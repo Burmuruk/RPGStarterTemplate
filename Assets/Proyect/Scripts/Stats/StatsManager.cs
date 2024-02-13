@@ -6,11 +6,8 @@ namespace Burmuruk.Tesis.Stats
     {
         Stats m_stats;
 
-        public float Speed { get => m_stats.m_speed; }
-
-        private void Start()
-        {
-            
-        }
+        public float Speed { get => m_stats.speed; }
+        public int HP { get; set; }
+        public int Damage { get; set; }
     }
 }

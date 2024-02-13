@@ -6,10 +6,11 @@ namespace Burmuruk.Tesis.Movement
     [RequireComponent(typeof(Rigidbody))]
     public class Movement : MonoBehaviour
     {
+        [SerializeField] float m_maxVel; 
+
         Rigidbody m_rb;
         StatsManager m_statsManager;
 
-        [SerializeField] float m_maxVel; 
         float m_maxSteerForce;
         public float wanderDisplacement;
         public float wanderRadious;
@@ -22,7 +23,7 @@ namespace Burmuruk.Tesis.Movement
 
         public void MoveTo(Vector3 point)
         {
-
+            SteeringBehaviours.Seek2D(this, point);
         }
 
         /// <summary>

@@ -1,7 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
 
 namespace Burmuruk.Tesis.Movement
 {
@@ -105,12 +102,22 @@ namespace Burmuruk.Tesis.Movement
             return steering;
         }
 
-
+        /// <summary>
+        /// Rotates the agent to look at the given direction.
+        /// </summary>
+        /// <param name="agent"></param>
+        /// <param name="direction"></param>
         public static void LookAt(Transform agent, Vector3 direction)
         {
             agent.transform.LookAt(agent.position + direction);
         }
 
+        /// <summary>
+        /// Ensures the giving vector's magnitud is not bigger than the maxValue.
+        /// </summary>
+        /// <param name="vector"></param>
+        /// <param name="maxValue"></param>
+        /// <returns></returns>
         private static Vector3 truncate(Vector3 vector, float maxValue)
         {
             if (vector.magnitude <= maxValue)
@@ -120,6 +127,6 @@ namespace Burmuruk.Tesis.Movement
             vector.Normalize();
             return vector *= maxValue;
         }
-    } 
+    }
 }
 
