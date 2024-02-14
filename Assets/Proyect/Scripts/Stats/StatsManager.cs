@@ -4,15 +4,16 @@ namespace Burmuruk.Tesis.Stats
 {
     public class StatsManager : MonoBehaviour
     {
+        [Header("Status")]
         [SerializeField] Stats m_stats;
+        [SerializeField] float speed;
+        [SerializeField] int hp;
+        [SerializeField] int damage;
+        [Space(), Header("Detection")]
+        [SerializeField] float eyesRadious;
+        [SerializeField] float earsRadious;
 
         Inventary inventary;
-
-        float speed;
-        int hp;
-        int damage;
-        float eyesRadious;
-        float earsRadious;
 
         public float Speed
         {
