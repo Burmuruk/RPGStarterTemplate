@@ -7,23 +7,44 @@ namespace Burmuruk.Tesis.Movement
     public class Movement : MonoBehaviour
     {
         [SerializeField] float m_maxVel; 
+        [SerializeField] float m_maxSteerForce;
+        [SerializeField] float m_threshold;
 
         Rigidbody m_rb;
         StatsManager m_statsManager;
+        Inventary m_inventary;
 
-        float m_maxSteerForce;
         public float wanderDisplacement;
         public float wanderRadious;
         public bool usePathFinding = false;
 
+        float SlowingRadious
+        {
+            get
+            {
+                if (m_inventary == null)
+                    return 3;
+
+                return m_inventary.EquipedWeapon.MinDistance;
+            }
+        }
+
         private void Awake()
         {
             m_rb = GetComponent<Rigidbody>();
+            m_statsManager = GetComponent<StatsManager>();
         }
 
         public void MoveTo(Vector3 point)
         {
-            SteeringBehaviours.Seek2D(this, point);
+            if (Vector3.Distance(transform.position, point) > SlowingRadious)
+            {
+                m_rb.velocity = SteeringBehaviours.Seek2D(this, point); 
+            }
+            else
+            {
+                m_rb.velocity = SteeringBehaviours.Arrival(this, point, SlowingRadious, m_threshold);
+            }
         }
 
         /// <summary>

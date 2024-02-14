@@ -9,9 +9,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e14a02c66efa1f945b460938528c2724, type: 3}
-  m_Name: PlayerStats
+  m_Script: {fileID: 11500000, guid: b77ef1b6c010ebe438dded9187084dbd, type: 3}
+  m_Name: Gun
   m_EditorClassIdentifier: 
-  speed: 5
-  hp: 100
-  damage: 1
+  m_type: 2
+  m_damage: 1
+  m_rateDamage: 0.5
+  m_minDistance: 5

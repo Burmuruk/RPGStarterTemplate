@@ -5,7 +5,7 @@ namespace Burmuruk.Tesis.Movement
     public class SteeringBehaviours
     {
         /// <summary>
-        /// Returns the next position to move the agent towards the target. The y value es ignored.
+        /// Returns the next position to move the agent towards the m_direction. The y value es ignored.
         /// </summary>
         /// <param name="agent">Object that cointains the agent</param>
         /// <param name="targetPosition">Object that cointains the position</param>
@@ -17,7 +17,7 @@ namespace Burmuruk.Tesis.Movement
         }
 
         /// <summary>
-        /// Returns the next position to move the agent towards the target.
+        /// Returns the next position to move the agent towards the m_direction.
         /// </summary>
         /// <param name="agent">Object that cointains the agent</param>
         /// <param name="targetPosition">Object that cointains the position</param>
@@ -29,7 +29,7 @@ namespace Burmuruk.Tesis.Movement
         }
 
         /// <summary>
-        /// Makes the given agent moven to the opposite side of the target.  The y value es ignored.
+        /// Makes the given agent moven to the opposite side of the m_direction.  The y value es ignored.
         /// </summary>
         /// <param name="agent">Object that cointains the agent</param>
         /// <param name="targetPosition">Object that cointains the position</param>
@@ -40,6 +40,14 @@ namespace Burmuruk.Tesis.Movement
             return calculateSteer(agent, desiredVel);
         }
 
+        /// <summary>
+        /// Starts to reduce the agent's velocity when reach the slowing radious and stop when it's the threshold.
+        /// </summary>
+        /// <param name="agent"></param>
+        /// <param name="targetPosition"></param>
+        /// <param name="slowingRadious"></param>
+        /// <param name="threshold"></param>
+        /// <returns></returns>
         public static Vector3 Arrival(Movement agent, Vector3 targetPosition, float slowingRadious, float threshold)
         {
             Vector3 newVel = agent.GetComponent<Rigidbody>().velocity;
@@ -50,6 +58,11 @@ namespace Burmuruk.Tesis.Movement
             return newVel *= slowingCowficient;
         }
 
+        /// <summary>
+        /// Calculate a random position to follow.
+        /// </summary>
+        /// <param name="agent"></param>
+        /// <returns></returns>
         public static Vector3 Wander(Movement agent)
         {
             Vector3 velCopy = agent.transform.GetComponent<Rigidbody>().velocity;
@@ -63,6 +76,12 @@ namespace Burmuruk.Tesis.Movement
             return randomDirection;
         }
 
+        /// <summary>
+        /// Moves the angent to the opposite direcion of the m_direction.
+        /// </summary>
+        /// <param name="agent"></param>
+        /// <param name="target"></param>
+        /// <returns></returns>
         public static Vector3 Flee(Movement agent, Transform target)
         {
             Vector3 desiredVel = agent.transform.position - target.position;
@@ -103,7 +122,7 @@ namespace Burmuruk.Tesis.Movement
         }
 
         /// <summary>
-        /// Rotates the agent to look at the given direction.
+        /// Rotates the agent to look at the given m_direction.
         /// </summary>
         /// <param name="agent"></param>
         /// <param name="direction"></param>
