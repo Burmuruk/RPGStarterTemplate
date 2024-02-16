@@ -11,7 +11,7 @@ namespace Burmuruk.Tesis.Stats
         [SerializeField] float m_minDistance;
 
         public int Damage { get => m_damage; }
-        public float RateDamage { get => m_rateDamage; }
+        public float DamageRate { get => m_rateDamage; }
         public float MinDistance { get => m_minDistance; }
     }
 

@@ -1,7 +1,6 @@
-using UnityEngine;
 using Burmuruk.Tesis.Stats;
-using UnityEngine.SocialPlatforms;
-using System;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace Burmuruk.Tesis.Control
 {
@@ -16,8 +15,8 @@ namespace Burmuruk.Tesis.Control
 
         protected Movement.Movement m_mover;
         protected Fighting.Fighter m_fighter;
+        protected StatsManager m_stats;
 
-        StatsManager m_stats;
         protected Collider[] eyesPerceibed, earsPerceibed;
         protected bool isFar = false;
         protected bool isClose = false;
@@ -26,6 +25,7 @@ namespace Burmuruk.Tesis.Control
         {
             m_mover = GetComponent<Movement.Movement>();
             m_fighter = GetComponent<Fighting.Fighter>();
+            m_stats = GetComponent<StatsManager>();
         }
 
         protected virtual void Start()
@@ -41,8 +41,8 @@ namespace Burmuruk.Tesis.Control
 
         protected virtual void FixedUpdate()
         {
-            eyesPerceibed = Physics.OverlapSphere(farPercept.position, m_stats.EyesRadious);
-            earsPerceibed = Physics.OverlapSphere(closePercept.position, m_stats. EarsRadious);
+            eyesPerceibed = Physics.OverlapSphere(farPercept.position, m_stats.EyesRadious, 1<<10);
+            earsPerceibed = Physics.OverlapSphere(closePercept.position, m_stats. EarsRadious, 1 << 10);
         }
 
         private void PerceptionManager()
@@ -60,6 +60,9 @@ namespace Burmuruk.Tesis.Control
         protected virtual bool PerceptEnemy(Collider[] perceibed)
         {
             if (perceibed == null) return false;
+            
+            List<Collider> enemies = new();
+            bool founded = false;
 
             for (int i = 0; i < perceibed.Length; i++)
             {
@@ -67,11 +70,17 @@ namespace Burmuruk.Tesis.Control
 
                 if (cur.GetComponent<EnemyController>() is var enemy && enemy != null)
                 {
-                    return true;
+                    enemies.Add(cur);
+                    founded = true;
                 }
             }
 
-            return false;
+            if (enemies.Count > 0)
+            {
+                perceibed = enemies.ToArray();
+            }
+
+            return founded;
         }
 
         protected virtual void DecisionManager()

@@ -1,5 +1,8 @@
 ﻿using UnityEngine;
 using Burmuruk.Tesis.Stats;
+using Burmuruk.Tesis.Movement;
+using MyDearAnima.Controll;
+using Burmuruk.Utilities;
 
 namespace Burmuruk.Tesis.Fighting
 {
@@ -10,9 +13,11 @@ namespace Burmuruk.Tesis.Fighting
         StatsManager m_Stats;
         StatsManager m_targetStats;
         Inventary m_inventary;
+        Movement.Movement m_movement;
 
-        float m_minDistance;
-        float m_damage;
+        Transform m_target;
+        CoolDownAction cdBasicAttack;
+        public bool shouldGetClose = false;
         bool canAttack = true;
 
         private void Awake()
@@ -20,6 +25,11 @@ namespace Burmuruk.Tesis.Fighting
             m_Stats = GetComponent<StatsManager>();
             m_targetStats = GetComponent<StatsManager>();
             m_inventary = FindObjectOfType<Inventary>();
+        }
+
+        private void Start()
+        {
+            cdBasicAttack = new CoolDownAction(m_Stats.DamageRate);
         }
 
         private void FixedUpdate()
@@ -30,17 +40,29 @@ namespace Burmuruk.Tesis.Fighting
             }
         }
 
+        public void SetTarget(Transform target)
+        {
+            m_target = target;
+            m_targetStats = target.GetComponent<StatsManager>();
+        }
+
         /// <summary>
         /// Executes a basic attack if it's close enough to the m_direction.
         /// </summary>
-        private void BasicAttack()
+        public void BasicAttack()
         {
-            if (Vector3.Distance(m_targetStats.transform.position, transform.position) < m_inventary.EquipedWeapon.MinDistance)
+            if (Vector3.Distance(m_target.position, transform.position) < m_inventary.EquipedWeapon.MinDistance)
             {
-                m_targetStats.HP -= m_Stats.Damage;
+                if (cdBasicAttack.CanUse)
+                {
+                    m_targetStats.HP -= m_Stats.Damage;
+                    StartCoroutine(cdBasicAttack.CoolDown());
+                }
+            }
+            else if (shouldGetClose)
+            {
+                m_movement.MoveTo(transform.position);
             }
         }
-
-        
     }
 }

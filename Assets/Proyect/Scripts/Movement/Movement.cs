@@ -1,10 +1,11 @@
 ﻿using Burmuruk.Tesis.Stats;
+using System;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Movement
 {
     [RequireComponent(typeof(Rigidbody))]
-    public class Movement : MonoBehaviour
+    public class Movement : MonoBehaviour, IMoveAction
     {
         [SerializeField] float m_maxVel; 
         [SerializeField] float m_maxSteerForce;
@@ -13,10 +14,14 @@ namespace Burmuruk.Tesis.Movement
         Rigidbody m_rb;
         StatsManager m_statsManager;
         Inventary m_inventary;
+        MovementSchuduler m_scheduler;
 
         public float wanderDisplacement;
         public float wanderRadious;
         public bool usePathFinding = false;
+        bool m_canMove = false;
+
+        public event Action OnActionFinished = delegate { };
 
         float SlowingRadious
         {
@@ -33,6 +38,7 @@ namespace Burmuruk.Tesis.Movement
         {
             m_rb = GetComponent<Rigidbody>();
             m_statsManager = GetComponent<StatsManager>();
+            m_scheduler = new MovementSchuduler();
         }
 
         public void MoveTo(Vector3 point)
@@ -72,6 +78,21 @@ namespace Burmuruk.Tesis.Movement
         public float getMaxSteerForce()
         {
             return m_maxSteerForce;
+        }
+
+        public void StopAction()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void StartAction()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void PauseAction()
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

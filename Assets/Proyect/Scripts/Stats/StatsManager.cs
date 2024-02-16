@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace Burmuruk.Tesis.Stats
 {
@@ -15,11 +16,14 @@ namespace Burmuruk.Tesis.Stats
 
         Inventary inventary;
 
+        public event Action OnDied;
+
+        #region Stats
         public float Speed
         {
             get
             {
-                return m_stats.speed + speed;
+                return speed;
             }
             set => speed = value;
         }
@@ -28,11 +32,26 @@ namespace Burmuruk.Tesis.Stats
         {
             get
             {
-                return m_stats.hp + hp;
+                return hp;
             }
-            set => hp = value;
-        }
+            set
+            {
+                if (value < 0)
+                {
+                    hp = 0;
+                    OnDied?.Invoke();
+                }
+                else
+                {
+                    hp = value;
+                }
 
+                print(hp);
+            }
+        }
+        #endregion
+
+        #region Combat
         public int Damage
         {
             get
@@ -40,8 +59,18 @@ namespace Burmuruk.Tesis.Stats
                 return inventary.EquipedWeapon.Damage + damage;
             }
             set => damage = value;
-        }
+        } 
 
+        public float DamageRate
+        {
+            get
+            {
+                return inventary.EquipedWeapon.DamageRate;
+            }
+        }
+        #endregion
+
+        #region Detection
         public float EyesRadious
         {
             get
@@ -58,6 +87,18 @@ namespace Burmuruk.Tesis.Stats
                 return m_stats.earsRadious + earsRadious;
             }
             set => earsRadious = value;
+        } 
+        #endregion
+
+        private void Start()
+        {
+            inventary = GetComponent<Inventary>();
+            UpdateStats();
+        }
+
+        private void UpdateStats()
+        {
+            (hp, speed) = (m_stats.hp, m_stats.speed);
         }
     }
 }

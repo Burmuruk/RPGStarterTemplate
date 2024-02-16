@@ -15,3 +15,5 @@ MonoBehaviour:
   speed: 5
   hp: 100
   damage: 1
+  eyesRadious: 6
+  earsRadious: 3
