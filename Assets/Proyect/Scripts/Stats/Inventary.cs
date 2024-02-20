@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Burmuruk.Tesis.Stats
 {
-    class Inventary : MonoBehaviour
+    public class Inventary : MonoBehaviour
     {
         [Header("General Lists")]
         [SerializeField] List<Weapon> weapons;
@@ -20,7 +20,7 @@ namespace Burmuruk.Tesis.Stats
         static List<Weapon> m_weapons;
         static List<Hability> m_habilites;
         static List<Modification> m_modifiers;
-        static List<Modification> m_items;
+        static List<Pickable> m_items;
 
         Dictionary<ItemType, List<(object, bool)>> m_owned = new()
         {
@@ -29,7 +29,13 @@ namespace Burmuruk.Tesis.Stats
             { ItemType.Modification, new List<(object, bool)>() },
             { ItemType.Consumable, new List<(object, bool)>() },
         };
-        int habSlots;
+        Dictionary<ItemType, int> slots = new()
+        {
+            { ItemType.Weapon, 2},
+            { ItemType.Hability, 2},
+            { ItemType.Modification, 2},
+            { ItemType.Consumable, 2},
+        };
 
         public event Action OnWeaponChanged;
 
@@ -72,7 +78,7 @@ namespace Burmuruk.Tesis.Stats
             (m_owned[type]??= new()).Add((item, false));
         }
 
-        public void Drop(ItemType type, int idx)
+        public void Remove(ItemType type, int idx)
         {
             m_owned[type].RemoveAt(idx);
         }
@@ -87,9 +93,16 @@ namespace Burmuruk.Tesis.Stats
             return m_owned[type][idx];
         }
 
-        public void Equip(ItemType type)
+        public void Equip(ItemType type, object item)
         {
-
+            for (int i = 0; i < m_owned[type].Count; i++)
+            {
+                if (m_owned[type][i].Item1 == item)
+                {
+                    m_owned[type][i] = (item, true);
+                    break;
+                }
+            }
         }
     }
 

@@ -1,8 +1,6 @@
-﻿using UnityEngine;
-using Burmuruk.Tesis.Stats;
-using Burmuruk.Tesis.Movement;
-using MyDearAnima.Controll;
+﻿using Burmuruk.Tesis.Stats;
 using Burmuruk.Utilities;
+using UnityEngine;
 
 namespace Burmuruk.Tesis.Fighting
 {
@@ -14,6 +12,7 @@ namespace Burmuruk.Tesis.Fighting
         StatsManager m_targetStats;
         Inventary m_inventary;
         Movement.Movement m_movement;
+        HabilitiesManager habManager;
 
         Transform m_target;
         CoolDownAction cdBasicAttack;
@@ -51,11 +50,13 @@ namespace Burmuruk.Tesis.Fighting
         /// </summary>
         public void BasicAttack()
         {
+            if (!m_target) return;
+
             if (Vector3.Distance(m_target.position, transform.position) < m_inventary.EquipedWeapon.MinDistance)
             {
                 if (cdBasicAttack.CanUse)
                 {
-                    m_targetStats.HP -= m_Stats.Damage;
+                    m_targetStats.ApplyDamage(m_Stats.Damage);
                     StartCoroutine(cdBasicAttack.CoolDown());
                 }
             }
@@ -64,5 +65,28 @@ namespace Burmuruk.Tesis.Fighting
                 m_movement.MoveTo(transform.position);
             }
         }
+
+        public void SpecialAttack(int idx)
+        {
+            var habilities = m_inventary.GetOwnedList(ItemType.Hability);
+
+            foreach (var hability in habilities)
+            {
+                if ((int)hability.Item1 == idx)
+                {
+                    var args = GetSpecialAttackArgs(idx);
+                    HabilitiesManager.habilitiesList[idx].Item2?.Invoke(args);
+                    return;
+                }
+            }
+        }
+
+        private object GetSpecialAttackArgs(int idx) =>
+            idx switch
+            {
+                0 => m_movement.CurDirection,
+                2 => m_target,
+                _ => null
+            };
     }
 }

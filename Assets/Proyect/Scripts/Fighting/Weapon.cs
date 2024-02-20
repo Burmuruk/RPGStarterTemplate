@@ -3,7 +3,7 @@
 namespace Burmuruk.Tesis.Stats
 {
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Weapon", order = 1)]
-    class Weapon : ScriptableObject
+    public class Weapon : ScriptableObject
     {
         [SerializeField] WeaponType m_type;
         [SerializeField] int m_damage;

@@ -16,6 +16,7 @@ namespace Burmuruk.Tesis.Control
         protected Movement.Movement m_mover;
         protected Fighting.Fighter m_fighter;
         protected StatsManager m_stats;
+        protected Inventary m_inventary;
 
         protected Collider[] eyesPerceibed, earsPerceibed;
         protected bool isFar = false;
@@ -26,6 +27,7 @@ namespace Burmuruk.Tesis.Control
             m_mover = GetComponent<Movement.Movement>();
             m_fighter = GetComponent<Fighting.Fighter>();
             m_stats = GetComponent<StatsManager>();
+            m_inventary = gameObject.GetComponent<Inventary>();
         }
 
         protected virtual void Start()

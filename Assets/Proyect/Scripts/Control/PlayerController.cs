@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Burmuruk.Tesis.Stats;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace Burmuruk.Tesis.Control
@@ -28,7 +29,6 @@ namespace Burmuruk.Tesis.Control
         {
             if (context.performed)
             {
-                print("Run");
                 var dir = context.ReadValue<Vector2>();
                 if (dir.magnitude <= 0)
                 {
@@ -82,6 +82,15 @@ namespace Burmuruk.Tesis.Control
                 Vector3 screenPos = new(mousePos.x, cam.pixelHeight - mousePos.y, cam.nearClipPlane);
 
                 return cam.ScreenPointToRay(Mouse.current.position.ReadValue());
+            }
+        }
+
+        private void OnTriggerEnter(Collider other)
+        {
+            if (other.gameObject.GetComponent<Pickable>() is var item && item)
+            {
+                m_inventary.Add(ItemType.Consumable, item);
+                Destroy(other.gameObject);
             }
         }
     }

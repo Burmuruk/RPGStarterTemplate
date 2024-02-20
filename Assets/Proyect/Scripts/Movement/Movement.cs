@@ -23,6 +23,8 @@ namespace Burmuruk.Tesis.Movement
 
         public event Action OnActionFinished = delegate { };
 
+        public Vector3 CurDirection { get; private set; }
+
         float SlowingRadious
         {
             get
@@ -46,11 +48,15 @@ namespace Burmuruk.Tesis.Movement
             if (Vector3.Distance(transform.position, point) > SlowingRadious)
             {
                 m_rb.velocity = SteeringBehaviours.Seek2D(this, point); 
+                CurDirection = m_rb.velocity.normalized;
             }
             else
             {
                 m_rb.velocity = SteeringBehaviours.Arrival(this, point, SlowingRadious, m_threshold);
+                CurDirection = Vector3.zero;
             }
+
+            SteeringBehaviours.LookAt(transform, m_rb.velocity);
         }
 
         /// <summary>

@@ -28,26 +28,13 @@ namespace Burmuruk.Tesis.Stats
             set => speed = value;
         }
 
-        public int HP
+        public int Hp
         {
             get
             {
                 return hp;
             }
-            set
-            {
-                if (value < 0)
-                {
-                    hp = 0;
-                    OnDied?.Invoke();
-                }
-                else
-                {
-                    hp = value;
-                }
-
-                print(hp);
-            }
+            set => hp = value;
         }
         #endregion
 
@@ -89,6 +76,21 @@ namespace Burmuruk.Tesis.Stats
             set => earsRadious = value;
         } 
         #endregion
+
+        public void ApplyDamage(int amount)
+        {
+            if (hp - amount < 0)
+            {
+                Hp = 0;
+                OnDied?.Invoke();
+            }
+            else
+            {
+                Hp -= amount;
+            }
+
+            print(Hp);
+        }
 
         private void Start()
         {
