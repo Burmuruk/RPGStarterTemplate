@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
+using static Burmuruk.Tesis.Stats.Inventary;
 
 namespace Burmuruk.Tesis.Stats
 {
@@ -9,6 +11,7 @@ namespace Burmuruk.Tesis.Stats
         [SerializeField] Stats m_stats;
         [SerializeField] float speed;
         [SerializeField] int hp;
+        int maxHp = 100;
         [SerializeField] int damage;
         [Space(), Header("Detection")]
         [SerializeField] float eyesRadious;
@@ -17,6 +20,8 @@ namespace Burmuruk.Tesis.Stats
         Inventary inventary;
 
         public event Action OnDied;
+
+        Dictionary<ItemType, int> slots;
 
         #region Stats
         public float Speed
@@ -36,6 +41,8 @@ namespace Burmuruk.Tesis.Stats
             }
             set => hp = value;
         }
+
+        public int MaxHp { get; set; }
         #endregion
 
         #region Combat
@@ -101,6 +108,17 @@ namespace Burmuruk.Tesis.Stats
         private void UpdateStats()
         {
             (hp, speed) = (m_stats.hp, m_stats.speed);
+            slots = m_stats.GetAllSlots();
+        }
+
+        public int GetSlots(ItemType type)
+        {
+            return slots[type];
+        }
+
+        public Dictionary<ItemType, int> GetAllSlots()
+        {
+            return slots;
         }
     }
 }

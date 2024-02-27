@@ -12,8 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e14a02c66efa1f945b460938528c2724, type: 3}
   m_Name: PlayerStats
   m_EditorClassIdentifier: 
+  initialized: 0
   speed: 5
   hp: 100
   damage: 1
-  eyesRadious: 6
+  eyesRadious: 4.5
   earsRadious: 3
+  m_slots:
+  - type: 3
+    maxAmount: 3
+  - type: 1
+    maxAmount: 10
+  - type: 2
+    maxAmount: 2

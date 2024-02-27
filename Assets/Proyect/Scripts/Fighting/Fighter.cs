@@ -66,26 +66,26 @@ namespace Burmuruk.Tesis.Fighting
             }
         }
 
-        public void SpecialAttack(int idx)
+        public void SpecialAttack(HabilityType type)
         {
             var habilities = m_inventary.GetOwnedList(ItemType.Hability);
 
             foreach (var hability in habilities)
             {
-                if ((int)hability.Item1 == idx)
+                if (((Hability)hability.Item).Type == type)
                 {
-                    var args = GetSpecialAttackArgs(idx);
-                    HabilitiesManager.habilitiesList[idx].Item2?.Invoke(args);
+                    var args = GetSpecialAttackArgs(type);
+                    HabilitiesManager.habilitiesList[type]?.Invoke(args);
                     return;
                 }
             }
         }
 
-        private object GetSpecialAttackArgs(int idx) =>
-            idx switch
+        private object GetSpecialAttackArgs(HabilityType type) =>
+            type switch
             {
-                0 => m_movement.CurDirection,
-                2 => m_target,
+                HabilityType.Dash => m_movement.CurDirection,
+                HabilityType.StealHealth => m_target,
                 _ => null
             };
     }

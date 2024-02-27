@@ -1,40 +1,49 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Linq;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Stats
 {
     public class Inventary : MonoBehaviour
     {
-        [Header("General Lists")]
-        [SerializeField] List<Weapon> weapons;
-        [SerializeField] List<Hability> habilites;
-        [SerializeField] List<Modification> modifiers;
-        [SerializeField] List<Modification> items;
-
         [Header("Status")]
-        [SerializeField] int? m_equipedWeapon = 1;
+        [SerializeField] Weapon m_equipedWeapon;
+        StatsManager stats;
 
-        static List<Weapon> m_weapons;
-        static List<Hability> m_habilites;
-        static List<Modification> m_modifiers;
-        static List<Pickable> m_items;
+        public struct EquipedItem
+        {
+            ISaveableItem item;
+            bool isEquipped;
+            int count;
 
-        Dictionary<ItemType, List<(object, bool)>> m_owned = new()
+            public ISaveableItem Item { get => item; }
+            public int Count { get => count; }
+
+            public EquipedItem(ISaveableItem item)
+            {
+                this.item = item;
+                isEquipped = false;
+                count = 0;
+            }
+
+            public EquipedItem(ISaveableItem item, int count) : this(item)
+            {
+                this.count = count;
+            }
+
+            public void Add(int amount = 1) => count += amount;
+            public void Remove(int amount = 1) => count -= amount;
+
+            public void Equip(bool value) => isEquipped = value;
+        }
+
+        Dictionary<ItemType, List<(EquipedItem item, int maxAmount)>> m_owned = new()
         {
-            { ItemType.Weapon, new List<(object, bool)>() },
-            { ItemType.Hability, new List<(object, bool)>() },
-            { ItemType.Modification, new List<(object, bool)>() },
-            { ItemType.Consumable, new List<(object, bool)>() },
-        };
-        Dictionary<ItemType, int> slots = new()
-        {
-            { ItemType.Weapon, 2},
-            { ItemType.Hability, 2},
-            { ItemType.Modification, 2},
-            { ItemType.Consumable, 2},
+            { ItemType.Weapon, new List<(EquipedItem item, int maxAmount)>() },
+            { ItemType.Hability, new List<(EquipedItem item, int maxAmount)>() },
+            { ItemType.Modification, new List<(EquipedItem item, int maxAmount)>() },
+            { ItemType.Consumable, new List<(EquipedItem item, int maxAmount)>() },
         };
 
         public event Action OnWeaponChanged;
@@ -43,20 +52,16 @@ namespace Burmuruk.Tesis.Stats
         {
             get
             {
-                if (m_equipedWeapon.HasValue)
-                {
-                    return m_weapons[m_equipedWeapon.Value];
-                }
-
-                return null;
+                return m_equipedWeapon;
             }
         }
 
         private void Awake()
         {
-            m_weapons ??= weapons;
-            m_habilites ??= habilites;
-            m_modifiers ??= modifiers;
+            //m_weapons ??= weapons;
+            ////m_habilites ??= habilites;
+            //m_modifiers ??= modifiers;
+            stats = GetComponent<StatsManager>();
         }
 
         private void Start()
@@ -64,18 +69,26 @@ namespace Burmuruk.Tesis.Stats
             
         }
 
-        public void ChangeEquipedWeapon(int idx)
+        private void Update()
         {
-            if (m_weapons != null && m_weapons[idx] != null)
+            if (Input.GetKeyDown(KeyCode.Alpha1))
             {
-                m_equipedWeapon = idx;
-                OnWeaponChanged?.Invoke();
+                if (m_owned.Count <= 0 || m_owned[ItemType.Hability].Count <= 0)
+                    return;
+
+                ((IUsable)m_owned[ItemType.Hability][0].item.Item).Use();
             }
         }
 
-        public void Add(ItemType type, object item)
+        public void ChangeEquipedWeapon(Weapon weapon)
         {
-            (m_owned[type]??= new()).Add((item, false));
+            m_equipedWeapon = weapon;
+            OnWeaponChanged?.Invoke();
+        }
+
+        public void Add(ItemType type, ISaveableItem item)
+        {
+            (m_owned[type]??= new()).Add((new(item), stats.GetSlots(type)));
         }
 
         public void Remove(ItemType type, int idx)
@@ -83,24 +96,26 @@ namespace Burmuruk.Tesis.Stats
             m_owned[type].RemoveAt(idx);
         }
 
-        public ReadOnlyCollection<(object, bool)> GetOwnedList(ItemType type)
+        public List<EquipedItem> GetOwnedList(ItemType type)
         {
-            return m_owned[type].AsReadOnly();
+            return (from list in m_owned[type] select list.item).ToList();
         }
 
-        public object GetOwnedItem(ItemType type, int idx)
+        public ISaveableItem GetOwnedItem(ItemType type, int idx)
         {
-            return m_owned[type][idx];
+            return m_owned[type][idx].item.Item;
         }
 
-        public void Equip(ItemType type, object item)
+        public void Equip(ItemType type, ISaveableItem item)
         {
+            print("Equip");
             for (int i = 0; i < m_owned[type].Count; i++)
             {
-                if (m_owned[type][i].Item1 == item)
+                if (m_owned[type][i].Item1.Item == item)
                 {
-                    m_owned[type][i] = (item, true);
-                    break;
+                    m_owned[type][i].Item1.Equip(true);
+                    ((IEquipable)m_owned[type][i].Item1.Item).Equip(stats); 
+                    return;
                 }
             }
         }
@@ -113,5 +128,22 @@ namespace Burmuruk.Tesis.Stats
         Hability,
         Modification,
         Weapon
+    }
+
+    public interface ISaveableItem
+    {
+
+    }
+
+    public interface IEquipable
+    {
+        public void Equip(StatsManager stats);
+
+        public void Remove(StatsManager stats);
+    }
+
+    public interface IUsable
+    {
+        void Use();
     }
 }

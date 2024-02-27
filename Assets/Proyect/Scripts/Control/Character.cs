@@ -1,4 +1,6 @@
+using Assets.Proyect.Scripts.Control;
 using Burmuruk.Tesis.Stats;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -13,21 +15,28 @@ namespace Burmuruk.Tesis.Control
         [SerializeField] protected bool hasFarPerception;
         [SerializeField] protected bool hasClosePerception;
 
-        protected Movement.Movement m_mover;
-        protected Fighting.Fighter m_fighter;
-        protected StatsManager m_stats;
-        protected Inventary m_inventary;
+        [Space(), Header("Settings")]
+        [SerializeField] protected string enemyTag;
+        //[SerializeField] protected float farRadious;
+        //[SerializeField] protected float closeRadious;
+
+        [HideInInspector] public Movement.Movement mover;
+        [HideInInspector] public Fighting.Fighter fighter;
+        [HideInInspector] public StatsManager stats;
+        [HideInInspector] Inventary inventary;
 
         protected Collider[] eyesPerceibed, earsPerceibed;
         protected bool isFar = false;
         protected bool isClose = false;
 
+        public Inventary Inventary { get => inventary; }
+
         protected virtual void Awake()
         {
-            m_mover = GetComponent<Movement.Movement>();
-            m_fighter = GetComponent<Fighting.Fighter>();
-            m_stats = GetComponent<StatsManager>();
-            m_inventary = gameObject.GetComponent<Inventary>();
+            mover = GetComponent<Movement.Movement>();
+            fighter = GetComponent<Fighting.Fighter>();
+            stats = GetComponent<StatsManager>();
+            inventary = gameObject.GetComponent<Inventary>();
         }
 
         protected virtual void Start()
@@ -43,8 +52,18 @@ namespace Burmuruk.Tesis.Control
 
         protected virtual void FixedUpdate()
         {
-            eyesPerceibed = Physics.OverlapSphere(farPercept.position, m_stats.EyesRadious, 1<<10);
-            earsPerceibed = Physics.OverlapSphere(closePercept.position, m_stats. EarsRadious, 1 << 10);
+            eyesPerceibed = Physics.OverlapSphere(farPercept.position, stats.EyesRadious, 1<<10);
+            earsPerceibed = Physics.OverlapSphere(closePercept.position, stats.EarsRadious, 1 << 10);
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            if (!stats || !farPercept || !closePercept) return;
+
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(farPercept.position, stats.EyesRadious);
+            Gizmos.color = Color.blue;
+            Gizmos.DrawWireSphere(closePercept.position, stats.EarsRadious);
         }
 
         private void PerceptionManager()
@@ -70,7 +89,7 @@ namespace Burmuruk.Tesis.Control
             {
                 ref var cur = ref perceibed[i];
 
-                if (cur.GetComponent<EnemyController>() is var enemy && enemy != null)
+                if (cur.CompareTag(enemyTag))
                 {
                     enemies.Add(cur);
                     founded = true;

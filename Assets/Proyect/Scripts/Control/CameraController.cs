@@ -1,37 +1,25 @@
-﻿using UnityEngine;
+﻿using Cinemachine;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace Burmuruk.Tesis.Control
 {
     class CameraController : MonoBehaviour
     {
-        [Header("Referenes")]
-        [SerializeField] new GameObject camera;
-        [SerializeField] GameObject body;
-        [SerializeField] GameObject pivot;
-        [Header("Settings")]
-        [SerializeField] float maxHeight = 45;
-        [SerializeField] float minHeight = 45;
-        [SerializeField] float verticalSensitivity = 1f;
-        [SerializeField] float horizontalSensitivity = 1f;
+        //[Header("Referenes")]
+        PlayerManager playerManager;
+        new CinemachineVirtualCamera camera;
 
-        float m_rotationX = 0;
-        private Vector2 m_direction = default;
-
-        private void Update()
+        private void Awake()
         {
-            MoveCamera();
+            playerManager = FindObjectOfType<PlayerManager>();
+            playerManager.OnPlayerChanged += SetTarget;
+            camera = GetComponent<CinemachineVirtualCamera>();
         }
 
-        public void LookAt(InputAction.CallbackContext context)
+        void SetTarget()
         {
-            Vector2 direction = context.ReadValue<Vector2>();
-
-        }
-
-        private void MoveCamera()
-        {
-            
+            camera.Follow = playerManager.CurPlayer;
         }
     }
 }

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Burmuruk.Tesis.Stats
 {
-    class Pickable : MonoBehaviour
+    class Pickable : MonoBehaviour, ISaveableItem
     {
         [SerializeField] int hp;
 

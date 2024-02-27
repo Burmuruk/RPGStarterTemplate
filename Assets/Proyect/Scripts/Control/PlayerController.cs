@@ -4,29 +4,33 @@ using UnityEngine.InputSystem;
 
 namespace Burmuruk.Tesis.Control
 {
-    class PlayerController : Character
+    class PlayerController : MonoBehaviour
     {
         bool m_shouldMove = false;
         Vector3 m_direction = default;
         Collider m_target;
+        Character player;
 
-        protected override void FixedUpdate()
+        void FixedUpdate()
         {
-            base.FixedUpdate();
-
-            if (m_shouldMove)
+            if (m_shouldMove && player)
             {
-                m_mover.MoveTo(transform.position + m_direction * 10);
+                player.mover.MoveTo(transform.position + m_direction * 10);
             }
+
+            DetectItems();
         }
 
-        protected override void DecisionManager()
+        public void SetPlayer(Character player)
         {
-            base.DecisionManager();
+            var vollider = player.GetComponent<CapsuleCollider>();
+            this.player = player;
         }
 
         public void Move(InputAction.CallbackContext context)
         {
+            if (!player) return;
+
             if (context.performed)
             {
                 var dir = context.ReadValue<Vector2>();
@@ -48,6 +52,8 @@ namespace Burmuruk.Tesis.Control
 
         public void SelectTarget(InputAction.CallbackContext context)
         {
+            if (!player) return;
+
             if (context.performed)
             {
                 print("Right Click");
@@ -57,13 +63,15 @@ namespace Burmuruk.Tesis.Control
                 {
                     print(enemy.name);
                     m_target = enemy;
-                    m_fighter.SetTarget(m_target.transform);
+                    player.fighter.SetTarget(m_target.transform);
                 }
             }
         }
 
         private Collider DetectEnemyInMouse()
         {
+            if (!player) return null;
+
             Ray ray = GetRayFromMouseToWorld();
             RaycastHit hit;
 
@@ -87,10 +95,29 @@ namespace Burmuruk.Tesis.Control
 
         private void OnTriggerEnter(Collider other)
         {
-            if (other.gameObject.GetComponent<Pickable>() is var item && item)
+            //Physics.OverlapSphere(transform.position, .5f, 1<<11);
+            //if (other.gameObject.GetComponent<Pickable>() is var item && item)
+            //{
+            //    player.inventary.Add(ItemType.Consumable, item);
+            //    Destroy(other.gameObject);
+            //}
+        }
+
+        private void DetectItems()
+        {
+            var items = Physics.OverlapSphere(player.transform.position, .5f, 1 << 11);
+
+            foreach (var item in items)
             {
-                m_inventary.Add(ItemType.Consumable, item);
-                Destroy(other.gameObject);
+                var cmp = item.GetComponent<PickableItem>();
+                if (cmp)
+                {
+                    var inventary = player.GetComponent<Inventary>();
+                    print("Using Item");
+                    inventary.Add(cmp.type, cmp.Item);
+                    inventary.Equip(cmp.type, cmp.Item);
+                    item.gameObject.SetActive(false);
+                }
             }
         }
     }

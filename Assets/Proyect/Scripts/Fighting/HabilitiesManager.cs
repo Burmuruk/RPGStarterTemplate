@@ -7,24 +7,21 @@ namespace Burmuruk.Tesis.Fighting
 {
     class HabilitiesManager : MonoBehaviour
     {
+        
+
         Movement.Movement m_movement;
         StatsManager stats;
 
-        public static List<(string, Action<object>)> habilitiesList = new()
+        public static readonly Dictionary<HabilityType, Action<object>> habilitiesList = new()
         {
-            { ("Dash", Dash) },
-            { ("Jump", Jump) },
-            { ("StealLife", StealLife) },
+            { HabilityType.Dash, Dash },
+            { HabilityType.Jump, Jump },
+            { HabilityType.StealHealth, StealLife },
         };
-
-        public HabilitiesManager()
-        {
-            habilitiesList = new();
-        }
 
         public static void Dash(object direction)
         {
-            Vector3 dir = (Vector3) direction;
+            //Vector3 dir = (Vector3) direction;
 
             //stats.Speed += 2;
             print("In Dash!!!");
@@ -39,5 +36,13 @@ namespace Burmuruk.Tesis.Fighting
         {
 
         }
+    }
+
+    public enum HabilityType
+    {
+        None,
+        Dash,
+        Jump,
+        StealHealth
     }
 }
