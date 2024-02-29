@@ -1,5 +1,4 @@
-﻿
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using Burmuruk.AI.PathFinding;
 using Burmuruk.WorldG.Patrol;
@@ -62,7 +61,7 @@ namespace Burmuruk.AI
         public pState meshState = pState.None;
         public pState connectionsState = pState.None;
 
-        private List<IPathNode> nodes = new List<IPathNode>();
+        private List<ScrNode> nodes = new List<ScrNode>();
         #endregion
 
         #region Properties
@@ -106,7 +105,7 @@ namespace Burmuruk.AI
                     return false;
             }
         }
-        public List<IPathNode> Nodes
+        public List<ScrNode> Nodes
         {
             get
             {
@@ -119,7 +118,7 @@ namespace Burmuruk.AI
                             var node = transform.GetChild(i).GetComponent<IPathNode>();
 
                             if (node != null)
-                                nodes.Add(node);
+                                nodes.Add((ScrNode)node);
                         }
                     }
 
@@ -185,6 +184,8 @@ namespace Burmuruk.AI
             nearestStart = startNode.GetComponent<IPathNode>() == null ? true : false;
             nearestEnd = endNode.GetComponent<IPathNode>() == null ? true : false;
 
+
+
             (IPathNode start, IPathNode end) = (nearestStart, nearestEnd) switch
             {
                 (true, true) => (Find_NearestNode(startNode.transform.position), Find_NearestNode(endNode.transform.position)),
@@ -218,18 +219,18 @@ namespace Burmuruk.AI
             nodeCount = 0;
             this.nodes.Clear();
 
-//            foreach (var node in nodes)
-//            {
-//#if UNITY_EDITOR
-//                DestroyImmediate(node.gameObject);
-//                continue;
-//#endif
+            foreach (ScrNode node in nodes)
+            {
+#if UNITY_EDITOR
+                DestroyImmediate(node.Item);
+                continue;
+#endif
 
-//                Destroy(node.gameObject);
-//            }
+                Destroy(node.Item);
+            }
 
-//            CreateMesh = true;
-//            meshState = pState.None;
+            CreateMesh = true;
+            meshState = pState.None;
         }
 
         public void Clear_NodeConections()
@@ -266,7 +267,7 @@ namespace Burmuruk.AI
             return null;
         }
 
-        public List<IPathNode> Get_Nodes() => nodes;
+        public List<ScrNode> Get_Nodes() => nodes;
 
         #endregion
 
@@ -278,7 +279,7 @@ namespace Burmuruk.AI
                 nodes = transform.GetComponentsInChildren<IPathNode>();
             else
                 nodes = this.nodes.ToArray();
-            
+
             var maxDis = maxDistance / Mathf.Sin(maxAngle * Mathf.PI / 180);
             edgesToFix = new List<(IPathNode node, IPathNode hitPos)>();
 
@@ -295,7 +296,7 @@ namespace Burmuruk.AI
                     {
                         float normal1, normal2;
                         //Vector3 hitPos1, hitPos2;
-                        
+
                         bool hitted1 = Detect_OjbstaclesBetween(cur, nodes[j], out normal1);
                         bool hitted2 = Detect_OjbstaclesBetween(nodes[j], cur, out normal2);
 
@@ -311,12 +312,12 @@ namespace Burmuruk.AI
 
                         (ConnectionType a, ConnectionType b) types = Get_Types(hitted1, hitted2);
 
-                        //if (!hitted1)
-                        //    cur.NodeConnections.Add(
-                        //        new NodeConnection(cur, nodes[j], m, types.a));
-                        //if (!hitted2)
-                        //    nodes[j].NodeConnections.Add(
-                        //        new NodeConnection(nodes[j], cur, m, types.b));
+                        if (!hitted1)
+                            cur.NodeConnections.Add(
+                                new NodeConnection(cur, nodes[j], m, types.a));
+                        if (!hitted2)
+                            nodes[j].NodeConnections.Add(
+                                new NodeConnection(nodes[j], cur, m, types.b));
                     }
                     //else
                     //{
@@ -349,6 +350,7 @@ namespace Burmuruk.AI
                     _ => (ConnectionType.None, ConnectionType.None),
                 };
             }
+
             float Get_VerticalDifference(IPathNode node, IPathNode cur)
             {
                 float dif = 0;
@@ -410,7 +412,7 @@ namespace Burmuruk.AI
             bool hitted = false;
             for (int k = 0; k < hit.Length; k++)
             {
-                if (Vector3.Angle(new Vector3(0, 1, 0), hit[k].normal) is var a && (a < (10) || (a > 89 && a < 90.5) ) && a != 0)
+                if (Vector3.Angle(new Vector3(0, 1, 0), hit[k].normal) is var a && (a < (10) || (a > 89 && a < 90.5)) && a != 0)
                 {
                     hitted = true;
                 }
@@ -527,8 +529,9 @@ namespace Burmuruk.AI
             var newNode = Instantiate(Node, transform);
             newNode.transform.position = position;
             newNode.transform.name = "Node " + nodeCount.ToString();
-            var nodeCs = newNode.GetComponent<IPathNode>();
-            //nodeCs.SetIndex(nodeCount++);
+            var nodeCs = newNode.GetComponent<ScrNode>();
+            nodeCount++;
+            nodeCs.SetIndex(nodeCount++);
             nodes.Add(nodeCs);
         }
 
@@ -614,5 +617,5 @@ namespace Burmuruk.AI
             }
         }
         #endregion
-    } 
+    }
 }
