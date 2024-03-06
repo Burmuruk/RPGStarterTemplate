@@ -34,15 +34,15 @@ namespace Burmuruk.AI.PathFinding
 
         public AStar() { }
 
-        public void SetNodeList(IPathNode[] nodes)
+        public void SetNodeList(ICollection<IPathNode> nodes)
         {
             weights = new Dictionary<uint, Vector3>();
 
             try
             {
-                for (int i = 0; i < nodes.Length; i++)
+                foreach (IPathNode node in nodes)
                 {
-                    weights.Add(nodes[i].ID, nodes[i].Position);
+                    weights.Add(node.ID, node.Position);
                 }
             }
             catch (Exception)

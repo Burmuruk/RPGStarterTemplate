@@ -1,4 +1,5 @@
 ﻿using Burmuruk.Tesis.Stats;
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -10,6 +11,9 @@ namespace Burmuruk.Tesis.Control
         Vector3 m_direction = default;
         Collider m_target;
         Character player;
+        bool m_canChangeFormation = false;
+
+        public event Action<Vector2> OnFormationChanged;
 
         void FixedUpdate()
         {
@@ -65,6 +69,35 @@ namespace Burmuruk.Tesis.Control
                     m_target = enemy;
                     player.fighter.SetTarget(m_target.transform);
                 }
+            }
+        }
+
+        public void DisplayFormations(InputAction.CallbackContext context)
+        {
+            if (!player) return;
+
+            if (context.performed)
+            {
+                print("Show formations");
+                m_canChangeFormation = true;
+            }
+            else
+            { 
+                m_canChangeFormation = false;
+            }
+        }
+
+        public void ChangeFormation(InputAction.CallbackContext context)
+        {
+            if (!player) return;
+
+            if (context.performed && m_canChangeFormation)
+            {
+                var dir = context.ReadValue<Vector2>();
+
+                print("Change!");
+
+                OnFormationChanged?.Invoke(dir);
             }
         }
 

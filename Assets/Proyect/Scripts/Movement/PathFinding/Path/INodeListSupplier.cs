@@ -7,7 +7,7 @@ namespace Burmuruk.WorldG.Patrol
     {
         public Vector3 StartNode { get; }
         public Vector3 EndNode { get; }
-        public IPathNode[] Nodes { get; }
+        public ICollection<IPathNode> Nodes { get; }
 
         public void SetTarget(IPathNode[] nodes, float pRadious = .2f, float maxDistance = 2, float maxAngle = 45, float height = 1);
 
@@ -19,6 +19,6 @@ namespace Burmuruk.WorldG.Patrol
 
         public void ClearNodeConnections();
 
-        public void SetNodes(IPathNode[] nodes);
+        public void SetNodes(ICollection<IPathNode> nodes);
     }
 }

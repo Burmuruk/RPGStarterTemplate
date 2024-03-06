@@ -26,8 +26,8 @@ namespace Burmuruk.Tesis.Control
         [HideInInspector] Inventary inventary;
 
         protected Collider[] eyesPerceibed, earsPerceibed;
-        protected bool isFar = false;
-        protected bool isClose = false;
+        protected bool isTargetFar = false;
+        protected bool isTargetClose = false;
 
         public Inventary Inventary { get => inventary; }
 
@@ -70,11 +70,11 @@ namespace Burmuruk.Tesis.Control
         {
             if (hasFarPerception)
             {
-                isFar = PerceptEnemy(eyesPerceibed);
+                isTargetFar = PerceptEnemy(eyesPerceibed);
             }
             if (hasClosePerception)
             {
-                isClose = PerceptEnemy(earsPerceibed);
+                isTargetClose = PerceptEnemy(earsPerceibed);
             }
         }
 
@@ -110,6 +110,11 @@ namespace Burmuruk.Tesis.Control
         }
 
         protected virtual void ActionManager()
+        {
+
+        }
+
+        protected virtual void MovementManager()
         {
 
         }

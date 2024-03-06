@@ -42,7 +42,7 @@ namespace Burmuruk.AI.PathFinding
             this.end = end;
         }
 
-        public void SetNodeList(IPathNode[] nodes)
+        public void SetNodeList(ICollection<IPathNode> nodes)
         {
 
         }

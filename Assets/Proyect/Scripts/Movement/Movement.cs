@@ -1,5 +1,8 @@
-﻿using Burmuruk.Tesis.Stats;
+﻿using Burmuruk.AI.PathFinding;
+using Burmuruk.Tesis.Stats;
+using Burmuruk.WorldG.Patrol;
 using System;
+using System.Diagnostics;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Movement
@@ -15,11 +18,14 @@ namespace Burmuruk.Tesis.Movement
         StatsManager m_statsManager;
         Inventary m_inventary;
         MovementSchuduler m_scheduler;
+        PatrolController m_patrolController;
 
         public float wanderDisplacement;
         public float wanderRadious;
         public bool usePathFinding = false;
         bool m_canMove = false;
+        Vector3 target = Vector3.zero;
+        bool isMoving = false;
 
         public event Action OnActionFinished = delegate { };
 
@@ -41,18 +47,50 @@ namespace Burmuruk.Tesis.Movement
             m_rb = GetComponent<Rigidbody>();
             m_statsManager = GetComponent<StatsManager>();
             m_scheduler = new MovementSchuduler();
+
+            m_patrolController = gameObject.GetComponent<PatrolController>();
+            m_patrolController.OnFinished += m_patrolController.Execute_Tasks;
+        }
+
+        private void FixedUpdate()
+        {
+            if (m_canMove)
+            {
+                Move();
+            }
         }
 
         public void MoveTo(Vector3 point)
         {
-            if (Vector3.Distance(transform.position, point) > SlowingRadious)
+            if (isMoving) return;
+
+            target = point;
+            m_canMove = true;
+            m_patrolController.OnPatrolFinished += FinishAction;
+            m_patrolController.CreatePatrolWithSpline<AStar>(transform.position, target, CyclicType.None);
+            isMoving = true;
+        }
+
+        public void Flee()
+        {
+
+        }
+
+        public void Pursue()
+        {
+
+        }
+
+        private void Move()
+        {
+            if (Vector3.Distance(transform.position, target) > SlowingRadious)
             {
-                m_rb.velocity = SteeringBehaviours.Seek2D(this, point); 
+                m_rb.velocity = SteeringBehaviours.Seek2D(this, target);
                 CurDirection = m_rb.velocity.normalized;
             }
             else
             {
-                m_rb.velocity = SteeringBehaviours.Arrival(this, point, SlowingRadious, m_threshold);
+                m_rb.velocity = SteeringBehaviours.Arrival(this, target, SlowingRadious, m_threshold);
                 CurDirection = Vector3.zero;
             }
 
@@ -99,6 +137,13 @@ namespace Burmuruk.Tesis.Movement
         public void PauseAction()
         {
             throw new System.NotImplementedException();
+        }
+
+        public void FinishAction()
+        {
+            isMoving = false;
+            m_patrolController.OnPatrolFinished -= FinishAction;
+            print("PatrolFinished");
         }
     }
 }

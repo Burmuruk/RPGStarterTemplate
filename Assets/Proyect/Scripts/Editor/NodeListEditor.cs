@@ -33,7 +33,7 @@ namespace Burmuruk
                 if (nodeList.MeshState == pState.None)
                     nodeList.Calculate_PathMesh();
                 else if (nodeList.ConnectionsState == pState.None || nodeList.ConnectionsState == pState.finished)
-                    nodeList.Calculate_NodesConections();
+                    nodeList.CalculateNodesConnections();
             }
 
             string btnDeleteName = (nodeList.MeshState, nodeList.ConnectionsState) switch
@@ -50,7 +50,7 @@ namespace Burmuruk
             {
                 if (nodeList.ConnectionsState == pState.finished)
                 {
-                    nodeList.Clear_NodeConections();
+                    nodeList.ClearNodeConnections();
                 }
                 else if (nodeList.MeshState == pState.finished)
                 {

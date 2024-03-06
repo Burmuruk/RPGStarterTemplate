@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
-using Burmuruk.AI.PathFinding;
+﻿using Burmuruk.AI.PathFinding;
+using Burmuruk.Collections;
 using Burmuruk.WorldG.Patrol;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 public enum pState
 {
@@ -13,21 +16,40 @@ public enum pState
 
 namespace Burmuruk.AI
 {
-    public class NodesList : MonoBehaviour
+    public class NodesList : MonoBehaviour, INodeListSupplier
     {
         #region Variables
         [Header("Nodes Settings")]
         [Space]
-        [SerializeField]
-        float maxDistance = 3;
+        //[SerializeField]
+        //float maxDistance = 3;
         [SerializeField]
         float maxAngle = 45;
         [SerializeField]
         bool showChanges = false;
-        [SerializeField]
 
-        [Header("Dijkstra Settings")]
+        [Header("Mesh Settings")]
         [Space]
+        [SerializeField]
+        GameObject Node;
+        [SerializeField]
+        float nodDistance = 3;
+        [SerializeField]
+        GameObject x1;
+        [SerializeField]
+        GameObject x2;
+        [SerializeField]
+        bool createMesh = false;
+        [SerializeField]
+        bool showMeshZone = false;
+        [SerializeField]
+        float pRadious = .5f;
+        [SerializeField]
+        bool phisicNodes = false;
+
+        [Header("PathFinding Settings")]
+        [Space]
+        [SerializeField]
         public GameObject startNode;
         bool nearestStart = false;
         [SerializeField]
@@ -35,23 +57,6 @@ namespace Burmuruk.AI
         bool nearestEnd = false;
         [SerializeField]
         bool drawPath = false;
-
-        [Header("Mesh Settings")]
-        [Space]
-        [SerializeField]
-        GameObject Node;
-        [SerializeField]
-        GameObject x1;
-        [SerializeField]
-        GameObject x2;
-        [SerializeField]
-        float minDistance = 3;
-        [SerializeField]
-        bool createMesh = false;
-        [SerializeField]
-        bool showMeshZone = false;
-        [SerializeField]
-        float pRadious = .5f;
 
         Dijkstra dijkstra;
         uint nodeCount = 0;
@@ -61,11 +66,10 @@ namespace Burmuruk.AI
         public pState meshState = pState.None;
         public pState connectionsState = pState.None;
 
-        private List<ScrNode> nodes = new List<ScrNode>();
+        private LinkedGrid<ScrNode> nodes;
         #endregion
 
         #region Properties
-        public float MinDistance { get => minDistance; }
         public bool CreateMesh { get => createMesh; set => createMesh = value; }
         public bool HasDijkstra
         {
@@ -105,7 +109,7 @@ namespace Burmuruk.AI
                     return false;
             }
         }
-        public List<ScrNode> Nodes
+        public LinkedGrid<ScrNode> Nodes
         {
             get
             {
@@ -128,6 +132,12 @@ namespace Burmuruk.AI
                     return null;
             }
         }
+
+        public Vector3 StartNode => throw new NotImplementedException();
+
+        public Vector3 EndNode => throw new NotImplementedException();
+
+        ICollection<IPathNode> INodeListSupplier.Nodes => throw new NotImplementedException();
         #endregion
 
         #region Unity methods
@@ -162,17 +172,17 @@ namespace Burmuruk.AI
         {
             if (!createMesh || AreProcessRunning || AreProcessDeleting) return;
 
-            meshState = pState.running;
             Destroy_Nodes();
+            meshState = pState.running;
             Create_PathMesh();
         }
 
-        public void Calculate_NodesConections()
+        public void CalculateNodesConnections()
         {
             if (AreProcessRunning || AreProcessDeleting) return;
 
+            ClearNodeConnections();
             connectionsState = pState.running;
-            Clear_NodeConections();
             InitializeNodeLists();
         }
 
@@ -188,9 +198,9 @@ namespace Burmuruk.AI
 
             (IPathNode start, IPathNode end) = (nearestStart, nearestEnd) switch
             {
-                (true, true) => (Find_NearestNode(startNode.transform.position), Find_NearestNode(endNode.transform.position)),
-                (true, false) => (Find_NearestNode(startNode.transform.position), endNode.GetComponent<IPathNode>()),
-                (false, true) => (startNode.GetComponent<IPathNode>(), Find_NearestNode(endNode.transform.position)),
+                (true, true) => (FindNearestNode(startNode.transform.position), FindNearestNode(endNode.transform.position)),
+                (true, false) => (FindNearestNode(startNode.transform.position), endNode.GetComponent<IPathNode>()),
+                (false, true) => (startNode.GetComponent<IPathNode>(), FindNearestNode(endNode.transform.position)),
                 _ => (startNode.GetComponent<IPathNode>(), endNode.GetComponent<IPathNode>())
             };
 
@@ -222,18 +232,18 @@ namespace Burmuruk.AI
             foreach (ScrNode node in nodes)
             {
 #if UNITY_EDITOR
-                DestroyImmediate(node.Item);
+                DestroyImmediate(node.gameObject);
                 continue;
 #endif
 
-                Destroy(node.Item);
+                Destroy(node.gameObject);
             }
 
             CreateMesh = true;
             meshState = pState.None;
         }
 
-        public void Clear_NodeConections()
+        public void ClearNodeConnections()
         {
             if (AreProcessRunning || AreProcessDeleting || connectionsState != pState.finished) return;
 
@@ -267,76 +277,61 @@ namespace Burmuruk.AI
             return null;
         }
 
-        public List<ScrNode> Get_Nodes() => nodes;
+        public LinkedGrid<ScrNode> Get_Nodes() => nodes;
 
         #endregion
 
         #region Connections
         private void InitializeNodeLists()
         {
-            IPathNode[] nodes;
-            if (this.nodes.Count <= 0)
-                nodes = transform.GetComponentsInChildren<IPathNode>();
-            else
-                nodes = this.nodes.ToArray();
-
-            var maxDis = maxDistance / Mathf.Sin(maxAngle * Mathf.PI / 180);
+            var maxVerticalDis = nodDistance / Mathf.Sin(maxAngle * Mathf.PI / 180);
             edgesToFix = new List<(IPathNode node, IPathNode hitPos)>();
 
-            for (int i = 0; i < nodes.Length; i++)
+            var enumerator = (LinkedGridEnumerator<LinkedGridNode<ScrNode>, ScrNode>)nodes.GetEnumerator();
+            while (enumerator.MoveNext())
             {
-                var cur = nodes[i];
-
-                for (int j = i + 1; j < nodes.Length; j++)
+                foreach (var key in enumerator.Current.Connections.Keys)
                 {
-                    float dif = Get_VerticalDifference(nodes[j], cur);
-                    var m = Get_Magnitud(cur, nodes[j]);
+                    var cur = enumerator.Current.Node;
+                    var nextHead = enumerator.Current[key];
 
-                    if ((dif < .001f && m <= maxDistance) || (dif > .001f && m <= maxDis))
+                    while (nextHead != null)
                     {
-                        float normal1, normal2;
-                        //Vector3 hitPos1, hitPos2;
+                        ScrNode next = null;
+                        try
+                        {
+                            next = nextHead.Node;
+                        }
+                        catch (NullReferenceException)
+                        {
 
-                        bool hitted1 = Detect_OjbstaclesBetween(cur, nodes[j], out normal1);
-                        bool hitted2 = Detect_OjbstaclesBetween(nodes[j], cur, out normal2);
+                            throw;
+                        }
 
-                        //if (!hitted1 && (normal1 < 45 || normal1 == 0))
-                        //{
-                        //    //hitted2 = true;
-                        //    edgesToFix.Add((cur, hitPos1));
-                        //}
-                        //if (!hitted2 && (normal2 < 45 || normal2 == 0))
-                        //{
-                        //    //hitted1 = true;
-                        //}
+                        float dis = Get_VerticalDifference(cur, next);
 
-                        (ConnectionType a, ConnectionType b) types = Get_Types(hitted1, hitted2);
+                        if (dis <= maxVerticalDis)
+                        {
+                            float normal1, normal2;
+                            //Vector3 hitPos1, hitPos2;
 
-                        if (!hitted1)
-                            cur.NodeConnections.Add(
-                                new NodeConnection(cur, nodes[j], m, types.a));
-                        if (!hitted2)
-                            nodes[j].NodeConnections.Add(
-                                new NodeConnection(nodes[j], cur, m, types.b));
+                            bool hitted1 = Detect_OjbstaclesBetween(cur, next, out normal1);
+                            bool hitted2 = Detect_OjbstaclesBetween(next, cur, out normal2);
+
+                            (ConnectionType a, ConnectionType b) types = Get_Types(hitted1, hitted2);
+
+                            if (!hitted1)
+                                cur.NodeConnections.Add(
+                                    new NodeConnection(cur, next, nodDistance, types.a));
+                            if (!hitted2)
+                                next.NodeConnections.Add(
+                                    new NodeConnection(next, cur, nodDistance, types.b));
+                        }
+
+                        nextHead = nextHead[Direction.Down];
                     }
-                    //else
-                    //{
-                    //    float dis;
-                    //    if (cur.transform.position.z > nodes[j].transform.position.z)
-                    //        dis = cur.transform.position.z - nodes[j].transform.position.z;
-                    //    else
-                    //        dis = nodes[j].transform.position.z - cur.transform.position.z;
-
-                    //    if (dis > maxDis)
-                    //        edgesToFix.Add((cur, nodes[j]));
-                    //}
                 }
             }
-
-            //for (int i = 0; i < edgesToFix.Count; i++)
-            //{
-            //    Set_OffsetOnEdge(edgesToFix[i].node, edgesToFix[i].hitPos);
-            //}
 
             connectionsState = pState.finished;
 
@@ -366,32 +361,65 @@ namespace Burmuruk.AI
             }
         }
 
-        private void Set_OffsetOnEdge(IPathNode a, IPathNode hitPos)
-        {
-            float distBetween = Vector3.Distance(a.Position, hitPos.Position);
-            //float disToHit;
-            var direction = hitPos.Position - a.Position;
+        //private (int x, int y)[] GetNearCoordinates(float maxDistance)
+        //{
+        //    List<(int x, int y, int times, int increment)> directions = new()
+        //    {
+        //        { (1, 0, 1, 0) },
+        //        { (0, -1, 1, 1) },
+        //        { (-1, 0, 2, 2) },
+        //        { (0, 1, 2, 1) },
+        //        { (1, 0, 2, 1) },
+        //        { (0, -1, 1, 1) },
+        //    };
 
-            RaycastHit hit;
-            if (!Physics.Raycast(a.Position, direction, out hit, distBetween) &&
-                !Physics.Raycast(hitPos.Position, direction * -1, out hit, distBetween))
-                return;
+        //    List<(int x, int y)> verticalHits = new();
+        //    int x = 0;
+        //    int y = 0;
 
-            if (MinDistance < pRadious / 2)
-            {
+        //    for (int j = 0; j < (int)maxDistance; j++)
+        //    {
+        //        for (int i = 0; i < directions.Count; i++)
+        //        {
+        //            x += directions[i].times * (i + directions[i].increment) * directions[i].x;
+        //            y += directions[i].times * (i + directions[i].increment) * directions[i].y;
 
-            }
-            else if (distBetween < pRadious)
-            {
+        //            if (MathF.Pow(x, 2) + MathF.Pow(y, 2) <= MathF.Pow(maxDistance, 2))
+        //            {
+        //                verticalHits.Add((x, y));
+        //            }
+        //        } 
+        //    }
 
-            }
-            else
-            {
-                //var finalPos = direction + direction.normalized * (disToHit - pRadious);
-                //transform.position = direction + direction.normalized * (disToHit - pRadious);
-                Debug.DrawLine(a.Position, hit.point + Vector3.up * 10, Color.red, 5);
-            }
-        }
+        //    return verticalHits.ToArray();
+        //}
+
+        //private void Set_OffsetOnEdge(IPathNode a, IPathNode hitPos)
+        //{
+        //    float distBetween = Vector3.Distance(a.Position, hitPos.Position);
+        //    //float disToHit;
+        //    var direction = hitPos.Position - a.Position;
+
+        //    RaycastHit hit;
+        //    if (!Physics.Raycast(a.Position, direction, out hit, distBetween) &&
+        //        !Physics.Raycast(hitPos.Position, direction * -1, out hit, distBetween))
+        //        return;
+
+        //    if (MinDistance < pRadious / 2)
+        //    {
+
+        //    }
+        //    else if (distBetween < pRadious)
+        //    {
+
+        //    }
+        //    else
+        //    {
+        //        //var finalPos = direction + direction.normalized * (disToHit - pRadious);
+        //        //transform.position = direction + direction.normalized * (disToHit - pRadious);
+        //        Debug.DrawLine(a.Position, hit.point + Vector3.up * 10, Color.red, 5);
+        //    }
+        //}
 
         private float Get_Magnitud(IPathNode nodeA, IPathNode nodeB) =>
             Vector3.Distance(nodeA.Position, nodeB.Position);
@@ -429,31 +457,57 @@ namespace Burmuruk.AI
         #region Mesh
         private void Create_PathMesh()
         {
-            Fix_InvertedPositions();
+            Vector3 distances = Fix_InvertedPositions();
 
-            float xIndex = (x2.transform.position - x1.transform.position).x / minDistance;
-            float zIndex = (x2.transform.position - x1.transform.position).z / minDistance;
-            float height = (x2.transform.position - x1.transform.position).y;
+            int rows = (int)(distances.z / nodDistance) + 1;
 
+            nodes = new LinkedGrid<ScrNode>(rows);
 
+            float xIndex = distances.x / nodDistance;
+            float zIndex = distances.z / nodDistance;
+            float height = distances.y;
 
-            for (float i = 0; i < Mathf.Abs(xIndex); i += minDistance)
+            int zPointsIdx;
+
+            for (float i = 0; i < Mathf.Abs(xIndex); i += nodDistance)
             {
-                for (float j = 0; j < Mathf.Abs(zIndex); j += minDistance)
+                for (float j = 0; j < Mathf.Abs(zIndex); j += nodDistance)
                 {
                     var curPosA = new Vector3()
                     {
-                        x = x1.transform.position.x + minDistance * i,
+                        x = x1.transform.position.x + nodDistance * i,
                         y = x2.transform.position.y,
-                        z = x1.transform.position.z - minDistance * j
+                        z = x1.transform.position.z - nodDistance * j
                     };
 
                     //Debug.DrawRay(curPosA, Vector3.down * height, Color.green, 9);
                     Ray hi = new Ray(curPosA, Vector3.down * height);
-                    var positions = Detect_Ground(height, hi);
+                    var verticalHits = Detect_Ground(height, hi);
 
-                    if (positions != null)
-                        Verify_CapsuleArea(positions);
+                    if (verticalHits != null)
+                    {
+                        for (int k = 0; k < verticalHits.Count; k++)
+                        {
+                            //var start = verticalHits[k] + new Vector3(0, .7f, 0);
+
+                            //if (!Physics.CapsuleCast(start, (start + new Vector3(0, 1, 0)), .5f, new Vector3(0, 1, 0), .1f))
+                            //    Create_Node(verticalHits[k]);
+                            bool added = false;
+                            if (Verify_CapsuleArea(verticalHits[k]))
+                            {
+                                var newNode = Create_Node(verticalHits[k]);
+                                if (added)
+                                {
+                                    nodes.AddDown(nodes.Last, newNode);
+                                }
+                                else
+                                {
+                                    nodes.Add(newNode);
+                                    added = true;
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -461,20 +515,32 @@ namespace Burmuruk.AI
             meshState = pState.finished;
         }
 
-        private void Fix_InvertedPositions()
+        private Vector3 Fix_InvertedPositions()
         {
-            if (x2.transform.position.x < x1.transform.position.x)
+            return new Vector3()
             {
-                var newPos = x1.transform.position;
-                x1.transform.position = x2.transform.position;
-                x2.transform.position = newPos;
-            }
+                x = GetSize(x1.transform.position.x, x2.transform.position.x),
+                y = GetSize(x1.transform.position.y, x2.transform.position.y),
+                z = GetSize(x1.transform.position.z, x2.transform.position.z),
+            };
+
+            
             //if (x2.transform.position.z < x1.transform.position.z)
             //{
             //    var newPos = x1.transform.position;
             //    x1.transform.position = x2.transform.position;
             //    x2.transform.position = newPos;
             //}
+            float GetSize(float x1, float x2)
+            {
+                return (x1 < 0, x2 < 0) switch
+                {
+                    (true, true) => MathF.Abs(x1 + x2),
+                    (false, true) => x1 + MathF.Abs(x2),
+                    (true, false) => MathF.Abs(x1) + x2,
+                    (false, false) => x1 + x2
+                };
+            }
         }
 
         private List<Vector3> Detect_Ground(float height, Ray hi, Vector3 offset = default)
@@ -513,26 +579,25 @@ namespace Burmuruk.AI
             return nodes;
         }
 
-        private void Verify_CapsuleArea(List<Vector3> positions)
+        private bool Verify_CapsuleArea(Vector3 position)
         {
-            for (int i = 0; i < positions.Count; i++)
-            {
-                var start = positions[i] + new Vector3(0, .7f, 0);
+            var start = position + new Vector3(0, .7f, 0);
 
-                if (!Physics.CapsuleCast(start, (start + new Vector3(0, 1, 0)), .5f, new Vector3(0, 1, 0), .1f))
-                    Create_Node(positions[i]);
-            }
+            if (!Physics.CapsuleCast(start, (start + new Vector3(0, 1, 0)), .5f, new Vector3(0, 1, 0), .1f))
+                return true;
+
+            return false;
         }
 
-        private void Create_Node(in Vector3 position)
+        private ScrNode Create_Node(in Vector3 position)
         {
             var newNode = Instantiate(Node, transform);
             newNode.transform.position = position;
             newNode.transform.name = "Node " + nodeCount.ToString();
             var nodeCs = newNode.GetComponent<ScrNode>();
-            nodeCount++;
             nodeCs.SetIndex(nodeCount++);
-            nodes.Add(nodeCs);
+            
+            return nodeCs;
         }
 
         private void Draw_MeshZone()
@@ -567,7 +632,7 @@ namespace Burmuruk.AI
 
                 for (int j = i + 1; j < nodes.Length; j++)
                 {
-                    if (Get_Magnitud(cur, nodes[j]) is var m && m <= maxDistance)
+                    if (Get_Magnitud(cur, nodes[j]) is var m && m <= nodDistance)
                     {
                         bool hitted1 = Detect_OjbstaclesBetween(cur, nodes[j], out _);
                         bool hitted2 = Detect_OjbstaclesBetween(nodes[j], cur, out _);
@@ -581,7 +646,7 @@ namespace Burmuruk.AI
         #endregion
 
         #region Dijkstra
-        public IPathNode Find_NearestNode(Vector3 start)
+        public IPathNode FindNearestNode(Vector3 start)
         {
             IPathNode[] nodes;
             if (this.nodes.Count <= 0)
@@ -615,6 +680,25 @@ namespace Burmuruk.AI
 
                 node = node.Next;
             }
+        }
+
+        public void SetTarget(IPathNode[] nodes, float pRadious = 0.2F, float maxDistance = 2, float maxAngle = 45, float height = 1)
+        {
+            //this.nodes = nodes;
+            //this.pRadious = pRadious;
+            //this.maxDistance = maxDistance;
+            //this.maxAngle = maxAngle;
+            //this.height = height;
+
+            //CalculateNodesConnections();
+            throw new NotImplementedException();
+        }
+
+        public void Clear() => nodes = null;
+
+        public void SetNodes(ICollection<IPathNode> nodes)
+        {
+            this.nodes = (LinkedGrid<ScrNode>)nodes;
         }
         #endregion
     }

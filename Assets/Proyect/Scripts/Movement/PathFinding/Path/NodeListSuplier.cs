@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 
 namespace Burmuruk.WorldG.Patrol
@@ -7,7 +8,7 @@ namespace Burmuruk.WorldG.Patrol
     {
         private Vector3 startNode = default;
         private Vector3 endNode = default;
-        IPathNode[] nodes = null;
+        ICollection<IPathNode> nodes = null;
         private float maxDistance = 2;
         private float maxAngle = 5;
         float pRadious = .5f;
@@ -19,7 +20,7 @@ namespace Burmuruk.WorldG.Patrol
 
         public Vector3 EndNode => endNode;
 
-        public IPathNode[] Nodes => nodes;
+        public ICollection<IPathNode> Nodes => nodes;
 
         #region Public methods
         public void CalculateNodesConnections()
@@ -38,7 +39,7 @@ namespace Burmuruk.WorldG.Patrol
             if (connectionsState == pState.running || connectionsState == pState.deleting || connectionsState != pState.finished)
                 return;
 
-            if (nodes == null || nodes.Length <= 0) return;
+            if (nodes == null || nodes.Count <= 0) return;
 
             connectionsState = pState.deleting;
 
@@ -50,21 +51,21 @@ namespace Burmuruk.WorldG.Patrol
 
         public IPathNode FindNearestNode(Vector3 start)
         {
-            if (nodes == null || nodes.Length <= 0) return default;
+            if (nodes == null || nodes.Count <= 0) return default;
 
             float minDistance = float.MaxValue;
-            int? index = -1;
+            IPathNode node = null;
 
-            for (int i = 0; i < nodes.Length; i++)
+            foreach (var curNode in nodes)
             {
-                if (Vector3.Distance(nodes[i].Position, start) is var d && d < minDistance)
+                if (Vector3.Distance(curNode.Position, start) is var d && d < minDistance)
                 {
                     minDistance = d;
-                    index = i;
+                    node = curNode;
                 }
             }
 
-            return index.HasValue ? nodes[index.Value] : null;
+            return node != null ? node : null;
         }
 
         public void SetTarget(IPathNode[] nodes, float pRadious = .2f, float maxDistance = 2, float maxAngle = 45, float height = 1)
@@ -78,43 +79,46 @@ namespace Burmuruk.WorldG.Patrol
             CalculateNodesConnections();
         } 
 
-        public void SetNodes(IPathNode[] nodes) =>
+        public void SetNodes(ICollection<IPathNode> nodes) =>
             this.nodes = nodes;
 
         #endregion
 
         private void InitializeNodeLists()
         {
-            if (nodes == null || nodes.Length <= 0) return;
+            if (nodes == null || nodes.Count <= 0) return;
 
             var maxDis = maxDistance / Mathf.Sin(maxAngle * Mathf.PI / 180);
 
-            for (int i = 0; i < nodes.Length; i++)
+            for (int i = 0; i < nodes.Count; i++)
             {
-                var cur = nodes[i];
-
-                for (int j = i + 1; j < nodes.Length; j++)
+                foreach (var node in nodes)
                 {
-                    float dif = Get_VerticalDifference(nodes[j], cur);
-                    var m = Get_Magnitud(cur, nodes[j]);
+                    var cur = node;
 
-                    if ((dif < .001f && m <= maxDistance) || (dif > .001f && m <= maxDis))
-                    {
-                        float normal1, normal2;
-                        //Vector3 hitPos1, hitPos2;
+                    //for (int j = i + 1; j < nodes.Count; j++)
+                    //{
+                    //    float dif = Get_VerticalDifference(nodes[j], cur);
+                    //    var m = Get_Magnitud(cur, nodes[j]);
 
-                        bool hitted1 = Detect_OjbstaclesBetween(cur, nodes[j], out normal1);
-                        bool hitted2 = Detect_OjbstaclesBetween(nodes[j], cur, out normal2);
+                    //    if ((dif < .001f && m <= maxDistance) || (dif > .001f && m <= maxDis))
+                    //    {
+                    //        float normal1, normal2;
+                    //        //Vector3 hitPos1, hitPos2;
 
-                        (ConnectionType a, ConnectionType b) types = Get_Types(hitted1, hitted2);
+                    //        bool hitted1 = Detect_OjbstaclesBetween(cur, nodes[j], out normal1);
+                    //        bool hitted2 = Detect_OjbstaclesBetween(nodes[j], cur, out normal2);
 
-                        if (!hitted1)
-                            cur.NodeConnections.Add(
-                                new NodeConnection(cur, nodes[j], m, types.a));
-                        if (!hitted2)
-                            nodes[j].NodeConnections.Add(
-                                new NodeConnection(nodes[j], cur, m, types.b));
-                    }
+                    //        (ConnectionType a, ConnectionType b) types = Get_Types(hitted1, hitted2);
+
+                    //        if (!hitted1)
+                    //            cur.NodeConnections.Add(
+                    //                new NodeConnection(cur, nodes[j], m, types.a));
+                    //        if (!hitted2)
+                    //            nodes[j].NodeConnections.Add(
+                    //                new NodeConnection(nodes[j], cur, m, types.b));
+                    //    }
+                    //} 
                 }
             }
 
