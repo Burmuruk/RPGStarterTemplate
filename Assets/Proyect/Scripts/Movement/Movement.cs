@@ -26,6 +26,7 @@ namespace Burmuruk.Tesis.Movement
         bool m_canMove = false;
         Vector3 target = Vector3.zero;
         bool isMoving = false;
+        PathFinder m_pathFinder;
 
         public event Action OnActionFinished = delegate { };
 
@@ -48,8 +49,14 @@ namespace Burmuruk.Tesis.Movement
             m_statsManager = GetComponent<StatsManager>();
             m_scheduler = new MovementSchuduler();
 
-            m_patrolController = gameObject.GetComponent<PatrolController>();
-            m_patrolController.OnFinished += m_patrolController.Execute_Tasks;
+            //m_patrolController = gameObject.GetComponent<PatrolController>();
+            //m_patrolController.OnFinished += m_patrolController.Execute_Tasks;
+        }
+
+        private void Start()
+        {
+            var levelManager = FindObjectOfType<LevelManager>();
+            m_pathFinder = new PathFinder(levelManager.GetNodeList());
         }
 
         private void FixedUpdate()

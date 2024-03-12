@@ -1,21 +1,30 @@
 using Burmuruk.WorldG.Patrol;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Burmuruk.AI
 {
-    public class ScrNode : MonoBehaviour, IPathNode
+    [Serializable]
+    public struct ScrNode : IPathNode
     {
-        public GameObject Item { get; set; }
         [SerializeField]
-        List<NodeConnection> nodeConnections = new();
+        List<NodeConnection> nodeConnections;
+        [SerializeField] Vector3 position;
         uint id;
 
         public uint ID => id;
 
-        public Vector3 Position => transform.position;
+        public Vector3 Position { get => position; }
 
         public List<NodeConnection> NodeConnections => nodeConnections;
+
+        public ScrNode(uint idx, Vector3 position = default)
+        {
+            id = idx;
+            nodeConnections = new();
+            this.position = position;
+        }
 
         //private void OnDrawGizmosSelected()
         //{
@@ -35,7 +44,7 @@ namespace Burmuruk.AI
 
         public float GetDistanceBetweenNodes(in NodeConnection connection)
         {
-            Vector3 value = connection.node.Position - transform.position;
+            Vector3 value = connection.node.Position - Position;
             return value.magnitude;
         }
 

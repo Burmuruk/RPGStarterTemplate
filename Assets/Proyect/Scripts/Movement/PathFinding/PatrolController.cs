@@ -85,26 +85,6 @@ namespace Burmuruk.WorldG.Patrol
         public Movement Mover { get => mover; set => mover = value; }
         public bool CancelRequested { get; private set; }
 
-        #region private methods
-        private void Awake()
-        {
-            mover = GetComponent<Movement>();
-
-            InitializeTasks();
-        }
-
-        private void OnEnable()
-        {
-            if (mover == null) return;
-
-            mover.OnFinished += Execute_Tasks;
-        }
-
-        private void OnDisable()
-        {
-            if (mover != null)
-                mover.OnFinished -= Execute_Tasks;
-        }
 
         #region public methods
         public void SetNodeList(INodeListSupplier nodeList, CyclicType cyclicType)
@@ -137,7 +117,7 @@ namespace Burmuruk.WorldG.Patrol
             finder.OnPathCalculated += () =>
             {
                 var route = finder.BestRoute;
-                //print("Total nodes!! =>  " + route?.Count);
+                //print("Total connections!! =>  " + route?.Count);
                 enumerator?.Dispose();
                 enumerator = null;
                 CreateSpline();
@@ -210,10 +190,31 @@ namespace Burmuruk.WorldG.Patrol
             }
 
             RestartTasks();
-        }  
+        }
 
-        public void AbortPatrol () => CancelRequested = true;
+        public void AbortPatrol() => CancelRequested = true;
         #endregion
+
+        #region private methods
+        private void Awake()
+        {
+            mover = GetComponent<Movement>();
+
+            InitializeTasks();
+        }
+
+        private void OnEnable()
+        {
+            if (mover == null) return;
+
+            mover.OnFinished += Execute_Tasks;
+        }
+
+        private void OnDisable()
+        {
+            if (mover != null)
+                mover.OnFinished -= Execute_Tasks;
+        }
 
         private void RestartTasks()
         {

@@ -1,30 +1,36 @@
 ﻿using Burmuruk.AI;
+using Burmuruk.WorldG.Patrol;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Burmuruk.Collections
 {
-    public class LinkedGrid<T> : ICollection<T>, IEnumerable<T> where T : class
+    public unsafe class LinkedGrid<T> :IEnumerable<T> where T : struct, IPathNode
     {
-        List<LinkedGridNode<T>> headers = new();
-        int rows;
         int count;
+        int verticalNodesCount;
+        LinkedGridNode<T> first;
+        LinkedGridNode<T> last;
 
         public LinkedGrid(int rows)
         {
-            this.rows = rows;
+            this.RowsCount = rows;
         }
 
-        public LinkedGridNode<T> First { get; private set; }
-        public LinkedGridNode<T> Last { get; private set; }
+        public List<LinkedGridNode<T>> Headers { get; private set; } = new();
+        public int RowsCount { get; private set; }
+        public ref LinkedGridNode<T> First { get => ref first; }
+        public ref  LinkedGridNode<T> Last { get => ref last; }
         public int Count => count;
+        public int DeepCount {  get => verticalNodesCount + count; }
 
         public bool IsReadOnly => throw new NotImplementedException();
 
-        public void Add(T item)
+        public void Add(ref T item, int gap)
         {
-            var node = new LinkedGridNode<T>(item);
+            var node = new LinkedGridNode<T>(ref item, GetRowIdx(gap));
 
             if (First != null)
             {
@@ -36,94 +42,129 @@ namespace Burmuruk.Collections
             {
                 First = node;
                 Last = node;
-                headers.Add(node);
             }
 
             count++;
 
-            TryAddHeader(node);
-            CreateSideConnections(node);
+            TryAddHeader();
+            CreateSideConnections();
         }
 
-        private void CreateSideConnections(LinkedGridNode<T> node)
+        private void CreateSideConnections()
         {
-            if (count > rows)
+            if (Headers.Count > 1)
             {
-                int headerIdx = (count - 1) / rows;
+                int headerIdx = Headers.Count - 2;
 
-                int idx = count - rows * (headerIdx <= 0 ? 1 : headerIdx);
+                var curNode = Headers[headerIdx];
                 int i = 0;
-                var curNode = headers[headerIdx - 1];
+                bool founded = false;
 
-                while (++i < idx)
+                while (i <= last.rowIdx)
                 {
+                    if (curNode.rowIdx == last.rowIdx)
+                    {
+                        founded = true;
+                        break;
+                    }
+
+                    i += curNode[Direction.Next].rowIdx - curNode.rowIdx;
+
                     curNode = curNode[Direction.Next];
                 }
 
-                node[Direction.Left] = curNode;
-                curNode[Direction.Right] = node;
+                if (!founded) return;
+
+                last[Direction.Left] = curNode;
+                curNode[Direction.Right] = last;
             }
         }
 
-        private void TryAddHeader(LinkedGridNode<T> node)
+        private void TryAddHeader()
         {
-            if (count <= rows) return;
-
-            if ((float)count % (float)rows == 1)
+            if (Last.rowIdx == 0)
             {
-                headers.Add(node);
+                Headers.Add(last);
             }
         }
 
-        private void MoveHeaders(int spaces)
+        private int GetRowIdx(int idx)
         {
-            for (int i = 0; i < headers.Count; ++i)
+            if (count == 123)
             {
-                for (int j = 0; j < spaces; ++j)
-                {
-                    headers[i] = spaces > 0 ? headers[i][Direction.Next] : headers[i][Direction.Previous];
-                }
+                Debug.Print("hi");
             }
+            if (Last == null)
+            {
+                return idx >= RowsCount ? (RowsCount - idx) : idx;
+            }
+            else if (idx <= last.rowIdx)
+            {
+                return idx;
+            }
+            else if (idx < RowsCount)
+            {
+                return idx;
+            }
+
+            return idx - Last.rowIdx;
         }
 
-        public void AddAfter(LinkedGridNode<T> node, LinkedGridNode<T> newNode)
-        {
-            newNode[Direction.Next] = node[Direction.Next];
-            node[Direction.Next] = newNode;
-            newNode[Direction.Previous] = node;
+        //private void MoveHeaders(int spaces)
+        //{
+        //    for (int i = 0; i < Headers.Count; ++i)
+        //    {
+        //        for (int j = 0; j < spaces; ++j)
+        //        {
+        //            Headers[i] = spaces > 0 ? Headers[i][Direction.Next] : Headers[i][Direction.Previous];
+        //        }
+        //    }
+        //}
 
-            count++;
+        //public void AddAfter(LinkedGridNode<T> node, LinkedGridNode<T> newNode)
+        //{
+        //    newNode[Direction.Next] = node[Direction.Next];
+        //    node[Direction.Next] = newNode;
+        //    newNode[Direction.Previous] = node;
 
-            TryAddHeader(node);
-            CreateSideConnections(node);
-        }
+        //    count++;
 
-        public LinkedGridNode<T> AddAfter(LinkedGridNode<T> node, T value)
-        {
-            throw new NotImplementedException();
-        }
-        public void AddBefore(LinkedGridNode<T> node, LinkedGridNode<T> newNode)
-        {
-            newNode[Direction.Next] = node;
-            newNode[Direction.Previous] = node[Direction.Previous];
-            node[Direction.Previous] = newNode;
+        //    TryAddHeader(node);
+        //    CreateSideConnections(node);
+        //}
 
-            count++;
-            TryAddHeader(node);
-            CreateSideConnections(node);
-        }
-        public LinkedGridNode<T> AddBefore(LinkedGridNode<T> node, T value)
+        //public LinkedGridNode<T> AddAfter(LinkedGridNode<T> node, ref T value)
+        //{
+        //    throw new NotImplementedException();
+        //}
+        //public void AddBefore(LinkedGridNode<T> node, LinkedGridNode<T> newNode)
+        //{
+        //    newNode[Direction.Next] = node;
+        //    newNode[Direction.Previous] = node[Direction.Previous];
+        //    node[Direction.Previous] = newNode;
+
+        //    count++;
+        //    TryAddHeader(node);
+        //    CreateSideConnections(node);
+        //}
+        //public LinkedGridNode<T> AddBefore(LinkedGridNode<T> node, ref T value)
+        //{
+        //    throw new NotImplementedException();
+        //}
+        public LinkedGridNode<T> AddUp(LinkedGridNode<T> node, ref T value)
         {
-            throw new NotImplementedException();
-        }
-        public LinkedGridNode<T> AddUp(LinkedGridNode<T> node, T value)
-        {
-            node[Direction.Up] = new LinkedGridNode<T>(value);
+            node[Direction.Up] = new LinkedGridNode<T>(ref value);
+
+            verticalNodesCount++;
+
             return node[Direction.Up];
         }
-        public LinkedGridNode<T> AddDown(LinkedGridNode<T> node, T value)
+        public LinkedGridNode<T> AddDown(LinkedGridNode<T> node, ref T value)
         {
-            node[Direction.Down] = new LinkedGridNode<T>(value);
+            node[Direction.Down] = new LinkedGridNode<T>(ref value);
+
+            verticalNodesCount++;
+
             return node[Direction.Down];
         }
         public void AddFirst(LinkedGridNode<T> node)
@@ -133,8 +174,8 @@ namespace Burmuruk.Collections
             First = node;
 
             count++;
-            TryAddHeader(node);
-            CreateSideConnections(node);
+            TryAddHeader();
+            CreateSideConnections();
         }
         public LinkedGridNode<T> AddFirst(T value)
         {
@@ -147,8 +188,8 @@ namespace Burmuruk.Collections
             Last = node;
 
             count++;
-            TryAddHeader(node);
-            CreateSideConnections(node);
+            TryAddHeader();
+            CreateSideConnections();
         }
         public LinkedGridNode<T> AddLast(T value)
         {
@@ -165,7 +206,7 @@ namespace Burmuruk.Collections
             LinkedGridNode<T> node = First;
             while (node != Last)
             {
-                if (node.Node == item)
+                if (node.Node.Position == item.Position)
                 {
                     return true;
                 }
@@ -196,7 +237,7 @@ namespace Burmuruk.Collections
             LinkedGridNode<T> node = First;
             while (node != Last)
             {
-                if (node.Node == item)
+                if (node.Node.Position == item.Position)
                 {
                     if (node[Direction.Previous] != null)
                     {
@@ -212,13 +253,65 @@ namespace Burmuruk.Collections
             return false;
         }
 
+        public IPathNode[][][] ToArray()
+        {
+            if (Count <= 0) return null;
+
+            IPathNode[][][] connections = new IPathNode[count][][];
+            int columnSize = 0;
+            int x = -1;
+            var node = First;
+
+            try
+            {
+                for (int y = -1; node != null; y++)
+                {
+                    var curNode = node;
+
+                    if (curNode == Headers[x])
+                    {
+                        try
+                        {
+                            if (Headers.Count > x)
+                                columnSize = checked((int)(Headers[x + 1].Node.ID - 1 - Headers[x].Node.ID));
+                            else
+                                columnSize = checked((int)(Count - Headers[x].Node.ID - 1));
+                        }
+                        catch (OverflowException)
+                        {
+                            throw new OverflowException();
+                        }
+
+                        connections[x] = new IPathNode[columnSize][];
+                        ++x;
+                    }
+
+                    for (int z = 0; curNode != null; z++)
+                    {
+                        connections[x][y][z] = node.GetNodeCopy();
+                        curNode = curNode[Direction.Down];
+                    }
+
+                    node = node[Direction.Next];
+                    ++y;
+                }
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+
+                throw;
+            }
+
+            return connections;
+        }
+
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
         {
             return (IEnumerator<T>)new LinkedGridEnumerator<LinkedGridNode<T>, T>(First);
         }
     }
 
-    public class LinkedGridEnumerator<T, U> : IEnumerator<T> where T: LinkedGridNode<U>
+    public class LinkedGridEnumerator<T, U> : IEnumerator<T> where T: LinkedGridNode<U> where U: struct, IPathNode
     {
         T current;
 
@@ -234,7 +327,7 @@ namespace Burmuruk.Collections
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            current = null;
         } 
 
         public bool MoveNext()
@@ -261,27 +354,34 @@ namespace Burmuruk.Collections
         Left,
     }
 
-    public class LinkedGridNode<T>
+    public class LinkedGridNode<T> where T : struct, IPathNode
     {
         Dictionary<Direction, LinkedGridNode<T>> connections = new();
+        T node;
+        int gapSize;
 
         public LinkedGridNode()
         {
 
         }
 
-        public LinkedGridNode(T node)
+        public LinkedGridNode(ref T node, int gapSize = 0)
         {
             Node = node;
+            this.gapSize = gapSize;
         }
 
-        public LinkedGridNode(LinkedGridNode<T> previous, T node)
+        public ref T Node { get => ref node; }
+        public int rowIdx { get => gapSize; }
+        public Dictionary<Direction, LinkedGridNode<T>> Connections { get => connections; }
+
+        public LinkedGridNode(LinkedGridNode<T> previous, ref T node)
         {
             connections = new()
             {
                 { Direction.Previous, previous }
             };
-            Node = node;
+            this.node = node;
         }
 
         public LinkedGridNode<T> this[Direction d]
@@ -300,7 +400,9 @@ namespace Burmuruk.Collections
             }
         }
 
-        public T Node { get; private set; }
-        public Dictionary<Direction, LinkedGridNode<T>> Connections { get => connections; }
+        public T GetNodeCopy()
+        {
+            return node;
+        }
     }
 }

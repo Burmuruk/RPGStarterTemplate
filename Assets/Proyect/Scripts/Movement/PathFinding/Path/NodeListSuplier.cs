@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-
+using Burmuruk.AI;
 
 namespace Burmuruk.WorldG.Patrol
 {
@@ -96,27 +96,27 @@ namespace Burmuruk.WorldG.Patrol
                 {
                     var cur = node;
 
-                    //for (int j = i + 1; j < nodes.Count; j++)
+                    //for (int j = i + 1; j < connections.Count; j++)
                     //{
-                    //    float dif = Get_VerticalDifference(nodes[j], cur);
-                    //    var m = Get_Magnitud(cur, nodes[j]);
+                    //    float dif = Get_VerticalDifference(connections[j], cur);
+                    //    var m = Get_Magnitud(cur, connections[j]);
 
                     //    if ((dif < .001f && m <= maxDistance) || (dif > .001f && m <= maxDis))
                     //    {
                     //        float normal1, normal2;
                     //        //Vector3 hitPos1, hitPos2;
 
-                    //        bool hitted1 = Detect_OjbstaclesBetween(cur, nodes[j], out normal1);
-                    //        bool hitted2 = Detect_OjbstaclesBetween(nodes[j], cur, out normal2);
+                    //        bool hitted1 = Detect_OjbstaclesBetween(cur, connections[j], out normal1);
+                    //        bool hitted2 = Detect_OjbstaclesBetween(connections[j], cur, out normal2);
 
                     //        (ConnectionType a, ConnectionType b) types = Get_Types(hitted1, hitted2);
 
                     //        if (!hitted1)
                     //            cur.NodeConnections.Add(
-                    //                new NodeConnection(cur, nodes[j], m, types.a));
+                    //                new NodeConnection(cur, connections[j], m, types.a));
                     //        if (!hitted2)
-                    //            nodes[j].NodeConnections.Add(
-                    //                new NodeConnection(nodes[j], cur, m, types.b));
+                    //            connections[j].NodeConnections.Add(
+                    //                new NodeConnection(connections[j], cur, m, types.b));
                     //    }
                     //} 
                 }

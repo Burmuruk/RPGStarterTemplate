@@ -84,7 +84,7 @@ namespace Burmuruk.WorldG.Patrol
 
             if (path == null || path.Count <= 1)
                 return;
-            //List<NodeData> nodes = new List<NodeData>();
+            //List<NodeData> connections = new List<NodeData>();
             //List<int> hello;
             if (!shouldDraw) return;
 

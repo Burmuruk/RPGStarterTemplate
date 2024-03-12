@@ -18,7 +18,7 @@ namespace Burmuruk.WorldG.Patrol
         public ConnectionType connectionType;
         public float magnitude;
 
-        public NodeConnection(IPathNode current, IPathNode node)
+        public NodeConnection(ref IPathNode current, ref IPathNode node)
         {
             this.node = node;
             this.connectionType = ConnectionType.None;
@@ -26,7 +26,7 @@ namespace Burmuruk.WorldG.Patrol
             magnitude = DistanceBewtweenNodes(current, node);
         }
 
-        public NodeConnection(IPathNode current, IPathNode node, float magnitude, ConnectionType type = ConnectionType.None) : this(current, node)
+        public NodeConnection(ref IPathNode current, ref IPathNode node, float magnitude, ConnectionType type = ConnectionType.None) : this(ref current, ref node)
         {
             this.connectionType = type;
         }

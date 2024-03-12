@@ -1,8 +1,7 @@
 using UnityEditor;
 using UnityEngine;
-using Burmuruk.AI;
 
-namespace Burmuruk
+namespace Burmuruk.AI
 {
     [CustomEditor(typeof(NodesList))]
     public class NodeListEditor : Editor
@@ -46,44 +45,66 @@ namespace Burmuruk
                 _ => "",
             };
 
-            if (GUILayout.Button(btnDeleteName))
+            if (nodeList.meshState == pState.finished)
             {
-                if (nodeList.ConnectionsState == pState.finished)
+                if (GUILayout.Button(btnDeleteName))
                 {
-                    nodeList.ClearNodeConnections();
-                }
-                else if (nodeList.MeshState == pState.finished)
+                    if (nodeList.ConnectionsState == pState.finished)
+                    {
+                        nodeList.ClearNodeConnections();
+                    }
+                    else if (nodeList.MeshState == pState.finished)
+                    {
+                        nodeList.Destroy_Nodes();
+                    }
+                } 
+            }
+
+            if (nodeList.connectionsState == pState.finished && nodeList.meshState == pState.finished
+                && nodeList.pathWriter != null)
+            {
+                GUILayout.Space(10);
+
+                string btnToJson = nodeList.memoryFreed switch
                 {
-                    nodeList.Destroy_Nodes();
+                    pState.None => "Free space",
+                    pState.running => "Freeing space",
+                    pState.finished => "Space freed",
+                    _ => "",
+                };
+
+                if (GUILayout.Button(btnToJson))
+                {
+                    nodeList.SaveList();
                 }
             }
 
-            GUILayout.Space(10);
+            //GUILayout.Space(10);
 
-            string btnDjksName = nodeList.DijkstraState switch
-            {
-                pState.None => "Calculate Dijkstra",
-                pState.running => "Running Dijkstra",
-                pState.finished => "Recalcular Dijkstra",
-                _ => "",
-            };
+            //string btnDjksName = nodeList.DijkstraState switch
+            //{
+            //    pState.None => "Calculate Dijkstra",
+            //    pState.running => "Running Dijkstra",
+            //    pState.finished => "Recalcular Dijkstra",
+            //    _ => "",
+            //};
 
-            if (GUILayout.Button(btnDjksName))
-            {
-                nodeList.Calculate_Dijkstra();
-            }
+            //if (GUILayout.Button(btnDjksName))
+            //{
+            //    nodeList.Calculate_Dijkstra();
+            //}
 
-            string btnDelDijkstra = "Delete Dijkstra";
+            //string btnDelDijkstra = "Delete Dijkstra";
 
-            if (nodeList.DijkstraState == pState.running)
-                btnDelDijkstra = "Deleting Dijkstra";
-            else if (nodeList.DijkstraState == pState.None)
-                btnDelDijkstra = "";
+            //if (nodeList.DijkstraState == pState.running)
+            //    btnDelDijkstra = "Deleting Dijkstra";
+            //else if (nodeList.DijkstraState == pState.None)
+            //    btnDelDijkstra = "";
 
-            if (GUILayout.Button(btnDelDijkstra))
-            {
-                nodeList.Clear_Dijkstra();
-            }
+            //if (GUILayout.Button(btnDelDijkstra))
+            //{
+            //    nodeList.Clear_Dijkstra();
+            //}
         }
     } 
 }
