@@ -453,8 +453,9 @@ namespace Burmuruk.AI
             int xIndex = (int)(distances.x / nodDistance);
             int zIndex = (int)(distances.z / nodDistance);
             int height = (int)(distances.y);
+            int columnIdx = 0;
 
-            for (float i = 0; i < Mathf.Abs(xIndex); i += nodDistance)
+            for (float i = 0; i < Mathf.Abs(xIndex); i += nodDistance, columnIdx++)
             {
                 int idx = 0;
                 for (float j = 0; j < Mathf.Abs(zIndex); j += nodDistance, idx++)
@@ -486,7 +487,7 @@ namespace Burmuruk.AI
                                 }
                                 else
                                 {
-                                    nodes.Add(ref newNode, idx);
+                                    nodes.Add(ref newNode, idx, columnIdx);
                                     added = true;
                                 }
                             }

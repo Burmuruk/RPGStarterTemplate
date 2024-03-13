@@ -11,7 +11,7 @@ namespace Burmuruk.AI
         [SerializeField]
         List<NodeConnection> nodeConnections;
         [SerializeField] Vector3 position;
-        uint id;
+        [SerializeField] uint id;
 
         public uint ID => id;
 

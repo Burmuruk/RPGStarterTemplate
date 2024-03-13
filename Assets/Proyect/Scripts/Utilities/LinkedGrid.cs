@@ -3,7 +3,7 @@ using Burmuruk.WorldG.Patrol;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
+using UnityEngine;
 
 namespace Burmuruk.Collections
 {
@@ -28,9 +28,9 @@ namespace Burmuruk.Collections
 
         public bool IsReadOnly => throw new NotImplementedException();
 
-        public void Add(ref T item, int gap)
+        public void Add(ref T item, int rowIdx, int columnIdx)
         {
-            var node = new LinkedGridNode<T>(ref item, GetRowIdx(gap));
+            LinkedGridNode<T> node = new LinkedGridNode<T>(ref item, GetRowIdx(rowIdx, columnIdx), columnIdx);
 
             if (First != null)
             {
@@ -42,6 +42,7 @@ namespace Burmuruk.Collections
             {
                 First = node;
                 Last = node;
+                Headers.Add(last);
             }
 
             count++;
@@ -54,21 +55,25 @@ namespace Burmuruk.Collections
         {
             if (Headers.Count > 1)
             {
+                if (last.ID == 137u)
+                {
+                    Debug.Log("hi");
+                }
                 int headerIdx = Headers.Count - 2;
 
                 var curNode = Headers[headerIdx];
                 int i = 0;
                 bool founded = false;
 
-                while (i <= last.rowIdx)
+                while (i <= last.RowIdx)
                 {
-                    if (curNode.rowIdx == last.rowIdx)
+                    if (curNode.RowIdx == last.RowIdx)
                     {
                         founded = true;
                         break;
                     }
 
-                    i += curNode[Direction.Next].rowIdx - curNode.rowIdx;
+                    i += curNode[Direction.Next].RowIdx - curNode.RowIdx;
 
                     curNode = curNode[Direction.Next];
                 }
@@ -82,32 +87,29 @@ namespace Burmuruk.Collections
 
         private void TryAddHeader()
         {
-            if (Last.rowIdx == 0)
+            if (last[Direction.Previous] != null && last.ColumnIdx > last[Direction.Previous].ColumnIdx)
             {
                 Headers.Add(last);
             }
         }
 
-        private int GetRowIdx(int idx)
+        private int GetRowIdx(int yIdx, int xIdx)
         {
-            if (count == 123)
+            if (last != null && (last.ColumnIdx - xIdx > 1 || (last.ColumnIdx == xIdx && yIdx <= last.RowIdx)))
             {
-                Debug.Print("hi");
-            }
-            if (Last == null)
-            {
-                return idx >= RowsCount ? (RowsCount - idx) : idx;
-            }
-            else if (idx <= last.rowIdx)
-            {
-                return idx;
-            }
-            else if (idx < RowsCount)
-            {
-                return idx;
+                throw new InvalidOperationException();
             }
 
-            return idx - Last.rowIdx;
+            if (last == null)
+            {
+                return yIdx >= RowsCount ? (RowsCount - yIdx) : yIdx;
+            }
+            else if (yIdx < RowsCount)
+            {
+                return yIdx;
+            }
+
+            return yIdx - last.RowIdx;
         }
 
         //private void MoveHeaders(int spaces)
@@ -365,14 +367,17 @@ namespace Burmuruk.Collections
 
         }
 
-        public LinkedGridNode(ref T node, int gapSize = 0)
+        public LinkedGridNode(ref T node, int gapSize = 0, int columnIdx = 0)
         {
             Node = node;
             this.gapSize = gapSize;
+            ColumnIdx = columnIdx;
         }
 
         public ref T Node { get => ref node; }
-        public int rowIdx { get => gapSize; }
+        public int RowIdx { get => gapSize; }
+        public int ColumnIdx { get; private set; }
+        public uint ID { get =>  node.ID; }
         public Dictionary<Direction, LinkedGridNode<T>> Connections { get => connections; }
 
         public LinkedGridNode(LinkedGridNode<T> previous, ref T node)
