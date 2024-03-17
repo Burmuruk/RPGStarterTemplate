@@ -33,7 +33,7 @@ namespace Burmuruk.AI
         //    foreach (var item in NodeConnections)
         //    {
         //        if (item.connectionType == ConnectionType.BIDIMENSIONAL)
-        //            Debug.DrawRay(transform.position, item.node.Position - transform.position, Color.blue);
+        //            Debug.DrawRay(transform.position, item.node2.Position - transform.position, Color.blue);
         //    }
         //}
 

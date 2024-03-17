@@ -11,6 +11,7 @@ namespace Burmuruk.Tesis.Control
         List<AIGuildMember> players;
         PlayerController playerController;
         int? m_CurPlayer;
+        [SerializeField] string curPlayerName;
 
         public event Action OnPlayerChanged;
 
@@ -46,6 +47,8 @@ namespace Burmuruk.Tesis.Control
 
             var players = from p in FindObjectsOfType<AIGuildMember>() where p is IPlayable select p;
             this.players = players.ToList();
+
+            playerController.OnFormationChanged += ChangeFormation;
         }
 
         private void Start()
@@ -57,19 +60,42 @@ namespace Burmuruk.Tesis.Control
         {
             if (players != null && idx < players.Count)
             {
-                players.ForEach(p => p.enabled = true);
+                DisableRestOfPlayers(idx);
 
                 players[idx].enabled = false;
                 playerController.SetPlayer(players[idx]);
+
                 m_CurPlayer = idx;
+                curPlayerName = players[idx].name;
 
                 OnPlayerChanged?.Invoke();
             }
         }
 
+        private void DisableRestOfPlayers(int idx)
+        {
+            players.ForEach(p =>
+            {
+                p.enabled = true;
+                p.SetMainPlayer(players[idx]);
+                p.Fellows = players.Where(fellow => fellow != p && p != players[idx]).ToArray();
+            });
+        }
+
         private void SetPlayerControl()
         {
             SetPlayerControl(0);
+        }
+
+        private void ChangeFormation(Vector2 value)
+        {
+            foreach (var player in players)
+            {
+                if (player.enabled)
+                {
+                    player.SetFormation(value);
+                }
+            }
         }
     }
 

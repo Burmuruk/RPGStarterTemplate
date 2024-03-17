@@ -105,6 +105,8 @@ namespace Burmuruk.AI
             //{
             //    nodeList.Clear_Dijkstra();
             //}
+
+            EditorUtility.SetDirty(target);
         }
     } 
 }

@@ -1,3 +1,5 @@
+using Burmuruk.Tesis.Control;
+using TMPro;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Movement
@@ -55,7 +57,7 @@ namespace Burmuruk.Tesis.Movement
 
             slowingCowficient = Vector3.Distance(agent.transform.position, targetPosition) is var dis && dis > threshold ? dis / slowingRadious : 0;
 
-            return newVel *= slowingCowficient;
+            return newVel.normalized * agent.getMaxVel() * slowingCowficient;
         }
 
         /// <summary>
@@ -145,6 +147,40 @@ namespace Burmuruk.Tesis.Movement
             }
             vector.Normalize();
             return vector *= maxValue;
+        }
+
+        public static Vector3 GetFollowPosition(Movement leader, Movement agent, float gap, params Character[] fellows)
+        {
+            if (!leader) return default;
+
+            Vector3 rearPosition = GetRearPosition(leader, agent, gap);
+
+            (float disBetween, Transform fellow) closest = (float.MaxValue, null);
+
+            foreach (var fellow in fellows) 
+            {
+                if (Vector3.Distance(agent.transform.position, fellow.transform.position) is var d && d < closest.disBetween)
+                {
+                    closest = (d, fellow.transform);
+                }
+            }
+
+            if (closest.disBetween < gap)
+            {
+                rearPosition += (agent.transform.position - closest.fellow.position).normalized * (gap);
+            }
+
+            return rearPosition;
+        }
+
+        private static Vector3 GetRearPosition(Movement leader, Movement agent, float gap)
+        {
+            Vector3 rearPosition = (leader.transform.position - agent.transform.position).normalized;
+            rearPosition.Scale(Vector3.one * -1);
+            rearPosition *= gap;
+            rearPosition += leader.transform.position;
+
+            return rearPosition;
         }
     }
 }

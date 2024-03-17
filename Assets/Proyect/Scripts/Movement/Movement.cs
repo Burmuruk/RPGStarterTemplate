@@ -1,8 +1,8 @@
 ﻿using Burmuruk.AI.PathFinding;
+using Burmuruk.Tesis.Control;
 using Burmuruk.Tesis.Stats;
 using Burmuruk.WorldG.Patrol;
 using System;
-using System.Diagnostics;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Movement
@@ -18,7 +18,7 @@ namespace Burmuruk.Tesis.Movement
         StatsManager m_statsManager;
         Inventary m_inventary;
         MovementSchuduler m_scheduler;
-        PatrolController m_patrolController;
+        //PatrolController m_patrolController;
 
         public float wanderDisplacement;
         public float wanderRadious;
@@ -27,10 +27,12 @@ namespace Burmuruk.Tesis.Movement
         Vector3 target = Vector3.zero;
         bool isMoving = false;
         PathFinder m_pathFinder;
+        INodeListSupplier nodeList;
 
-        public event Action OnActionFinished = delegate { };
+        public event Action OnFinished = delegate { };
 
         public Vector3 CurDirection { get; private set; }
+        public Vector3 Veloctiy { get => m_rb.velocity; }
 
         float SlowingRadious
         {
@@ -55,27 +57,87 @@ namespace Burmuruk.Tesis.Movement
 
         private void Start()
         {
-            var levelManager = FindObjectOfType<LevelManager>();
-            m_pathFinder = new PathFinder(levelManager.GetNodeList());
+            
         }
 
         private void FixedUpdate()
         {
-            if (m_canMove)
+            Move();
+        }
+
+        public void SetConnections(INodeListSupplier nodeList)
+        {
+            m_pathFinder = new PathFinder(nodeList);
+            this.nodeList = nodeList;
+
+            m_pathFinder.OnPathCalculated += () =>
             {
-                Move();
-            }
+                print("Finished");
+                m_canMove = true;
+
+                if (m_pathFinder.BestRoute == null || m_pathFinder.BestRoute.Count == 0)
+                {
+                    FinishAction();
+                    isMoving = false;
+                    print("Path not founded");
+                    return;
+                }
+
+                target = m_pathFinder.BestRoute.Last.Value.Position;
+                print(m_pathFinder.BestRoute.Last.Value.ID);
+                UnityEngine.Debug.DrawLine(transform.position, target, Color.black);
+
+                IPathNode lastNode = null;
+                foreach (var node in m_pathFinder.BestRoute)
+                {
+                    if (lastNode != null)
+                        UnityEngine.Debug.DrawLine(lastNode.Position, node.Position, Color.black, 5);
+
+                    lastNode = node;
+                }
+            };
         }
 
         public void MoveTo(Vector3 point)
+       {
+            if (isMoving) return;
+            //UnityEngine.Debug.DrawRay(point, Vector3.up * 8);
+            isMoving = true;
+
+            try
+            {
+                target = nodeList.FindNearestNode(point).Position;
+                m_canMove = true;
+                //m_pathFinder.Find_BestRoute<AStar>((transform.position, point));
+            }
+            catch (Exception e)
+            {
+                m_canMove = true;
+                isMoving = false;
+                throw e;
+            }
+        }
+
+        public void FollowWithDistance(Movement target, float gap, params Character[] fellows)
         {
             if (isMoving) return;
 
-            target = point;
-            m_canMove = true;
-            m_patrolController.OnPatrolFinished += FinishAction;
-            m_patrolController.CreatePatrolWithSpline<AStar>(transform.position, target, CyclicType.None);
-            isMoving = true;
+            Vector3 point = SteeringBehaviours.GetFollowPosition(target, this, gap, fellows);
+            Debug.DrawRay(point, Vector3.up * 8, Color.red);
+            MoveTo(point);
+            //isMoving = true;
+
+            //try
+            //{
+            //    m_canMove = true;
+            //    m_pathFinder.Find_BestRoute<AStar>((transform.position, point));
+            //}
+            //catch (Exception e)
+            //{
+            //    m_canMove = true;
+            //    isMoving = false;
+            //    throw e;
+            //}
         }
 
         public void Flee()
@@ -90,10 +152,20 @@ namespace Burmuruk.Tesis.Movement
 
         private void Move()
         {
-            if (Vector3.Distance(transform.position, target) > SlowingRadious)
+            if (!m_canMove) return;
+
+            //UnityEngine.Debug.DrawRay(target, Vector3.up * 18, Color.red);
+
+            m_rb.velocity = SteeringBehaviours.Seek2D(this, target);
+            if (Vector3.Distance(transform.position, target) is var d && d> SlowingRadious)
             {
-                m_rb.velocity = SteeringBehaviours.Seek2D(this, target);
                 CurDirection = m_rb.velocity.normalized;
+            }
+            else if (d <= m_threshold)
+            {
+                m_rb.velocity = new(0, m_rb.velocity.y, 0);
+                isMoving = false;
+                FinishAction();
             }
             else
             {
@@ -101,7 +173,7 @@ namespace Burmuruk.Tesis.Movement
                 CurDirection = Vector3.zero;
             }
 
-            SteeringBehaviours.LookAt(transform, m_rb.velocity);
+            SteeringBehaviours.LookAt(transform, new(m_rb.velocity.x, 0, m_rb.velocity.z));
         }
 
         /// <summary>
@@ -149,8 +221,8 @@ namespace Burmuruk.Tesis.Movement
         public void FinishAction()
         {
             isMoving = false;
-            m_patrolController.OnPatrolFinished -= FinishAction;
-            print("PatrolFinished");
+            m_canMove = false;
+            //print("PatrolFinished");
         }
     }
 }

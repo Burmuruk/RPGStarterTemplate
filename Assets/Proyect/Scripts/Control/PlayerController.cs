@@ -19,7 +19,15 @@ namespace Burmuruk.Tesis.Control
         {
             if (m_shouldMove && player)
             {
-                player.mover.MoveTo(transform.position + m_direction * 10);
+                try
+                {
+                    player.mover.MoveTo(player.transform.position + m_direction * 2);
+                }
+                catch (NullReferenceException)
+                {
+
+                    throw;
+                }
             }
 
             DetectItems();
@@ -95,7 +103,7 @@ namespace Burmuruk.Tesis.Control
             {
                 var dir = context.ReadValue<Vector2>();
 
-                print("Change!");
+                //print("Change!");
 
                 OnFormationChanged?.Invoke(dir);
             }

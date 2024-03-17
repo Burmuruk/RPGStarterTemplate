@@ -111,7 +111,7 @@ namespace Burmuruk.Tesis.Movement
 
     public interface IMoveAction
     {
-        event Action OnActionFinished;
+        event Action OnFinished;
         void StopAction();
         void StartAction();
         void PauseAction();

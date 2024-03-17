@@ -17,12 +17,14 @@ namespace Burmuruk.WorldG.Patrol
         public IPathNode node;
         public ConnectionType connectionType;
         public float magnitude;
+        public uint id;
 
         public NodeConnection(ref IPathNode current, ref IPathNode node)
         {
             this.node = node;
             this.connectionType = ConnectionType.None;
             this.magnitude = 0;
+            id  = node.ID;
             magnitude = DistanceBewtweenNodes(current, node);
         }
 

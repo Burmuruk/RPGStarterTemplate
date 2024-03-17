@@ -42,7 +42,7 @@ namespace Burmuruk.AI.PathFinding
             this.end = end;
         }
 
-        public void SetNodeList(ICollection<IPathNode> nodes)
+        public void SetNodeList(IEnumerable<IPathNode> nodes)
         {
 
         }
@@ -246,14 +246,14 @@ namespace Burmuruk.AI.PathFinding
     //        this.last = &Hi;
     //    }
 
-    //    public void AddFirst(T* node)
+    //    public void AddFirst(T* node2)
     //    {
-    //        first->prev = node;
+    //        first->prev = node2;
     //    }
 
-    //    public void AddLast(T* node)
+    //    public void AddLast(T* node2)
     //    {
-    //        last->next = node;
+    //        last->next = node2;
     //    }
     //}
 
@@ -261,13 +261,13 @@ namespace Burmuruk.AI.PathFinding
     //{
     //    public T* prev;
     //    public T* next;
-    //    public T* node;
+    //    public T* node2;
 
-    //    public MyLinkedNode(T* node)
+    //    public MyLinkedNode(T* node2)
     //    {
     //        prev = null;
     //        next = null;
-    //        this.node = node;
+    //        this.node2 = node2;
     //    }
     //}
 }

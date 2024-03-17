@@ -34,7 +34,7 @@ namespace Burmuruk.AI.PathFinding
 
         public AStar() { }
 
-        public void SetNodeList(ICollection<IPathNode> nodes)
+        public void SetNodeList(IEnumerable<IPathNode> nodes)
         {
             weights = new Dictionary<uint, Vector3>();
 
@@ -196,7 +196,7 @@ namespace Burmuruk.AI.PathFinding
                             if (minWeight.weight != float.MaxValue)
                             {
                                 cur = minWeight.node;
-                                //Update_CurrentNode(ref cur, minWeight.node, ref curWeight, ref lists);
+                                //Update_CurrentNode(ref cur, minWeight.node2, ref curWeight, ref lists);
                             }
                             else if (data[cur].prev != null)
                             {

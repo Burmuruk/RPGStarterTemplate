@@ -1,5 +1,4 @@
 ﻿using Burmuruk.AI;
-using Burmuruk.AI.PathFinding;
 using Burmuruk.WorldG.Patrol;
 using Cinemachine;
 using System.Collections.Generic;
@@ -11,13 +10,16 @@ namespace Burmuruk.Tesis.Movement.PathFindig
     public class Path : ScriptableObject, INodeListSaver
     {
         [SerializeField] bool loaded;
-        INodeListSupplier m_nodeList;
+        [SerializeField] public INodeListSupplier m_nodeList;
+        [SerializeField] uint nodes;
 
         public bool Loaded { get => loaded; }
+        public INodeListSupplier NodeList { get => m_nodeList; }
 
-        public void SaveList(INodeListSupplier nodeList)
+        public void SaveList(INodeListSupplier node)
         {
-            this.m_nodeList = nodeList;
+            m_nodeList = node;
+            //this.m_nodeList = nodeList;
             loaded = true;
         }
 

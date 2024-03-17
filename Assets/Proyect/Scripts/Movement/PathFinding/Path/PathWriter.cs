@@ -8,10 +8,5 @@ namespace Burmuruk.AI
         [SerializeField] public Path path;
         public NodesList nodesList;
 
-        public void SaveConnections()
-        {
-            nodesList.FreeMemory();
-            path.SaveList(nodesList);
-        }
     }
 }

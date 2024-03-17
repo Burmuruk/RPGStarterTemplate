@@ -84,7 +84,9 @@ namespace Burmuruk.AI.PathFinding
                 curNodes[i].start = nodesList.FindNearestNode(pairs[i].start);
                 curNodes[i].end = nodesList.FindNearestNode(pairs[i].end);
             }
-
+            UnityEngine.Debug.DrawRay(curNodes[0].start.Position, Vector3.up, Color.blue);
+            UnityEngine.Debug.DrawRay(curNodes[0].end.Position, Vector3.up, Color.green);
+            //return;
             try
             {
                 isCalculating = true;
@@ -146,12 +148,19 @@ namespace Burmuruk.AI.PathFinding
             RemoveLongPaths(idx, idxDis, distances.Count - 1);
             shorstestNodeIdx = null;
 
-            for (int i = 0; i < curNodes.Length; i++)
+            try
             {
-                if (curNodes[i].end.ID == paths[idx].Last.Value.ID || curNodes[i].end.ID == paths[idx].First.Value.ID)
+                for (int i = 0; i < curNodes.Length; i++)
                 {
-                    shorstestNodeIdx = i;
+                    if (curNodes[i].end.ID == paths[idx].Last.Value.ID || curNodes[i].end.ID == paths[idx].First.Value.ID)
+                    {
+                        shorstestNodeIdx = i;
+                    }
                 }
+            }
+            catch (Exception)
+            {
+                return;
             }
 
             routeSizes.RemoveAt(routeSizes.Count - 1);

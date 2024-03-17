@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Burmuruk.Tesis.Movement;
 
 namespace Burmuruk.WorldG.Patrol
 {
@@ -230,11 +231,11 @@ namespace Burmuruk.WorldG.Patrol
 
             actionsList = new Dictionary<TaskType, Action>()
                 {
-                    { TaskType.Turn, () => mover.TurnTo((float)taskValue) },
+                    //{ TaskType.Turn, () => mover.TurnTo((float)taskValue) },
                     { TaskType.Move, () => {
                         Transform p = NextPoint;
                         if (p == null) { RestartTasks(); return;}
-                        mover.MoveTo(p); } },
+                        mover.MoveTo(p.position); } },
                     { TaskType.Wait, () => Invoke("Execute_Tasks", (float)taskValue)}
                 };
 
