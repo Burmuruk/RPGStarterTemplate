@@ -307,12 +307,16 @@ namespace Burmuruk.AI
                                 bool hitted1 = Detect_OjbstaclesBetween(cur, next, out normal1);
                                 bool hitted2 = Detect_OjbstaclesBetween(next, cur, out normal2);
 
-                                CreateConnectionsBetween(cur, next, hitted1, hitted2);
+                                if (!hitted1 && !hitted2)
+                                    CreateConnectionsBetween(cur, next, hitted1, hitted2);
                             }
 
                             nextLinkedNode = nextLinkedNode[Direction.Up];
                         }
                     }
+
+                    if (curLinkedNode.Node.NodeConnections == null || curLinkedNode.Node.NodeConnections.Count <= 0)
+                        nodes.Remove(curLinkedNode);
                     
                     curLinkedNode = curLinkedNode[Direction.Up];
                 }
@@ -366,39 +370,6 @@ namespace Burmuruk.AI
             }
         }
 
-        //private (int x, int y)[] GetNearCoordinates(float maxDistance)
-        //{
-        //    List<(int x, int y, int times, int increment)> directions = new()
-        //    {
-        //        { (1, 0, 1, 0) },
-        //        { (0, -1, 1, 1) },
-        //        { (-1, 0, 2, 2) },
-        //        { (0, 1, 2, 1) },
-        //        { (1, 0, 2, 1) },
-        //        { (0, -1, 1, 1) },
-        //    };
-
-        //    List<(int x, int y)> verticalHits = new();
-        //    int x = 0;
-        //    int y = 0;
-
-        //    for (int j = 0; j < (int)maxDistance; j++)
-        //    {
-        //        for (int j = 0; j < directions.Count; j++)
-        //        {
-        //            x += directions[j].times * (j + directions[j].increment) * directions[j].x;
-        //            y += directions[j].times * (j + directions[j].increment) * directions[j].y;
-
-        //            if (MathF.Pow(x, 2) + MathF.Pow(y, 2) <= MathF.Pow(maxDistance, 2))
-        //            {
-        //                verticalHits.Add((x, y));
-        //            }
-        //        } 
-        //    }
-
-        //    return verticalHits.ToArray();
-        //}
-
         //private void Set_OffsetOnEdge(IPathNode a, IPathNode hitPos)
         //{
         //    float distBetween = Vector3.Distance(a.Position, hitPos.Position);
@@ -422,7 +393,7 @@ namespace Burmuruk.AI
         //    {
         //        //var finalPos = direction + direction.normalized * (disToHit - pRadious);
         //        //transform.position = direction + direction.normalized * (disToHit - pRadious);
-        //        Debug.DrawLine(a.Position, hit.point + Vector3.up * 10, Color.red, 5);
+        //        Debug.DrawLine(a.Position, hit.position + Vector3.up * 10, Color.red, 5);
         //    }
         //}
 
@@ -441,7 +412,7 @@ namespace Burmuruk.AI
             bool hitted = false;
             hit = Physics.CapsuleCastAll(pointA, pointB, pRadious, dir.normalized, Vector3.Distance(nodeA.Position, nodeB.Position));
             //Debug.DrawLine(pointA, pointB);
-            //Debug.DrawRay(pointA, dir.normalized * Vector3.Distance(nodeA.Position, nodeB.Position));
+            //Debug.DrawRay(pointA, nextDir.normalized * Vector3.Distance(nodeA.Position, nodeB.Position));
 
             for (int k = 0; k < hit.Length; k++)
             {
@@ -473,10 +444,10 @@ namespace Burmuruk.AI
             int height = (int)(distances.y);
             int columnIdx = 0;
 
-            for (float i = 0; i < Mathf.Abs(xIndex); i += nodDistance, columnIdx++)
+            for (int i = 0; i < Mathf.Abs(xIndex); i ++, columnIdx++)
             {
                 int idx = 0;
-                for (float j = 0; j < Mathf.Abs(zIndex); j += nodDistance, idx++)
+                for (int j = 0; j < Mathf.Abs(zIndex); j++, idx++)
                 {
                     var curPosA = new Vector3()
                     {
@@ -655,12 +626,15 @@ namespace Burmuruk.AI
 
             (int x, int y, int z)? index = null;
             int length = connections.Length - 1;
+            float dis;
 
             for (int i = 0; i < connections.Length; i++)
             {
                 if (i == length ||
                     (start.x >= connections[i][0][0].Position.x && start.x < connections[i + 1][0][0].Position.x))
                 {
+                    RoundIdx(ref i, start.x, connections[i][0][0].Position.x);
+
                     length = connections[i].Length - 1;
 
                     for (int j = 0; j < connections[i].Length; j++)
@@ -668,6 +642,8 @@ namespace Burmuruk.AI
                         if (j == length ||
                             (start.z >= connections[i][j][0].Position.z))
                         {
+                            RoundIdx(ref j, start.z, connections[i][j][0].Position.z);
+
                             length = connections[i][j].Length - 1;
 
                             for (int k = 0; k < connections[i][j].Length; k++)
@@ -675,6 +651,8 @@ namespace Burmuruk.AI
                                 if (k == length || 
                                     (start.y >= connections[i][j][k].Position.y && start.y < connections[i][j][k + 1].Position.y))
                                 {
+                                    RoundIdx(ref k, start.y, connections[i][j][k].Position.y);
+
                                     index = (i, j, k);
                                     break;
                                 }
@@ -689,6 +667,75 @@ namespace Burmuruk.AI
             }
 
             return index.HasValue ? connections[index.Value.x][index.Value.y][index.Value.z] : null;
+
+            void RoundIdx(ref int idx, float max, float min)
+            {
+                dis = max - min;
+
+                if (dis > nodDistance / 2 && idx < length)
+                {
+                    ++idx;
+                }
+            }
+        }
+
+        public bool ValidatePosition(Vector3 position, IPathNode nearestPoint)
+        {
+            var curDirections = GetDirections(nearestPoint.Position, position);
+
+            if (curDirections.Count <= 0) return false;
+
+            foreach (var nextDir in nearestPoint.NodeConnections)
+            {
+                var directions = GetDirections(nearestPoint.Position, nextDir.node.Position);
+
+                foreach (var curdir in directions)
+                {
+                    bool founded = false;
+
+                    for (int i = 0; i < curDirections.Count; i++)
+                    {
+                        if (curdir == curDirections[i])
+                        {
+                            curDirections.Remove(curDirections[i]);
+                            founded = true;
+                            break;
+                        }
+                    }
+
+                    if (founded) break;
+                }
+
+                if (curDirections.Count <= 0)
+                    return true;
+            }
+
+            return false;
+
+            List<Direction> GetDirections(Vector3 curPos, Vector3 nextPos)
+            {
+                List<Direction> directions = new();
+
+                if (nextPos.x > curPos.x)
+                {
+                    directions.Add(Direction.Right);
+                }
+                else if (nextPos.x < curPos.x)
+                {
+                    directions.Add(Direction.Left);
+                }
+
+                if (nextPos.z > curPos.z)
+                {
+                    directions.Add(Direction.Next);
+                }
+                else if (nextPos.z < curPos.z)
+                {
+                    directions.Add(Direction.Previous);
+                }
+
+                return directions;
+            }
         }
 
         private void Draw_Dijkstra()

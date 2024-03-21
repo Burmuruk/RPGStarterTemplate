@@ -18,7 +18,6 @@ namespace Burmuruk.Tesis.Movement
         StatsManager m_statsManager;
         Inventary m_inventary;
         MovementSchuduler m_scheduler;
-        //PatrolController m_patrolController;
 
         public float wanderDisplacement;
         public float wanderRadious;
@@ -106,9 +105,29 @@ namespace Burmuruk.Tesis.Movement
 
             try
             {
-                target = nodeList.FindNearestNode(point).Position;
+                var nearest = nodeList.FindNearestNode(point);
+
+                if (nearest == null)
+                {
+                    isMoving = false;
+                    return;
+                }
+
+                if (nodeList.ValidatePosition(point, nearest))
+                {
+                    target = point;
+                    //m_pathFinder.Find_BestRoute<AStar>((transform.position, target)); 
+                }
+                else
+                {
+                    isMoving =false;
+                    return;
+                    target = nearest.Position;
+                    m_pathFinder.Find_BestRoute<AStar>((transform.position, nearest.Position));
+                }
+
+
                 m_canMove = true;
-                //m_pathFinder.Find_BestRoute<AStar>((transform.position, point));
             }
             catch (Exception e)
             {
@@ -140,6 +159,15 @@ namespace Burmuruk.Tesis.Movement
             //}
         }
 
+        public void ChangePositionTo(Transform agent, Vector3 point)
+        {
+            var nearest = nodeList.FindNearestNode(point);
+
+            if (nearest == null) return;
+
+            agent.position = nearest.Position;
+        }
+
         public void Flee()
         {
 
@@ -157,15 +185,16 @@ namespace Burmuruk.Tesis.Movement
             //UnityEngine.Debug.DrawRay(target, Vector3.up * 18, Color.red);
 
             m_rb.velocity = SteeringBehaviours.Seek2D(this, target);
-            if (Vector3.Distance(transform.position, target) is var d && d> SlowingRadious)
+            var pos1 = new Vector3(transform.position.x, 0, transform.position.z);
+            var pos2 = new Vector3(target.x, 0, target.z);
+
+            if (Vector3.Distance(pos1, pos2) is var d && d> SlowingRadious)
             {
                 CurDirection = m_rb.velocity.normalized;
             }
             else if (d <= m_threshold)
             {
-                m_rb.velocity = new(0, m_rb.velocity.y, 0);
-                isMoving = false;
-                FinishAction();
+                StopAction();
             }
             else
             {
@@ -205,7 +234,9 @@ namespace Burmuruk.Tesis.Movement
 
         public void StopAction()
         {
-            throw new System.NotImplementedException();
+            //target = default;
+            m_rb.velocity = new(0, m_rb.velocity.y, 0);
+            FinishAction();
         }
 
         public void StartAction()

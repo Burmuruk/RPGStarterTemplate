@@ -12,6 +12,7 @@ namespace Burmuruk.Tesis.Control
         PlayerController playerController;
         int? m_CurPlayer;
         [SerializeField] string curPlayerName;
+        (Vector2 value, object args) curFormation = default;
 
         public event Action OnPlayerChanged;
 
@@ -54,6 +55,11 @@ namespace Burmuruk.Tesis.Control
         private void Start()
         {
             SetPlayerControl();
+
+            foreach (var player in players)
+            {
+                player.OnCombatStarted += EnterToCombatMode;
+            }
         }
 
         public void SetPlayerControl(int idx)
@@ -87,15 +93,33 @@ namespace Burmuruk.Tesis.Control
             SetPlayerControl(0);
         }
 
-        private void ChangeFormation(Vector2 value)
+        private void ChangeFormation(Vector2 value, object args)
         {
             foreach (var player in players)
             {
                 if (player.enabled)
                 {
-                    player.SetFormation(value);
+                    player.SetFormation(value, args);
                 }
             }
+
+            curFormation = (value, args);
+        }
+
+        private void EnterToCombatMode()
+        {
+            players.ForEach((player) => { player.State = PlayerState.Combat; });
+        }
+
+        public void AddMember(AIGuildMember member)
+        {
+            member.OnCombatStarted += EnterToCombatMode;
+            member.SetFormation(curFormation.value, curFormation.args);
+        }
+
+        public void RemoveMember(AIGuildMember member)
+        {
+            member.OnCombatStarted -= EnterToCombatMode;
         }
     }
 
@@ -105,5 +129,15 @@ namespace Burmuruk.Tesis.Control
 
         void EnableControll();
         void DisableControll();
+    }
+
+    public enum PlayerState
+    {
+        None,
+        Combat,
+        FollowPlayer,
+        Patrol,
+        Teleporting,
+        Dead
     }
 }

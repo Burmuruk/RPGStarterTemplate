@@ -254,20 +254,60 @@ namespace Burmuruk.Collections
             LinkedGridNode<T> node = First;
             while (node != Last)
             {
-                if (node.Node.Position == item.Position)
+                if (node.Node.ID == item.ID)
                 {
                     if (node[Direction.Previous] != null)
                     {
                         node[Direction.Previous][Direction.Next] = node[Direction.Next];
-                        node[Direction.Next][Direction.Previous] = node[Direction.Previous];
-                        return true;
                     }
+
+                    if (node[Direction.Next] != null)
+                    {
+                        node[Direction.Next][Direction.Previous] = node[Direction.Previous]; 
+                    }
+
+                    if (node[Direction.Down] != null)
+                    {
+                        node[Direction.Down][Direction.Up] = node[Direction.Up];
+                    }
+
+                    if (node[Direction.Up] != null)
+                    {
+                        node[Direction.Up][Direction.Down] = node[Direction.Down];
+                    }
+
+                    return true;
                 }
 
                 node = node[Direction.Next];
             }
 
             return false;
+        }
+
+        public bool Remove(LinkedGridNode<T> node)
+        {
+            if (node[Direction.Previous] != null)
+            {
+                node[Direction.Previous][Direction.Next] = node[Direction.Next];
+            }
+
+            if (node[Direction.Next] != null)
+            {
+                node[Direction.Next][Direction.Previous] = node[Direction.Previous];
+            }
+
+            if (node[Direction.Down] != null)
+            {
+                node[Direction.Down][Direction.Up] = node[Direction.Up];
+            }
+
+            if (node[Direction.Up] != null)
+            {
+                node[Direction.Up][Direction.Down] = node[Direction.Down];
+            }
+
+            return true;
         }
 
         public IPathNode[][][] ToArray()

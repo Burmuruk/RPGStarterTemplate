@@ -13,6 +13,8 @@ namespace Burmuruk.WorldG.Patrol
 
         public IPathNode FindNearestNode(Vector3 start);
 
+        public bool ValidatePosition(Vector3 position, IPathNode nearestPoint);
+
         public void CalculateNodesConnections();
 
         public void Clear();

@@ -29,6 +29,8 @@ namespace Burmuruk.Tesis.Control
         protected bool isTargetFar = false;
         protected bool isTargetClose = false;
 
+        public event Action OnCombatStarted;
+
         public Inventary Inventary { get => inventary; }
 
         protected virtual void Awake()
@@ -70,15 +72,15 @@ namespace Burmuruk.Tesis.Control
         {
             if (hasFarPerception)
             {
-                isTargetFar = PerceptEnemy(eyesPerceibed);
+                isTargetFar = PerceptEnemy(ref eyesPerceibed);
             }
             if (hasClosePerception)
             {
-                isTargetClose = PerceptEnemy(earsPerceibed);
+                isTargetClose = PerceptEnemy(ref earsPerceibed);
             }
         }
 
-        protected virtual bool PerceptEnemy(Collider[] perceibed)
+        protected virtual bool PerceptEnemy(ref Collider[] perceibed)
         {
             if (perceibed == null) return false;
             

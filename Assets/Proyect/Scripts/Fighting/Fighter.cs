@@ -23,7 +23,7 @@ namespace Burmuruk.Tesis.Fighting
         {
             m_Stats = GetComponent<StatsManager>();
             m_targetStats = GetComponent<StatsManager>();
-            m_inventary = FindObjectOfType<Inventary>();
+            m_inventary = GetComponent<Inventary>();
         }
 
         private void Start()

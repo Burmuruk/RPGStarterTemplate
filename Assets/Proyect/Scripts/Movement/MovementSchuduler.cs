@@ -39,6 +39,19 @@ namespace Burmuruk.Tesis.Movement
         {
             if (FindTaskByCaller(caller, out _)) return;
 
+            int priorityValue = (int)priority;
+            //var cur = actionsList.First;
+
+            //for (int i = 0; i < actionsList.Count; i++)
+            //{
+            //    if (caller == cur.Caller)
+            //    {
+            //        actionsList.AddAfter(cur)
+            //    }
+
+            //    cur = cur.Next;
+            //}
+
             actionsList.Add(new(Status.Waiting, caller, priority, actions));
         }
 

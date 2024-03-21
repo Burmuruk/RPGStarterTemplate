@@ -23,7 +23,7 @@ namespace Burmuruk.WorldG.Patrol
 
     //    public float wanderDisplacement, wanderRadious;
     //    bool isReceivingDamage = false;
-    //    public Transform m_target;
+    //    public Transform Target;
     //    public Transform m_Leader;
     //    public Vector3? wandernextPosition = null;
 

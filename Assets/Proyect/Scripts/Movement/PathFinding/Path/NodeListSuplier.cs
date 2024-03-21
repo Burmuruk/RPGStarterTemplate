@@ -105,6 +105,11 @@ namespace Burmuruk.WorldG.Patrol
             this.connections = connections;
         }
 
+        public bool ValidatePosition(Vector3 position, IPathNode nearestPoint)
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion
     }
 }

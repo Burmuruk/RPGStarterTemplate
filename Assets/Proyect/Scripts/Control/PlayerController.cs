@@ -1,4 +1,5 @@
-﻿using Burmuruk.Tesis.Stats;
+﻿using Assets.Proyect.Scripts.Control;
+using Burmuruk.Tesis.Stats;
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -9,11 +10,11 @@ namespace Burmuruk.Tesis.Control
     {
         bool m_shouldMove = false;
         Vector3 m_direction = default;
-        Collider m_target;
         Character player;
         bool m_canChangeFormation = false;
 
-        public event Action<Vector2> OnFormationChanged;
+        public event Action<Vector2, object> OnFormationChanged;
+        public AIEnemyController Target { get; private set; }
 
         void FixedUpdate()
         {
@@ -39,6 +40,7 @@ namespace Burmuruk.Tesis.Control
             this.player = player;
         }
 
+        #region Inputs
         public void Move(InputAction.CallbackContext context)
         {
             if (!player) return;
@@ -58,7 +60,7 @@ namespace Burmuruk.Tesis.Control
             else
             {
                 m_direction = Vector3.zero;
-                m_shouldMove =false;
+                m_shouldMove = false;
             }
         }
 
@@ -74,8 +76,8 @@ namespace Burmuruk.Tesis.Control
                 if (enemy)
                 {
                     print(enemy.name);
-                    m_target = enemy;
-                    player.fighter.SetTarget(m_target.transform);
+                    Target = enemy.GetComponent<AIEnemyController>();
+                    player.fighter.SetTarget(Target.transform);
                 }
             }
         }
@@ -90,7 +92,7 @@ namespace Burmuruk.Tesis.Control
                 m_canChangeFormation = true;
             }
             else
-            { 
+            {
                 m_canChangeFormation = false;
             }
         }
@@ -103,12 +105,21 @@ namespace Burmuruk.Tesis.Control
             {
                 var dir = context.ReadValue<Vector2>();
 
-                //print("Change!");
+                if (dir.y == -1 && Target == null)
+                    return;
 
-                OnFormationChanged?.Invoke(dir);
+                object args = dir switch
+                {
+                    { y: -1 } => Target,
+                    _ => null
+                };
+
+                OnFormationChanged?.Invoke(dir, args);
             }
         }
+        #endregion
 
+        #region Private methods
         private Collider DetectEnemyInMouse()
         {
             if (!player) return null;
@@ -127,7 +138,7 @@ namespace Burmuruk.Tesis.Control
             {
                 Vector3 mousePos = Mouse.current.position.ReadValue();
                 var cam = Camera.main;
-                
+
                 Vector3 screenPos = new(mousePos.x, cam.pixelHeight - mousePos.y, cam.nearClipPlane);
 
                 return cam.ScreenPointToRay(Mouse.current.position.ReadValue());
@@ -160,6 +171,7 @@ namespace Burmuruk.Tesis.Control
                     item.gameObject.SetActive(false);
                 }
             }
-        }
+        } 
+        #endregion
     }
 }

@@ -7,7 +7,7 @@ namespace Burmuruk.Tesis.Control
         Character[] Fellows { get; set; }
         float FellowGap { get; }
         public Formation Formation { get; }
-        public void SetFormation(Vector2 formation);
+        public void SetFormation(Vector2 formation, object args);
     }
 
     public enum Formation

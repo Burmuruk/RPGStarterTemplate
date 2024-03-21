@@ -1,5 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Burmuruk.Tesis.Stats;
+using Burmuruk.Utilities;
+using System;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Control
@@ -13,17 +14,10 @@ namespace Burmuruk.Tesis.Control
         [SerializeField] AttackState attackState;
         [SerializeField] float fellowGap;
 
-        #region Enums
+        object formationArgs;
+        Transform m_target;
 
-        public enum PlayerState
-        {
-            None,
-            Combat,
-            FollowPlayer,
-            Patrol,
-            Teleporting,
-            Dead
-        }
+        #region Enums
 
         public enum PlayerDistance
         {
@@ -44,7 +38,8 @@ namespace Burmuruk.Tesis.Control
         public enum MovementState
         {
             None,
-
+            Moving,
+            ConsecutiveAction
         }
         #endregion
 
@@ -52,24 +47,32 @@ namespace Burmuruk.Tesis.Control
         const float freeDistance = 6;
         const float farDistance = 9;
 
-        public event Action OnCombatStarted;
+        CoolDownAction cdTeleport;
 
         public bool IsControlled { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
         public Character[] Fellows { get; set; }
         public float FellowGap { get => fellowGap; }
         public Formation Formation { get => formation; }
+        public PlayerState State { get => playerState; set => playerState = value; }
+
+        protected override void Start()
+        {
+            base.Start();
+
+            cdTeleport = new CoolDownAction(1.5f);
+        }
 
         protected override void FixedUpdate()
         {
-            base.FixedUpdate();
-
             playerDistance = Vector3.Distance(mainPlayer.transform.position, transform.position) switch
             {
-                < closeDistance => PlayerDistance.Close,
-                < freeDistance => PlayerDistance.Free,
-                < farDistance => PlayerDistance.Far,
-                _ => PlayerDistance.FarAway
+                <= closeDistance => PlayerDistance.Close,
+                <= freeDistance => PlayerDistance.Free,
+                <= farDistance => PlayerDistance.Far,
+                > farDistance => PlayerDistance.FarAway
             };
+
+            base.FixedUpdate();
         }
 
         public void DisableControll()
@@ -82,7 +85,7 @@ namespace Burmuruk.Tesis.Control
             throw new System.NotImplementedException();
         }
 
-        public void SetFormation(Vector2 formation)
+        public void SetFormation(Vector2 formation, object args)
         {
             //if (playerState != PlayerState.Combat) return;
                 
@@ -94,6 +97,8 @@ namespace Burmuruk.Tesis.Control
                 { x: 1 } => Formation.Free,
                 _ => this.formation,
             };
+
+            formationArgs = args;
             print ("Current formation: \t" + this.formation.ToString());
         }
 
@@ -109,6 +114,9 @@ namespace Burmuruk.Tesis.Control
             if (playerDistance == PlayerDistance.FarAway)
             {
                 playerState = PlayerState.Teleporting;
+
+                ActionManager();
+                MovementManager();
                 return;
             }
 
@@ -136,20 +144,30 @@ namespace Burmuruk.Tesis.Control
                             attackState = AttackState.None;
                         }
                     }
+                    else if (playerDistance == PlayerDistance.Far)
+                    {
+                        playerState = PlayerState.FollowPlayer;
+                        attackState = AttackState.None;
+                    }
 
                     break;
 
                 case Formation.Protect:
 
-                    if (playerDistance == PlayerDistance.Free || playerDistance == PlayerDistance.Close)
+                    if (playerDistance == PlayerDistance.Close)
                     {
                         if (isTargetFar || isTargetClose)
                         {
                             playerState = PlayerState.Combat;
                             attackState = AttackState.BasicAttack;
                         }
+                        else
+                        {
+                            playerState = PlayerState.None;
+                            attackState = AttackState.None;
+                        }
                     }
-                    else if (playerDistance == PlayerDistance.Far)
+                    else
                     {
                         playerState = PlayerState.FollowPlayer;
                         attackState = AttackState.None;
@@ -170,11 +188,44 @@ namespace Burmuruk.Tesis.Control
             }
 
             ActionManager();
+            MovementManager();
         }
 
         protected override void ActionManager()
         {
             base.ActionManager();
+
+            switch (playerState, attackState)
+            {
+                case (PlayerState.FollowPlayer, _):
+                    break;
+
+                case (PlayerState.Combat, AttackState.BasicAttack):
+                    if (isTargetFar || isTargetClose)
+                    {
+                        if (formation == Formation.LockTarget)
+                        {
+                            m_target = ((Character)formationArgs).transform;
+                        }
+                        else
+                        {
+                            m_target = GetNearestTarget(eyesPerceibed);
+                        }
+
+                        fighter.SetTarget(m_target);
+                        fighter.BasicAttack();
+                    }
+                    break;
+
+                case (PlayerState.Teleporting, _):
+                    Invoke("MoveCloseToPlayer", 1);
+                    break;
+            }
+        }
+
+        protected override void MovementManager()
+        {
+            base.MovementManager();
 
             switch (playerState, attackState)
             {
@@ -185,15 +236,55 @@ namespace Burmuruk.Tesis.Control
                 case (PlayerState.Combat, AttackState.BasicAttack):
                     if (isTargetFar || isTargetClose)
                     {
-                        if (formation == Formation.Protect)
-                        {
-                            fighter.shouldGetClose = false;
-                        }
+                        if (formation == Formation.Protect) break;
 
-                        fighter.BasicAttack();
+                        var dis = Inventary.EquipedWeapon.MinDistance * .8f;
+                        if (Vector3.Distance(m_target.position, transform.position) > dis)
+                        {
+                            var destiniy = (transform.position - m_target.position).normalized * dis;
+                            destiniy += m_target.position;
+                            mover.MoveTo(destiniy);
+                            Debug.DrawRay(destiniy, Vector3.up * 5);
+                        }
                     }
                     break;
+
+                case (PlayerState.Teleporting, _):
+                    Invoke("MoveCloseToPlayer", 1);
+                    break;
             }
+        }
+
+        private void MoveCloseToPlayer()
+        {
+            var (x, z) = (Mathf.Cos(UnityEngine.Random.Range(-1, 1)), Mathf.Sin(UnityEngine.Random.Range(-1, .1f)));
+            var dis = freeDistance / 2;
+
+            var pos = new Vector3(x * dis, mainPlayer.transform.position.y, z * dis);
+            pos = pos.normalized * UnityEngine.Random.Range(closeDistance, freeDistance);
+
+            if (cdTeleport.CanUse)
+            {
+                print("Teleport!!");
+                StartCoroutine(cdTeleport.CoolDown());
+                mover.ChangePositionTo(transform, mainPlayer.transform.position + pos);
+            }
+            //Vector3.ProjectOnPlane(pos, transform.get)
+        }
+
+        private Transform GetNearestTarget(Collider[] eyesPerceibed)
+        {
+            (Transform enemy, float dis) closest = (null, float.MaxValue);
+
+            foreach (var enemy in eyesPerceibed)
+            {
+                if (Vector3.Distance(enemy.transform.position, transform.position) is var d && d < closest.dis)
+                {
+                    closest = (enemy.transform, d);
+                }
+            }
+
+            return closest.enemy;
         }
 
         private void FollowPlayer()
