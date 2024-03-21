@@ -76,6 +76,8 @@ namespace Burmuruk.AI.PathFinding
             var distances = new List<float>();
             Task<List<float>> task;
 
+            routeSizes = new();
+            paths = new();
             int idx = paths.Count;
             int idxDis = (routeSizes ??= new()).Count;
 
@@ -84,9 +86,7 @@ namespace Burmuruk.AI.PathFinding
                 curNodes[i].start = nodesList.FindNearestNode(pairs[i].start);
                 curNodes[i].end = nodesList.FindNearestNode(pairs[i].end);
             }
-            UnityEngine.Debug.DrawRay(curNodes[0].start.Position, Vector3.up, Color.blue);
-            UnityEngine.Debug.DrawRay(curNodes[0].end.Position, Vector3.up, Color.green);
-            //return;
+            
             try
             {
                 isCalculating = true;
@@ -148,19 +148,12 @@ namespace Burmuruk.AI.PathFinding
             RemoveLongPaths(idx, idxDis, distances.Count - 1);
             shorstestNodeIdx = null;
 
-            try
+            for (int i = 0; i < curNodes.Length; i++)
             {
-                for (int i = 0; i < curNodes.Length; i++)
+                if (curNodes[i].end.ID == paths[idx].Last.Value.ID || curNodes[i].end.ID == paths[idx].First.Value.ID)
                 {
-                    if (curNodes[i].end.ID == paths[idx].Last.Value.ID || curNodes[i].end.ID == paths[idx].First.Value.ID)
-                    {
-                        shorstestNodeIdx = i;
-                    }
+                    shorstestNodeIdx = i;
                 }
-            }
-            catch (Exception)
-            {
-                return;
             }
 
             routeSizes.RemoveAt(routeSizes.Count - 1);
@@ -246,7 +239,6 @@ namespace Burmuruk.AI.PathFinding
             try
             {
                 float dis = 0;
-                //Debug.Log($"start {start.ID} endo {end.ID}");
                 var path = Get_Route(start, end, out dis);
 
                 if (path == null) return;

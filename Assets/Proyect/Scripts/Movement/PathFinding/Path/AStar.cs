@@ -38,17 +38,9 @@ namespace Burmuruk.AI.PathFinding
         {
             weights = new Dictionary<uint, Vector3>();
 
-            try
+            foreach (IPathNode node in nodes)
             {
-                foreach (IPathNode node in nodes)
-                {
-                    weights.Add(node.ID, node.Position);
-                }
-            }
-            catch (Exception)
-            {
-                Debug.LogError("posiciones");
-                throw;
+                weights.Add(node.ID, node.Position);
             }
         }
 
@@ -60,15 +52,7 @@ namespace Burmuruk.AI.PathFinding
             RequiredLists lists = new RequiredLists();
             lists.Initialize(start, end);
 
-            try
-            {
-                Start_Algorithm(ref lists, out distance);
-            }
-            catch (NullReferenceException e)
-            {
-                Debug.LogError("path not founded " + e.Message + " id ");
-                lists.shortestPath = null;
-            }
+            Start_Algorithm(ref lists, out distance);
 
             return lists.shortestPath;
         }
@@ -103,16 +87,7 @@ namespace Burmuruk.AI.PathFinding
                 return;
             }
 
-            try
-            {
-                Get_ShortestPath(ref lists, out distance);
-                //Debug.Log($"Shortest {lists.shortestPath.First.Value.ID} to {lists.shortestPath.Last.Value.ID}");
-            }
-            catch (Exception)
-            {
-                Debug.LogError("shortest obtained");
-                throw;
-            }
+            Get_ShortestPath(ref lists, out distance);
         }
 
         public void Start_Algorithm(out float distance)
@@ -144,79 +119,50 @@ namespace Burmuruk.AI.PathFinding
 
                 do
                 {
-                    try
+                    (IPathNode node, float weight) minWeight = (null, float.MaxValue);
+
+                    var curData = data[cur];
+                    ChangeState(NodeState.Checked, cur, ref data);
+
+                    if (cur.ID == lists.end.ID)
                     {
-                        (IPathNode node, float weight) minWeight = (null, float.MaxValue);
-
-                        var curData = data[cur];
-                        ChangeState(NodeState.Checked, cur, ref data);
-
-                        if (cur.ID == lists.end.ID)
-                        {
-                            lists.endReached = true;
-                            break;
-                            //Update_CurrentNode(ref cur, unCheckedNodes.Last.Value, ref curWeight, ref lists);
-                        }
-
-                        foreach (var conection in cur.NodeConnections)
-                        {
-                            try
-                            {
-                                //if (conection.connectionType != ConnectionType.BIDIMENSIONAL) continue;
-
-                                if (!data.ContainsKey(conection.node))
-                                    Start(conection.node, ref lists);
-
-                                if (data[conection.node].state == NodeState.Checked) continue;
-
-                                var next = conection.node;
-                                Update_Previous(ref next, cur, ref data);
-
-                                if (data[next].state == NodeState.Unchecked)
-                                {
-                                    var dis = selectedNodesCount++;
-                                    ChangeWeight(dis, next, cur, ref data);
-                                    ChangeState(NodeState.Waiting, next, ref data);
-                                }
-
-                                float weight =  GetDistance(next.ID, lists.end.ID);
-
-                                if (weight < minWeight.weight)
-                                    minWeight = (next, weight);
-                            }
-                            catch (Exception)
-                            {
-                                Debug.Log("childs");
-                                throw;
-                            }
-                        }
-
-                        try
-                        {
-                            if (minWeight.weight != float.MaxValue)
-                            {
-                                cur = minWeight.node;
-                                //Update_CurrentNode(ref cur, minWeight.node2, ref curWeight, ref lists);
-                            }
-                            else if (data[cur].prev != null)
-                            {
-                                cur = data[cur].prev;
-                                //Update_CurrentNode(ref cur, data[cur].prev, ref curWeight, ref lists);
-                            }
-                            else
-                                finished = true;
-                        }
-                        catch (Exception)
-                        {
-                            Debug.Log("last ifs");
-                            throw;
-                        }
+                        lists.endReached = true;
+                        break;
                     }
-                    catch (Exception)
+
+                    foreach (var conection in cur.NodeConnections)
                     {
-                        Debug.Log("Fist in Algorithem");
-                        throw;
+                        if (!data.ContainsKey(conection.node))
+                            Start(conection.node, ref lists);
+
+                        if (data[conection.node].state == NodeState.Checked) continue;
+
+                        var next = conection.node;
+                        Update_Previous(ref next, cur, ref data);
+
+                        if (data[next].state == NodeState.Unchecked)
+                        {
+                            var dis = selectedNodesCount++;
+                            ChangeWeight(dis, next, cur, ref data);
+                            ChangeState(NodeState.Waiting, next, ref data);
+                        }
+
+                        float weight =  GetDistance(next.ID, lists.end.ID);
+
+                        if (weight < minWeight.weight)
+                            minWeight = (next, weight);
                     }
+
+                    if (minWeight.weight != float.MaxValue)
+                    {
+                        cur = minWeight.node;
+                    }
+                    else if (data[cur].prev != null)
+                    {
+                        cur = data[cur].prev;
+                    }
+                    else
+                        finished = true;
 
                 } while (!finished);
             }
@@ -253,10 +199,10 @@ namespace Burmuruk.AI.PathFinding
 
         void Update_Previous(ref IPathNode cur, in IPathNode prev, ref Dictionary<IPathNode, NodeData> data)
         {
-            var hi = data[cur];
-            hi.prev = prev;
+            var copy = data[cur];
+            copy.prev = prev;
 
-            data[cur] = hi;
+            data[cur] = copy;
         }
 
         private void Get_ShortestPath(ref RequiredLists lists, out float distance)
@@ -288,6 +234,7 @@ namespace Burmuruk.AI.PathFinding
                 cur = data[cur].prev;
             }
 
+            shortestPath.AddFirst(cur);
             shortestPath.AddFirst(data[cur].prev);
         }
 

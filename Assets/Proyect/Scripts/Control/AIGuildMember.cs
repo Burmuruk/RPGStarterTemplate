@@ -34,13 +34,6 @@ namespace Burmuruk.Tesis.Control
             BasicAttack,
             SpecialAttack,
         }
-
-        public enum MovementState
-        {
-            None,
-            Moving,
-            ConsecutiveAction
-        }
         #endregion
 
         const float closeDistance = 3;
@@ -265,11 +258,9 @@ namespace Burmuruk.Tesis.Control
 
             if (cdTeleport.CanUse)
             {
-                print("Teleport!!");
                 StartCoroutine(cdTeleport.CoolDown());
                 mover.ChangePositionTo(transform, mainPlayer.transform.position + pos);
             }
-            //Vector3.ProjectOnPlane(pos, transform.get)
         }
 
         private Transform GetNearestTarget(Collider[] eyesPerceibed)
