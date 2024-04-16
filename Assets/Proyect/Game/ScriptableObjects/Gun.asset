@@ -15,4 +15,4 @@ MonoBehaviour:
   m_type: 2
   m_damage: 1
   m_rateDamage: 0.5
-  m_minDistance: 5
+  m_minDistance: 2.5

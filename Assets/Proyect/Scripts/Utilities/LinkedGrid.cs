@@ -258,12 +258,32 @@ namespace Burmuruk.Collections
                 {
                     if (node[Direction.Previous] != null)
                     {
-                        node[Direction.Previous][Direction.Next] = node[Direction.Next];
+                        if (node[Direction.Previous][Direction.Next] == node)
+                        {
+                            if (node[Direction.Up] != null)
+                            {
+                                node[Direction.Previous][Direction.Next] = node[Direction.Up];
+                            }
+                            else
+                            {
+                                node[Direction.Previous][Direction.Next] = node[Direction.Next];
+                            }
+                        }
                     }
 
                     if (node[Direction.Next] != null)
                     {
-                        node[Direction.Next][Direction.Previous] = node[Direction.Previous]; 
+                        if (node[Direction.Next][Direction.Previous] == node)
+                        {
+                            if (node[Direction.Up] != null)
+                            {
+                                node[Direction.Next][Direction.Previous] = node[Direction.Up];
+                            }
+                            else
+                            {
+                                node[Direction.Next][Direction.Previous] = node[Direction.Previous];
+                            }
+                        }
                     }
 
                     if (node[Direction.Down] != null)
@@ -448,8 +468,32 @@ namespace Burmuruk.Collections
                 {
                     if (connections.ContainsKey(Direction.Up))
                     {
-                        connections[Direction.Up][d] = value;
+                        try
+                        {
+                            connections[Direction.Up][d] = value;
+                        }
+                        catch (NullReferenceException)
+                        {
+
+                            throw;
+                        }
                     }
+                    try
+                    {
+                    }
+                    catch (NullReferenceException)
+                    {
+
+                        throw;
+                    }
+                }
+                try
+                {
+                }
+                catch (NullReferenceException)
+                {
+
+                    throw;
                 }
             }
         }

@@ -52,17 +52,10 @@ namespace Burmuruk.Tesis.Fighting
         {
             if (!m_target) return;
 
-            if (Vector3.Distance(m_target.position, transform.position) < m_inventary.EquipedWeapon.MinDistance)
+            if (cdBasicAttack.CanUse)
             {
-                if (cdBasicAttack.CanUse)
-                {
-                    m_targetStats.ApplyDamage(m_Stats.Damage);
-                    StartCoroutine(cdBasicAttack.CoolDown());
-                }
-            }
-            else if (shouldGetClose)
-            {
-                m_movement.MoveTo(transform.position);
+                m_targetStats.ApplyDamage(m_Stats.Damage);
+                StartCoroutine(cdBasicAttack.CoolDown());
             }
         }
 

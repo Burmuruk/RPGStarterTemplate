@@ -12,10 +12,12 @@ namespace Burmuruk.Tesis.Control
         PlayerController playerController;
         int? m_CurPlayer;
         [SerializeField] string curPlayerName;
-        (Vector2 value, object args) curFormation = default;
+        (Formation value, object args) curFormation = default;
 
         public event Action OnPlayerChanged;
+        public event Action OnFormationChanged;
 
+        List<AIGuildMember> Players { get => players; }
         public Inventary playerInventary
         {
             get
@@ -41,6 +43,7 @@ namespace Burmuruk.Tesis.Control
                 return null;
             }
         }
+        public (Formation value, object args) CurFormation { get => curFormation; }
 
         private void Awake()
         {
@@ -95,15 +98,25 @@ namespace Burmuruk.Tesis.Control
 
         private void ChangeFormation(Vector2 value, object args)
         {
+            Formation formation = value switch
+            {
+                { y: 1 } => Formation.Follow,
+                { y: -1 } => Formation.LockTarget,
+                { x: -1 } => Formation.Protect,
+                { x: 1 } => Formation.Free,
+                _ => Formation.None,
+            };
+
             foreach (var player in players)
             {
                 if (player.enabled)
                 {
-                    player.SetFormation(value, args);
+                    player.SetFormation(formation, args);
                 }
             }
 
-            curFormation = (value, args);
+            curFormation = (formation, args);
+            OnFormationChanged?.Invoke();
         }
 
         private void EnterToCombatMode()

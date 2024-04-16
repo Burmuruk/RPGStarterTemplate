@@ -14,6 +14,8 @@ namespace Burmuruk.Tesis.Control
         bool m_canChangeFormation = false;
 
         public event Action<Vector2, object> OnFormationChanged;
+        public event Action OnInteractableEnter;
+        public event Action OnInteractableExit;
         public AIEnemyController Target { get; private set; }
 
         void FixedUpdate()

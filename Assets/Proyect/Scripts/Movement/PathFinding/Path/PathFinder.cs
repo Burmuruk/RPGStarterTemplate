@@ -36,7 +36,16 @@ namespace Burmuruk.AI.PathFinding
         public Vector3 End { get => nodesList.EndNode; }
 
         #region public
-        public LinkedList<IPathNode> BestRoute { get => isCalculating ? null : paths[routeSizes[curPath].idx]; }
+        public LinkedList<IPathNode> BestRoute
+        {
+            get
+            {
+                if (isCalculating || paths == null || paths.Count <= 0)
+                    return null;
+
+                return paths[routeSizes[curPath].idx];
+            }
+        }
 
         public int? ShorstestNodeIdx { get => shorstestNodeIdx; }
 
@@ -87,24 +96,29 @@ namespace Burmuruk.AI.PathFinding
                 curNodes[i].end = nodesList.FindNearestNode(pairs[i].end);
             }
             
-            try
-            {
-                isCalculating = true;
-                task = Task.Run(() => GetAllRoutes(curNodes));
+            isCalculating = true;
+            task = Task.Run(() => GetAllRoutes(curNodes));
 
-                //task.Wait();
-                var awaiter = task.GetAwaiter();
-                awaiter.OnCompleted(() =>
+            //task.Wait();
+            var awaiter = task.GetAwaiter();
+            awaiter.OnCompleted(() =>
+            {
+                try
                 {
                     var result = awaiter.GetResult();
                     FindShortestPath(result, idx, idxDis);
-                    OnPathCalculated?.Invoke();
-                });
-            }
-            catch (AggregateException aex)
-            {
-                Debug.Log(aex.Message);
-            }
+                }
+                catch (AggregateException aex)
+                {
+                    Debug.Log(aex.Message);
+                }
+                finally
+                {
+                    isCalculating = false;
+                }
+
+                OnPathCalculated?.Invoke();
+            });
 
             return;
         }
@@ -218,7 +232,7 @@ namespace Burmuruk.AI.PathFinding
             }
             catch (AggregateException aex)
             {
-                Debug.LogError(aex.InnerException);
+                //Debug.LogError(aex.InnerException);
             }
             return distances;
         }

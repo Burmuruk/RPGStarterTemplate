@@ -16,6 +16,7 @@ namespace Burmuruk.Tesis.Control
 
         object formationArgs;
         Transform m_target;
+        CoolDownAction cdTeleport;
 
         #region Enums
 
@@ -40,7 +41,7 @@ namespace Burmuruk.Tesis.Control
         const float freeDistance = 6;
         const float farDistance = 9;
 
-        CoolDownAction cdTeleport;
+        public event Action OnEnemyDetected;
 
         public bool IsControlled { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
         public Character[] Fellows { get; set; }
@@ -68,6 +69,45 @@ namespace Burmuruk.Tesis.Control
             base.FixedUpdate();
         }
 
+        private void LateUpdate()
+        {
+            if (playerState == PlayerState.Combat && !isTargetFar && !isTargetClose)
+            {
+                Collider closest = null;
+
+                foreach (Character character in Fellows)
+                {
+                    if (character.IsTargetClose)
+                    {
+                        var enemy = GetClosestEnemy(character.CloseEnemies);
+
+                        //foreach (Character character2 in Fellows)
+                        //    if ()
+                    }
+                    else if (character.IsTargetFar)
+                    {
+                        GetClosestEnemy(character.FarEnemies);
+                    }
+                }
+            }
+        }
+
+        private (Collider obj, float dis) GetClosestEnemy(Collider[] enemies)
+        {
+            (int idx, float distance) closest = (0, float.MaxValue);
+
+            for (int i = 0; i < enemies.Length; i++)
+            {
+                var dis = Vector3.Distance(enemies[i].transform.position, transform.position);
+                if (dis < closest.distance)
+                {
+                    closest = (i, dis);
+                }
+            }
+
+            return (enemies[closest.idx], closest.distance);
+        }
+
         public void DisableControll()
         {
             throw new System.NotImplementedException();
@@ -78,18 +118,11 @@ namespace Burmuruk.Tesis.Control
             throw new System.NotImplementedException();
         }
 
-        public void SetFormation(Vector2 formation, object args)
+        public void SetFormation(Formation formation, object args)
         {
             //if (playerState != PlayerState.Combat) return;
-                
-            this.formation = formation switch
-            {
-                { y: 1 } => Formation.Follow,
-                { y: -1 } => Formation.LockTarget,
-                { x: -1 } => Formation.Protect,
-                { x: 1 } => Formation.Free,
-                _ => this.formation,
-            };
+
+            this.formation = formation;
 
             formationArgs = args;
             print ("Current formation: \t" + this.formation.ToString());
@@ -281,6 +314,11 @@ namespace Burmuruk.Tesis.Control
         private void FollowPlayer()
         {
             mover.FollowWithDistance(mainPlayer.mover, fellowGap, Fellows);
+        }
+
+        private void GetRemainEnemies()
+        {
+            
         }
     }
 }

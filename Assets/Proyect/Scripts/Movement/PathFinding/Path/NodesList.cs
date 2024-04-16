@@ -36,6 +36,7 @@ namespace Burmuruk.AI
         [SerializeField] bool showMeshZone = false;
         [SerializeField] float pRadious = .5f;
         [SerializeField] bool phisicNodes = false;
+        [SerializeField] int layer;
 
         [Header("PathFinding Settings"), Space()]
         [SerializeField] public GameObject startNode;
@@ -523,7 +524,7 @@ namespace Burmuruk.AI
             var offsetRay = hi;
             offsetRay.origin = hi.origin + offset;
 
-            var hits = Physics.RaycastAll(offsetRay, height);
+            var hits = Physics.RaycastAll(offsetRay, height, 1 << layer);
 
             if (hits != null && hits.Length > 0)
             {
@@ -555,7 +556,7 @@ namespace Burmuruk.AI
         {
             var start = position + new Vector3(0, .7f, 0);
 
-            if (!Physics.CapsuleCast(start, (start + new Vector3(0, 1, 0)), .5f, new Vector3(0, 1, 0), .1f))
+            if (!Physics.CapsuleCast(start, (start + new Vector3(0, 1, 0)), .5f, new Vector3(0, 1, 0), .1f, 1 << layer))
                 return true;
 
             return false;

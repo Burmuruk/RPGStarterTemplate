@@ -104,7 +104,11 @@ namespace Burmuruk.Tesis.Movement
 
                 m_state = MovementState.FollowingPath;
                 m_curPath = m_pathFinder.BestRoute;
-                GetNextNode();
+                if (!GetNextNode())
+                {
+                    FinishAction();
+                    return;
+                }
 
                 IPathNode lastNode = null;
                 foreach (var node in m_pathFinder.BestRoute)
@@ -163,10 +167,10 @@ namespace Burmuruk.Tesis.Movement
             {
                 m_pathFinder.Find_BestRoute<AStar>((transform.position, point));
             }
-            catch (Exception e)
+            catch (NullReferenceException)
             {
                 m_state = MovementState.None;
-                throw e;
+                FinishAction();
             }
         }
 

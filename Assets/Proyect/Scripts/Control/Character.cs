@@ -32,6 +32,10 @@ namespace Burmuruk.Tesis.Control
         public event Action OnCombatStarted;
 
         public Inventary Inventary { get => inventary; }
+        public Collider[] CloseEnemies { get => earsPerceibed; }
+        public Collider[] FarEnemies { get => eyesPerceibed; }
+        public bool IsTargetFar { get => isTargetFar; }
+        public bool IsTargetClose { get => isTargetClose; }
 
         protected virtual void Awake()
         {
@@ -48,7 +52,6 @@ namespace Burmuruk.Tesis.Control
 
         protected virtual void Update()
         {
-            PerceptionManager();
             DecisionManager();
         }
 
@@ -56,6 +59,8 @@ namespace Burmuruk.Tesis.Control
         {
             eyesPerceibed = Physics.OverlapSphere(farPercept.position, stats.EyesRadious, 1<<10);
             earsPerceibed = Physics.OverlapSphere(closePercept.position, stats.EarsRadious, 1 << 10);
+
+            PerceptionManager();
         }
 
         private void OnDrawGizmosSelected()
