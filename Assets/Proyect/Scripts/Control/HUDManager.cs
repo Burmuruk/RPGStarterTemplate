@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Control
@@ -16,17 +17,21 @@ namespace Burmuruk.Tesis.Control
         [SerializeField] GameObject pAbilites;
         [SerializeField] GameObject pAbilities;
         [SerializeField] GameObject pInteractables;
-        [SerializeField] PopUp pFormation;
+        [SerializeField] GameObject pFormation;
+        [SerializeField] GameObject pFormationInfo;
+        [SerializeField] GameObject pFormationState;
         [SerializeField] PopUp pLife;
         [SerializeField] PopUp pNotifications;
         [SerializeField] PopUp pMissions;
 
         State state;
         PopUps activePopUps;
-        CoolDownAction cdFormations;
+        CoolDownAction cdChangeFormation;
         CoolDownAction cdMissions;
+        List<CoolDownAction> cdNotifications;
 
         Queue<GameObject> lifeBarPool;
+        Queue<PopUp> notificationsPool;
 
         enum State
         {
@@ -69,38 +74,69 @@ namespace Burmuruk.Tesis.Control
         private void Start()
         {
             FillLifePool();
+            CreateNotificationsPool();
 
-            cdFormations = new CoolDownAction(pFormation.showingTime, (args) => { pFormation.container.SetActive(false); });
+            cdChangeFormation = new CoolDownAction(2, ShowFormations );
         }
 
         private void OnEnable()
         {
+            playerController.OnFormationHold += ShowFormations;
             playerManager.OnFormationChanged += ChangeFormation;
             playerController.OnInteractableEnter += () => ShowInteractionButton(true);
             playerController.OnInteractableEnter += () => ShowInteractionButton(false);
+            playerController.OnItemPicked += () => ShowNotification("Objeto recogido");
             //playerManager. combat mode -> abilities
         }
 
         private void LateUpdate()
         {
-            
+            playerController.OnFormationHold -= ShowFormations;
+            playerManager.OnFormationChanged -= ChangeFormation;
+            playerController.OnInteractableEnter -= () => ShowInteractionButton(true);
+            playerController.OnInteractableEnter -= () => ShowInteractionButton(false);
+            playerController.OnItemPicked -= () => ShowNotification("Objeto recogido");
+        }
+
+        private void ShowFormations(bool value)
+        {
+            if (value)
+            {
+                if (!cdChangeFormation.CanUse) return;
+
+                StopCoroutine(cdChangeFormation.CoolDown());
+                pFormation.SetActive(true);
+                pFormationInfo.SetActive(true);
+                pFormationState.SetActive(false);
+            }
+            else
+            {
+                pFormation.SetActive(true);
+                pFormationInfo.SetActive(true);
+                pFormationState.SetActive(false);
+            }
         }
 
         private void ChangeFormation()
         {
-            if (!cdFormations.CanUse) return;
+            if (!cdChangeFormation.CanUse) return;
 
-            StartCoroutine(cdFormations.CoolDown());
+            StartCoroutine(cdChangeFormation.CoolDown());
 
-            pFormation.container.SetActive(true);
-            pFormation.text.text = playerManager.CurFormation.value switch
-            {
-                Formation.Protect => "Protejer",
-                Formation.Free => "Libre",
-                Formation.LockTarget => "Fija objetivo",
-                Formation.Follow => "Seguir",
-                _ => pFormation.text.text
-            };
+            pFormation.SetActive(true);
+            //pFormationState.tex = playerManager.CurFormation.value switch
+            //{
+            //    Formation.Protect => "Protejer",
+            //    Formation.Free => "Libre",
+            //    Formation.LockTarget => "Fija objetivo",
+            //    Formation.Follow => "Seguir",
+            //    _ => pFormation.text.text
+            //};
+        }
+
+        private void ShowNewFormation()
+        {
+
         }
 
         private void ShowInteractionButton(bool shouldShow)
@@ -108,13 +144,40 @@ namespace Burmuruk.Tesis.Control
             pInteractables.SetActive(shouldShow);
         }
 
+        private void ShowNotification(string message)
+        {
+
+        }
+
         private void FillLifePool()
         {
+            if (pLife == null) return;
+
             lifeBarPool = new();
 
-            for (int i = 0; i < 30; i++)
+            for (int i = 0; i < 20; i++)
             {
                 lifeBarPool.Enqueue(Instantiate(pLife.container, pLife.container.transform.parent)); 
+            }
+        }
+
+        private void CreateNotificationsPool()
+        {
+            if (pLife == null) return;
+
+            notificationsPool = new();
+
+            for (int i = 0; i < 10; i++)
+            {
+                var notification = Instantiate(pNotifications.container, pLife.container.transform.parent);
+                var newPopUp = pNotifications with
+                {
+                    container = notification,
+                    text = notification.GetComponent<TextMeshPro>(),
+                };
+
+                notificationsPool.Enqueue(newPopUp);
+                //cdNotifications.Add(new())
             }
         }
     }

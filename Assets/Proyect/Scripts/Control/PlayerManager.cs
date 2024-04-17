@@ -107,13 +107,13 @@ namespace Burmuruk.Tesis.Control
                 _ => Formation.None,
             };
 
-            foreach (var player in players)
+            players.ForEach((player) =>
             {
                 if (player.enabled)
                 {
                     player.SetFormation(formation, args);
                 }
-            }
+            });
 
             curFormation = (formation, args);
             OnFormationChanged?.Invoke();

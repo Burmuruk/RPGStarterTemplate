@@ -1,8 +1,11 @@
 ﻿using Assets.Proyect.Scripts.Control;
 using Burmuruk.Tesis.Stats;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using static Unity.Burst.Intrinsics.X86.Avx;
+using static UnityEditor.Progress;
 
 namespace Burmuruk.Tesis.Control
 {
@@ -12,11 +15,27 @@ namespace Burmuruk.Tesis.Control
         Vector3 m_direction = default;
         Character player;
         bool m_canChangeFormation = false;
+        private List<PickableItem> m_pickables = new List<PickableItem>();
 
+        public event Action<bool> OnFormationHold;
         public event Action<Vector2, object> OnFormationChanged;
         public event Action OnInteractableEnter;
         public event Action OnInteractableExit;
+        public event Action OnItemPicked;
+
         public AIEnemyController Target { get; private set; }
+        public bool HaveInteractable
+        {
+            get
+            {
+                if (m_pickables.Count > 0)
+                {
+                    return true;
+                }
+
+                return false;
+            }
+        }
 
         void FixedUpdate()
         {
@@ -92,10 +111,13 @@ namespace Burmuruk.Tesis.Control
             {
                 print("Show formations");
                 m_canChangeFormation = true;
+
+                OnFormationHold?.Invoke(true);
             }
             else
             {
                 m_canChangeFormation = false;
+                OnFormationHold?.Invoke(false);
             }
         }
 
@@ -118,6 +140,22 @@ namespace Burmuruk.Tesis.Control
 
                 OnFormationChanged?.Invoke(dir, args);
             }
+        }
+
+        public void Interact(InputAction.CallbackContext context)
+        {
+            if (!HaveInteractable) return;
+
+            var cmp = m_pickables[0];
+            var inventary = player.GetComponent<Inventary>();
+            print("Using Item");
+            inventary.Add(cmp.type, cmp.Item);
+            inventary.Equip(cmp.type, cmp.Item);
+            cmp.gameObject.SetActive(false);
+
+            m_pickables.Remove(cmp);
+
+            OnItemPicked?.Invoke();
         }
         #endregion
 
@@ -160,18 +198,22 @@ namespace Burmuruk.Tesis.Control
         private void DetectItems()
         {
             var items = Physics.OverlapSphere(player.transform.position, .5f, 1 << 11);
+            var hadItem = m_pickables.Count > 0;
+            m_pickables.Clear();
 
             foreach (var item in items)
             {
                 var cmp = item.GetComponent<PickableItem>();
                 if (cmp)
                 {
-                    var inventary = player.GetComponent<Inventary>();
-                    print("Using Item");
-                    inventary.Add(cmp.type, cmp.Item);
-                    inventary.Equip(cmp.type, cmp.Item);
-                    item.gameObject.SetActive(false);
+                    m_pickables.Add(cmp);
+                    OnInteractableEnter?.Invoke();
                 }
+            }
+
+            if (hadItem && m_pickables.Count <= 0)
+            {
+                OnInteractableExit?.Invoke();
             }
         } 
         #endregion
