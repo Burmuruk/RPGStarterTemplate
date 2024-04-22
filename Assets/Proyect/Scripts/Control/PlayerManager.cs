@@ -16,8 +16,21 @@ namespace Burmuruk.Tesis.Control
 
         public event Action OnPlayerChanged;
         public event Action OnFormationChanged;
+        public event Action<bool> OnCombatEnter;
 
-        List<AIGuildMember> Players { get => players; }
+        public List<AIGuildMember> Players
+        {
+            get
+            {
+                if (players == null)
+                {
+                    FindPlayers();
+                    return players;
+                }
+
+                return players;
+            }
+        }
         public Inventary playerInventary
         {
             get
@@ -49,9 +62,6 @@ namespace Burmuruk.Tesis.Control
         {
             playerController = FindObjectOfType<PlayerController>();
 
-            var players = from p in FindObjectsOfType<AIGuildMember>() where p is IPlayable select p;
-            this.players = players.ToList();
-
             playerController.OnFormationChanged += ChangeFormation;
         }
 
@@ -59,10 +69,7 @@ namespace Burmuruk.Tesis.Control
         {
             SetPlayerControl();
 
-            foreach (var player in players)
-            {
-                player.OnCombatStarted += EnterToCombatMode;
-            }
+            players.ForEach((player) => player.OnCombatStarted += EnterToCombatMode);
         }
 
         public void SetPlayerControl(int idx)
@@ -79,6 +86,12 @@ namespace Burmuruk.Tesis.Control
 
                 OnPlayerChanged?.Invoke();
             }
+        }
+
+        private void FindPlayers()
+        {
+            var players = from p in FindObjectsOfType<AIGuildMember>() where p is IPlayable select p;
+            this.players = players.ToList();
         }
 
         private void DisableRestOfPlayers(int idx)
@@ -119,9 +132,13 @@ namespace Burmuruk.Tesis.Control
             OnFormationChanged?.Invoke();
         }
 
-        private void EnterToCombatMode()
+        private void EnterToCombatMode(bool shouldEnter)
         {
-            players.ForEach((player) => { player.State = PlayerState.Combat; });
+            PlayerState state = shouldEnter ? PlayerState.Combat : PlayerState.None;
+
+            players.ForEach((player) => { player.PlayerState = state; });
+
+            OnCombatEnter?.Invoke(shouldEnter);
         }
 
         public void AddMember(AIGuildMember member)

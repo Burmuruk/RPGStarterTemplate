@@ -15,6 +15,7 @@ MonoBehaviour:
   initialized: 0
   speed: 5
   hp: 500
+  maxHp: 500
   damage: 1
   eyesRadious: 4.5
   earsRadious: 3

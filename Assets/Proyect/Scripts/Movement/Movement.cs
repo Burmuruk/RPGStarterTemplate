@@ -178,11 +178,17 @@ namespace Burmuruk.Tesis.Movement
         {
             if (IsMoving) FinishAction();
 
-            var nearest = nodeList.FindNearestNode(point);
+            try
+            {
+                var nearest = nodeList.FindNearestNode(point);
 
-            if (nearest == null) return;
+                if (nearest == null) return;
 
-            agent.position = nearest.Position;
+                agent.position = nearest.Position;
+            }
+            catch (NullReferenceException)
+            {
+            }
         }
 
 

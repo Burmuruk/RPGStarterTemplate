@@ -5,23 +5,35 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using static Unity.Burst.Intrinsics.X86.Avx;
-using static UnityEditor.Progress;
 
 namespace Burmuruk.Tesis.Control
 {
     class PlayerController : MonoBehaviour
     {
+        Character player;
+
         bool m_shouldMove = false;
         Vector3 m_direction = default;
-        Character player;
         bool m_canChangeFormation = false;
         private List<PickableItem> m_pickables = new List<PickableItem>();
+        private List<Interactable> m_interactables = new List<Interactable>();
+        int interactableIdx = 0;
+        
+        enum Interactions
+        {
+            None,
+            Pickable,
+            Talk,
+            Interact
+        }
 
         public event Action<bool> OnFormationHold;
         public event Action<Vector2, object> OnFormationChanged;
-        public event Action OnInteractableEnter;
-        public event Action OnInteractableExit;
-        public event Action OnItemPicked;
+        public event Action<bool, string> OnPickableEnter;
+        public event Action<bool, string> OnPickableExit;
+        public event Action<string, Vector3> OnItemPicked;
+        public event Action<bool, string> OnInteractableEnter;
+        public event Action<bool, string> OnInteractableExit;
 
         public AIEnemyController Target { get; private set; }
         public bool HaveInteractable
@@ -53,6 +65,7 @@ namespace Burmuruk.Tesis.Control
             }
 
             DetectItems();
+            DetectInteractables();
         }
 
         public void SetPlayer(Character player)
@@ -109,15 +122,16 @@ namespace Burmuruk.Tesis.Control
 
             if (context.performed)
             {
-                print("Show formations");
                 m_canChangeFormation = true;
 
                 OnFormationHold?.Invoke(true);
             }
             else
             {
+                if (m_canChangeFormation)
+                    OnFormationHold?.Invoke(false);
+
                 m_canChangeFormation = false;
-                OnFormationHold?.Invoke(false);
             }
         }
 
@@ -148,14 +162,20 @@ namespace Burmuruk.Tesis.Control
 
             var cmp = m_pickables[0];
             var inventary = player.GetComponent<Inventary>();
-            print("Using Item");
             inventary.Add(cmp.type, cmp.Item);
             inventary.Equip(cmp.type, cmp.Item);
             cmp.gameObject.SetActive(false);
 
             m_pickables.Remove(cmp);
 
-            OnItemPicked?.Invoke();
+            OnItemPicked?.Invoke(cmp.type.ToString(), cmp.transform.position);
+        }
+
+        public void Cross(InputAction.CallbackContext context)
+        {
+            if (!context.performed) return;
+
+            var value = context.ReadValue<Vector2>();
         }
         #endregion
 
@@ -197,7 +217,7 @@ namespace Burmuruk.Tesis.Control
 
         private void DetectItems()
         {
-            var items = Physics.OverlapSphere(player.transform.position, .5f, 1 << 11);
+            var items = Physics.OverlapSphere(player.transform.position, 1.5f, 1 << 11);
             var hadItem = m_pickables.Count > 0;
             m_pickables.Clear();
 
@@ -207,15 +227,43 @@ namespace Burmuruk.Tesis.Control
                 if (cmp)
                 {
                     m_pickables.Add(cmp);
-                    OnInteractableEnter?.Invoke();
                 }
             }
 
             if (hadItem && m_pickables.Count <= 0)
             {
-                OnInteractableExit?.Invoke();
+                OnPickableExit?.Invoke(false, "");
             }
-        } 
+            else if (m_pickables.Count > 0)
+            {
+                OnPickableEnter?.Invoke(true, "Tomar"/* + m_pickables[0].type.ToString()*/);
+            }
+        }
+
+        private void DetectInteractables()
+        {
+            var items = Physics.OverlapSphere(player.transform.position, 1f, 1 << 11);
+            var hadItem = m_interactables.Count > 0;
+            m_interactables.Clear();
+
+            foreach (var item in items)
+            {
+                var cmp = item.GetComponent<Interactable>();
+                if (cmp)
+                {
+                    m_interactables.Add(cmp);
+                }
+            }
+
+            if (hadItem && m_interactables.Count <= 0)
+            {
+                OnInteractableExit?.Invoke(false, "");
+            }
+            else if (m_interactables.Count > 0)
+            {
+                OnInteractableEnter?.Invoke(true, "Interact");
+            }
+        }
         #endregion
     }
 }

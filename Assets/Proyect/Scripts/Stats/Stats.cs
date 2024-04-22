@@ -12,6 +12,7 @@ namespace Burmuruk.Tesis.Stats
         [Space(20), Header("Basic stats")]
         [SerializeField] public float speed;
         [SerializeField] public int hp;
+        [SerializeField] public int maxHp;
         [SerializeField] public float damage;
         [Space(), Header("Detection")]
         [SerializeField] public float eyesRadious;

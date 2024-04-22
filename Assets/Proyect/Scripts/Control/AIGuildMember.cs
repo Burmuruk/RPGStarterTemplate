@@ -1,6 +1,7 @@
 ﻿using Burmuruk.Tesis.Stats;
 using Burmuruk.Utilities;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Control
@@ -42,12 +43,28 @@ namespace Burmuruk.Tesis.Control
         const float farDistance = 9;
 
         public event Action OnEnemyDetected;
+        public  event Action OnFormationChanged;
+        public override event Action<bool> OnCombatStarted;
 
         public bool IsControlled { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
         public Character[] Fellows { get; set; }
         public float FellowGap { get => fellowGap; }
         public Formation Formation { get => formation; }
-        public PlayerState State { get => playerState; set => playerState = value; }
+        public PlayerState PlayerState
+        {
+            get => playerState;
+            set
+            {
+                if (playerState == PlayerState.Combat && value != PlayerState.Combat)
+                {
+                    playerState = value;
+                    OnCombatStarted?.Invoke(false);
+                    return;
+                }
+
+                playerState = value;
+            }
+        }
 
         protected override void Start()
         {
@@ -74,25 +91,28 @@ namespace Burmuruk.Tesis.Control
             if (playerState == PlayerState.Combat && !isTargetFar && !isTargetClose)
             {
                 Collider closest = null;
+                List<(Component enemy, float distance)> closestEnemies = new();
 
                 foreach (Character character in Fellows)
                 {
-                    if (character.IsTargetClose)
+                    if (character.IsTargetClose || character.IsTargetFar)
                     {
-                        var enemy = GetClosestEnemy(character.CloseEnemies);
+                        closestEnemies.Add(GetClosestEnemy(character.CloseEnemies));
+                    }
+                }
 
-                        //foreach (Character character2 in Fellows)
-                        //    if ()
-                    }
-                    else if (character.IsTargetFar)
-                    {
-                        GetClosestEnemy(character.FarEnemies);
-                    }
+                if (closestEnemies.Count > 0)
+                {
+
+                }
+                else
+                {
+                    OnCombatStarted(false);
                 }
             }
         }
 
-        private (Collider obj, float dis) GetClosestEnemy(Collider[] enemies)
+        private (Component obj, float dis) GetClosestEnemy(Component[] enemies)
         {
             (int idx, float distance) closest = (0, float.MaxValue);
 
@@ -139,7 +159,7 @@ namespace Burmuruk.Tesis.Control
 
             if (playerDistance == PlayerDistance.FarAway)
             {
-                playerState = PlayerState.Teleporting;
+                PlayerState = PlayerState.Teleporting;
 
                 ActionManager();
                 MovementManager();
@@ -150,7 +170,7 @@ namespace Burmuruk.Tesis.Control
             {
                 case Formation.Follow:
 
-                    playerState = PlayerState.FollowPlayer;
+                    PlayerState = PlayerState.FollowPlayer;
                     attackState = AttackState.None;
                     break;
 
@@ -159,20 +179,22 @@ namespace Burmuruk.Tesis.Control
 
                     if (playerDistance == PlayerDistance.Free || playerDistance == PlayerDistance.Close)
                     {
-                        if (isTargetFar || isTargetClose)
+                        if ((isTargetFar || isTargetClose) && 
+                            Vector3.Distance(transform.position, 
+                                GetNearestTarget(eyesPerceibed).position) < freeDistance)
                         {
-                            playerState = PlayerState.Combat;
+                            PlayerState = PlayerState.Combat;
                             attackState = AttackState.BasicAttack;
                         }
                         else
                         {
-                            playerState = PlayerState.None;
+                            PlayerState = PlayerState.None;
                             attackState = AttackState.None;
                         }
                     }
                     else if (playerDistance == PlayerDistance.Far)
                     {
-                        playerState = PlayerState.FollowPlayer;
+                        PlayerState = PlayerState.FollowPlayer;
                         attackState = AttackState.None;
                     }
 
@@ -182,20 +204,22 @@ namespace Burmuruk.Tesis.Control
 
                     if (playerDistance == PlayerDistance.Close)
                     {
-                        if (isTargetFar || isTargetClose)
+                        if ((isTargetFar || isTargetClose) &&
+                            Vector3.Distance(transform.position, 
+                            GetNearestTarget(eyesPerceibed).position) < Inventary.EquipedWeapon.MinDistance)
                         {
-                            playerState = PlayerState.Combat;
+                            PlayerState = PlayerState.Combat;
                             attackState = AttackState.BasicAttack;
                         }
                         else
                         {
-                            playerState = PlayerState.None;
+                            PlayerState = PlayerState.None;
                             attackState = AttackState.None;
                         }
                     }
                     else
                     {
-                        playerState = PlayerState.FollowPlayer;
+                        PlayerState = PlayerState.FollowPlayer;
                         attackState = AttackState.None;
                     }
                     
@@ -204,7 +228,7 @@ namespace Burmuruk.Tesis.Control
                 case Formation.LockTarget:
                     if (playerDistance == PlayerDistance.Free || playerDistance == PlayerDistance.Close)
                     {
-                        playerState = PlayerState.Combat;
+                        PlayerState = PlayerState.Combat;
                         attackState = AttackState.BasicAttack;
                     }
                     break;
@@ -238,6 +262,7 @@ namespace Burmuruk.Tesis.Control
                             m_target = GetNearestTarget(eyesPerceibed);
                         }
 
+                        OnCombatStarted?.Invoke(true);
                         fighter.SetTarget(m_target);
                         fighter.BasicAttack();
                     }

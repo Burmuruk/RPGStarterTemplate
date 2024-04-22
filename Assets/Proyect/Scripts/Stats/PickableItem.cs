@@ -20,4 +20,9 @@ namespace Burmuruk.Tesis.Stats
             };
         }
     }
+
+    public interface IInteractable
+    {
+        void Interact();
+    }
 }

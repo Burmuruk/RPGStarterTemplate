@@ -29,7 +29,7 @@ namespace Burmuruk.Tesis.Control
         protected bool isTargetFar = false;
         protected bool isTargetClose = false;
 
-        public event Action OnCombatStarted;
+        public virtual event Action<bool> OnCombatStarted;
 
         public Inventary Inventary { get => inventary; }
         public Collider[] CloseEnemies { get => earsPerceibed; }

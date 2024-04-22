@@ -20,6 +20,7 @@ namespace Burmuruk.Tesis.Stats
         Inventary inventary;
 
         public event Action OnDied;
+        public event Action<float> OnDamage;
 
         Dictionary<ItemType, int> slots;
 
@@ -42,7 +43,7 @@ namespace Burmuruk.Tesis.Stats
             set => hp = value;
         }
 
-        public int MaxHp { get; set; }
+        public int MaxHp { get => m_stats.maxHp; set => maxHp = value; }
         #endregion
 
         #region Combat
@@ -96,7 +97,7 @@ namespace Burmuruk.Tesis.Stats
                 Hp -= amount;
             }
 
-            print(Hp);
+            OnDamage?.Invoke(Hp * 100 / maxHp);
         }
 
         private void Start()

@@ -66,7 +66,7 @@ namespace Burmuruk.Utilities
         public void Restart()
         {
             currentTime = 0;
-            CanUse = true;
+            canUse = true;
             inCoolDown = false;
         }
 
@@ -74,8 +74,8 @@ namespace Burmuruk.Utilities
         {
             if (inCoolDown) yield break;
 
-            CanUse = false;
             inCoolDown = true;
+            CanUse = false;
             currentTime = time - Time.deltaTime;
 
             while (currentTime > 0)
