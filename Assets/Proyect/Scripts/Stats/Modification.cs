@@ -34,6 +34,11 @@ namespace Burmuruk.Tesis.Stats
         {
             throw new System.NotImplementedException();
         }
+
+        int ISaveableItem.GetSubType()
+        {
+            return (int)type;
+        }
     }
 
     //public struct ModificationData

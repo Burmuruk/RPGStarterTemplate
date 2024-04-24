@@ -1,16 +1,13 @@
-﻿using Burmuruk.Tesis.Stats;
+﻿using Burmuruk.Tesis.Control;
 using Burmuruk.Utilities;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using TMPro;
-using UnityEditor.Profiling;
 using UnityEngine;
-using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.Pool;
 using UnityEngine.UI;
 
-namespace Burmuruk.Tesis.Control
+namespace Burmuruk.Tesis.UI
 {
     public class HUDManager : MonoBehaviour
     {
@@ -81,97 +78,6 @@ namespace Burmuruk.Tesis.Control
             Enemies
         }
 
-        [Serializable]
-        record StackableLabel
-        {
-            public GameObject container;
-            public StackableNode node;
-            public float showingTime;
-            public int amount;
-            public int maxAmount;
-            public bool instanciateParent = false;
-
-            private ObjectPool<StackableNode> pool;
-            public List<StackableNode> activeNodes {  get; private set; }
-
-            public void Initialize()
-            {
-                pool = new(CreateElement, GetElement, ReleaseElement, RemoveElement, defaultCapacity: amount, maxSize: maxAmount);
-                activeNodes = new List<StackableNode>();
-            }
-
-            private void ReleaseElement(StackableNode node)
-            {
-                node.label.transform.parent.gameObject.SetActive(false);
-            }
-
-            public StackableNode Get()
-            {
-                return pool.Get();
-            }
-
-            public void Release(int idx = 0)
-            {
-                try
-                {
-                    Release(activeNodes[idx]);
-                }
-                catch (ArgumentOutOfRangeException)
-                {
-
-                }
-            }
-
-            public void Release(StackableNode node)
-            {
-                pool.Release(node);
-                activeNodes.Remove(node);
-            }
-
-            private void GetElement(StackableNode node)
-            {
-                node.label.transform.parent.gameObject.SetActive(true);
-                activeNodes.Add(node);
-            }
-
-            private StackableNode CreateElement()
-            {
-                if (pool.CountAll <= 0)
-                    return node;
-
-                GameObject newLabel;
-
-                if (instanciateParent)
-                {
-                    newLabel = Instantiate(container, container.transform.parent);
-                }
-                else 
-                {
-                    newLabel = Instantiate(node.label.transform.parent.gameObject, node.label.transform.parent.parent);
-                }
-
-                StackableNode newNode = node with
-                {
-                    label = newLabel.GetComponentInChildren<TextMeshProUGUI>(),
-                    image = newLabel.GetComponentInChildren<Image>()
-                };
-
-                return newNode;
-            }
-
-            private void RemoveElement(StackableNode node)
-            {
-                Destroy(node.label);
-            }
-        }
-
-        [Serializable]
-        record StackableNode
-        {
-            public TMPro.TextMeshProUGUI label;
-            public Image image;
-        }
-
         private void Awake()
         {
             playerController = FindObjectOfType<PlayerController>();
@@ -180,7 +86,8 @@ namespace Burmuruk.Tesis.Control
 
         private void Start()
         {
-            cdChangeFormation = new CoolDownAction(2, (value) => {
+            cdChangeFormation = new CoolDownAction(2, (value) =>
+            {
                 formationState = FormationState.Showing;
                 ShowFormations(!value);
             });
@@ -273,7 +180,7 @@ namespace Burmuruk.Tesis.Control
                 pFormationState.container.SetActive(true);
                 UpdateFormationText();
                 pFormationInfo.SetActive(false);
-                
+
                 if (cdFormationInfo.CanUse)
                     StartCoroutine(cdFormationInfo.CoolDown());
 
@@ -282,7 +189,7 @@ namespace Burmuruk.Tesis.Control
             else
             {
                 if (formationState == FormationState.Changing) return;
-                
+
                 StopCoroutine(cdFormationInfo.CoolDown());
                 pFormationState.container.SetActive(false);
                 pFormationState.Release();

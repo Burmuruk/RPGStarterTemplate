@@ -1,0 +1,100 @@
+﻿using System;
+using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+using UnityEngine.Pool;
+using UnityEngine.UI;
+
+namespace Burmuruk.Tesis.UI
+{
+    [Serializable]
+    public record StackableLabel
+    {
+        public GameObject container;
+        public StackableNode node;
+        public float showingTime;
+        public int amount;
+        public int maxAmount;
+        public bool instanciateParent = false;
+
+        private ObjectPool<StackableNode> pool;
+        public List<StackableNode> activeNodes { get; private set; }
+
+        public void Initialize()
+        {
+            pool = new(CreateElement, GetElement, ReleaseElement, RemoveElement, defaultCapacity: amount, maxSize: maxAmount);
+            activeNodes = new List<StackableNode>();
+        }
+
+        private void ReleaseElement(StackableNode node)
+        {
+            node.label.transform.parent.gameObject.SetActive(false);
+        }
+
+        public StackableNode Get()
+        {
+            return pool.Get();
+        }
+
+        public void Release(int idx = 0)
+        {
+            try
+            {
+                Release(activeNodes[idx]);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+
+            }
+        }
+
+        public void Release(StackableNode node)
+        {
+            pool.Release(node);
+            activeNodes.Remove(node);
+        }
+
+        private void GetElement(StackableNode node)
+        {
+            node.label.transform.parent.gameObject.SetActive(true);
+            activeNodes.Add(node);
+        }
+
+        private StackableNode CreateElement()
+        {
+            if (pool.CountAll <= 0)
+                return node;
+
+            GameObject newLabel;
+
+            if (instanciateParent)
+            {
+                newLabel = UnityEngine.MonoBehaviour.Instantiate(container, container.transform.parent);
+            }
+            else
+            {
+                newLabel = UnityEngine.MonoBehaviour.Instantiate(node.label.transform.parent.gameObject, node.label.transform.parent.parent);
+            }
+
+            StackableNode newNode = node with
+            {
+                label = newLabel.GetComponentInChildren<TextMeshProUGUI>(),
+                image = newLabel.GetComponentInChildren<Image>()
+            };
+
+            return newNode;
+        }
+
+        private void RemoveElement(StackableNode node)
+        {
+            UnityEngine.MonoBehaviour.Destroy(node.label);
+        }
+    }
+
+    [Serializable]
+    public record StackableNode
+    {
+        public TMPro.TextMeshProUGUI label;
+        public Image image;
+    }
+}

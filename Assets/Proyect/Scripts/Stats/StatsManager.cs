@@ -17,7 +17,7 @@ namespace Burmuruk.Tesis.Stats
         [SerializeField] float eyesRadious;
         [SerializeField] float earsRadious;
 
-        Inventary inventary;
+        IInventary inventary;
 
         public event Action OnDied;
         public event Action<float> OnDamage;
@@ -60,6 +60,11 @@ namespace Burmuruk.Tesis.Stats
         {
             get
             {
+                if (inventary.EquipedWeapon == null)
+                {
+                    return 0;
+                }
+
                 return inventary.EquipedWeapon.DamageRate;
             }
         }
@@ -102,7 +107,7 @@ namespace Burmuruk.Tesis.Stats
 
         private void Start()
         {
-            inventary = GetComponent<Inventary>();
+            inventary = GetComponent<IInventary>();
             UpdateStats();
         }
 

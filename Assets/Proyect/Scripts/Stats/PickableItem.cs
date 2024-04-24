@@ -3,21 +3,15 @@ using UnityEngine;
 
 namespace Burmuruk.Tesis.Stats
 {
-    public class PickableItem : MonoBehaviour
+    public class PickableItem : MonoBehaviour, ISaveableItem
     {
         [SerializeField] ItemsList list;
-        public ItemType type;
-        [SerializeField] int itemIdx;
+        public ItemType itemType;
+        [SerializeField] PickableType itemIdx;
 
-        public ISaveableItem Item
+        public int GetSubType()
         {
-            get => type switch
-            {
-                ItemType.Hability => list.Habilities[itemIdx],
-                ItemType.Modification => list.Modifiers[itemIdx],
-                ItemType.Consumable => list.Items[itemIdx],
-                _ => null
-            };
+            throw new System.NotImplementedException();
         }
     }
 

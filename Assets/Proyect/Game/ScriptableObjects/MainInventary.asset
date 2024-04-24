@@ -12,10 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4cb13b230a5a664298f5325155c81e8, type: 3}
   m_Name: MainInventary
   m_EditorClassIdentifier: 
-  weapons: []
+  weapons:
+  - {fileID: 11400000, guid: 1d4668583dbdb284c89aed484e05052e, type: 2}
   modifiers:
   - {fileID: 11400000, guid: f3731ab59b503e444b058fee7591a19e, type: 2}
   items: []
-  habilites:
-  - {fileID: 11400000, guid: 97b21fac9528c394eadb42ace7d7fe08, type: 2}
-  m_items: []
+  abilities:
+  - {fileID: 0}
+  Initialized: 0

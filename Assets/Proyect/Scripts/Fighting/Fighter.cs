@@ -1,4 +1,5 @@
-﻿using Burmuruk.Tesis.Stats;
+﻿using Burmuruk.Tesis.Control;
+using Burmuruk.Tesis.Stats;
 using Burmuruk.Utilities;
 using UnityEngine;
 
@@ -10,7 +11,7 @@ namespace Burmuruk.Tesis.Fighting
 
         StatsManager m_Stats;
         StatsManager m_targetStats;
-        Inventary m_inventary;
+        IInventary m_inventary;
         Movement.Movement m_movement;
         HabilitiesManager habManager;
 
@@ -23,11 +24,20 @@ namespace Burmuruk.Tesis.Fighting
         {
             m_Stats = GetComponent<StatsManager>();
             m_targetStats = GetComponent<StatsManager>();
-            m_inventary = GetComponent<Inventary>();
+            m_inventary = GetComponent<IInventary>();
         }
 
         private void Start()
         {
+            var decorator = m_inventary as InventaryEquipDecorator;
+
+            if (decorator != null)
+            {
+                decorator.Add(ItemType.Weapon, 0);
+                decorator.Equip(GetComponent<Character>(), ItemType.Weapon, 0);
+            }
+
+            //if (m_Stats.DamageRate == 0) return;
             cdBasicAttack = new CoolDownAction(m_Stats.DamageRate);
         }
 
@@ -37,6 +47,9 @@ namespace Burmuruk.Tesis.Fighting
             {
                 BasicAttack();
             }
+
+            if (m_Stats.DamageRate != 0)
+                cdBasicAttack = new CoolDownAction(m_Stats.DamageRate);
         }
 
         public void SetTarget(Transform target)
@@ -59,13 +72,13 @@ namespace Burmuruk.Tesis.Fighting
             }
         }
 
-        public void SpecialAttack(HabilityType type)
+        public void SpecialAttack(AbilityType type)
         {
-            var habilities = m_inventary.GetOwnedList(ItemType.Hability);
+            var habilities = m_inventary.GetOwnedList(ItemType.Ability);
 
             foreach (var hability in habilities)
             {
-                if (((Hability)hability.Item).Type == type)
+                if (hability.GetSubType() == (int)type)
                 {
                     var args = GetSpecialAttackArgs(type);
                     HabilitiesManager.habilitiesList[type]?.Invoke(args);
@@ -74,11 +87,11 @@ namespace Burmuruk.Tesis.Fighting
             }
         }
 
-        private object GetSpecialAttackArgs(HabilityType type) =>
+        private object GetSpecialAttackArgs(AbilityType type) =>
             type switch
             {
-                HabilityType.Dash => m_movement.CurDirection,
-                HabilityType.StealHealth => m_target,
+                AbilityType.Dash => m_movement.CurDirection,
+                AbilityType.StealHealth => m_target,
                 _ => null
             };
     }

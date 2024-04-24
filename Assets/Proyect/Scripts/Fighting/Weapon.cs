@@ -3,7 +3,7 @@
 namespace Burmuruk.Tesis.Stats
 {
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Weapon", order = 1)]
-    public class Weapon : ScriptableObject
+    public class Weapon : ScriptableObject, ISaveableItem
     {
         [SerializeField] WeaponType m_type;
         [SerializeField] int m_damage;
@@ -13,6 +13,11 @@ namespace Burmuruk.Tesis.Stats
         public int Damage { get => m_damage; }
         public float DamageRate { get => m_rateDamage; }
         public float MinDistance { get => m_minDistance; }
+
+        int ISaveableItem.GetSubType()
+        {
+            return (int)m_type;
+        }
     }
 
     enum WeaponType

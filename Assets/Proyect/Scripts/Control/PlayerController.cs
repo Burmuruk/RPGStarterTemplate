@@ -4,19 +4,20 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using static Unity.Burst.Intrinsics.X86.Avx;
 
 namespace Burmuruk.Tesis.Control
 {
     class PlayerController : MonoBehaviour
     {
         Character player;
+        GameManager gameManager;
+        LevelManager levelManager;
 
         bool m_shouldMove = false;
         Vector3 m_direction = default;
         bool m_canChangeFormation = false;
         private List<PickableItem> m_pickables = new List<PickableItem>();
-        private List<Interactable> m_interactables = new List<Interactable>();
+        private List<IInteractable> m_interactables = new List<IInteractable>();
         int interactableIdx = 0;
         
         enum Interactions
@@ -36,7 +37,7 @@ namespace Burmuruk.Tesis.Control
         public event Action<bool, string> OnInteractableExit;
 
         public AIEnemyController Target { get; private set; }
-        public bool HaveInteractable
+        public bool HavePickable
         {
             get
             {
@@ -49,9 +50,15 @@ namespace Burmuruk.Tesis.Control
             }
         }
 
+        private void Start()
+        {
+            gameManager = GetComponent<GameManager>();
+            levelManager = GetComponent<LevelManager>();
+        }
+
         void FixedUpdate()
         {
-            if (m_shouldMove && player)
+            if (m_shouldMove && player && GameManager.Instance.GameState == GameManager.State.Playing)
             {
                 try
                 {
@@ -78,6 +85,29 @@ namespace Burmuruk.Tesis.Control
         public void Move(InputAction.CallbackContext context)
         {
             if (!player) return;
+
+            if (gameManager.GameState == GameManager.State.UI)
+            {
+                if (context.performed)
+                {
+                    var dir = context.ReadValue<Vector2>();
+                    if (dir.magnitude <= 0)
+                    {
+                        m_shouldMove = false;
+                        return;
+                    }
+
+                    levelManager.RotatePlayer(dir);
+                    m_shouldMove = true;
+                }
+                else
+                {
+                    levelManager.RotatePlayer(Vector2.zero);
+                    m_shouldMove = false;
+                }
+            }
+            else if (gameManager.GameState != GameManager.State.Playing)
+                return;
 
             if (context.performed)
             {
@@ -137,7 +167,7 @@ namespace Burmuruk.Tesis.Control
 
         public void ChangeFormation(InputAction.CallbackContext context)
         {
-            if (!player) return;
+            if (!player || gameManager.GameState != GameManager.State.Playing) return;
 
             if (context.performed && m_canChangeFormation)
             {
@@ -158,17 +188,24 @@ namespace Burmuruk.Tesis.Control
 
         public void Interact(InputAction.CallbackContext context)
         {
-            if (!HaveInteractable) return;
+            if (!context.performed) return;
 
-            var cmp = m_pickables[0];
-            var inventary = player.GetComponent<Inventary>();
-            inventary.Add(cmp.type, cmp.Item);
-            inventary.Equip(cmp.type, cmp.Item);
-            cmp.gameObject.SetActive(false);
+            if (HavePickable)
+            {
+                var cmp = m_pickables[0];
+                var inventary = player.GetComponent<InventaryEquipDecorator>();
+                inventary.Add(cmp.itemType, cmp);
+                inventary.Equip(player, cmp.itemType, cmp.GetSubType());
+                cmp.gameObject.SetActive(false);
 
-            m_pickables.Remove(cmp);
+                m_pickables.Remove(cmp);
 
-            OnItemPicked?.Invoke(cmp.type.ToString(), cmp.transform.position);
+                OnItemPicked?.Invoke(cmp.itemType.ToString(), cmp.transform.position);
+            }
+            else if (m_interactables.Count > 0)
+            {
+                m_interactables[0].Interact();
+            }
         }
 
         public void Cross(InputAction.CallbackContext context)
@@ -176,6 +213,11 @@ namespace Burmuruk.Tesis.Control
             if (!context.performed) return;
 
             var value = context.ReadValue<Vector2>();
+        }
+
+        public void Pause(InputAction.CallbackContext context)
+        {
+            gameManager.ExitUI();
         }
         #endregion
 
@@ -208,9 +250,9 @@ namespace Burmuruk.Tesis.Control
         private void OnTriggerEnter(Collider other)
         {
             //Physics.OverlapSphere(transform.position, .5f, 1<<11);
-            //if (other.gameObject.GetComponent<Pickable>() is var item && item)
+            //if (other.gameObject.GetComponent<Pickable>() is var itemType && itemType)
             //{
-            //    player.inventary.Add(ItemType.Consumable, item);
+            //    player.inventary.Add(ItemType.Consumable, itemType);
             //    Destroy(other.gameObject);
             //}
         }
@@ -236,7 +278,7 @@ namespace Burmuruk.Tesis.Control
             }
             else if (m_pickables.Count > 0)
             {
-                OnPickableEnter?.Invoke(true, "Tomar"/* + m_pickables[0].type.ToString()*/);
+                OnPickableEnter?.Invoke(true, "Tomar"/* + m_items[0].subType.ToString()*/);
             }
         }
 
@@ -248,8 +290,8 @@ namespace Burmuruk.Tesis.Control
 
             foreach (var item in items)
             {
-                var cmp = item.GetComponent<Interactable>();
-                if (cmp)
+                var cmp = item.GetComponent<IInteractable>();
+                if (cmp != null)
                 {
                     m_interactables.Add(cmp);
                 }
@@ -257,12 +299,25 @@ namespace Burmuruk.Tesis.Control
 
             if (hadItem && m_interactables.Count <= 0)
             {
-                OnInteractableExit?.Invoke(false, "");
+                OnPickableExit?.Invoke(false, "");
             }
             else if (m_interactables.Count > 0)
             {
-                OnInteractableEnter?.Invoke(true, "Interact");
+                OnPickableEnter?.Invoke(true, "Interact");
             }
+        }
+
+        private void TakeItem()
+        {
+            var cmp = m_pickables[0];
+            var inventary = player.GetComponent<InventaryEquipDecorator>();
+            inventary.Add(cmp.itemType, cmp);
+            //inventary.Equip(cmp.subType, cmp.Item);
+            cmp.gameObject.SetActive(false);
+
+            m_pickables.Remove(cmp);
+
+            OnItemPicked?.Invoke(cmp.itemType.ToString(), cmp.transform.position);
         }
         #endregion
     }

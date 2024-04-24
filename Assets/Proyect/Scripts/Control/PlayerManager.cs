@@ -31,7 +31,7 @@ namespace Burmuruk.Tesis.Control
                 return players;
             }
         }
-        public Inventary playerInventary
+        public IInventary playerInventary
         {
             get
             {
@@ -67,9 +67,8 @@ namespace Burmuruk.Tesis.Control
 
         private void Start()
         {
+            Players.ForEach(p => ((InventaryEquipDecorator)p.Inventary).SetInventary(GetComponent<Inventary>()));
             SetPlayerControl();
-
-            players.ForEach((player) => player.OnCombatStarted += EnterToCombatMode);
         }
 
         public void SetPlayerControl(int idx)

@@ -8,6 +8,18 @@ namespace Burmuruk.Tesis.Stats
         [SerializeField] int hp;
 
         public int Hp;
+
+        public int GetSubType()
+        {
+            return (int)hp;
+        }
+    }
+
+    public enum PickableType
+    {
+        None,
+        Hp,
+        Speed
     }
 
     public interface IPickable

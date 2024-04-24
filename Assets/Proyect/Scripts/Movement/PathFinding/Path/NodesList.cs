@@ -133,6 +133,22 @@ namespace Burmuruk.AI
             //CalculateConnections();
         }
 
+        private void FixedUpdate()
+        {
+            if (meshState == pState.None && connectionsState == pState.None && memoryFreed == pState.None)
+            {
+                Calculate_PathMesh();
+            }
+            else if (meshState == pState.finished && connectionsState == pState.None && memoryFreed == pState.None)
+            {
+                CalculateNodesConnections();
+            }
+            else if (meshState == pState.finished && connectionsState == pState.finished && memoryFreed == pState.None)
+            {
+                SaveList();
+            }
+        }
+
         private void OnDrawGizmos()
         {
             if (showChanges)
@@ -411,7 +427,7 @@ namespace Burmuruk.AI
             var dir = (nodeB.Position - nodeA.Position);
 
             bool hitted = false;
-            hit = Physics.CapsuleCastAll(pointA, pointB, pRadious, dir.normalized, Vector3.Distance(nodeA.Position, nodeB.Position));
+            hit = Physics.CapsuleCastAll(pointA, pointB, pRadious, dir.normalized, Vector3.Distance(nodeA.Position, nodeB.Position), 1 << layer);
             //Debug.DrawLine(pointA, pointB);
             //Debug.DrawRay(pointA, nextDir.normalized * Vector3.Distance(nodeA.Position, nodeB.Position));
 

@@ -12,7 +12,8 @@ namespace Burmuruk.Tesis.Movement
     {
         None,
         Moving,
-        FollowingPath
+        FollowingPath,
+        Calculating
     }
 
     [RequireComponent(typeof(Rigidbody))]

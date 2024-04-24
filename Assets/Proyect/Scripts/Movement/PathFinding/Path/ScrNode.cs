@@ -30,10 +30,10 @@ namespace Burmuruk.AI
         //{
         //    if (nodeConnections == null) return;
 
-        //    foreach (var item in NodeConnections)
+        //    foreach (var itemType in NodeConnections)
         //    {
-        //        if (item.connectionType == ConnectionType.BIDIMENSIONAL)
-        //            Debug.DrawRay(transform.position, item.node2.Position - transform.position, Color.blue);
+        //        if (itemType.connectionType == ConnectionType.BIDIMENSIONAL)
+        //            Debug.DrawRay(transform.position, itemType.node2.Position - transform.position, Color.blue);
         //    }
         //}
 

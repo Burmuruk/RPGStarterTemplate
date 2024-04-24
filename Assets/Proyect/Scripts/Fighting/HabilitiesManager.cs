@@ -12,11 +12,11 @@ namespace Burmuruk.Tesis.Fighting
         Movement.Movement m_movement;
         StatsManager stats;
 
-        public static readonly Dictionary<HabilityType, Action<object>> habilitiesList = new()
+        public static readonly Dictionary<AbilityType, Action<object>> habilitiesList = new()
         {
-            { HabilityType.Dash, Dash },
-            { HabilityType.Jump, Jump },
-            { HabilityType.StealHealth, StealLife },
+            { AbilityType.Dash, Dash },
+            { AbilityType.Jump, Jump },
+            { AbilityType.StealHealth, StealLife },
         };
 
         public static void Dash(object direction)
@@ -38,7 +38,7 @@ namespace Burmuruk.Tesis.Fighting
         }
     }
 
-    public enum HabilityType
+    public enum AbilityType
     {
         None,
         Dash,

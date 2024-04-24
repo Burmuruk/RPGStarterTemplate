@@ -23,7 +23,7 @@ namespace Burmuruk.Tesis.Control
         [HideInInspector] public Movement.Movement mover;
         [HideInInspector] public Fighting.Fighter fighter;
         [HideInInspector] public StatsManager stats;
-        [HideInInspector] Inventary inventary;
+        [HideInInspector] IInventary inventary;
 
         protected Collider[] eyesPerceibed, earsPerceibed;
         protected bool isTargetFar = false;
@@ -31,7 +31,7 @@ namespace Burmuruk.Tesis.Control
 
         public virtual event Action<bool> OnCombatStarted;
 
-        public Inventary Inventary { get => inventary; }
+        public IInventary Inventary { get => inventary; }
         public Collider[] CloseEnemies { get => earsPerceibed; }
         public Collider[] FarEnemies { get => eyesPerceibed; }
         public bool IsTargetFar { get => isTargetFar; }
@@ -42,7 +42,7 @@ namespace Burmuruk.Tesis.Control
             mover = GetComponent<Movement.Movement>();
             fighter = GetComponent<Fighting.Fighter>();
             stats = GetComponent<StatsManager>();
-            inventary = gameObject.GetComponent<Inventary>();
+            inventary = gameObject.GetComponent<IInventary>();
         }
 
         protected virtual void Start()

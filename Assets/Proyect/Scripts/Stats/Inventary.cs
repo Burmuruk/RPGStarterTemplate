@@ -1,49 +1,25 @@
-﻿using System;
+﻿using Burmuruk.Tesis.Control;
+using Burmuruk.Tesis.Fighting;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static UnityEditor.Progress;
 
 namespace Burmuruk.Tesis.Stats
 {
-    public class Inventary : MonoBehaviour
+    public class Inventary : MonoBehaviour, IInventary
     {
         [Header("Status")]
-        [SerializeField] Weapon m_equipedWeapon;
+        [SerializeField] ItemsList m_ItemsList;
         StatsManager stats;
 
-        public struct EquipedItem
+        Dictionary<ItemType, Dictionary<int, (ISaveableItem item, int maxAmount)>> m_owned = new()
         {
-            ISaveableItem item;
-            bool isEquipped;
-            int count;
-
-            public ISaveableItem Item { get => item; }
-            public int Count { get => count; }
-
-            public EquipedItem(ISaveableItem item)
-            {
-                this.item = item;
-                isEquipped = false;
-                count = 0;
-            }
-
-            public EquipedItem(ISaveableItem item, int count) : this(item)
-            {
-                this.count = count;
-            }
-
-            public void Add(int amount = 1) => count += amount;
-            public void Remove(int amount = 1) => count -= amount;
-
-            public void Equip(bool value) => isEquipped = value;
-        }
-
-        Dictionary<ItemType, List<(EquipedItem item, int maxAmount)>> m_owned = new()
-        {
-            { ItemType.Weapon, new List<(EquipedItem item, int maxAmount)>() },
-            { ItemType.Hability, new List<(EquipedItem item, int maxAmount)>() },
-            { ItemType.Modification, new List<(EquipedItem item, int maxAmount)>() },
-            { ItemType.Consumable, new List<(EquipedItem item, int maxAmount)>() },
+            { ItemType.Weapon, new Dictionary<int, (ISaveableItem item, int maxAmount)>() },
+            { ItemType.Ability, new Dictionary<int, (ISaveableItem item, int maxAmount)>() },
+            { ItemType.Modification, new Dictionary<int, (ISaveableItem item, int maxAmount)>() },
+            { ItemType.Consumable, new Dictionary<int, (ISaveableItem item, int maxAmount)>() },
         };
 
         public event Action OnWeaponChanged;
@@ -52,72 +28,81 @@ namespace Burmuruk.Tesis.Stats
         {
             get
             {
-                return m_equipedWeapon;
+                foreach (var weapon in m_owned[ItemType.Weapon].Values)
+                {
+                    if (((EquipedItem)weapon.item) is var w && w.IsEquip)
+                    {
+                        return (Weapon)GetOwnedItem(w.ItemType, weapon.item.GetSubType());
+                    }
+                }
+
+                return null;
             }
         }
 
         private void Awake()
         {
             //m_weapons ??= weapons;
-            ////m_habilites ??= habilites;
+            ////m_habilites ??= abilities;
             //m_modifiers ??= modifiers;
             stats = GetComponent<StatsManager>();
-        }
-
-        private void Start()
-        {
-            
         }
 
         private void Update()
         {
             if (Input.GetKeyDown(KeyCode.Alpha1))
             {
-                if (m_owned.Count <= 0 || m_owned[ItemType.Hability].Count <= 0)
+                if (m_owned.Count <= 0 || m_owned[ItemType.Ability].Count <= 0)
                     return;
 
-                ((IUsable)m_owned[ItemType.Hability][0].item.Item).Use();
+                var type = (AbilityType)(m_owned[ItemType.Ability][0].item.GetSubType());
+                ((IUsable)m_ItemsList.GetAbility(type)).Use();
+                
             }
         }
 
-        public void ChangeEquipedWeapon(Weapon weapon)
+        public virtual bool Add(ItemType type, ISaveableItem item)
         {
-            m_equipedWeapon = weapon;
-            OnWeaponChanged?.Invoke();
+            var generalList = (m_owned[type] ??= new());
+
+            int subType = item.GetSubType();
+
+            if (generalList.ContainsKey(subType))
+            {
+                generalList[subType] = (
+                    generalList[subType].item,
+                    generalList[subType].maxAmount + 1);
+            }
+            else
+            {
+                generalList.Add(subType, (item, 99));
+            }
+
+            return true;
         }
 
-        public void Add(ItemType type, ISaveableItem item)
+        public virtual bool Remove(ItemType type, int idx)
         {
-            (m_owned[type]??= new()).Add((new(item), stats.GetSlots(type)));
+            m_owned[type].Remove(idx);
+
+            return true;
         }
 
-        public void Remove(ItemType type, int idx)
+        public List<ISaveableItem> GetOwnedList(ItemType type)
         {
-            m_owned[type].RemoveAt(idx);
-        }
-
-        public List<EquipedItem> GetOwnedList(ItemType type)
-        {
-            return (from list in m_owned[type] select list.item).ToList();
+            return (from list in m_owned[type] select list.Value.item).ToList();
         }
 
         public ISaveableItem GetOwnedItem(ItemType type, int idx)
         {
-            return m_owned[type][idx].item.Item;
+            var subtype = m_owned[type][idx].item.GetSubType();
+            
+            return m_ItemsList.Get(type, subtype);
         }
 
-        public void Equip(ItemType type, ISaveableItem item)
+        public void Add(ItemType itemType, int subType)
         {
-            print("Equip");
-            for (int i = 0; i < m_owned[type].Count; i++)
-            {
-                if (m_owned[type][i].Item1.Item == item)
-                {
-                    m_owned[type][i].Item1.Equip(true);
-                    ((IEquipable)m_owned[type][i].Item1.Item).Equip(stats); 
-                    return;
-                }
-            }
+            
         }
     }
 
@@ -125,14 +110,14 @@ namespace Burmuruk.Tesis.Stats
     {
         None,
         Consumable,
-        Hability,
+        Ability,
         Modification,
         Weapon
     }
 
     public interface ISaveableItem
     {
-
+        public int GetSubType();
     }
 
     public interface IEquipable
