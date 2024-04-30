@@ -9,10 +9,22 @@ namespace Burmuruk.Tesis.Stats
         [SerializeField] int m_damage;
         [SerializeField] float m_rateDamage;
         [SerializeField] float m_minDistance;
+        [SerializeField] string m_name;
+        [SerializeField] string m_description;
 
         public int Damage { get => m_damage; }
         public float DamageRate { get => m_rateDamage; }
         public float MinDistance { get => m_minDistance; }
+
+        public string GetName()
+        {
+            return m_name;
+        }
+
+        public string GetDescription()
+        {
+            return m_description;
+        }
 
         int ISaveableItem.GetSubType()
         {

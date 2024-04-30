@@ -1,5 +1,6 @@
 ﻿using Burmuruk.Tesis.Control;
 using System;
+using System.Collections.Generic;
 
 namespace Burmuruk.Tesis.Stats
 {
@@ -8,7 +9,7 @@ namespace Burmuruk.Tesis.Stats
         ItemType itemType;
         bool isEquipped;
         int count;
-        Character character;
+        List<Character> characters;
         int subType;
 
         public event Action<Character, EquipedItem> OnUnequiped;
@@ -16,6 +17,7 @@ namespace Burmuruk.Tesis.Stats
         public ItemType ItemType { get => itemType; }
         public int Count { get => count; }
         public bool IsEquip { get => isEquipped; }
+        public List<Character> Characters { get => characters; }
 
         public EquipedItem(ISaveableItem item, ItemType itemType)
         {
@@ -23,7 +25,7 @@ namespace Burmuruk.Tesis.Stats
             subType = item.GetSubType();
             isEquipped = false;
             count = 0;
-            character = null;
+            characters = new();
             OnUnequiped = delegate { };
         }
 
@@ -33,13 +35,13 @@ namespace Burmuruk.Tesis.Stats
             this.subType = subType;
             isEquipped = false;
             count = 0;
-            character = null;
+            characters = new();
             OnUnequiped = delegate { };
         }
 
-        public EquipedItem(ISaveableItem item, ItemType itemType, Character character) : this(item, itemType)
+        public EquipedItem(ISaveableItem item, ItemType itemType, params Character[] characters) : this(item, itemType)
         {
-            this.character = character;
+            this.characters = new List<Character>(characters);
         }
 
         public EquipedItem(ISaveableItem item, ItemType itemType, int count) : this(item, itemType)
@@ -53,15 +55,36 @@ namespace Burmuruk.Tesis.Stats
         public void Equip(bool value, Character character)
         {
             isEquipped = value;
-            this.character = character;
+            this.characters.Add(character);
 
             if (!value)
+            {
                 OnUnequiped(character, this);
+                characters.Remove(character);
+            }
+        }
+
+        public void Unequip(Character character)
+        {
+            characters.Remove(character);
+
+            if (characters.Count == 0)
+                isEquipped = false;
         }
 
         public int GetSubType()
         {
             return subType;
+        }
+
+        public string GetName()
+        {
+            return "";
+        }
+
+        public string GetDescription()
+        {
+            return "";
         }
     }
 }

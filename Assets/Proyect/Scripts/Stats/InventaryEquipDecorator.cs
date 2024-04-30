@@ -2,14 +2,13 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using static UnityEditor.Progress;
 
 namespace Burmuruk.Tesis.Stats
 {
     public class InventaryEquipDecorator : MonoBehaviour, IInventary
     {
         Inventary inventary;
-        PlayerItemEquipper itemEquipper;
+        PlayerCustomizationManager customazationManager;
 
         (ItemType itemType, EquipedItem item) alarmedRemovedItem = default;
         (ItemType itemType, Character player, EquipedItem item) alarmedEquipItem = default;
@@ -19,19 +18,25 @@ namespace Burmuruk.Tesis.Stats
 
         public Weapon EquipedWeapon { get => inventary.EquipedWeapon; }
 
+        private void Start()
+        {
+            customazationManager = GetComponent<PlayerCustomizationManager>();
+        }
+
         public void SetInventary(Inventary inventary) => this.inventary = inventary;
 
         public void Equip(Character player, ItemType itemType, int type)
         {
             var item = inventary.GetOwnedItem(itemType, type);
 
-            if (item != null) return;
+            if (item == null) return;
 
             alarmedEquipItem = (itemType, player, (EquipedItem)item);
 
             if (((EquipedItem)item).IsEquip)
             {
                 OnTryAlreadyEquiped?.Invoke();
+                return;
             }
 
             EquipDirec();
@@ -43,17 +48,21 @@ namespace Burmuruk.Tesis.Stats
             equipedItem.Equip(true, player);
             //equipedItem.OnUnequiped += Unequip;
 
-            itemEquipper.Equip(itemType, equipedItem.GetSubType());
+            if (itemType == ItemType.Modification)
+            {
+                var prefab = inventary.GetItem(itemType, equipedItem.GetSubType());
+                customazationManager.EquipModification(player, (Modification)prefab);
+            }
 
-            alarmedEquipItem = default;
+            alarmedEquipItem = default; 
         }
 
         public void Unequip(Character player, EquipedItem item)
         {
-            item.Equip(false, player);
+            item.Unequip(player);
             //item.OnUnequiped -= Unequip;
 
-            itemEquipper.Unequip(item.ItemType, item.GetSubType());
+            customazationManager.UnequipModification(player, item.GetSubType());
         }
 
         public bool Add(ItemType type, ISaveableItem item)
@@ -103,7 +112,35 @@ namespace Burmuruk.Tesis.Stats
 
         public List<ISaveableItem> GetOwnedList(ItemType type)
         {
-            return GetOwnedList(type);
+            return inventary.GetOwnedList(type);
+        }
+
+        public List<ISaveableItem> GetEquipedItems(ItemType itemType, Character character)
+        {
+            var items = inventary.GetOwnedList(itemType);
+
+            List<ISaveableItem> equipedItems = new(); 
+
+            foreach (var item in items)
+            {
+                var equiped = item as EquipedItem;
+                if (equiped.IsEquip && equiped.Characters.Contains(character))
+                {
+                    equipedItems.Add(equiped);
+                }
+            }
+
+            return equipedItems;
+        }
+
+        public List<ISaveableItem> GetList(ItemType type)
+        {
+            return inventary.GetList(type);
+        }
+
+        public ISaveableItem GetItem(ItemType type, int idx)
+        {
+            return inventary.GetItem(type, idx);
         }
     }
 }

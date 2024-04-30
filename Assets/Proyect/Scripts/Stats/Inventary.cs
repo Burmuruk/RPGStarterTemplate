@@ -4,15 +4,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static UnityEditor.Progress;
 
 namespace Burmuruk.Tesis.Stats
 {
-    public class Inventary : MonoBehaviour, IInventary
+    public class Inventary : MonoBehaviour, IInventary, ISaveable
     {
         [Header("Status")]
         [SerializeField] ItemsList m_ItemsList;
         StatsManager stats;
+
+        int id;
+        bool isPersistentData = false;
 
         Dictionary<ItemType, Dictionary<int, (ISaveableItem item, int maxAmount)>> m_owned = new()
         {
@@ -22,8 +24,11 @@ namespace Burmuruk.Tesis.Stats
             { ItemType.Consumable, new Dictionary<int, (ISaveableItem item, int maxAmount)>() },
         };
 
+
         public event Action OnWeaponChanged;
 
+        public int ID { get => id; }
+        public bool IsPersistentData { get => isPersistentData; }
         public Weapon EquipedWeapon
         {
             get
@@ -32,7 +37,7 @@ namespace Burmuruk.Tesis.Stats
                 {
                     if (((EquipedItem)weapon.item) is var w && w.IsEquip)
                     {
-                        return (Weapon)GetOwnedItem(w.ItemType, weapon.item.GetSubType());
+                        return (Weapon)GetItem(w.ItemType, weapon.item.GetSubType());
                     }
                 }
 
@@ -45,6 +50,7 @@ namespace Burmuruk.Tesis.Stats
             //m_weapons ??= weapons;
             ////m_habilites ??= abilities;
             //m_modifiers ??= modifiers;
+            id = GetHashCode();
             stats = GetComponent<StatsManager>();
         }
 
@@ -61,8 +67,20 @@ namespace Burmuruk.Tesis.Stats
             }
         }
 
+        public object Save()
+        {
+            return m_owned;
+        }
+        public void Load(object args)
+        {
+            m_owned = (Dictionary<ItemType, Dictionary<int, (ISaveableItem item, int maxAmount)>>)args;
+        }
+
         public virtual bool Add(ItemType type, ISaveableItem item)
         {
+            //if (GetItem(type, item.GetSubType()) == null) 
+            //    return false;
+
             var generalList = (m_owned[type] ??= new());
 
             int subType = item.GetSubType();
@@ -95,14 +113,32 @@ namespace Burmuruk.Tesis.Stats
 
         public ISaveableItem GetOwnedItem(ItemType type, int idx)
         {
-            var subtype = m_owned[type][idx].item.GetSubType();
-            
-            return m_ItemsList.Get(type, subtype);
+            if (m_owned[type].ContainsKey(idx))
+            {
+                return m_owned[type][idx].item;
+            }
+
+            return null;
         }
 
-        public void Add(ItemType itemType, int subType)
+        public List<ISaveableItem> GetList(ItemType type)
         {
-            
+            List<ISaveableItem> realList = new();
+
+            foreach (var item in GetOwnedList(type))
+            {
+                realList.Add(m_ItemsList.Get(type, item.GetSubType()));
+            }
+
+            return realList;
+        }
+
+        public ISaveableItem GetItem(ItemType type, int subType)
+        {
+            if (GetOwnedItem(type, subType) == null) 
+                return null;
+
+            return m_ItemsList.Get(type, subType);
         }
     }
 
@@ -118,6 +154,8 @@ namespace Burmuruk.Tesis.Stats
     public interface ISaveableItem
     {
         public int GetSubType();
+        public string GetName();
+        public string GetDescription();
     }
 
     public interface IEquipable

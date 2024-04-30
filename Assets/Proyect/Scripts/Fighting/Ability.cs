@@ -9,6 +9,8 @@ namespace Burmuruk.Tesis.Stats
     {
         [SerializeField] float speed;
         [SerializeField] AbilityType type;
+        [SerializeField] string m_name;
+        [SerializeField] string m_description;
 
         public AbilityType Type { get => type; }
 
@@ -27,9 +29,19 @@ namespace Burmuruk.Tesis.Stats
             HabilitiesManager.habilitiesList[type].Invoke(null);
         }
 
-        int ISaveableItem.GetSubType()
+        public int GetSubType()
         {
             return (int)type;
+        }
+
+        public string GetName()
+        {
+            return m_name;
+        }
+
+        public string GetDescription()
+        {
+            return m_description;
         }
     }
 

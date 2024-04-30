@@ -39,7 +39,7 @@ namespace Burmuruk.Tesis.Control
                 return false;
 
             state = State.UI;
-            //playerInput.SwitchCurrentActionMap("UI");
+            playerInput.SwitchCurrentActionMap("UI");
 
             return true;
         }

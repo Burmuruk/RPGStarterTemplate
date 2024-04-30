@@ -31,7 +31,7 @@ namespace Burmuruk.Tesis.Control
 
         public virtual event Action<bool> OnCombatStarted;
 
-        public IInventary Inventary { get => inventary; }
+        public IInventary Inventary { get => inventary; set => inventary = value; }
         public Collider[] CloseEnemies { get => earsPerceibed; }
         public Collider[] FarEnemies { get => eyesPerceibed; }
         public bool IsTargetFar { get => isTargetFar; }

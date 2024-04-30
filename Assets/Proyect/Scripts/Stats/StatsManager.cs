@@ -90,6 +90,11 @@ namespace Burmuruk.Tesis.Stats
         } 
         #endregion
 
+        public void SetInventary(IInventary inventary)
+        {
+            this.inventary = inventary;
+        }
+
         public void ApplyDamage(int amount)
         {
             if (hp - amount < 0)
@@ -107,7 +112,7 @@ namespace Burmuruk.Tesis.Stats
 
         private void Start()
         {
-            inventary = GetComponent<IInventary>();
+            inventary??= GetComponent<IInventary>();
             UpdateStats();
         }
 

@@ -9,8 +9,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cfd7f239e967c6a48a82aa516749a4ee, type: 3}
+  m_Script: {fileID: 11500000, guid: 4c3e54cf44c798e47b97f54a3813d8f8, type: 3}
   m_Name: Dash
   m_EditorClassIdentifier: 
-  speed: 15
+  speed: 10
   type: 1
+  m_name: Dash
+  m_description: Moves fast

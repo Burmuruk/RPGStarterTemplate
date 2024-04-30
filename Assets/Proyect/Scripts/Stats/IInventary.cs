@@ -11,9 +11,10 @@ namespace Burmuruk.Tesis.Stats
     {
         public Weapon EquipedWeapon { get; }
         public bool Add(ItemType type, ISaveableItem item);
-        public void Add(ItemType itemType, int idx);
         public bool Remove(ItemType type, int idx);
         public List<ISaveableItem> GetOwnedList(ItemType type);
+        public List<ISaveableItem> GetList(ItemType type);
         public ISaveableItem GetOwnedItem(ItemType type, int idx);
+        public ISaveableItem GetItem(ItemType type, int idx);
     }
 }

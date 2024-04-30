@@ -193,7 +193,7 @@ namespace Burmuruk.Tesis.Control
             if (HavePickable)
             {
                 var cmp = m_pickables[0];
-                var inventary = player.GetComponent<InventaryEquipDecorator>();
+                var inventary = GetComponent<InventaryEquipDecorator>();
                 inventary.Add(cmp.itemType, cmp);
                 inventary.Equip(player, cmp.itemType, cmp.GetSubType());
                 cmp.gameObject.SetActive(false);

@@ -43,7 +43,7 @@ namespace Burmuruk.Tesis.Control
                 return players[m_CurPlayer.Value].Inventary;
             }
         }
-        public Inventary MainInventary { get; private set; }
+        public IInventary MainInventary { get; private set; }
         public Transform CurPlayer
         {
             get
@@ -61,13 +61,20 @@ namespace Burmuruk.Tesis.Control
         private void Awake()
         {
             playerController = FindObjectOfType<PlayerController>();
-
             playerController.OnFormationChanged += ChangeFormation;
+            MainInventary = GetComponent<InventaryEquipDecorator>();
+
+            ((InventaryEquipDecorator)MainInventary).SetInventary(GetComponent<Inventary>());
+            
+            foreach (var player in Players)
+            {
+                player.Inventary = MainInventary;
+                player.stats.SetInventary(MainInventary);
+            }
         }
 
         private void Start()
         {
-            Players.ForEach(p => ((InventaryEquipDecorator)p.Inventary).SetInventary(GetComponent<Inventary>()));
             SetPlayerControl();
         }
 

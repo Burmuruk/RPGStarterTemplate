@@ -1,6 +1,7 @@
 using Burmuruk.Tesis.Control;
 using Burmuruk.Tesis.Movement;
 using Burmuruk.Tesis.Movement.PathFindig;
+using Burmuruk.Tesis.Stats;
 using Burmuruk.Tesis.UI;
 using Burmuruk.WorldG.Patrol;
 using UnityEngine;
@@ -104,8 +105,10 @@ public class LevelManager : MonoBehaviour
 
                 if (menuCharacters != null)
                 {
-                    var inventary = FindObjectOfType<PlayerManager>().MainInventary;
-                    menuCharacters.SetInventary(inventary);
+                    var cloths = FindObjectOfType<PlayerCustomizationManager>();
+                    var pm = FindObjectOfType<PlayerManager>();
+                    menuCharacters.SetPlayers(pm.Players, cloths);
+                    menuCharacters.SetInventary(pm.MainInventary);
                     break;
                 }
             }

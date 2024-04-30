@@ -5,11 +5,16 @@ namespace Burmuruk.Tesis.Stats
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Modifier", order = 3)]
     public class Modification : ScriptableObject, ISaveableItem, IEquipable
     {
+        [SerializeField] GameObject prefab;
         [SerializeField] int amount;
         [SerializeField] float amount2;
         [SerializeField] ModificationType type;
+        [SerializeField] string m_name;
+        [SerializeField] string m_description;
 
         StatsManager stats;
+
+        public GameObject Prefab { get => prefab; }
 
         public void Equip(StatsManager stats)
         {
@@ -35,9 +40,19 @@ namespace Burmuruk.Tesis.Stats
             throw new System.NotImplementedException();
         }
 
-        int ISaveableItem.GetSubType()
+        public int GetSubType()
         {
             return (int)type;
+        }
+
+        public string GetName()
+        {
+            return m_name;
+        }
+
+        public string GetDescription()
+        {
+            return m_description;
         }
     }
 
