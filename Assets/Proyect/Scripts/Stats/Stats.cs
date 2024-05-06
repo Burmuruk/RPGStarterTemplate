@@ -14,6 +14,7 @@ namespace Burmuruk.Tesis.Stats
         [SerializeField] public int hp;
         [SerializeField] public int maxHp;
         [SerializeField] public float damage;
+        [SerializeField] public Color color;
         [Space(), Header("Detection")]
         [SerializeField] public float eyesRadious;
         [SerializeField] public float earsRadious;

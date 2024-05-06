@@ -92,7 +92,7 @@ namespace Burmuruk.WorldG.Patrol
             //isSelected = false;
         }
 
-        //[DrawGizmo(GizmoType.Pickable & GizmoType.Selected)]
+        //[DrawGizmo(GizmoType.Consumable & GizmoType.Selected)]
         private void OnDrawGizmos()
         {
             Gizmos.color = nodeData.NodeColor;

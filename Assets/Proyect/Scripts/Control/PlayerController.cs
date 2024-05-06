@@ -195,7 +195,7 @@ namespace Burmuruk.Tesis.Control
                 var cmp = m_pickables[0];
                 var inventary = GetComponent<InventaryEquipDecorator>();
                 inventary.Add(cmp.itemType, cmp);
-                inventary.Equip(player, cmp.itemType, cmp.GetSubType());
+                //inventary.Equip(player, cmp.itemType, cmp.GetSubType());
                 cmp.gameObject.SetActive(false);
 
                 m_pickables.Remove(cmp);
@@ -218,6 +218,16 @@ namespace Burmuruk.Tesis.Control
         public void Pause(InputAction.CallbackContext context)
         {
             gameManager.ExitUI();
+        }
+
+        public void ShowMoreOptions(InputAction.CallbackContext context)
+        {
+            if (!context.performed) return;
+
+            if (gameManager.GameState == GameManager.State.UI)
+            {
+                levelManager.ShowMoreOptions();
+            }
         }
         #endregion
 
@@ -250,9 +260,9 @@ namespace Burmuruk.Tesis.Control
         private void OnTriggerEnter(Collider other)
         {
             //Physics.OverlapSphere(transform.position, .5f, 1<<11);
-            //if (other.gameObject.GetComponent<Pickable>() is var itemType && itemType)
+            //if (other.gameObject.GetComponent<Consumable>() is var itemType && itemType)
             //{
-            //    player.inventary.Add(ItemType.Consumable, itemType);
+            //    player.inventary.Add(Type.Consumable, itemType);
             //    Destroy(other.gameObject);
             //}
         }
@@ -312,7 +322,7 @@ namespace Burmuruk.Tesis.Control
             var cmp = m_pickables[0];
             var inventary = player.GetComponent<InventaryEquipDecorator>();
             inventary.Add(cmp.itemType, cmp);
-            //inventary.Equip(cmp.subType, cmp.Item);
+            //inventary.ElementAction(cmp.subType, cmp.Item);
             cmp.gameObject.SetActive(false);
 
             m_pickables.Remove(cmp);

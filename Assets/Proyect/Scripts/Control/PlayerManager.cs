@@ -8,6 +8,8 @@ namespace Burmuruk.Tesis.Control
 {
     class PlayerManager : MonoBehaviour
     {
+        public List<Color> playerColors = new List<Color>();
+
         List<AIGuildMember> players;
         PlayerController playerController;
         int? m_CurPlayer;
@@ -98,6 +100,11 @@ namespace Burmuruk.Tesis.Control
         {
             var players = from p in FindObjectsOfType<AIGuildMember>() where p is IPlayable select p;
             this.players = players.ToList();
+
+            foreach (var player in players)
+            {
+                SetColor(player);
+            }
         }
 
         private void DisableRestOfPlayers(int idx)
@@ -151,11 +158,27 @@ namespace Burmuruk.Tesis.Control
         {
             member.OnCombatStarted += EnterToCombatMode;
             member.SetFormation(curFormation.value, curFormation.args);
+
+            SetColor (member);
         }
 
         public void RemoveMember(AIGuildMember member)
         {
             member.OnCombatStarted -= EnterToCombatMode;
+        }
+
+        private void SetColor(AIGuildMember member)
+        {
+            if (playerColors.Count <= 0) return;
+
+            List<Color> usedColors = new();
+            players.ForEach(p => usedColors.Add(p.stats.Color));
+
+            var availableColors = (from color in playerColors where !usedColors.Contains(color) select color).ToList();
+
+            var selectedColorIdx = UnityEngine.Random.Range(0, availableColors.Count);
+
+            member.stats.Color = playerColors[selectedColorIdx];
         }
     }
 

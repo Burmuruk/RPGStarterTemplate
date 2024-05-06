@@ -130,4 +130,11 @@ public class LevelManager : MonoBehaviour
 
         menuCharacters.RotatePlayer(direction);
     }
+
+    public void ShowMoreOptions()
+    {
+        if (!menuCharacters) return;
+
+        menuCharacters.SwitchExtraData();
+    }
 }

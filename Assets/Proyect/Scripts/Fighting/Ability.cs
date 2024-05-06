@@ -12,7 +12,7 @@ namespace Burmuruk.Tesis.Stats
         [SerializeField] string m_name;
         [SerializeField] string m_description;
 
-        public AbilityType Type { get => type; }
+        public ItemType Type => ItemType.Ability;
 
         public void Equip(StatsManager stats)
         {

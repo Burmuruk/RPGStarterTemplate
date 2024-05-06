@@ -2,15 +2,30 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerData
+namespace Burmuruk.Tesis.Control
 {
-    public Color PlayerColor {  get; set; }
-    public Gender PlayerGender { get; set; }
-
-    public enum Gender
+    public class PlayerData
     {
-        None,
-        Male,
-        Female
-    }
+        public readonly int PlayerId;
+
+        public Color PlayerColor { get; set; }
+        public Gender PlayerGender { get; set; }
+
+        public PlayerData()
+        {
+            PlayerId = GetHashCode();
+        }
+
+        public PlayerData(int id)
+        {
+            PlayerId = id;
+        }
+
+        public enum Gender
+        {
+            None,
+            Male,
+            Female
+        }
+    } 
 }

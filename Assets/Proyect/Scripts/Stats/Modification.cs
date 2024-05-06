@@ -14,6 +14,7 @@ namespace Burmuruk.Tesis.Stats
 
         StatsManager stats;
 
+        public ItemType Type => ItemType.Modification;
         public GameObject Prefab { get => prefab; }
 
         public void Equip(StatsManager stats)

@@ -12,6 +12,7 @@ namespace Burmuruk.Tesis.Stats
         [SerializeField] string m_description;
         int id;
 
+        public ItemType Type => ItemType.Consumable;
         public bool IsPersistentData => false;
 
         public int ID => id;

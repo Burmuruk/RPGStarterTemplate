@@ -12,6 +12,7 @@ namespace Burmuruk.Tesis.Stats
         [SerializeField] string m_name;
         [SerializeField] string m_description;
 
+        public ItemType Type => ItemType.Weapon;
         public int Damage { get => m_damage; }
         public float DamageRate { get => m_rateDamage; }
         public float MinDistance { get => m_minDistance; }

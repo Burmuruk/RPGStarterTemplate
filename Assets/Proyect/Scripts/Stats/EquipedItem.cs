@@ -7,23 +7,21 @@ namespace Burmuruk.Tesis.Stats
     public class EquipedItem : ISaveableItem
     {
         ItemType itemType;
-        bool isEquipped;
         int count;
         List<Character> characters;
         int subType;
 
         public event Action<Character, EquipedItem> OnUnequiped;
 
-        public ItemType ItemType { get => itemType; }
+        public ItemType Type { get => itemType; }
         public int Count { get => count; }
-        public bool IsEquip { get => isEquipped; }
+        public bool IsEquip { get => characters.Count > 0; }
         public List<Character> Characters { get => characters; }
 
         public EquipedItem(ISaveableItem item, ItemType itemType)
         {
             this.itemType = itemType;
             subType = item.GetSubType();
-            isEquipped = false;
             count = 0;
             characters = new();
             OnUnequiped = delegate { };
@@ -33,7 +31,6 @@ namespace Burmuruk.Tesis.Stats
         {
             this.itemType = itemType;
             this.subType = subType;
-            isEquipped = false;
             count = 0;
             characters = new();
             OnUnequiped = delegate { };
@@ -52,24 +49,15 @@ namespace Burmuruk.Tesis.Stats
         public void Add(int amount = 1) => count += amount;
         public void Remove(int amount = 1) => count -= amount;
 
-        public void Equip(bool value, Character character)
+        public void Equip(Character character)
         {
-            isEquipped = value;
-            this.characters.Add(character);
-
-            if (!value)
-            {
-                OnUnequiped(character, this);
-                characters.Remove(character);
-            }
+            characters.Add(character);
         }
 
         public void Unequip(Character character)
         {
+            OnUnequiped(character, this);
             characters.Remove(character);
-
-            if (characters.Count == 0)
-                isEquipped = false;
         }
 
         public int GetSubType()

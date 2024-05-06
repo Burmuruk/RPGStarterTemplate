@@ -1,6 +1,7 @@
 ﻿using Burmuruk.Tesis.Control;
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Stats
@@ -31,21 +32,29 @@ namespace Burmuruk.Tesis.Stats
 
             if (item == null) return;
 
+            var equiped = (EquipedItem)item;
+            if (equiped.Characters.Contains(player)) return;
+
             alarmedEquipItem = (itemType, player, (EquipedItem)item);
 
-            if (((EquipedItem)item).IsEquip)
+            if (equiped.IsEquip && !CheckHaveMoreItems(itemType, type, equiped))
             {
                 OnTryAlreadyEquiped?.Invoke();
                 return;
             }
 
             EquipDirec();
+
+            bool CheckHaveMoreItems(ItemType itemType, int type, EquipedItem equiped)
+            {
+                return inventary.GetItemCount(itemType, type) > equiped.Characters.Count;
+            }
         }
 
         public void EquipDirec()
         {
             var (itemType, player, equipedItem) = alarmedEquipItem;
-            equipedItem.Equip(true, player);
+            equipedItem.Equip(player);
             //equipedItem.OnUnequiped += Unequip;
 
             if (itemType == ItemType.Modification)
@@ -59,6 +68,8 @@ namespace Burmuruk.Tesis.Stats
 
         public void Unequip(Character player, EquipedItem item)
         {
+            if (!item.Characters.Contains(player)) return;
+
             item.Unequip(player);
             //item.OnUnequiped -= Unequip;
 
@@ -141,6 +152,13 @@ namespace Burmuruk.Tesis.Stats
         public ISaveableItem GetItem(ItemType type, int idx)
         {
             return inventary.GetItem(type, idx);
+        }
+
+        public bool Use(ItemType type, int subType)
+        {
+            
+
+            return true;
         }
     }
 }

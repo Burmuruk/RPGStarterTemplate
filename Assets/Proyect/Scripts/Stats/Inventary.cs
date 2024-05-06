@@ -16,12 +16,12 @@ namespace Burmuruk.Tesis.Stats
         int id;
         bool isPersistentData = false;
 
-        Dictionary<ItemType, Dictionary<int, (ISaveableItem item, int maxAmount)>> m_owned = new()
+        Dictionary<ItemType, Dictionary<int, (ISaveableItem item, int count, int maxCount)>> m_owned = new()
         {
-            { ItemType.Weapon, new Dictionary<int, (ISaveableItem item, int maxAmount)>() },
-            { ItemType.Ability, new Dictionary<int, (ISaveableItem item, int maxAmount)>() },
-            { ItemType.Modification, new Dictionary<int, (ISaveableItem item, int maxAmount)>() },
-            { ItemType.Consumable, new Dictionary<int, (ISaveableItem item, int maxAmount)>() },
+            { ItemType.Weapon, new Dictionary<int, (ISaveableItem item, int count, int maxCount)>() },
+            { ItemType.Ability, new Dictionary<int, (ISaveableItem item, int count, int maxCount)>() },
+            { ItemType.Modification, new Dictionary<int, (ISaveableItem item, int count, int maxCount)>() },
+            { ItemType.Consumable, new Dictionary<int, (ISaveableItem item, int count, int maxCount)>() },
         };
 
 
@@ -37,7 +37,7 @@ namespace Burmuruk.Tesis.Stats
                 {
                     if (((EquipedItem)weapon.item) is var w && w.IsEquip)
                     {
-                        return (Weapon)GetItem(w.ItemType, weapon.item.GetSubType());
+                        return (Weapon)GetItem(w.Type, weapon.item.GetSubType());
                     }
                 }
 
@@ -73,7 +73,7 @@ namespace Burmuruk.Tesis.Stats
         }
         public void Load(object args)
         {
-            m_owned = (Dictionary<ItemType, Dictionary<int, (ISaveableItem item, int maxAmount)>>)args;
+            m_owned = (Dictionary<ItemType, Dictionary<int, (ISaveableItem item, int count, int maxCount)>>)args;
         }
 
         public virtual bool Add(ItemType type, ISaveableItem item)
@@ -89,11 +89,12 @@ namespace Burmuruk.Tesis.Stats
             {
                 generalList[subType] = (
                     generalList[subType].item,
-                    generalList[subType].maxAmount + 1);
+                    generalList[subType].count + 1,
+                    generalList[subType].maxCount + 1);
             }
             else
             {
-                generalList.Add(subType, (item, 99));
+                generalList.Add(subType, (item, 1, 99));
             }
 
             return true;
@@ -101,7 +102,10 @@ namespace Burmuruk.Tesis.Stats
 
         public virtual bool Remove(ItemType type, int idx)
         {
-            m_owned[type].Remove(idx);
+            if (m_owned[type][idx].count > 1)
+                m_owned[type][idx] = (m_owned[type][idx].item, m_owned[type][idx].count - 1, m_owned[type][idx].maxCount);
+            else
+                m_owned[type].Remove(idx);
 
             return true;
         }
@@ -140,6 +144,16 @@ namespace Burmuruk.Tesis.Stats
 
             return m_ItemsList.Get(type, subType);
         }
+
+        public int GetItemCount(ItemType type, int subType)
+        {
+            return m_owned[type][subType].count;
+        }
+
+        public int GetItemMaxCount(ItemType type, int subType)
+        {
+            return m_owned[type][subType].maxCount;
+        }
     }
 
     public enum ItemType
@@ -153,6 +167,7 @@ namespace Burmuruk.Tesis.Stats
 
     public interface ISaveableItem
     {
+        public ItemType Type { get; }
         public int GetSubType();
         public string GetName();
         public string GetDescription();

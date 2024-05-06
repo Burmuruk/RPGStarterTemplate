@@ -18,6 +18,7 @@ namespace Burmuruk.Tesis.Control
         object formationArgs;
         Transform m_target;
         CoolDownAction cdTeleport;
+        public int id = -1;
 
         #region Enums
 

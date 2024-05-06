@@ -9,6 +9,7 @@ namespace Burmuruk.Tesis.Stats
         [SerializeField] string m_name;
         [SerializeField] string m_description;
 
+        public ItemType Type => ItemType.Consumable;
         public int Hp;
 
         public int GetSubType()
