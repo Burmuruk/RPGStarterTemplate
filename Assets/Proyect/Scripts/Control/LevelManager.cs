@@ -137,4 +137,11 @@ public class LevelManager : MonoBehaviour
 
         menuCharacters.SwitchExtraData();
     }
+
+    public void ExitUI()
+    {
+        if (menuCharacters.curState != UIMenuCharacters.State.None) return;
+
+        gameManager.ExitUI();
+    }
 }

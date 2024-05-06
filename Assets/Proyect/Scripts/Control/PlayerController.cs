@@ -217,7 +217,7 @@ namespace Burmuruk.Tesis.Control
 
         public void Pause(InputAction.CallbackContext context)
         {
-            gameManager.ExitUI();
+            levelManager.ExitUI();
         }
 
         public void ShowMoreOptions(InputAction.CallbackContext context)

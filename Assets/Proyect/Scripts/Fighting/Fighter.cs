@@ -29,13 +29,13 @@ namespace Burmuruk.Tesis.Fighting
 
         private void Start()
         {
-            var decorator = m_inventary as InventaryEquipDecorator;
+            //var decorator = m_inventary as InventaryEquipDecorator;
 
-            if (decorator != null)
-            {
-                decorator.Add(ItemType.Weapon, 0);
-                decorator.Equip(GetComponent<Character>(), ItemType.Weapon, 0);
-            }
+            //if (decorator != null)
+            //{
+            //    decorator.Add(ItemType.Weapon, 0);
+            //    decorator.Equip(GetComponent<Character>(), ItemType.Weapon, 0);
+            //}
 
             //if (m_Stats.DamageRate == 0) return;
             cdBasicAttack = new CoolDownAction(m_Stats.DamageRate);

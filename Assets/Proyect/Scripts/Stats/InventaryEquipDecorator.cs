@@ -160,5 +160,15 @@ namespace Burmuruk.Tesis.Stats
 
             return true;
         }
+
+        public int GetItemCount(ItemType type, int subType)
+        {
+            return inventary.GetItemCount(type, subType);
+        }
+
+        public int GetItemMaxCount(ItemType type, int subType)
+        {
+            return inventary.GetItemMaxCount(type, subType);
+        }
     }
 }

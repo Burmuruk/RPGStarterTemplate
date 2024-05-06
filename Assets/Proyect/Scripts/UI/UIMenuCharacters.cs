@@ -18,21 +18,23 @@ namespace Burmuruk.Tesis.UI
         [SerializeField] TextMeshProUGUI txtWarning;
         [SerializeField] MyItemButton[] WarningButtons;
         [SerializeField] GameObject AmountPanel;
+        [SerializeField] GameObject colorsPanel;
+
         PlayerCustomizationManager clothingManager;
 
-        enum State
+        public enum State
         {
             None,
             Notice,
             Loading
         }
 
+        public State curState = State.None;
         Vector2 direction;
         int curPlayerIdx;
         int curTabIdx;
         bool showDescription = false;
         int curElementId = 0;
-        State curState = State.None;
 
         List<AIGuildMember> players;
         InventaryTab curInventaryTab;
@@ -50,6 +52,7 @@ namespace Burmuruk.Tesis.UI
         private void Awake()
         {
             elementPanel.Initialize();
+            WarningButtons[0].onClick.AddListener(ChangeEquipedPlayer);
             WarningButtons[1].onClick.AddListener(CancelWarning);
         }
 
@@ -66,16 +69,22 @@ namespace Burmuruk.Tesis.UI
         #region Elements panel
         public void ShowModifications()
         {
+            if (curState != State.None) return;
+
             ShowElements(GetSortedItems(InventaryTab.Modifications));
         }
 
         public void ShowWeapons()
         {
+            if (curState != State.None) return;
+
             ShowElements(GetSortedItems(InventaryTab.Weapons));
         }
 
         public void ShowInvantary()
         {
+            if (curState != State.None) return;
+
             ShowElements(GetSortedItems(InventaryTab.Inventary));
         }
 
@@ -118,16 +127,36 @@ namespace Burmuruk.Tesis.UI
                 case ItemType.Ability:
                 case ItemType.Weapon:
                 case ItemType.Modification:
-                    var item = curElementLabels[idx].item;
-                    (inventary as InventaryEquipDecorator).Equip(players[curPlayerIdx], item.Type, item.GetSubType());
 
-                    SetPlayersColors(curElementLabels[idx].item, curElementLabels[idx].panel);
+                    EquipItem(idx);
                     break;
 
                 default:
                     break;
             }
             print("Interacting");
+        }
+
+        private void EquipItem(int idx)
+        {
+            var item = curElementLabels[idx].item;
+            (inventary as InventaryEquipDecorator).Equip(players[curPlayerIdx], item.Type, item.GetSubType());
+
+            SetPlayersColors(curElementLabels[idx].item, curElementLabels[idx].panel);
+        }
+
+        public void ChangeEquipedPlayer()
+        {
+            var item = curElementLabels[curElementId].item;
+            var lastPlayer = item.Characters.Last();
+            var inventaryDecorator = (inventary as InventaryEquipDecorator);
+
+            inventaryDecorator.Unequip(lastPlayer, item);
+            inventaryDecorator.Equip(players[curPlayerIdx], item.Type, item.GetSubType());
+
+            SetPlayersColors(item, curElementLabels[curElementId].panel);
+            txtWarning.transform.parent.gameObject.SetActive(false);
+            curState = State.None;
         }
 
         private void ShowElements(List<ISaveableItem> items)
@@ -144,7 +173,7 @@ namespace Burmuruk.Tesis.UI
                 var txtCount = (from txt in panel.label.transform.GetComponentsInChildren<TextMeshProUGUI>()
                                where txt.gameObject != panel.label.gameObject
                                select txt).First();
-                txtCount.text = equipedItem.Count.ToString();
+                txtCount.text = inventary.GetItemCount(item.Type, item.GetSubType()).ToString();
 
                 int buttonId = i++;
                 SubscribeToEvents(panel, buttonId);
@@ -177,11 +206,12 @@ namespace Burmuruk.Tesis.UI
             {
 
                 Color[] colors = (from player in players
-                                  let id = player.stats.ID
-                                  select
-                                     (from character in equiped.Characters
-                                      where character.stats.ID == id
-                                      select character.stats.Color).First())
+                                  let cur =
+                                     from character in equiped.Characters
+                                     where character.stats.ID == player.stats.ID
+                                     select character
+                                  where cur.Count() > 0
+                                  select cur.First().stats.Color)
                             .ToArray();
 
                 for (int i = 0; i < images.Count(); i++)
@@ -243,15 +273,15 @@ namespace Burmuruk.Tesis.UI
         private void ShowEquipedWarning()
         {
             curState = State.Notice;
-            WarningButtons[0].gameObject.SetActive(true);
             txtWarning.text = "El objeto está actualmente equipado.\n¿Desea equiparlo?";
+            WarningButtons[0].transform.parent.gameObject.SetActive(true);
         }
 
         private void ShowDeleteEquipedWarning()
         {
             curState = State.Notice;
-            WarningButtons[0].gameObject.SetActive(true);
             txtWarning.text = "El objeto está actualmente equipado.\n¿Desea eliminarlo?";
+            WarningButtons[0].transform.parent.gameObject.SetActive(true);
         }
 
         private void ShowAmountNotice()
@@ -261,6 +291,7 @@ namespace Burmuruk.Tesis.UI
 
         private void CancelWarning()
         {
+            WarningButtons[0].transform.parent.gameObject.SetActive(false);
             curState = State.None;
         }
         #endregion
@@ -298,14 +329,23 @@ namespace Burmuruk.Tesis.UI
 
         public void ShowNextPlayer()
         {
+            if (curState != State.None) return;
+
             curPlayerIdx = GetNextPlayerIdx(1);
             ShowCharacters();
         }
 
         public void ShowPreviourPlayer()
         {
+            if (curState != State.None) return;
+
             curPlayerIdx = GetNextPlayerIdx(-1);
             ShowCharacters();
+        }
+
+        public void ChangePlayerColor()
+        {
+            colorsPanel.SetActive(!colorsPanel.activeSelf);
         }
         #endregion
 

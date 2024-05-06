@@ -16,5 +16,7 @@ namespace Burmuruk.Tesis.Stats
         public List<ISaveableItem> GetList(ItemType type);
         public ISaveableItem GetOwnedItem(ItemType type, int idx);
         public ISaveableItem GetItem(ItemType type, int idx);
+        public int GetItemCount(ItemType type, int subType);
+        public int GetItemMaxCount(ItemType type, int subType);
     }
 }

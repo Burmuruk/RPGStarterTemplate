@@ -117,6 +117,7 @@ namespace Burmuruk.Tesis.Stats
         {
             inventary??= GetComponent<IInventary>();
             UpdateStats();
+            ID = GetHashCode();
         }
 
         private void UpdateStats()
