@@ -60,6 +60,11 @@ namespace Burmuruk.Tesis.UI
             WarningButtons[1].onClick.AddListener(CancelWarning);
         }
 
+        private void Start()
+        {
+            colorsPanel.SetActive(false);
+        }
+
         private void Update()
         {
             Rotate();
@@ -355,6 +360,9 @@ namespace Burmuruk.Tesis.UI
         private void ChangeColor()
         {
             players[curPlayerIdx].stats.Color = btnColorsDict[curBtnId].color;
+
+            ShowCharacters();
+            colorsPanel.SetActive(false);
         }
 
         public void SelectBtnColor(int id) => curBtnId = id;
@@ -362,18 +370,14 @@ namespace Burmuruk.Tesis.UI
         private void InitializeColorButtons()
         {
             btnColors = colorsPanel.GetComponentsInChildren<MyItemButton>(true);
+            btnColorsDict = new();
 
             int btnId = 0;
             for (int i = 0; i < btnColors.Length; i++)
             {
                 var btn = btnColors[i];
 
-                if (i < customization.Colors.Length && VerifyColor(i))
-                {
-                    btnColorsDict[btnId].color = customization.Colors[i];
-                    btn.gameObject.SetActive(true);
-                }
-                else
+                if (i >= customization.Colors.Length || !VerifyColor(i))
                 {
                     btn.gameObject.SetActive(false);
                     continue;
@@ -382,8 +386,11 @@ namespace Burmuruk.Tesis.UI
                 btn.SetId(btnId);
                 btn.OnPointerEnterEvent += SelectBtnColor;
                 btn.onClick.AddListener(ChangeColor);
+                btnColorsDict.Add(btnId, btn.GetComponent<Image>());
 
-                btnColorsDict.Add(btnId++, btn.GetComponent<Image>());
+                btnColorsDict[btnId].color = customization.Colors[i];
+                btn.gameObject.SetActive(true);
+                btnId++; 
             }
 
             bool VerifyColor(int idx)
