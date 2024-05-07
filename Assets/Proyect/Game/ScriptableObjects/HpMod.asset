@@ -12,6 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d83da948e79ab141b68e27f996de49b, type: 3}
   m_Name: HpMod
   m_EditorClassIdentifier: 
+  m_Prefab: {fileID: 5526356562127619286, guid: 57850c23274320c4ebfa31c914b465cf,
+    type: 3}
   amount: 0
   amount2: 30
-  type: 2
+  type: 1
+  bodyPart: 2
+  m_name: Casco
+  m_description: Casco super reforzado

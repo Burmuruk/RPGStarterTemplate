@@ -1,21 +1,24 @@
-﻿using UnityEngine;
+﻿using UnityEditor;
+using UnityEngine;
 
 namespace Burmuruk.Tesis.Stats
 {
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Modifier", order = 3)]
     public class Modification : ScriptableObject, ISaveableItem, IEquipable
     {
-        [SerializeField] GameObject prefab;
+        [SerializeField] GameObject m_Prefab;
         [SerializeField] int amount;
         [SerializeField] float amount2;
         [SerializeField] ModificationType type;
+        [SerializeField] BodyManager.BodyPart bodyPart;
         [SerializeField] string m_name;
         [SerializeField] string m_description;
 
         StatsManager stats;
 
         public ItemType Type => ItemType.Modification;
-        public GameObject Prefab { get => prefab; }
+        public BodyManager.BodyPart BodyPart { get => bodyPart; }
+        public GameObject Prefab { get => m_Prefab; }
 
         public void Equip(StatsManager stats)
         {
@@ -27,7 +30,7 @@ namespace Burmuruk.Tesis.Stats
                     break;
 
                 case ModificationType.MaxSpeed:
-                    Debug.Log("Speedo");
+                    Debug.Log("Supeedo");
                     stats.Speed += amount2;
                     break;
 

@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Burmuruk.Tesis.Stats
 {
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Hability", order = 2)]
-    public class Ability : ScriptableObject, ISaveableItem, IEquipable, IUsable
+    public class Ability : ScriptableObject, ISaveableItem, IUsable
     {
         [SerializeField] float speed;
         [SerializeField] AbilityType type;

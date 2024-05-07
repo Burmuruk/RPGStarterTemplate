@@ -175,8 +175,10 @@ namespace Burmuruk.Tesis.Stats
 
     public interface IEquipable
     {
-        public void Equip(StatsManager stats);
+        public BodyManager.BodyPart BodyPart { get; }
+        public GameObject Prefab { get; }
 
+        public void Equip(StatsManager stats);
         public void Remove(StatsManager stats);
     }
 

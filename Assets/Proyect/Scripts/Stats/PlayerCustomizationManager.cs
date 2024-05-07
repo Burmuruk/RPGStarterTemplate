@@ -1,8 +1,6 @@
 ﻿using Burmuruk.Tesis.Control;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
 
 namespace Burmuruk.Tesis.Stats
 {
@@ -24,35 +22,38 @@ namespace Burmuruk.Tesis.Stats
             foreach (var item in equipedItems)
             {
                 var mod = inventary.GetItem(ItemType.Modification, item.GetSubType());
-                
-                if (mod == null) continue;
 
-                var inst = Instantiate(((Modification)mod).Prefab, character.transform);
-                equipedObjects.Add((inst, (ModificationType)mod.GetSubType()));
+                EquipModification(character, (IEquipable)mod);
             }
         }
 
-        public void EquipModification(Character character, Modification modification)
+        public void EquipModification(Character character, IEquipable modification)
         {
             if (modification == null) return;
 
-            var inst = Instantiate(modification.Prefab, character.transform);
-            equipedObjects.Add((inst, (ModificationType)modification.GetSubType()));
+            var parent = character.BodyManager.GetPart(modification.BodyPart);
+
+            var inst = Instantiate(modification.Prefab, parent.transform);
+            inst.transform.localPosition = Vector3.zero;
+            inst.transform.localRotation = Quaternion.Euler(Vector3.zero);
+
+            equipedObjects.Add((inst, (ModificationType)(modification as ISaveableItem).GetSubType()));
         }
 
-        public void UnequipModification(Character character, int modificationType)
+        public void UnequipModification(Character character, IEquipable equipable)
         {
-            var type = (ModificationType)modificationType;
-           
-            for (var i = 0; i < equipedObjects.Count; i++)
-            {
-                if (equipedObjects[i].type == type)
-                {
-                    Destroy(equipedObjects[i].item);
-                    equipedObjects.RemoveAt(i);
-                    break;
-                }
-            }
+            Destroy(character.BodyManager.GetPart(equipable.BodyPart));
+            //var type = (ModificationType)modificationType;
+
+            //for (var i = 0; i < equipedObjects.Count; i++)
+            //{
+            //    if (equipedObjects[i].type == type)
+            //    {
+            //        Destroy(equipedObjects[i].item);
+            //        equipedObjects.RemoveAt(i);
+            //        break;
+            //    }
+            //}
         }
     }
 }

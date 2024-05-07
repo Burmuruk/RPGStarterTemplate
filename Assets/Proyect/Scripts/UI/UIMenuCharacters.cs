@@ -10,6 +10,7 @@ namespace Burmuruk.Tesis.UI
 {
     public class UIMenuCharacters : MonoBehaviour
     {
+        #region Variables
         [SerializeField] StackableLabel elementPanel;
         [SerializeField] TextMeshProUGUI txtExtraInfo;
         [SerializeField] GameObject characterModel;
@@ -42,7 +43,7 @@ namespace Burmuruk.Tesis.UI
         InventaryTab curInventaryTab;
         IInventary inventary;
         MyItemButton[] btnColors;
-        Dictionary<int,  Image> btnColorsDict;
+        Dictionary<int, Image> btnColorsDict;
         Dictionary<int, (StackableNode panel, EquipedItem item, ISaveableItem realItem)> curElementLabels = new();
 
         enum InventaryTab
@@ -52,7 +53,9 @@ namespace Burmuruk.Tesis.UI
             Weapons,
             Inventary
         }
+        #endregion
 
+        #region Unity Methods
         private void Awake()
         {
             elementPanel.Initialize();
@@ -68,12 +71,8 @@ namespace Burmuruk.Tesis.UI
         private void Update()
         {
             Rotate();
-        }
-
-        private void Rotate()
-        {
-            characterModel.transform.Rotate(Vector3.up, direction.x * rotationVelocity * -1);
-        }
+        } 
+        #endregion
 
         #region Elements panel
         public void ShowModifications()
@@ -152,6 +151,7 @@ namespace Burmuruk.Tesis.UI
             (inventary as InventaryEquipDecorator).Equip(players[curPlayerIdx], item.Type, item.GetSubType());
 
             SetPlayersColors(curElementLabels[idx].item, curElementLabels[idx].panel);
+            ShowCharacterModel();
         }
 
         public void ChangeEquipedPlayer()
@@ -313,6 +313,28 @@ namespace Burmuruk.Tesis.UI
             playersImg[0].color = players[GetNextPlayerIdx(-1)].stats.Color;
             playersImg[1].color = players[curPlayerIdx].stats.Color;
             playersImg[2].color = players[GetNextPlayerIdx(1)].stats.Color;
+
+            ShowCharacterModel();
+        }
+
+        private void ShowCharacterModel()
+        {
+            RemovePreviousModel();
+
+            var prefab = players[curPlayerIdx].BodyManager.GetPart(BodyManager.BodyPart.Body);
+            var inst = Instantiate(prefab, characterModel.transform);
+            inst.transform.localPosition = Vector3.zero;
+
+            void RemovePreviousModel()
+            {
+                if (characterModel.transform.childCount > 0)
+                {
+                    Destroy(characterModel.transform.GetChild(0).gameObject);
+                    //while (characterModel.transform.childCount > 0)
+                    //{
+                    //}
+                }
+            }
         }
 
         private int GetNextPlayerIdx(int idx)
@@ -406,6 +428,7 @@ namespace Burmuruk.Tesis.UI
         }
         #endregion
 
+        #region Initialization
         public void SetInventary(IInventary inventary)
         {
             this.inventary = inventary;
@@ -434,11 +457,17 @@ namespace Burmuruk.Tesis.UI
             ShowCharacters();
             InitializeColorButtons();
             //playersImg[1] = this.players[curPlayerIdx];
-        }
+        } 
+        #endregion
 
         public void RotatePlayer(Vector2 direction)
         {
             this.direction = direction;
+        }
+
+        private void Rotate()
+        {
+            characterModel.transform.Rotate(Vector3.up, direction.x * rotationVelocity * -1);
         }
     }
 }

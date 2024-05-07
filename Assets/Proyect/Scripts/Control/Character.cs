@@ -14,6 +14,7 @@ namespace Burmuruk.Tesis.Control
         [Space(), Header("Status"), Space()]
         [SerializeField] protected bool hasFarPerception;
         [SerializeField] protected bool hasClosePerception;
+        [SerializeField] protected BodyManager bodyManager;
 
         [Space(), Header("Settings")]
         [SerializeField] protected string enemyTag;
@@ -36,6 +37,7 @@ namespace Burmuruk.Tesis.Control
         public Collider[] FarEnemies { get => eyesPerceibed; }
         public bool IsTargetFar { get => isTargetFar; }
         public bool IsTargetClose { get => isTargetClose; }
+        public BodyManager BodyManager { get => bodyManager; }
 
         protected virtual void Awake()
         {

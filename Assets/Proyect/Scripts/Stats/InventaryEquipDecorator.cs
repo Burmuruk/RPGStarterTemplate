@@ -55,12 +55,12 @@ namespace Burmuruk.Tesis.Stats
         {
             var (itemType, player, equipedItem) = alarmedEquipItem;
             equipedItem.Equip(player);
-            //equipedItem.OnUnequiped += Unequip;
+            
+            var prefab = inventary.GetItem(itemType, equipedItem.GetSubType());
 
-            if (itemType == ItemType.Modification)
+            if (prefab is IEquipable equipable && equipable != null)
             {
-                var prefab = inventary.GetItem(itemType, equipedItem.GetSubType());
-                customazationManager.EquipModification(player, (Modification)prefab);
+                customazationManager.EquipModification(player, equipable);
             }
 
             alarmedEquipItem = default; 
@@ -72,8 +72,9 @@ namespace Burmuruk.Tesis.Stats
 
             item.Unequip(player);
             //item.OnUnequiped -= Unequip;
+            var equipedItem = inventary.GetItem(item.Type, item.GetSubType()) as IEquipable;
 
-            customazationManager.UnequipModification(player, item.GetSubType());
+            customazationManager.UnequipModification(player, equipedItem);
         }
 
         public bool Add(ItemType type, ISaveableItem item)

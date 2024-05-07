@@ -2,10 +2,7 @@
 using Burmuruk.Utilities;
 using System;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
-using UnityEngine.Pool;
-using UnityEngine.UI;
 
 namespace Burmuruk.Tesis.UI
 {
