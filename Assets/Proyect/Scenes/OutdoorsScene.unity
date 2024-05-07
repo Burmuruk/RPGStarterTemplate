@@ -5350,8 +5350,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 248.72852, y: -264.27176}
-  m_SizeDelta: {x: 497.45703, y: 58.925995}
+  m_AnchoredPosition: {x: 149.62, y: -263.69485}
+  m_SizeDelta: {x: 299.24, y: 58.925995}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1032971287
 MonoBehaviour:
@@ -10130,8 +10130,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -175, y: -76}
-  m_SizeDelta: {x: -1422.543, y: -757.5969}
+  m_AnchoredPosition: {x: -274.109, y: -76}
+  m_SizeDelta: {x: -1620.76, y: -757.597}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1722688837
 MonoBehaviour:
@@ -10151,9 +10151,9 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 7
-  m_Spacing: 0
+  m_Spacing: 5
   m_ChildForceExpandWidth: 1
-  m_ChildForceExpandHeight: 1
+  m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 1
   m_ChildControlHeight: 0
   m_ChildScaleWidth: 0
@@ -14225,11 +14225,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ae918abcb38c6341adcb28fa838819b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerColors:
-  - {r: 0.14464222, g: 0.3207547, b: 0.15835315, a: 1}
-  - {r: 0.5849056, g: 0.13835162, b: 0.08718398, a: 1}
-  - {r: 0.07489497, g: 0.32352662, b: 0.5924529, a: 1}
-  - {r: 0.6981132, g: 0.54134536, b: 0.046101715, a: 1}
+  customization: {fileID: 11400000, guid: cf3ce64e5c7a4654abc0078918a16d76, type: 2}
   curPlayerName: 
 --- !u!1001 &1918420457852554485
 PrefabInstance:

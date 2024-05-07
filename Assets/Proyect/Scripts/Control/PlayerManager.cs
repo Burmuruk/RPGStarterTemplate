@@ -8,7 +8,7 @@ namespace Burmuruk.Tesis.Control
 {
     class PlayerManager : MonoBehaviour
     {
-        public List<Color> playerColors = new List<Color>();
+        [SerializeField] PlayerCustomization customization;
 
         List<AIGuildMember> players;
         PlayerController playerController;
@@ -169,16 +169,43 @@ namespace Burmuruk.Tesis.Control
 
         private void SetColor(AIGuildMember member)
         {
-            if (playerColors.Count <= 0) return;
+            if (customization.DefaultColors.Length <= 0) return;
 
-            List<Color> usedColors = new();
-            players.ForEach(p => usedColors.Add(p.stats.Color));
+            Color? newColor = default;
 
-            var availableColors = (from color in playerColors where !usedColors.Contains(color) select color).ToList();
+            foreach (var color in customization.DefaultColors)
+            {
+                bool hasColor = false;
 
-            var selectedColorIdx = UnityEngine.Random.Range(0, availableColors.Count);
+                foreach (var player in players)
+                {
+                    if (player.stats.Color == color)
+                    {
+                        hasColor = true;
+                        break;
+                    }
+                }
 
-            member.stats.Color = playerColors[selectedColorIdx];
+                if (!hasColor)
+                {
+                    newColor = color;
+                    break;
+                }
+            }
+
+            if (!newColor.HasValue) return;
+
+            member.stats.Color = newColor.Value;
+
+            //List<Color> usedColors = new();
+
+            //players.ForEach(p => usedColors.Add(p.stats.Color));
+
+            //var availableColors = (from color in playerColors where !usedColors.Contains(color) select color).ToList();
+
+            //var selectedColorIdx = UnityEngine.Random.Range(0, availableColors.Count);
+
+            //member.stats.Color = playerColors[selectedColorIdx];
         }
     }
 

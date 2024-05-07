@@ -19,6 +19,7 @@ namespace Burmuruk.Tesis.UI
         [SerializeField] MyItemButton[] WarningButtons;
         [SerializeField] GameObject AmountPanel;
         [SerializeField] GameObject colorsPanel;
+        [SerializeField] PlayerCustomization customization;
 
         PlayerCustomizationManager clothingManager;
 
@@ -35,10 +36,13 @@ namespace Burmuruk.Tesis.UI
         int curTabIdx;
         bool showDescription = false;
         int curElementId = 0;
+        int curBtnId = 0;
 
         List<AIGuildMember> players;
         InventaryTab curInventaryTab;
         IInventary inventary;
+        MyItemButton[] btnColors;
+        Dictionary<int,  Image> btnColorsDict;
         Dictionary<int, (StackableNode panel, EquipedItem item, ISaveableItem realItem)> curElementLabels = new();
 
         enum InventaryTab
@@ -347,6 +351,52 @@ namespace Burmuruk.Tesis.UI
         {
             colorsPanel.SetActive(!colorsPanel.activeSelf);
         }
+
+        private void ChangeColor()
+        {
+            players[curPlayerIdx].stats.Color = btnColorsDict[curBtnId].color;
+        }
+
+        public void SelectBtnColor(int id) => curBtnId = id;
+
+        private void InitializeColorButtons()
+        {
+            btnColors = colorsPanel.GetComponentsInChildren<MyItemButton>(true);
+
+            int btnId = 0;
+            for (int i = 0; i < btnColors.Length; i++)
+            {
+                var btn = btnColors[i];
+
+                if (i < customization.Colors.Length && VerifyColor(i))
+                {
+                    btnColorsDict[btnId].color = customization.Colors[i];
+                    btn.gameObject.SetActive(true);
+                }
+                else
+                {
+                    btn.gameObject.SetActive(false);
+                    continue;
+                }
+
+                btn.SetId(btnId);
+                btn.OnPointerEnterEvent += SelectBtnColor;
+                btn.onClick.AddListener(ChangeColor);
+
+                btnColorsDict.Add(btnId++, btn.GetComponent<Image>());
+            }
+
+            bool VerifyColor(int idx)
+            {
+                foreach (var player in players)
+                {
+                    if (player.stats.Color == customization.Colors[idx])
+                        return false;
+                }
+
+                return true;
+            }
+        }
         #endregion
 
         public void SetInventary(IInventary inventary)
@@ -375,6 +425,7 @@ namespace Burmuruk.Tesis.UI
 
             this.clothingManager = clothingManager;
             ShowCharacters();
+            InitializeColorButtons();
             //playersImg[1] = this.players[curPlayerIdx];
         }
 
