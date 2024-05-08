@@ -36,7 +36,7 @@ namespace Burmuruk.Tesis.UI
         List<(StackableNode node, CoolDownAction coolDown)> cdNotifications = new();
         public FormationState formationState = FormationState.None;
 
-        Dictionary<GameObject, StackableNode> playersLife;
+        Dictionary<AIGuildMember, StackableNode> playersLife;
 
         enum State
         {
@@ -91,25 +91,36 @@ namespace Burmuruk.Tesis.UI
             cdFormationInfo = new CoolDownAction(.5f, EnableFormationsInfo);
             cdMissions = new Queue<CoolDownAction>();
 
+            InitializeStackables();
+            CreateHPPlayersBar();
+        }
+
+        private void InitializeStackables()
+        {
             pFormationState.Initialize();
             pInteractable.Initialize();
             pNotifications.Initialize();
             pMissions.Initialize();
             pLife.Initialize();
+        }
 
+        private void CreateHPPlayersBar()
+        {
             playersLife = new();
             foreach (var player in playerManager.Players)
             {
                 StackableNode lifeBar = pLife.Get();
-                playersLife.Add(player.gameObject, lifeBar);
+                playersLife.Add(player, lifeBar);
 
                 lifeBar.label.transform.parent.position = Camera.main.WorldToScreenPoint(player.transform.position);
-                UpdateHealth(player.stats.Hp * 100 / player.stats.MaxHp, player.gameObject);
+                UpdateHealth(player.stats.Hp * 100 / player.stats.MaxHp, player);
+                lifeBar.label.transform.parent.gameObject.SetActive(false);
             }
         }
 
         private void OnEnable()
         {
+            playerManager.OnCombatEnter += EnableHPPlayersBar;
             playerManager.OnCombatEnter += ShowAbilities;
             playerManager.OnFormationChanged += ChangeFormation;
             playerController.OnFormationHold += ShowFormations;
@@ -120,7 +131,7 @@ namespace Burmuruk.Tesis.UI
 
             foreach (var player in playerManager.Players)
             {
-                player.stats.OnDamage += (hp) => { UpdateHealth(hp, player.gameObject); };
+                player.stats.OnDamage += (hp) => { UpdateHealth(hp, player); };
             }
         }
 
@@ -134,7 +145,7 @@ namespace Burmuruk.Tesis.UI
 
             foreach (var player in playerManager.Players)
             {
-                player.stats.OnDamage -= (hp) => { UpdateHealth(hp, player.gameObject); };
+                player.stats.OnDamage -= (hp) => { UpdateHealth(hp, player); };
             }
         }
 
@@ -149,17 +160,20 @@ namespace Burmuruk.Tesis.UI
 
             foreach (var player in playerManager.Players)
             {
-                var position = Vector3.Lerp(playersLife[player.gameObject].label.transform.parent.position,
+                var position = Vector3.Lerp(playersLife[player].label.transform.parent.position,
                     Camera.main.WorldToScreenPoint(player.transform.position + Vector3.up * 2),
                     Time.deltaTime * 20);
 
-                playersLife[player.gameObject].label.transform.parent.position = position;
+                playersLife[player].label.transform.parent.position = position;
             }
         }
 
-        private void UpdateHealth(float hp, GameObject player)
+        private void UpdateHealth(float hp, AIGuildMember player)
         {
             playersLife[player].image.fillAmount = hp / 100;
+
+            if (hp <= player.stats.MaxHp * .7f)
+                playersLife[player].image.transform.parent.gameObject.SetActive(true);
         }
 
         private void ShowFormations(bool value)
@@ -302,6 +316,20 @@ namespace Burmuruk.Tesis.UI
             }
 
             pAbilities.SetActive(value);
+
+        }
+
+        private void EnableHPOnDamage()
+        {
+
+        }
+
+        private void EnableHPPlayersBar(bool enable)
+        {
+            foreach (var bar in playersLife)
+            {
+                bar.Value.label.transform.parent.gameObject.SetActive(enable);
+            }
         }
 
         private void ShowNotification(string itemName, Vector3 itemPosition)

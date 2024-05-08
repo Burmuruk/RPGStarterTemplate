@@ -1,5 +1,4 @@
-﻿using Burmuruk.Tesis.Fighting;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Burmuruk.Tesis.Stats
 {
