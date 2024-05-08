@@ -282,7 +282,13 @@ namespace Burmuruk.Tesis.UI
         private void ShowEquipedWarning()
         {
             curState = State.Notice;
-            txtWarning.text = "El objeto está actualmente equipado.\n¿Desea equiparlo?";
+            if (txtWarning != null)
+                txtWarning.text = "El objeto está actualmente equipado.\n¿Desea equiparlo?";
+            else
+            {
+                txtWarning = GameObject.FindGameObjectsWithTag("Respawn")[0].GetComponent<TextMeshProUGUI>();
+                txtWarning.text = "El objeto está actualmente equipado.\n¿Desea equiparlo?";
+            }
             WarningButtons[0].transform.parent.gameObject.SetActive(true);
         }
 

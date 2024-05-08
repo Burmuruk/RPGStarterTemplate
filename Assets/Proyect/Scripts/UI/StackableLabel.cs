@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -76,10 +77,19 @@ namespace Burmuruk.Tesis.UI
                 newLabel = UnityEngine.MonoBehaviour.Instantiate(node.label.transform.parent.gameObject, node.label.transform.parent.parent);
             }
 
+            var all = newLabel.GetComponentsInChildren<Image>();
+            Image newImage = null;
+            foreach (var image in all)
+                if (image.transform != newLabel.transform)
+                {
+                    newImage = image;
+                    break;
+                }
+
             StackableNode newNode = node with
             {
                 label = newLabel.GetComponentInChildren<TextMeshProUGUI>(),
-                image = newLabel.GetComponentInChildren<Image>()
+                image = newImage
             };
 
             return newNode;
