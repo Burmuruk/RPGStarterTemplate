@@ -9,6 +9,7 @@ namespace Burmuruk.Tesis.UI
         int id;
         Action callback;
         public event Action<int> OnPointerEnterEvent;
+        public event Action OnRightClick;
 
         public void SetId(int id)
         {
@@ -23,9 +24,19 @@ namespace Burmuruk.Tesis.UI
         public override void OnPointerClick(PointerEventData eventData)
         {
             base.OnPointerClick(eventData);
+            
+            if (eventData.button == PointerEventData.InputButton.Right)
+            {
+                OnRightPointerClick();
+            }
 
             callback?.Invoke();
             callback = null;
+        }
+
+        public void OnRightPointerClick()
+        {
+            OnRightClick?.Invoke();
         }
 
         public override void OnPointerEnter(PointerEventData eventData)

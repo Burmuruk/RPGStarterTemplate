@@ -93,7 +93,7 @@ namespace Burmuruk.Tesis.Stats
         {
             var item = inventary.GetOwnedItem(type, idx);
 
-            if (item != null) return false;
+            if (item == null) return false;
 
             alarmedRemovedItem = (type, (EquipedItem)item);
 

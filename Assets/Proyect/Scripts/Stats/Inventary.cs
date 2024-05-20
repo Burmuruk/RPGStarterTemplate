@@ -1,5 +1,6 @@
 ﻿using Burmuruk.Tesis.Control;
 using Burmuruk.Tesis.Fighting;
+using Burmuruk.Tesis.Saving;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -67,11 +68,11 @@ namespace Burmuruk.Tesis.Stats
             }
         }
 
-        public object Save()
+        public object CaptureState()
         {
             return m_owned;
         }
-        public void Load(object args)
+        public void RestoreState(object args)
         {
             m_owned = (Dictionary<ItemType, Dictionary<int, (ISaveableItem item, int count, int maxCount)>>)args;
         }
@@ -147,7 +148,15 @@ namespace Burmuruk.Tesis.Stats
 
         public int GetItemCount(ItemType type, int subType)
         {
-            return m_owned[type][subType].count;
+            if (m_owned.ContainsKey(type))
+            {
+                if (m_owned[type].ContainsKey(subType))
+                    return m_owned[type][subType].count;
+                else
+                    return 0;
+            }
+
+            return 0;
         }
 
         public int GetItemMaxCount(ItemType type, int subType)

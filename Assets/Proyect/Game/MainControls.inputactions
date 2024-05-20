@@ -85,6 +85,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Delete",
+                    "type": "Button",
+                    "id": "92e5395e-377b-498f-953a-83af72b7c7e6",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -318,6 +327,17 @@
                     "action": "MoreOptions",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "9a6cac85-a6cd-43e7-8fc4-fd52adae25c7",
+                    "path": "<Keyboard>/delete",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "PC",
+                    "action": "Delete",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         },
@@ -338,6 +358,15 @@
                     "name": "Accept",
                     "type": "Button",
                     "id": "a379b424-9872-4953-912d-5d5d6ee40232",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "DeleteItem",
+                    "type": "Button",
+                    "id": "34b93853-65e7-4172-9962-0304ba3ef334",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -408,6 +437,17 @@
                     "processors": "",
                     "groups": "PC",
                     "action": "Accept",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "fe6d4321-c998-481e-9ec0-31c11281e7e9",
+                    "path": "<Keyboard>/delete",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "PC",
+                    "action": "DeleteItem",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

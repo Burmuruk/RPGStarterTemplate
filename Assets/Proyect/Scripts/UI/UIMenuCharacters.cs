@@ -3,8 +3,10 @@ using Burmuruk.Tesis.Stats;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UI;
+using static UnityEditor.Progress;
 
 namespace Burmuruk.Tesis.UI
 {
@@ -42,6 +44,7 @@ namespace Burmuruk.Tesis.UI
         List<AIGuildMember> players;
         InventaryTab curInventaryTab;
         IInventary inventary;
+        WarningProblem curWarningProblem;
         MyItemButton[] btnColors;
         Dictionary<int, Image> btnColorsDict;
         Dictionary<int, (StackableNode panel, EquipedItem item, ISaveableItem realItem)> curElementLabels = new();
@@ -53,13 +56,20 @@ namespace Burmuruk.Tesis.UI
             Weapons,
             Inventary
         }
+
+        enum WarningProblem
+        {
+            None,
+            EquipEquiped,
+            RemoveEquiped
+        }
         #endregion
 
         #region Unity Methods
         private void Awake()
         {
             elementPanel.Initialize();
-            WarningButtons[0].onClick.AddListener(ChangeEquipedPlayer);
+            WarningButtons[0].onClick.AddListener(AceptWarning);
             WarningButtons[1].onClick.AddListener(CancelWarning);
         }
 
@@ -80,6 +90,7 @@ namespace Burmuruk.Tesis.UI
             if (curState != State.None) return;
 
             ShowElements(GetSortedItems(InventaryTab.Modifications));
+            curInventaryTab = InventaryTab.Modifications;
         }
 
         public void ShowWeapons()
@@ -87,6 +98,7 @@ namespace Burmuruk.Tesis.UI
             if (curState != State.None) return;
 
             ShowElements(GetSortedItems(InventaryTab.Weapons));
+            curInventaryTab = InventaryTab.Weapons;
         }
 
         public void ShowInvantary()
@@ -94,6 +106,7 @@ namespace Burmuruk.Tesis.UI
             if (curState != State.None) return;
 
             ShowElements(GetSortedItems(InventaryTab.Inventary));
+            curInventaryTab = InventaryTab.Inventary;
         }
 
         public void SwitchExtraData()
@@ -145,16 +158,67 @@ namespace Burmuruk.Tesis.UI
             print("Interacting");
         }
 
-        private void EquipItem(int idx)
+        public void ElementCancelAction(int idx)
         {
-            var item = curElementLabels[idx].item;
-            (inventary as InventaryEquipDecorator).Equip(players[curPlayerIdx], item.Type, item.GetSubType());
+            switch ((curElementLabels[idx].item.Type))
+            {
+                case ItemType.Consumable:
+                    break;
 
-            SetPlayersColors(curElementLabels[idx].item, curElementLabels[idx].panel);
-            ShowCharacterModel();
+                case ItemType.Ability:
+                case ItemType.Weapon:
+                case ItemType.Modification:
+
+                    UnEquipItem(idx);
+                    break;
+
+                default:
+                    break;
+            }
+            print("Unequiping");
         }
 
-        public void ChangeEquipedPlayer()
+        public void TryRemoveItem()
+        {
+            if (!curElementLabels.ContainsKey(curElementId)) return;
+
+            var item = curElementLabels[curElementId].item;
+            if (!inventary.Remove(item.Type, item.GetSubType())) return;
+
+            if (inventary.GetItemCount(item.Type, item.GetSubType()) > 0)
+            {
+                SetElementInfo(curElementLabels[curElementId].panel, item, out _);
+            }
+            else
+            {
+                RemoveElement(curElementLabels[curElementId].panel);
+            }
+
+            txtWarning.transform.parent.gameObject.SetActive(false);
+            curWarningProblem = WarningProblem.None;
+            curState = State.None;
+        }
+
+        public void AceptWarning()
+        {
+            switch (curWarningProblem)
+            {
+                case WarningProblem.None:
+                    break;
+                case WarningProblem.EquipEquiped:
+                    ChangeEquiped();
+                    break;
+
+                case WarningProblem.RemoveEquiped:
+                    RemoveItem();
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        private void ChangeEquiped()
         {
             var item = curElementLabels[curElementId].item;
             var lastPlayer = item.Characters.Last();
@@ -166,6 +230,53 @@ namespace Burmuruk.Tesis.UI
             SetPlayersColors(item, curElementLabels[curElementId].panel);
             txtWarning.transform.parent.gameObject.SetActive(false);
             curState = State.None;
+
+            ShowCharacterModel();
+            curWarningProblem = WarningProblem.None;
+        }
+
+        private void RemoveItem()
+        {
+            var item = curElementLabels[curElementId].item;
+
+            var lastPlayer = item.Characters.Last();
+            var inventaryDecorator = (inventary as InventaryEquipDecorator);
+
+            inventaryDecorator.Unequip(lastPlayer, item);
+            ShowCharacterModel();
+
+            inventary.Remove(item.Type, item.GetSubType());
+
+            if (inventary.GetItemCount(item.Type, item.GetSubType()) > 0)
+            {
+                SetElementInfo(curElementLabels[curElementId].panel, item, out _);
+            }
+            else
+            {
+                RemoveElement(curElementLabels[curElementId].panel);
+            }
+
+            txtWarning.transform.parent.gameObject.SetActive(false);
+            curWarningProblem = WarningProblem.None;
+            curState = State.None;
+        }
+
+        private void EquipItem(int idx)
+        {
+            var item = curElementLabels[idx].item;
+            (inventary as InventaryEquipDecorator).Equip(players[curPlayerIdx], item.Type, item.GetSubType());
+
+            SetPlayersColors(curElementLabels[idx].item, curElementLabels[idx].panel);
+            ShowCharacterModel();
+        }
+
+        private void UnEquipItem(int idx)
+        {
+            var item = curElementLabels[idx].item;
+            (inventary as InventaryEquipDecorator).Unequip(players[curPlayerIdx], curElementLabels[idx].item);
+
+            SetPlayersColors(curElementLabels[idx].item, curElementLabels[idx].panel);
+            ShowCharacterModel();
         }
 
         private void ShowElements(List<ISaveableItem> items)
@@ -176,20 +287,14 @@ namespace Burmuruk.Tesis.UI
             foreach (var item in items)
             {
                 var panel = elementPanel.Get();
-                panel.label.text = item.GetName();
-                var equipedItem = inventary.GetOwnedItem(item.Type, item.GetSubType()) as EquipedItem;
 
-                var txtCount = (from txt in panel.label.transform.GetComponentsInChildren<TextMeshProUGUI>()
-                               where txt.gameObject != panel.label.gameObject
-                               select txt).First();
-                txtCount.text = inventary.GetItemCount(item.Type, item.GetSubType()).ToString();
+                EquipedItem equipedItem = null;
+                SetElementInfo(panel, item, out equipedItem);
 
                 int buttonId = i++;
                 SubscribeToEvents(panel, buttonId);
 
                 curElementLabels.Add(buttonId, (panel, equipedItem, inventary.GetItem(item.Type, item.GetSubType())));
-
-                SetPlayersColors(equipedItem, panel);
             }
 
             curElementId = 0;
@@ -200,8 +305,22 @@ namespace Burmuruk.Tesis.UI
                 var button = panel.label.transform.parent.GetComponent<MyItemButton>();
                 button.SetId(buttonId);
                 button.onClick.AddListener(() => { ElementAction(buttonId); });
+                button.OnRightClick += () => ElementCancelAction(buttonId);
                 button.OnPointerEnterEvent += SelectElement;
             }
+        }
+
+        private void SetElementInfo(StackableNode panel, ISaveableItem item, out EquipedItem equipedItem)
+        {
+            panel.label.text = item.GetName();
+            equipedItem = inventary.GetOwnedItem(item.Type, item.GetSubType()) as EquipedItem;
+
+            var txtCount = (from txt in panel.label.transform.GetComponentsInChildren<TextMeshProUGUI>()
+                            where txt.gameObject != panel.label.gameObject
+            select txt).First();
+            txtCount.text = inventary.GetItemCount(item.Type, item.GetSubType()).ToString();
+
+            SetPlayersColors(equipedItem, panel);
         }
 
         private void SetPlayersColors(EquipedItem equipedItem, StackableNode panel)
@@ -219,7 +338,7 @@ namespace Burmuruk.Tesis.UI
                                      from character in equiped.Characters
                                      where character.stats.ID == player.stats.ID
                                      select character
-                                  where cur.Count() > 0
+                                  where cur.Any()
                                   select cur.First().stats.Color)
                             .ToArray();
 
@@ -245,13 +364,28 @@ namespace Burmuruk.Tesis.UI
             }
         }
 
+        private void UpdatePlayersColors()
+        {
+            foreach (var element in curElementLabels.Values)
+            {
+                SetPlayersColors(element.item, element.panel);
+            }
+        }
+
         private void CleanElements()
         {
             while (elementPanel.activeNodes.Count > 0)
             {
-                elementPanel.Release(elementPanel.activeNodes[0]);
-                elementPanel.activeNodes[0].label.transform.parent.GetComponent<MyItemButton>().onClick.RemoveAllListeners();
+                RemoveElement(elementPanel.activeNodes[0]);
             }
+
+            curElementLabels.Clear();
+        }
+
+        private void RemoveElement(StackableNode node)
+        {
+            node.label.transform.parent.GetComponent<MyItemButton>().onClick.RemoveAllListeners();
+            elementPanel.Release(node);
         }
 
         private List<ISaveableItem> GetSortedItems(InventaryTab tab)
@@ -308,14 +442,13 @@ namespace Burmuruk.Tesis.UI
         {
             WarningButtons[0].transform.parent.gameObject.SetActive(false);
             curState = State.None;
+            curWarningProblem = WarningProblem.None;
         }
         #endregion
 
         #region Characters panel
         public void ShowCharacters()
         {
-            clothingManager.EquipModifications(players[curPlayerIdx]);
-
             playersImg[0].color = players[GetNextPlayerIdx(-1)].stats.Color;
             playersImg[1].color = players[curPlayerIdx].stats.Color;
             playersImg[2].color = players[GetNextPlayerIdx(1)].stats.Color;
@@ -391,6 +524,8 @@ namespace Burmuruk.Tesis.UI
 
             ShowCharacters();
             colorsPanel.SetActive(false);
+            InitializeColorButtons();
+            UpdatePlayersColors();
         }
 
         public void SelectBtnColor(int id) => curBtnId = id;
@@ -439,8 +574,16 @@ namespace Burmuruk.Tesis.UI
         {
             this.inventary = inventary;
             var inventaryDecorator = inventary as InventaryEquipDecorator;
-            inventaryDecorator.OnTryAlreadyEquiped += ShowEquipedWarning;
-            inventaryDecorator.OnTryDeleteEquiped += ShowDeleteEquipedWarning;
+            inventaryDecorator.OnTryAlreadyEquiped += () =>
+            {
+                curWarningProblem = WarningProblem.EquipEquiped;
+                ShowEquipedWarning();
+            };
+            inventaryDecorator.OnTryDeleteEquiped += () =>
+            {
+                curWarningProblem = WarningProblem.RemoveEquiped;
+                ShowDeleteEquipedWarning();
+            };
             curInventaryTab = InventaryTab.Modifications;
 
             ShowInvantary();

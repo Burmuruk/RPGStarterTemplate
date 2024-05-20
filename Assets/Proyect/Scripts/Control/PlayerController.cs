@@ -2,6 +2,7 @@
 using Burmuruk.Tesis.Stats;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -16,7 +17,7 @@ namespace Burmuruk.Tesis.Control
         bool m_shouldMove = false;
         Vector3 m_direction = default;
         bool m_canChangeFormation = false;
-        private List<PickableItem> m_pickables = new List<PickableItem>();
+        private Dictionary<Transform, PickableItem> m_pickables = new ();
         private List<IInteractable> m_interactables = new List<IInteractable>();
         int interactableIdx = 0;
         
@@ -192,13 +193,13 @@ namespace Burmuruk.Tesis.Control
 
             if (HavePickable)
             {
-                var cmp = m_pickables[0];
+                var cmp = m_pickables.First().Value;
                 var inventary = GetComponent<InventaryEquipDecorator>();
                 inventary.Add(cmp.itemType, cmp);
                 //inventary.Equip(player, cmp.itemType, cmp.GetSubType());
                 cmp.gameObject.SetActive(false);
 
-                m_pickables.Remove(cmp);
+                //m_pickables.Remove(cmp.transform);
 
                 OnItemPicked?.Invoke(cmp.itemType.ToString(), cmp.transform.position);
             }
@@ -227,6 +228,16 @@ namespace Burmuruk.Tesis.Control
             if (gameManager.GameState == GameManager.State.UI)
             {
                 levelManager.ShowMoreOptions();
+            }
+        }
+
+        public void Remove(InputAction.CallbackContext context)
+        {
+            if (!context.performed) return;
+
+            if (gameManager.GameState == GameManager.State.UI)
+            {
+                levelManager.Remove();
             }
         }
         #endregion
@@ -271,25 +282,36 @@ namespace Burmuruk.Tesis.Control
         {
             var items = Physics.OverlapSphere(player.transform.position, 1.5f, 1 << 11);
             var hadItem = m_pickables.Count > 0;
-            m_pickables.Clear();
+            //m_pickables.Clear();
+            Dictionary<Transform, PickableItem> newList = new();
+            List<PickableItem> newPickables = new();
 
             foreach (var item in items)
             {
                 var cmp = item.GetComponent<PickableItem>();
                 if (cmp)
                 {
-                    m_pickables.Add(cmp);
+                    if (!m_pickables.ContainsKey(cmp.transform))
+                    {
+                        newPickables.Add(cmp);
+                    }
+                    else
+                    {
+                        m_pickables.Remove(cmp.transform);
+                    }    
+                    
+                    newList.Add(cmp.transform, cmp);
                 }
             }
 
-            if (hadItem && m_pickables.Count <= 0)
-            {
-                OnPickableExit?.Invoke(false, "");
-            }
-            else if (m_pickables.Count > 0)
-            {
+            if (newList.Count <= 0)
+                foreach (var item in m_pickables)
+                    OnPickableExit?.Invoke(false, "");
+
+            foreach (var item in newPickables)
                 OnPickableEnter?.Invoke(true, "Tomar"/* + m_items[0].subType.ToString()*/);
-            }
+
+            m_pickables = newList;
         }
 
         private void DetectInteractables()
@@ -317,18 +339,18 @@ namespace Burmuruk.Tesis.Control
             }
         }
 
-        private void TakeItem()
-        {
-            var cmp = m_pickables[0];
-            var inventary = player.GetComponent<InventaryEquipDecorator>();
-            inventary.Add(cmp.itemType, cmp);
-            //inventary.ElementAction(cmp.subType, cmp.Item);
-            cmp.gameObject.SetActive(false);
+        //private void TakeItem()
+        //{
+        //    var cmp = m_pickables[0];
+        //    var inventary = player.GetComponent<InventaryEquipDecorator>();
+        //    inventary.Add(cmp.itemType, cmp);
+        //    //inventary.ElementAction(cmp.subType, cmp.Item);
+        //    cmp.gameObject.SetActive(false);
 
-            m_pickables.Remove(cmp);
+        //    m_pickables.Remove(cmp);
 
-            OnItemPicked?.Invoke(cmp.itemType.ToString(), cmp.transform.position);
-        }
+        //    OnItemPicked?.Invoke(cmp.itemType.ToString(), cmp.transform.position);
+        //}
         #endregion
     }
 }

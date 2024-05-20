@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Burmuruk.Tesis.Saving;
+using UnityEngine;
 
 namespace Burmuruk.Tesis.Stats
 {
@@ -36,12 +37,12 @@ namespace Burmuruk.Tesis.Stats
             return m_description;
         }
 
-        public object Save()
+        public object CaptureState()
         {
             return gameObject.activeSelf;
         }
 
-        public void Load(object args)
+        public void RestoreState(object args)
         {
             gameObject.SetActive((bool)args);
         }

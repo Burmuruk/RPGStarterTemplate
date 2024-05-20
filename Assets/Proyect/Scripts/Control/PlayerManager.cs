@@ -1,4 +1,6 @@
-﻿using Burmuruk.Tesis.Stats;
+﻿using Burmuruk.Tesis.Saving;
+using Burmuruk.Tesis.Stats;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +8,7 @@ using UnityEngine;
 
 namespace Burmuruk.Tesis.Control
 {
-    class PlayerManager : MonoBehaviour
+    class PlayerManager : MonoBehaviour, IJsonSaveable
     {
         [SerializeField] PlayerCustomization customization;
 
@@ -206,6 +208,22 @@ namespace Burmuruk.Tesis.Control
             //var selectedColorIdx = UnityEngine.Random.Range(0, availableColors.Count);
 
             //member.stats.Color = playerColors[selectedColorIdx];
+        }
+
+        public JToken CaptureAsJToken()
+        {
+            List<Vector3> positions = new();
+            players.ForEach(player => { positions.Add(player.transform.position); });
+            return JToken.FromObject(positions);
+        }
+
+        public void RestoreFromJToken(JToken state)
+        {
+            List<Vector3> positions = state.ToObject<List<Vector3>>();
+            for (int i = 0; i < players.Count; i++)
+            {
+                players[i].transform.position = positions[i];
+            }
         }
     }
 

@@ -42,7 +42,13 @@ namespace Burmuruk.Tesis.Stats
 
         public void UnequipModification(Character character, IEquipable equipable)
         {
-            Destroy(character.BodyManager.GetPart(equipable.BodyPart));
+            var bodyPart = character.BodyManager.GetPart(equipable.BodyPart);
+
+            for (int i = 0; i < bodyPart.transform.childCount; i++)
+            {
+                Destroy(bodyPart.transform.GetChild(i).gameObject);
+            }
+
             //var type = (ModificationType)modificationType;
 
             //for (var i = 0; i < equipedObjects.Count; i++)

@@ -144,4 +144,11 @@ public class LevelManager : MonoBehaviour
 
         gameManager.ExitUI();
     }
+
+    public void Remove()
+    {
+        if (!menuCharacters) return;
+
+        menuCharacters.TryRemoveItem();
+    }
 }
