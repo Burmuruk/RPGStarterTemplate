@@ -13,12 +13,14 @@ namespace Burmuruk.Tesis.Stats
         [SerializeField] BodyManager.BodyPart bodyPart;
         [SerializeField] string m_name;
         [SerializeField] string m_description;
+        [SerializeField] Sprite sprite;
 
         StatsManager stats;
 
         public ItemType Type => ItemType.Modification;
         public BodyManager.BodyPart BodyPart { get => bodyPart; }
         public GameObject Prefab { get => m_Prefab; }
+        public Sprite Sprite { get => sprite; }
 
         public void Equip(StatsManager stats)
         {

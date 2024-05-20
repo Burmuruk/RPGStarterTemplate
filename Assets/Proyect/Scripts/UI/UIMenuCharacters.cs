@@ -1,12 +1,12 @@
 using Burmuruk.Tesis.Control;
+using Burmuruk.Tesis.Fighting;
 using Burmuruk.Tesis.Stats;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UI;
-using static UnityEditor.Progress;
 
 namespace Burmuruk.Tesis.UI
 {
@@ -23,6 +23,13 @@ namespace Burmuruk.Tesis.UI
         [SerializeField] GameObject AmountPanel;
         [SerializeField] GameObject colorsPanel;
         [SerializeField] PlayerCustomization customization;
+        [SerializeField] Image[] btnModificationSlots;
+        [SerializeField] Image[] btnHumanAbilities;
+        [SerializeField] Image[] btnAlienAbilities;
+        [SerializeField] Image[] btnAbilitiesSlot;
+        [SerializeField] Color selectedColor;
+        [SerializeField] Sprite defaultBTNSprite;
+        [SerializeField] ItemsList itemsList;
 
         PlayerCustomizationManager clothingManager;
 
@@ -40,6 +47,8 @@ namespace Burmuruk.Tesis.UI
         bool showDescription = false;
         int curElementId = 0;
         int curBtnId = 0;
+        int? curModificationSlot;
+        int? curAbiltySlot;
 
         List<AIGuildMember> players;
         InventaryTab curInventaryTab;
@@ -47,6 +56,9 @@ namespace Burmuruk.Tesis.UI
         WarningProblem curWarningProblem;
         MyItemButton[] btnColors;
         Dictionary<int, Image> btnColorsDict;
+        Dictionary<int, (Image image, int subType)> btnAbilitiesDict;
+        Dictionary<int, (Image image, int subType)> btnAbilitiesSlotDict;
+        Dictionary<int, (Image image, int subType)> btnModsDict;
         Dictionary<int, (StackableNode panel, EquipedItem item, ISaveableItem realItem)> curElementLabels = new();
 
         enum InventaryTab
@@ -71,6 +83,8 @@ namespace Burmuruk.Tesis.UI
             elementPanel.Initialize();
             WarningButtons[0].onClick.AddListener(AceptWarning);
             WarningButtons[1].onClick.AddListener(CancelWarning);
+
+            InitializeHabilityButtons();
         }
 
         private void Start()
@@ -175,7 +189,11 @@ namespace Burmuruk.Tesis.UI
                 default:
                     break;
             }
+
             print("Unequiping");
+            txtWarning.transform.parent.gameObject.SetActive(false);
+            curWarningProblem = WarningProblem.None;
+            curState = State.None;
         }
 
         public void TryRemoveItem()
@@ -193,10 +211,6 @@ namespace Burmuruk.Tesis.UI
             {
                 RemoveElement(curElementLabels[curElementId].panel);
             }
-
-            txtWarning.transform.parent.gameObject.SetActive(false);
-            curWarningProblem = WarningProblem.None;
-            curState = State.None;
         }
 
         public void AceptWarning()
@@ -228,11 +242,7 @@ namespace Burmuruk.Tesis.UI
             inventaryDecorator.Equip(players[curPlayerIdx], item.Type, item.GetSubType());
 
             SetPlayersColors(item, curElementLabels[curElementId].panel);
-            txtWarning.transform.parent.gameObject.SetActive(false);
-            curState = State.None;
-
             ShowCharacterModel();
-            curWarningProblem = WarningProblem.None;
         }
 
         private void RemoveItem()
@@ -454,6 +464,7 @@ namespace Burmuruk.Tesis.UI
             playersImg[2].color = players[GetNextPlayerIdx(1)].stats.Color;
 
             ShowCharacterModel();
+            UpdateModsSprites();
         }
 
         private void ShowCharacterModel()
@@ -606,7 +617,28 @@ namespace Burmuruk.Tesis.UI
             ShowCharacters();
             InitializeColorButtons();
             //playersImg[1] = this.players[curPlayerIdx];
-        } 
+        }
+
+        private void UpdateModsSprites()
+        {
+            var mods = (from mod in inventary.GetOwnedList(ItemType.Modification)
+                       let equiped = (EquipedItem)mod
+                       where equiped.IsEquip && equiped.Characters.Contains(players[curPlayerIdx])
+                       select (Modification)inventary.GetItem(mod.Type, mod.GetSubType())
+                       ).ToArray();
+
+            int i = 0;
+            foreach (var modSlot in btnModificationSlots)
+            {
+                for (; i < mods.Length; i++)
+                {
+                    modSlot.sprite = mods[i].Sprite;
+                    continue;
+                }
+
+                modSlot.sprite = defaultBTNSprite;
+            }
+        }
         #endregion
 
         public void RotatePlayer(Vector2 direction)
@@ -618,5 +650,90 @@ namespace Burmuruk.Tesis.UI
         {
             characterModel.transform.Rotate(Vector3.up, direction.x * rotationVelocity * -1);
         }
+
+        #region Abilities
+        private void InitializeHabilityButtons()
+        {
+            for (int i = 0; i < btnAbilitiesSlot.Length; i++)
+            {
+                int id = i;
+                btnAbilitiesSlotDict.Add(id, (btnAbilitiesSlot[i], -1));
+                AddAbilityListeners(btnAbilitiesSlot[i], SelectAbilitySlot, id);
+            }
+
+            var collection = btnHumanAbilities;
+
+            for (int i = 0, j = 0, k = 0; i < collection.Count() && j < 2; i++, k++)
+            {
+                int id = k;
+                AddAbilitiesImage(id, collection[i]);
+                AddAbilityListeners(collection[i], SelectAbility, id);
+
+                if (i == btnHumanAbilities.Count() - 1)
+                {
+                    collection = btnAlienAbilities;
+                    j++;
+                    i = 0;
+                }
+            }
+        }
+
+        private void AddAbilitiesImage(int id, Image image)
+        {
+            btnAbilitiesDict.Add(id, (image, GetAbilitiesSubType().Current));
+        }
+
+        private IEnumerator<int> GetAbilitiesSubType()
+        {
+            foreach (var type in Enum.GetValues(typeof(AbilityType)))
+            {
+                yield return (int)type;
+            }
+        }
+
+        private void AddAbilityListeners(Image image, Action<int> listener, int id)
+        {
+            var button = image.transform.parent.GetComponent<MyItemButton>();
+            button.onClick.AddListener(() => listener(id));
+        }
+
+        private void UnequipAbilty(int id)
+        {
+
+        }
+
+        private void SelectAbilitySlot(int id)
+        {
+            if (curAbiltySlot.HasValue)
+            {
+                ChangeSelectedColor();
+            }
+
+            curAbiltySlot = id;
+            ChangeSelectedColor();
+        }
+
+        private void SelectAbility(int id)
+        {
+            if (!curAbiltySlot.HasValue) return;
+
+            var slotImage = btnAbilitiesDict[curAbiltySlot.Value].image;
+            slotImage.sprite = btnAbilitiesDict[id].image.sprite;
+
+            ((InventaryEquipDecorator)inventary).Equip(players[curPlayerIdx], ItemType.Ability, btnAbilitiesDict[id].subType);
+
+            ChangeSelectedColor();
+            curAbiltySlot = null;
+        }
+
+        private void ChangeSelectedColor()
+        {
+            var parentImage = btnAbilitiesDict[curAbiltySlot.Value].image.transform.parent.GetComponent<Image>();
+            var prevColor = parentImage.color;
+            parentImage.color = selectedColor;
+
+            selectedColor = prevColor;
+        }
+        #endregion
     }
 }

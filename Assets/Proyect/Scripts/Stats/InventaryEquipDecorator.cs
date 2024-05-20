@@ -26,24 +26,25 @@ namespace Burmuruk.Tesis.Stats
 
         public void SetInventary(Inventary inventary) => this.inventary = inventary;
 
-        public void Equip(Character player, ItemType itemType, int type)
+        public bool Equip(Character player, ItemType itemType, int type)
         {
             var item = inventary.GetOwnedItem(itemType, type);
 
-            if (item == null) return;
+            if (item == null) return false;
 
             var equiped = (EquipedItem)item;
-            if (equiped.Characters.Contains(player)) return;
+            if (equiped.Characters.Contains(player)) return false;
 
             alarmedEquipItem = (itemType, player, (EquipedItem)item);
 
             if (equiped.IsEquip && !CheckHaveMoreItems(itemType, type, equiped))
             {
                 OnTryAlreadyEquiped?.Invoke();
-                return;
+                return false;
             }
 
             EquipDirec();
+            return true;
 
             bool CheckHaveMoreItems(ItemType itemType, int type, EquipedItem equiped)
             {

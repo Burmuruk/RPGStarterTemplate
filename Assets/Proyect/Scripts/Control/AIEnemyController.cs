@@ -40,6 +40,11 @@ namespace Assets.Proyect.Scripts.Control
             base.FixedUpdate();
         }
 
+        public void Restart()
+        {
+
+        }
+
         public void DisableControll()
         {
             throw new System.NotImplementedException();
