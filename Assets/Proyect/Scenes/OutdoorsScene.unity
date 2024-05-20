@@ -9022,7 +9022,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 987314fbef53eaf41bd51fcaa8e92749, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  uniqueIdentifier: 5d8eea6d-f3ad-47c5-89f1-438778b3cc06
+  uniqueIdentifier: 549ef7a0-f6b9-4f66-9851-06f777c148c4
 --- !u!1 &1546309549
 GameObject:
   m_ObjectHideFlags: 0
@@ -9093,10 +9093,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   list: {fileID: 11400000, guid: 0a3f3d7e1f9d8704e976c5edafce273f, type: 2}
-  itemType: 0
+  itemType: 2
   itemIdx: 0
-  m_name: 
-  m_description: 
+  m_name: Hi
+  m_description: Test
 --- !u!135 &1613440284
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -14643,6 +14643,22 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: 92e5395e-377b-498f-953a-83af72b7c7e6
     m_ActionName: Player/Delete[/Keyboard/delete]
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 8654367142594339884}
+        m_TargetAssemblyTypeName: Burmuruk.Tesis.Control.PlayerController, Assembly-CSharp
+        m_MethodName: ChangeMenu
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 8a4d8847-956f-4d36-8bca-6a399f206b0b
+    m_ActionName: Player/New action[/Keyboard/tab]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: PC
   m_DefaultActionMap: Player

@@ -43,23 +43,23 @@ namespace Burmuruk.Tesis.Saving
         }
 
 #if UNITY_EDITOR
-        private void Update()
-        {
-            if (Application.IsPlaying(gameObject)) return;
-            if (string.IsNullOrEmpty(gameObject.scene.path)) return;
+        //private void Update()
+        //{
+        //    if (Application.IsPlaying(gameObject)) return;
+        //    if (string.IsNullOrEmpty(gameObject.scene.path)) return;
 
-            SerializedObject serializedObject = new(this);
-            SerializedProperty property = serializedObject.FindProperty("uniqueIdentifier");
+        //    SerializedObject serializedObject = new(this);
+        //    SerializedProperty property = serializedObject.FindProperty("uniqueIdentifier");
 
-            print("Editing");
-            if (string.IsNullOrEmpty(property.stringValue) || IsUnique(property.stringValue))
-            {
-                property.stringValue = System.Guid.NewGuid().ToString();
-                serializedObject.ApplyModifiedProperties();
-            }
+        //    print("Editing");
+        //    if (string.IsNullOrEmpty(property.stringValue) || IsUnique(property.stringValue))
+        //    {
+        //        property.stringValue = System.Guid.NewGuid().ToString();
+        //        serializedObject.ApplyModifiedProperties();
+        //    }
 
-            globalLookup[property.stringValue] = this;
-        }
+        //    globalLookup[property.stringValue] = this;
+        //}
 #endif
 
         private bool IsUnique(string candidate)

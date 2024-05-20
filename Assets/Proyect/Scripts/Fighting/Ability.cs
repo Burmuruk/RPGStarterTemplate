@@ -11,6 +11,7 @@ namespace Burmuruk.Tesis.Stats
         [SerializeField] AbilityType type;
         [SerializeField] string m_name;
         [SerializeField] string m_description;
+        [SerializeField] Sprite sprite;
 
         public ItemType Type => ItemType.Ability;
 

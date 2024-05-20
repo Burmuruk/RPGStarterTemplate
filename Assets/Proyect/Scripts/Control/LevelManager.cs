@@ -151,4 +151,11 @@ public class LevelManager : MonoBehaviour
 
         menuCharacters.TryRemoveItem();
     }
+
+    public void ChangeMenu()
+    {
+        if (!menuCharacters) return;
+
+        menuCharacters.ChangeMenu();
+    }
 }

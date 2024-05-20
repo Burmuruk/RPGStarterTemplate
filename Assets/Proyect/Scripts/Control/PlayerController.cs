@@ -135,7 +135,6 @@ namespace Burmuruk.Tesis.Control
 
             if (context.performed)
             {
-                print("Right Click");
                 var enemy = DetectEnemyInMouse();
 
                 if (enemy)
@@ -238,6 +237,16 @@ namespace Burmuruk.Tesis.Control
             if (gameManager.GameState == GameManager.State.UI)
             {
                 levelManager.Remove();
+            }
+        }
+
+        public void ChangeMenu(InputAction.CallbackContext context)
+        {
+            if (!context.performed) return;
+
+            if (gameManager.GameState == GameManager.State.UI)
+            {
+                levelManager.ChangeMenu();
             }
         }
         #endregion

@@ -16,3 +16,4 @@ MonoBehaviour:
   type: 1
   m_name: Dash
   m_description: Moves fast
+  sprite: {fileID: 21300000, guid: 62d6e33d3b7a3c64aa2f24dc010cb087, type: 3}
