@@ -37,7 +37,7 @@ namespace Burmuruk.Tesis.Stats
 
         public void Use()
         {
-            HabilitiesManager.habilitiesList[type].Invoke(null);
+            AbilitiesManager.habilitiesList[type].Invoke(null);
         }
 
         public int GetSubType()

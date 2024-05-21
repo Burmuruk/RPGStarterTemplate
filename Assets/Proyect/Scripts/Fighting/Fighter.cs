@@ -13,7 +13,7 @@ namespace Burmuruk.Tesis.Fighting
         StatsManager m_targetStats;
         IInventary m_inventary;
         Movement.Movement m_movement;
-        HabilitiesManager habManager;
+        AbilitiesManager habManager;
 
         Transform m_target;
         CoolDownAction cdBasicAttack;
@@ -81,7 +81,7 @@ namespace Burmuruk.Tesis.Fighting
                 if (hability.GetSubType() == (int)type)
                 {
                     var args = GetSpecialAttackArgs(type);
-                    HabilitiesManager.habilitiesList[type]?.Invoke(args);
+                    AbilitiesManager.habilitiesList[type]?.Invoke(args);
                     return;
                 }
             }

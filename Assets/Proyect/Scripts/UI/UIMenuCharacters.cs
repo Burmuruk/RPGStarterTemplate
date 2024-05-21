@@ -36,15 +36,6 @@ namespace Burmuruk.Tesis.UI
         [SerializeField] TextMeshProUGUI txtAbilityInfo;
         [SerializeField] TextMeshProUGUI txtAbilityTitle;
 
-        PlayerCustomizationManager clothingManager;
-
-        public enum State
-        {
-            None,
-            Notice,
-            Loading
-        }
-
         public State curState = State.None;
         Vector2 direction;
         int curPlayerIdx;
@@ -69,6 +60,12 @@ namespace Burmuruk.Tesis.UI
         Dictionary<int, (Image image, int subType)> btnModsDict;
         Dictionary<int, (StackableNode panel, EquipedItem item, ISaveableItem realItem)> curElementLabels = new();
 
+        public enum State
+        {
+            None,
+            Notice,
+            Loading
+        }
         enum InventaryTab
         {
             None,
@@ -697,7 +694,7 @@ namespace Burmuruk.Tesis.UI
             InitializeHabilityButtons();
         }
 
-        public void SetPlayers(List<AIGuildMember> players, PlayerCustomizationManager clothingManager)
+        public void SetPlayers(List<AIGuildMember> players)
         {
             this.players = players;
 
@@ -710,7 +707,6 @@ namespace Burmuruk.Tesis.UI
                 }
             }
 
-            this.clothingManager = clothingManager;
             ShowCharacters();
             InitializeColorButtons();
             //playersImg[1] = this.players[curPlayerIdx];

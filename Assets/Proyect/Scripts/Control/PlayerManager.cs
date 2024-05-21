@@ -98,14 +98,29 @@ namespace Burmuruk.Tesis.Control
             }
         }
 
+        public void UseItem(ItemType type, int subType)
+        {
+            var item = MainInventary.GetItem(type, subType);
+
+            if (item == null) return;
+
+            if (type == ItemType.Ability)
+            {
+                playerController.UseAbility((Ability)item);
+            }
+        }
+
         private void FindPlayers()
         {
-            var players = from p in FindObjectsOfType<AIGuildMember>() where p is IPlayable select p;
-            this.players = players.ToList();
+            var players = (from p in FindObjectsOfType<AIGuildMember>() 
+                          where p is IPlayable 
+                          select p).ToList();
+            
+            this.players = new();
 
             foreach (var player in players)
             {
-                SetColor(player);
+                AddMember(player);
             }
         }
 
@@ -161,6 +176,7 @@ namespace Burmuruk.Tesis.Control
             member.OnCombatStarted += EnterToCombatMode;
             member.SetFormation(curFormation.value, curFormation.args);
 
+            players.Add(member);
             SetColor (member);
         }
 

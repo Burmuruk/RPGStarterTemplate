@@ -249,9 +249,39 @@ namespace Burmuruk.Tesis.Control
                 levelManager.ChangeMenu();
             }
         }
+
+        public void UseAbility1(InputAction.CallbackContext context)
+        {
+            if (!context.performed) return;
+        }
+
+        public void UseAbility2(InputAction.CallbackContext context)
+        {
+            if (!context.performed) return;
+        }
+
+        public void UseAbility3(InputAction.CallbackContext context)
+        {
+            if (!context.performed) return;
+        }
+
+        public void UseAbility4(InputAction.CallbackContext context)
+        {
+            if (!context.performed) return;
+        }
         #endregion
 
         #region Private methods
+        public void UseAbility(Ability ability)
+        {
+            if (gameManager.GameState != GameManager.State.Playing)
+                return;
+
+            if (ability == null) return;
+
+            ability.Use();
+        }
+
         private Collider DetectEnemyInMouse()
         {
             if (!player) return null;

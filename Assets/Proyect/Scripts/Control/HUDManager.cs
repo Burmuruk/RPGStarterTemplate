@@ -1,8 +1,11 @@
 ﻿using Burmuruk.Tesis.Control;
+using Burmuruk.Tesis.Stats;
 using Burmuruk.Utilities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Burmuruk.Tesis.UI
 {
@@ -14,8 +17,9 @@ namespace Burmuruk.Tesis.UI
 
         [Space()]
         [Header("Abilities"), Space()]
-        [SerializeField] GameObject pAbilities;
-        [SerializeField] GameObject pAbility;
+        [SerializeField] GameObject pActiveAbilities;
+        [SerializeField] GameObject pPasiveAbilities;
+        [SerializeField] Sprite defaultAbilityIMG;
         [Header("Formations"), Space()]
         [SerializeField] GameObject pFormationInfo;
         [SerializeField] StackableLabel pFormationState;
@@ -305,18 +309,44 @@ namespace Burmuruk.Tesis.UI
         {
             if (value)
             {
-                //playerManager.CurPlayer.
+                var inventary = playerManager.MainInventary;
+                var curPlayer = playerManager.CurPlayer.GetComponent<Character>();
 
-                //for (int i = 0; i < pAbilities.transform.childCount; i++)
-                //{
-                //    var pAbilty = pAbilities.transform.GetChild(i);
+                var abilities = (from ability in inventary.GetOwnedList(ItemType.Ability)
+                                 where ((EquipedItem)ability).Characters.Contains(curPlayer)
+                                 select (Ability)inventary.GetItem(ability.Type, ability.GetSubType()))
+                             .ToArray();
 
-                //    pAbilities.SetActive(true);
-                //}
+                int j = 0;
+                for (int i = 0; i < pActiveAbilities.transform.childCount; i++)
+                {
+                    var imgAbilty = pActiveAbilities.transform.GetChild(i).GetComponent<Image>();
+
+                    if (j < abilities.Length)
+                    {
+                        int subType = abilities[j].GetSubType();
+                        var button = imgAbilty.GetComponent<MyItemButton>();
+
+                        imgAbilty.sprite = abilities[j].Sprite;
+                        button.onClick.RemoveAllListeners();
+                        button.onClick.AddListener(() => UseAbility(subType));
+
+                        j++;
+                        continue;
+                    }
+
+                    imgAbilty.sprite = defaultAbilityIMG;
+                    imgAbilty.gameObject.SetActive(false);
+                }
             }
 
-            pAbilities.SetActive(value);
+            pActiveAbilities.transform.parent.gameObject.SetActive(value);
 
+        }
+
+        private void UseAbility(int id)
+        {
+            playerManager.UseItem(ItemType.Ability, id);
         }
 
         private void EnableHPOnDamage()

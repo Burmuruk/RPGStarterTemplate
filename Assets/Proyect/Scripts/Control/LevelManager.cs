@@ -107,7 +107,7 @@ public class LevelManager : MonoBehaviour
                 {
                     var cloths = FindObjectOfType<PlayerCustomizationManager>();
                     var pm = FindObjectOfType<PlayerManager>();
-                    menuCharacters.SetPlayers(pm.Players, cloths);
+                    menuCharacters.SetPlayers(pm.Players);
                     menuCharacters.SetInventary(pm.MainInventary);
                     break;
                 }

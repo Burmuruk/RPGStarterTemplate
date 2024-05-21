@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Burmuruk.Tesis.Fighting
 {
-    class HabilitiesManager : MonoBehaviour
+    class AbilitiesManager : MonoBehaviour
     {
         
 
