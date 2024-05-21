@@ -73,7 +73,7 @@ namespace Burmuruk.Tesis.Stats
 
             item.Unequip(player);
             //item.OnUnequiped -= Unequip;
-            var equipedItem = inventary.GetItem(item.Type, item.GetSubType()) as IEquipable;
+            var equipedItem = (IEquipable)inventary.GetItem(item.Type, item.GetSubType());
 
             customazationManager.UnequipModification(player, equipedItem);
         }

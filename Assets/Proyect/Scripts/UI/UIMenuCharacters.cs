@@ -25,6 +25,7 @@ namespace Burmuruk.Tesis.UI
         [SerializeField] GameObject colorsPanel;
         [SerializeField] PlayerCustomization customization;
         [SerializeField] Image[] btnModificationSlots;
+        [Space(), Header("Abilities")]
         [SerializeField] GameObject abilitiesMenu;
         [SerializeField] Image[] btnHumanAbilities;
         [SerializeField] Image[] btnAlienAbilities;
@@ -32,6 +33,8 @@ namespace Burmuruk.Tesis.UI
         [SerializeField] Color selectedColor;
         [SerializeField] Sprite defaultBTNSprite;
         [SerializeField] ItemsList itemsList;
+        [SerializeField] TextMeshProUGUI txtAbilityInfo;
+        [SerializeField] TextMeshProUGUI txtAbilityTitle;
 
         PlayerCustomizationManager clothingManager;
 
@@ -73,7 +76,6 @@ namespace Burmuruk.Tesis.UI
             Weapons,
             Inventary
         }
-
         enum WarningProblem
         {
             None,
@@ -97,7 +99,6 @@ namespace Burmuruk.Tesis.UI
 
             var first = elementPanel.Get();
             elementPanel.Release(first);
-            InitializeHabilityButtons();
         }
 
         private void Start()
@@ -233,18 +234,13 @@ namespace Burmuruk.Tesis.UI
                 case Menu.None:
                     break;
                 case Menu.Inventary:
-                    charactersMenu.SetActive(false);
-
-                    abilitiesMenu.SetActive(true);
-                    curMenu = Menu.Abilities;
+                    ShowInventaryMenu();
                     break;
 
                 case Menu.Abilities:
-                    charactersMenu.SetActive(true);
-
-                    abilitiesMenu.SetActive(false);
-                    curMenu = Menu.Inventary;
+                    ShowAbilitiesMenu();
                     break;
+
                 default:
                     break;
             }
@@ -267,6 +263,24 @@ namespace Burmuruk.Tesis.UI
                 default:
                     break;
             }
+        }
+
+        private void ShowAbilitiesMenu()
+        {
+            abilitiesMenu.SetActive(false);
+            characterModel.SetActive(false);
+
+            charactersMenu.SetActive(true);
+            curMenu = Menu.Inventary;
+        }
+
+        private void ShowInventaryMenu()
+        {
+            charactersMenu.SetActive(false);
+
+            characterModel.SetActive(true);
+            abilitiesMenu.SetActive(true);
+            curMenu = Menu.Abilities;
         }
 
         private void ChangeEquiped()
@@ -516,6 +530,69 @@ namespace Burmuruk.Tesis.UI
 
             ShowCharacterModel();
             UpdateModsSprites();
+
+            if (curMenu == Menu.Abilities)
+            {
+                ShowCharacterAbilities();
+            }
+        }
+
+        public void ShowNextPlayer()
+        {
+            if (curState != State.None) return;
+
+            curPlayerIdx = GetNextPlayerIdx(1);
+            ShowCharacters();
+        }
+
+        public void ShowPreviourPlayer()
+        {
+            if (curState != State.None) return;
+
+            curPlayerIdx = GetNextPlayerIdx(-1);
+            ShowCharacters();
+        }
+
+        public void ChangePlayerColor()
+        {
+            colorsPanel.SetActive(!colorsPanel.activeSelf);
+        }
+
+        public void SelectBtnColor(int id) => curBtnId = id;
+
+        private void ShowCharacterAbilities()
+        {
+            var abilities = (from ability in inventary.GetOwnedList(ItemType.Ability)
+                             where ((EquipedItem)ability).Characters.Contains(players[curPlayerIdx])
+                             select (Ability)inventary.GetItem(ability.Type, ability.GetSubType()))
+                             .ToArray();
+
+            int j = 0;
+            for (int i = 0; i < btnAbilitiesSlotDict.Values.Count; i++)
+            {
+                var slot = btnAbilitiesSlotDict[i];
+
+                if (j < abilities.Length)
+                {
+                    slot.image.sprite = abilities[j].Sprite;
+                    btnAbilitiesSlotDict[i] = (btnAbilitiesSlotDict[i].image, abilities[j].GetSubType());
+                    j++;
+                    continue;
+                }
+
+                slot.image.sprite = defaultBTNSprite;
+                btnAbilitiesSlotDict[i] = (btnAbilitiesSlotDict[i].image, -1);
+            }
+        }
+
+        private void ChangeColor()
+        {
+            players[curPlayerIdx].stats.Color = btnColorsDict[curBtnId].color;
+
+            ShowCharacters();
+            colorsPanel.SetActive(false);
+            InitializeColorButtons();
+            UpdatePlayersColors();
         }
 
         private void ShowCharacterModel()
@@ -558,39 +635,6 @@ namespace Burmuruk.Tesis.UI
 
             return 0;
         }
-
-        public void ShowNextPlayer()
-        {
-            if (curState != State.None) return;
-
-            curPlayerIdx = GetNextPlayerIdx(1);
-            ShowCharacters();
-        }
-
-        public void ShowPreviourPlayer()
-        {
-            if (curState != State.None) return;
-
-            curPlayerIdx = GetNextPlayerIdx(-1);
-            ShowCharacters();
-        }
-
-        public void ChangePlayerColor()
-        {
-            colorsPanel.SetActive(!colorsPanel.activeSelf);
-        }
-
-        private void ChangeColor()
-        {
-            players[curPlayerIdx].stats.Color = btnColorsDict[curBtnId].color;
-
-            ShowCharacters();
-            colorsPanel.SetActive(false);
-            InitializeColorButtons();
-            UpdatePlayersColors();
-        }
-
-        public void SelectBtnColor(int id) => curBtnId = id;
 
         private void InitializeColorButtons()
         {
@@ -650,6 +694,7 @@ namespace Burmuruk.Tesis.UI
 
             ShowInvantary();
             UpdateModsSprites();
+            InitializeHabilityButtons();
         }
 
         public void SetPlayers(List<AIGuildMember> players, PlayerCustomizationManager clothingManager)
@@ -711,13 +756,17 @@ namespace Burmuruk.Tesis.UI
         {
             btnAbilitiesDict = new();
             btnAbilitiesSlotDict = new();
+            txtAbilityInfo.text = "";
+            txtAbilityTitle.text = "";
 
             for (int i = 0; i < btnAbilitiesSlot.Length; i++)
             {
                 int id = i;
                 btnAbilitiesSlotDict.Add(id, (btnAbilitiesSlot[i], -1));
-                AddAbilityListeners(btnAbilitiesSlot[i], SelectAbilitySlot, id);
-                btnAbilitiesSlot[i].transform.parent.GetComponent<MyItemButton>().OnRightClick += () => UnequipAbilty(id); 
+
+                var button = btnAbilitiesSlot[i].transform.parent.GetComponent<MyItemButton>();
+                button.onClick.AddListener(() => SelectAbilitySlot(id));
+                button.OnRightClick += () => UnequipAbilty(id);
             }
 
             var collection = btnHumanAbilities;
@@ -726,7 +775,6 @@ namespace Burmuruk.Tesis.UI
             {
                 int id = k;
                 AddAbilitiesImage(id, collection[i]);
-                AddAbilityListeners(collection[i], SelectAbility, id);
 
                 if (i == btnHumanAbilities.Count() - 1)
                 {
@@ -737,23 +785,39 @@ namespace Burmuruk.Tesis.UI
             }
         }
 
-        private void AddAbilitiesImage(int id, Image image)
+        private bool AddAbilitiesImage(int id, Image image)
         {
-            btnAbilitiesDict.Add(id, (image, GetAbilitiesSubType().Current));
-        }
+            int subType = -1;
+            string name = image.transform.parent.name;
 
-        private IEnumerator<int> GetAbilitiesSubType()
-        {
-            foreach (var type in Enum.GetValues(typeof(AbilityType)))
+            if (!Int32.TryParse(name.Substring(6, name.Length - 6), out subType))
+                return false;
+            
+            if (Enum.IsDefined(typeof(AbilityType), subType))
             {
-                yield return (int)type;
+                btnAbilitiesDict.Add(id, (image, subType));
+
+                if (inventary.GetItem(ItemType.Ability, subType) is var item && item != null)
+                {
+                    var ability = (Ability)item;
+                    image.sprite = ability.Sprite;
+                    image.transform.parent.gameObject.SetActive(true);
+                    return true;
+                }
             }
+            else
+                btnAbilitiesDict.Add(id, (image, -1));
+
+            image.transform.parent.gameObject.SetActive(false);
+            return false;
         }
 
-        private void AddAbilityListeners(Image image, Action<int> listener, int id)
+        private void ShowAbilityInfo(int id)
         {
-            var button = image.transform.parent.GetComponent<MyItemButton>();
-            button.onClick.AddListener(() => listener(id));
+            var ability = (Ability)inventary.GetItem(ItemType.Ability, id);
+
+            txtAbilityTitle.text = ability.name;
+            txtAbilityInfo.text = ability.GetDescription();
         }
 
         private void UnequipAbilty(int id)
@@ -805,10 +869,15 @@ namespace Burmuruk.Tesis.UI
             btnAbilitiesSlotDict[curAbiltySlot.Value] = (slot.image, -1);
         }
 
-        private void SelectAbility(int id)
+        public void SelectAbility(int id)
         {
             if (curState == State.Notice) return;
-            if (!curAbiltySlot.HasValue) return;
+
+            if (!curAbiltySlot.HasValue)
+            {
+                ShowAbilityInfo(id);
+                return;
+            }
 
             curAbilityId = id;
 
@@ -836,7 +905,7 @@ namespace Burmuruk.Tesis.UI
 
         private void ChangeSelectedColor()
         {
-            var parentImage = btnAbilitiesDict[curAbiltySlot.Value].image.transform.parent.GetComponent<Image>();
+            var parentImage = btnAbilitiesSlotDict[curAbiltySlot.Value].image.transform.parent.GetComponent<Image>();
             var prevColor = parentImage.color;
             parentImage.color = selectedColor;
 

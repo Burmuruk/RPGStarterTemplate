@@ -95,6 +95,9 @@ namespace Burmuruk.Tesis.Stats
             }
             else
             {
+                if (m_ItemsList.Get(type, subType) == null)
+                    return false;
+
                 generalList.Add(subType, (item, 1, 99));
             }
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
@@ -6,7 +7,7 @@ namespace Burmuruk.Tesis.UI
 {
     public class MyItemButton : Button
     {
-        int id;
+        [SerializeField] int id;
         Action callback;
         public event Action<int> OnPointerEnterEvent;
         public event Action OnRightClick;

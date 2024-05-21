@@ -29,7 +29,7 @@ namespace Burmuruk.Tesis.Stats
 
         public void EquipModification(Character character, IEquipable modification)
         {
-            if (modification == null) return;
+            if (modification == null || modification.BodyPart == BodyManager.BodyPart.None) return;
 
             var parent = character.BodyManager.GetPart(modification.BodyPart);
 
@@ -42,6 +42,8 @@ namespace Burmuruk.Tesis.Stats
 
         public void UnequipModification(Character character, IEquipable equipable)
         {
+            if (equipable.BodyPart == BodyManager.BodyPart.None) return;
+
             var bodyPart = character.BodyManager.GetPart(equipable.BodyPart);
 
             for (int i = 0; i < bodyPart.transform.childCount; i++)

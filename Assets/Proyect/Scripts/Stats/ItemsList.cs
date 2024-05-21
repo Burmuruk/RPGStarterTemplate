@@ -59,7 +59,7 @@ namespace Burmuruk.Tesis.Stats
             return item switch
             {
                 ItemType.Weapon => m_weapon[(WeaponType)type],
-                ItemType.Ability => m_ability[(AbilityType)type],
+                ItemType.Ability => m_ability.ContainsKey((AbilityType)type) ? m_ability[(AbilityType)type] : null,
                 ItemType.Modification => m_modifications[(ModificationType)type],
                 ItemType.Consumable => m_items[(PickableType)type],
                 _ => null
