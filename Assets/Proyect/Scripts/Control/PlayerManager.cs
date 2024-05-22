@@ -35,7 +35,7 @@ namespace Burmuruk.Tesis.Control
                 return players;
             }
         }
-        public IInventary playerInventary
+        public IInventory playerInventary
         {
             get
             {
@@ -47,7 +47,7 @@ namespace Burmuruk.Tesis.Control
                 return players[m_CurPlayer.Value].Inventary;
             }
         }
-        public IInventary MainInventary { get; private set; }
+        public IInventory MainInventary { get; private set; }
         public Transform CurPlayer
         {
             get
@@ -66,9 +66,9 @@ namespace Burmuruk.Tesis.Control
         {
             playerController = FindObjectOfType<PlayerController>();
             playerController.OnFormationChanged += ChangeFormation;
-            MainInventary = GetComponent<InventaryEquipDecorator>();
+            MainInventary = GetComponent<InventoryEquipDecorator>();
 
-            ((InventaryEquipDecorator)MainInventary).SetInventary(GetComponent<Inventary>());
+            ((InventoryEquipDecorator)MainInventary).SetInventary(GetComponent<Inventory>());
             
             foreach (var player in Players)
             {
@@ -86,9 +86,10 @@ namespace Burmuruk.Tesis.Control
         {
             if (players != null && idx < players.Count)
             {
-                DisableRestOfPlayers(idx);
+                EnableIAInRestOfPlayers(idx);
 
-                players[idx].enabled = false;
+                //players[idx].enabled = false;
+                players[idx].EnableControll();
                 playerController.SetPlayer(players[idx]);
 
                 m_CurPlayer = idx;
@@ -124,13 +125,14 @@ namespace Burmuruk.Tesis.Control
             }
         }
 
-        private void DisableRestOfPlayers(int idx)
+        private void EnableIAInRestOfPlayers(int mainPlayerIdx)
         {
             players.ForEach(p =>
             {
-                p.enabled = true;
-                p.SetMainPlayer(players[idx]);
-                p.Fellows = players.Where(fellow => fellow != p && p != players[idx]).ToArray();
+                //p.enabled = true;
+                p.DisableControll();
+                p.SetMainPlayer(players[mainPlayerIdx]);
+                p.Fellows = players.Where(fellow => fellow != p && p != players[mainPlayerIdx]).ToArray();
             });
         }
 

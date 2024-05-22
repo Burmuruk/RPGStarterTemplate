@@ -1,4 +1,5 @@
-﻿using Burmuruk.Tesis.Stats;
+﻿using Burmuruk.Tesis.Control.AI;
+using Burmuruk.Tesis.Stats;
 using Burmuruk.Utilities;
 using System;
 using System.Collections.Generic;
@@ -47,7 +48,7 @@ namespace Burmuruk.Tesis.Control
         public  event Action OnFormationChanged;
         public override event Action<bool> OnCombatStarted;
 
-        public bool IsControlled { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
+        public bool IsControlled { get; set; }
         public Character[] Fellows { get; set; }
         public float FellowGap { get => fellowGap; }
         public Formation Formation { get => formation; }
@@ -113,35 +114,19 @@ namespace Burmuruk.Tesis.Control
             }
         }
 
-        private (Component obj, float dis) GetClosestEnemy(Component[] enemies)
-        {
-            (int idx, float distance) closest = (0, float.MaxValue);
-
-            for (int i = 0; i < enemies.Length; i++)
-            {
-                var dis = Vector3.Distance(enemies[i].transform.position, transform.position);
-                if (dis < closest.distance)
-                {
-                    closest = (i, dis);
-                }
-            }
-
-            return (enemies[closest.idx], closest.distance);
-        }
-
         public void DisableControll()
         {
-            throw new System.NotImplementedException();
+            IsControlled = false;
         }
 
         public void EnableControll()
         {
-            throw new System.NotImplementedException();
+            IsControlled = true;
         }
 
         public void SetFormation(Formation formation, object args)
         {
-            //if (playerState != PlayerState.Combat) return;
+            //if (playerState != PlayerAction.Combat) return;
 
             this.formation = formation;
 
@@ -154,9 +139,20 @@ namespace Burmuruk.Tesis.Control
             mainPlayer = character;
         }
 
+        public void SetTarget(AIEnemyController enemy)
+        {
+            m_target = enemy.transform;
+        }
+
         protected override void DecisionManager()
         {
-            base.DecisionManager();
+            if (IsControlled)
+            {
+                ControlledDecisionManager();
+                ActionManager();
+                //MovementManager();
+                return;
+            }
 
             if (playerDistance == PlayerDistance.FarAway)
             {
@@ -252,13 +248,13 @@ namespace Burmuruk.Tesis.Control
                     break;
 
                 case (PlayerState.Combat, AttackState.BasicAttack):
-                    if (isTargetFar || isTargetClose)
+                    if (isTargetFar || isTargetClose || m_target)
                     {
                         if (formation == Formation.LockTarget)
                         {
                             m_target = ((Character)formationArgs).transform;
                         }
-                        else
+                        else if (m_target == null)
                         {
                             m_target = GetNearestTarget(eyesPerceibed);
                         }
@@ -266,6 +262,10 @@ namespace Burmuruk.Tesis.Control
                         OnCombatStarted?.Invoke(true);
                         fighter.SetTarget(m_target);
                         fighter.BasicAttack();
+                    }
+                    else if (m_target == null)
+                    {
+                        m_target = GetNearestTarget(eyesPerceibed);
                     }
                     break;
 
@@ -307,6 +307,24 @@ namespace Burmuruk.Tesis.Control
             }
         }
 
+        protected virtual void IdentifyHazards()
+        {
+            throw new NotImplementedException();
+        }
+
+        private void ControlledDecisionManager()
+        {
+            if (m_target || isTargetClose || isTargetFar)
+            {
+                OnCombatStarted?.Invoke(true);
+
+                playerState = PlayerState.Combat;
+                attackState = AttackState.BasicAttack;
+            }
+            else
+                OnCombatStarted?.Invoke(false);
+        }
+
         private void MoveCloseToPlayer()
         {
             var (x, z) = (Mathf.Cos(UnityEngine.Random.Range(-1, 1)), Mathf.Sin(UnityEngine.Random.Range(-1, .1f)));
@@ -322,21 +340,6 @@ namespace Burmuruk.Tesis.Control
             }
         }
 
-        private Transform GetNearestTarget(Collider[] eyesPerceibed)
-        {
-            (Transform enemy, float dis) closest = (null, float.MaxValue);
-
-            foreach (var enemy in eyesPerceibed)
-            {
-                if (Vector3.Distance(enemy.transform.position, transform.position) is var d && d < closest.dis)
-                {
-                    closest = (enemy.transform, d);
-                }
-            }
-
-            return closest.enemy;
-        }
-
         private void FollowPlayer()
         {
             mover.FollowWithDistance(mainPlayer.mover, fellowGap, Fellows);
@@ -345,6 +348,22 @@ namespace Burmuruk.Tesis.Control
         private void GetRemainEnemies()
         {
             
+        }
+
+        private (Component obj, float dis) GetClosestEnemy(Component[] enemies)
+        {
+            (int idx, float distance) closest = (0, float.MaxValue);
+
+            for (int i = 0; i < enemies.Length; i++)
+            {
+                var dis = Vector3.Distance(enemies[i].transform.position, transform.position);
+                if (dis < closest.distance)
+                {
+                    closest = (i, dis);
+                }
+            }
+
+            return (enemies[closest.idx], closest.distance);
         }
     }
 }

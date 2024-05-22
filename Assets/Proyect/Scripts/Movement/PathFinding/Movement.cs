@@ -45,9 +45,9 @@ namespace Burmuruk.WorldG.Patrol
 
     //        set
     //        {
-    //            if (Vector3.Distance(transform.position, value) >= minDistance)
+    //            if (Vector3.Distance(transform.position, ability) >= minDistance)
     //            {
-    //                destiny = value;
+    //                destiny = ability;
     //                canMove = true;
     //            }
     //            else
@@ -64,9 +64,9 @@ namespace Burmuruk.WorldG.Patrol
 
     //        set
     //        {
-    //            if (Vector3.Distance(transform.position, value) >= minDistance)
+    //            if (Vector3.Distance(transform.position, ability) >= minDistance)
     //            {
-    //                destiny = value;
+    //                destiny = ability;
     //            }
 
     //            else

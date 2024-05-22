@@ -8,12 +8,15 @@ using UnityEngine;
 
 namespace Burmuruk.Tesis.Stats
 {
-    public class Inventary : MonoBehaviour, IInventary, ISaveable
+    public class Inventory : MonoBehaviour, IInventory, ISaveable
     {
         [Header("Status")]
         [SerializeField] ItemsList m_ItemsList;
+        [SerializeField] Weapon initialWeapon;
+
         StatsManager stats;
 
+        bool weaponAdded;
         int id;
         bool isPersistentData = false;
 
@@ -25,7 +28,6 @@ namespace Burmuruk.Tesis.Stats
             { ItemType.Consumable, new Dictionary<int, (ISaveableItem item, int count, int maxCount)>() },
         };
 
-
         public event Action OnWeaponChanged;
 
         public int ID { get => id; }
@@ -34,6 +36,16 @@ namespace Burmuruk.Tesis.Stats
         {
             get
             {
+                if (!weaponAdded && initialWeapon)
+                {
+                    var item = new EquipedItem(initialWeapon, ItemType.Weapon);
+                    Add(ItemType.Weapon, item);
+                    item.Equip(gameObject.GetComponent<Character>());
+                    weaponAdded = true;
+                }
+
+                if (initialWeapon) return initialWeapon;
+
                 foreach (var weapon in m_owned[ItemType.Weapon].Values)
                 {
                     if (((EquipedItem)weapon.item) is var w && w.IsEquip)
@@ -53,19 +65,6 @@ namespace Burmuruk.Tesis.Stats
             //m_modifiers ??= modifiers;
             id = GetHashCode();
             stats = GetComponent<StatsManager>();
-        }
-
-        private void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.Alpha1))
-            {
-                if (m_owned.Count <= 0 || m_owned[ItemType.Ability].Count <= 0)
-                    return;
-
-                var type = (AbilityType)(m_owned[ItemType.Ability][0].item.GetSubType());
-                ((IUsable)m_ItemsList.GetAbility(type)).Use();
-                
-            }
         }
 
         public object CaptureState()
@@ -196,6 +195,6 @@ namespace Burmuruk.Tesis.Stats
 
     public interface IUsable
     {
-        void Use();
+        void Use(object args, Action callback);
     }
 }

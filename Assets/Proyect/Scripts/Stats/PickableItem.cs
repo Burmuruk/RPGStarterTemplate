@@ -37,6 +37,13 @@ namespace Burmuruk.Tesis.Stats
             return m_description;
         }
 
+        public void SetData(ItemType type, int subType, ItemsList list)
+        {
+            this.itemType = type;
+            itemIdx = subType;
+            this.list = list;
+        }
+
         public object CaptureState()
         {
             return gameObject.activeSelf;

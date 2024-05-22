@@ -7,12 +7,12 @@ namespace Burmuruk.Tesis.Stats
     public class PlayerCustomizationManager : MonoBehaviour
     {
         [SerializeField] GameObject spwnPoint;
-        InventaryEquipDecorator inventary;
+        InventoryEquipDecorator inventary;
         List<(GameObject item, ModificationType type)> equipedObjects = new();
 
         private void Start()
         {
-            inventary = GetComponent<InventaryEquipDecorator>();
+            inventary = GetComponent<InventoryEquipDecorator>();
         }
 
         public void EquipModifications(Character character)

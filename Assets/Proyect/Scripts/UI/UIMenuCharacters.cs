@@ -50,7 +50,7 @@ namespace Burmuruk.Tesis.UI
 
         List<AIGuildMember> players;
         InventaryTab curInventaryTab;
-        IInventary inventary;
+        IInventory inventary;
         WarningProblem curWarningProblem;
         Menu curMenu = Menu.Inventary;
         MyItemButton[] btnColors;
@@ -284,7 +284,7 @@ namespace Burmuruk.Tesis.UI
         {
             var item = curElementLabels[curElementId].item;
             var lastPlayer = item.Characters.Last();
-            var inventaryDecorator = (inventary as InventaryEquipDecorator);
+            var inventaryDecorator = (inventary as InventoryEquipDecorator);
 
             inventaryDecorator.Unequip(lastPlayer, item);
             inventaryDecorator.Equip(players[curPlayerIdx], item.Type, item.GetSubType());
@@ -309,7 +309,7 @@ namespace Burmuruk.Tesis.UI
             var item = curElementLabels[curElementId].item;
 
             var lastPlayer = item.Characters.Last();
-            var inventaryDecorator = (inventary as InventaryEquipDecorator);
+            var inventaryDecorator = (inventary as InventoryEquipDecorator);
 
             inventaryDecorator.Unequip(lastPlayer, item);
             ShowCharacterModel();
@@ -333,7 +333,7 @@ namespace Burmuruk.Tesis.UI
         private void EquipItem(int idx)
         {
             var item = curElementLabels[idx].item;
-            (inventary as InventaryEquipDecorator).Equip(players[curPlayerIdx], item.Type, item.GetSubType());
+            (inventary as InventoryEquipDecorator).Equip(players[curPlayerIdx], item.Type, item.GetSubType());
 
             SetPlayersColors(curElementLabels[idx].item, curElementLabels[idx].panel);
             ShowCharacterModel();
@@ -343,7 +343,7 @@ namespace Burmuruk.Tesis.UI
         private void UnEquipItem(int idx)
         {
             var item = curElementLabels[idx].item;
-            (inventary as InventaryEquipDecorator).Unequip(players[curPlayerIdx], curElementLabels[idx].item);
+            (inventary as InventoryEquipDecorator).Unequip(players[curPlayerIdx], curElementLabels[idx].item);
 
             SetPlayersColors(curElementLabels[idx].item, curElementLabels[idx].panel);
             ShowCharacterModel();
@@ -673,10 +673,10 @@ namespace Burmuruk.Tesis.UI
         #endregion
 
         #region Initialization
-        public void SetInventary(IInventary inventary)
+        public void SetInventary(IInventory inventary)
         {
             this.inventary = inventary;
-            var inventaryDecorator = inventary as InventaryEquipDecorator;
+            var inventaryDecorator = inventary as InventoryEquipDecorator;
             inventaryDecorator.OnTryAlreadyEquiped += () =>
             {
                 curWarningProblem = WarningProblem.EquipEquiped;
@@ -859,7 +859,7 @@ namespace Burmuruk.Tesis.UI
             var slot = btnAbilitiesSlotDict[curAbiltySlot.Value];
 
             var item = inventary.GetOwnedItem(ItemType.Ability, slot.subType);
-            (inventary as InventaryEquipDecorator).Unequip(players[curPlayerIdx], (EquipedItem)item);
+            (inventary as InventoryEquipDecorator).Unequip(players[curPlayerIdx], (EquipedItem)item);
 
             slot.image.sprite = defaultBTNSprite;
             btnAbilitiesSlotDict[curAbiltySlot.Value] = (slot.image, -1);
@@ -877,7 +877,7 @@ namespace Burmuruk.Tesis.UI
 
             curAbilityId = id;
 
-            if (((InventaryEquipDecorator)inventary).Equip(players[curPlayerIdx], ItemType.Ability, btnAbilitiesDict[id].subType))
+            if (((InventoryEquipDecorator)inventary).Equip(players[curPlayerIdx], ItemType.Ability, btnAbilitiesDict[id].subType))
             {
                 if (isAbilitySlotUsed)
                 {

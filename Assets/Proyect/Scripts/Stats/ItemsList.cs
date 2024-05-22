@@ -6,21 +6,21 @@ using UnityEngine;
 namespace Burmuruk.Tesis.Stats
 {
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Inventary", order = 1)]
-    class ItemsList : ScriptableObject
+    public class ItemsList : ScriptableObject
     {
         [Header("General Lists")]
         [SerializeField] List<Weapon> weapons;
         [SerializeField] List<Modification> modifiers;
-        [SerializeField] List<Pickable> items;
+        [SerializeField] List<ConsumableItem> items;
         [SerializeField] List<Ability> abilities;
         [SerializeField] bool Initialized;
 
-        Dictionary<PickableType, Pickable> m_items;
+        Dictionary<ConsumableType, ConsumableItem> m_items;
         Dictionary<WeaponType, Weapon> m_weapon;
         Dictionary<AbilityType, Ability> m_ability;
         Dictionary<ModificationType, Modification> m_modifications;
 
-        public List<Pickable> Items { get => items; }
+        public List<ConsumableItem> Items { get => items; }
         public List<Modification> Modifiers { get => modifiers; }
         public List<Ability> Abilities { get => abilities; }
 
@@ -31,7 +31,7 @@ namespace Burmuruk.Tesis.Stats
             return m_ability[type];
         }
 
-        public Pickable GetItem(PickableType type)
+        public ConsumableItem GetItem(ConsumableType type)
         {
             if (!Initialized) Initialize();
 
@@ -61,7 +61,7 @@ namespace Burmuruk.Tesis.Stats
                 ItemType.Weapon => m_weapon[(WeaponType)type],
                 ItemType.Ability => m_ability.ContainsKey((AbilityType)type) ? m_ability[(AbilityType)type] : null,
                 ItemType.Modification => m_modifications[(ModificationType)type],
-                ItemType.Consumable => m_items[(PickableType)type],
+                ItemType.Consumable => m_items[(ConsumableType)type],
                 _ => null
             };
         }
@@ -77,11 +77,11 @@ namespace Burmuruk.Tesis.Stats
                     m_weapon.Add(key, weapon);
             }
 
-            m_items = new Dictionary<PickableType, Pickable>();
+            m_items = new Dictionary<ConsumableType, ConsumableItem>();
 
             foreach (var pickable in items)
             {
-                var key = (PickableType)((ISaveableItem)pickable).GetSubType();
+                var key = (ConsumableType)((ISaveableItem)pickable).GetSubType();
                 if (!m_items.ContainsKey(key))
                     m_items.Add(key, pickable);
             }

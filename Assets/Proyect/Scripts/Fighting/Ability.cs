@@ -1,10 +1,11 @@
 ﻿using Burmuruk.Tesis.Fighting;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Stats
 {
-    [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Hability", order = 2)]
+    [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Ability", order = 2)]
     public class Ability : ScriptableObject, ISaveableItem, IUsable, IEquipable
     {
         [SerializeField] float speed;
@@ -14,16 +15,15 @@ namespace Burmuruk.Tesis.Stats
         [SerializeField] Sprite sprite;
         [SerializeField] int mode;
         [SerializeField] bool isHuman = true;
+        [SerializeField] float coolDown;
 
         public int Mode { get => mode; }
         public bool IsHuman { get => isHuman; }
         public Sprite Sprite { get => sprite; }
-
         public ItemType Type => ItemType.Ability;
-
         public BodyManager.BodyPart BodyPart => BodyManager.BodyPart.None;
-
         public GameObject Prefab => null;
+        public float CoolDown { get => coolDown; }
 
         public void Equip(StatsManager stats)
         {
@@ -35,9 +35,9 @@ namespace Burmuruk.Tesis.Stats
             throw new System.NotImplementedException();
         }
 
-        public void Use()
+        public void Use(object args, Action callback)
         {
-            AbilitiesManager.habilitiesList[type].Invoke(null);
+            AbilitiesManager.habilitiesList[type].Invoke(args, callback);
         }
 
         public int GetSubType()

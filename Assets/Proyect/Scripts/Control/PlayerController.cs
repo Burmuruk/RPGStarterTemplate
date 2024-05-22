@@ -1,4 +1,5 @@
-﻿using Assets.Proyect.Scripts.Control;
+﻿using Burmuruk.Tesis.Control.AI;
+using Burmuruk.Tesis.Fighting;
 using Burmuruk.Tesis.Stats;
 using System;
 using System.Collections.Generic;
@@ -139,9 +140,10 @@ namespace Burmuruk.Tesis.Control
 
                 if (enemy)
                 {
-                    print(enemy.name);
                     Target = enemy.GetComponent<AIEnemyController>();
-                    player.fighter.SetTarget(Target.transform);
+                    ((AIGuildMember)player).SetTarget(Target);
+                    //print(enemy.name);
+                    //player.fighter.SetTarget(Target.transform);
                 }
             }
         }
@@ -193,9 +195,9 @@ namespace Burmuruk.Tesis.Control
             if (HavePickable)
             {
                 var cmp = m_pickables.First().Value;
-                var inventary = GetComponent<InventaryEquipDecorator>();
+                var inventary = GetComponent<InventoryEquipDecorator>();
                 inventary.Add(cmp.itemType, cmp);
-                //inventary.Equip(player, cmp.itemType, cmp.GetSubType());
+                //inventory.Equip(player, cmp.itemType, cmp.GetSubType());
                 cmp.gameObject.SetActive(false);
 
                 //m_pickables.Remove(cmp.transform);
@@ -217,7 +219,14 @@ namespace Burmuruk.Tesis.Control
 
         public void Pause(InputAction.CallbackContext context)
         {
-            levelManager.ExitUI();
+            if (gameManager.GameState == GameManager.State.UI)
+            {
+                levelManager.ExitUI();
+            }
+            else
+            {
+                levelManager.Pause();
+            }
         }
 
         public void ShowMoreOptions(InputAction.CallbackContext context)
@@ -279,7 +288,18 @@ namespace Burmuruk.Tesis.Control
 
             if (ability == null) return;
 
-            ability.Use();
+            switch ((AbilityType)ability.GetSubType())
+            { 
+                case AbilityType.None:
+                    break;
+                case AbilityType.Dash:
+                    //ability.Use();
+                    break;
+                case AbilityType.StealHealth:
+                    break;
+                case AbilityType.Jump:
+                    break;
+            }
         }
 
         private Collider DetectEnemyInMouse()
@@ -312,7 +332,7 @@ namespace Burmuruk.Tesis.Control
             //Physics.OverlapSphere(transform.position, .5f, 1<<11);
             //if (other.gameObject.GetComponent<Consumable>() is var itemType && itemType)
             //{
-            //    player.inventary.Add(Type.Consumable, itemType);
+            //    player.inventory.Add(Type.Consumable, itemType);
             //    Destroy(other.gameObject);
             //}
         }
@@ -381,9 +401,9 @@ namespace Burmuruk.Tesis.Control
         //private void TakeItem()
         //{
         //    var cmp = m_pickables[0];
-        //    var inventary = player.GetComponent<InventaryEquipDecorator>();
-        //    inventary.Add(cmp.itemType, cmp);
-        //    //inventary.ElementAction(cmp.subType, cmp.Item);
+        //    var inventory = player.GetComponent<InventoryEquipDecorator>();
+        //    inventory.Add(cmp.itemType, cmp);
+        //    //inventory.ElementAction(cmp.subType, cmp.Item);
         //    cmp.gameObject.SetActive(false);
 
         //    m_pickables.Remove(cmp);

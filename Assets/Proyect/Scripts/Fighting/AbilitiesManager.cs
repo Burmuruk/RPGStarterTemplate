@@ -12,14 +12,14 @@ namespace Burmuruk.Tesis.Fighting
         Movement.Movement m_movement;
         StatsManager stats;
 
-        public static readonly Dictionary<AbilityType, Action<object>> habilitiesList = new()
+        public static readonly Dictionary<AbilityType, Action<object, Action>> habilitiesList = new()
         {
             { AbilityType.Dash, Dash },
             { AbilityType.Jump, Jump },
             { AbilityType.StealHealth, StealLife },
         };
 
-        public static void Dash(object direction)
+        public static void Dash(object args, Action callback)
         {
             //Vector3 dir = (Vector3) direction;
 
@@ -27,12 +27,12 @@ namespace Burmuruk.Tesis.Fighting
             print("In Dash!!!");
         }
 
-        public static void Jump(object direction)
+        public static void Jump(object args, Action callback)
         {
 
         }
 
-        public static void StealLife(object direction)
+        public static void StealLife(object args, Action callback)
         {
 
         }

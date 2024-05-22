@@ -10,13 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e14a02c66efa1f945b460938528c2724, type: 3}
-  m_Name: BasicEnemy
+  m_Name: BasicEnemy Melee
   m_EditorClassIdentifier: 
   initialized: 0
   speed: 5
-  hp: 500
-  maxHp: 500
-  damage: 1
+  hp: 10
+  maxHp: 10
+  damage: 2
+  color: {r: 0, g: 0, b: 0, a: 0}
   eyesRadious: 4.5
   earsRadious: 3
   m_slots:

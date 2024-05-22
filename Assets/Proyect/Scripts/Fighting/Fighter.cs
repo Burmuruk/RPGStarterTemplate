@@ -11,7 +11,7 @@ namespace Burmuruk.Tesis.Fighting
 
         StatsManager m_Stats;
         StatsManager m_targetStats;
-        IInventary m_inventary;
+        IInventory m_inventary;
         Movement.Movement m_movement;
         AbilitiesManager habManager;
 
@@ -24,12 +24,12 @@ namespace Burmuruk.Tesis.Fighting
         {
             m_Stats = GetComponent<StatsManager>();
             m_targetStats = GetComponent<StatsManager>();
-            m_inventary = GetComponent<IInventary>();
+            m_inventary = GetComponent<IInventory>();
         }
 
         private void Start()
         {
-            //var decorator = m_inventary as InventaryEquipDecorator;
+            //var decorator = m_inventary as InventoryEquipDecorator;
 
             //if (decorator != null)
             //{
@@ -48,8 +48,8 @@ namespace Burmuruk.Tesis.Fighting
                 BasicAttack();
             }
 
-            if (m_Stats.DamageRate != 0)
-                cdBasicAttack = new CoolDownAction(m_Stats.DamageRate);
+            //if (m_Stats.DamageRate != 0)
+            //    cdBasicAttack = new CoolDownAction(m_Stats.DamageRate);
         }
 
         public void SetTarget(Transform target)
@@ -67,6 +67,7 @@ namespace Burmuruk.Tesis.Fighting
 
             if (cdBasicAttack.CanUse)
             {
+                print(transform.name + " can use");
                 m_targetStats.ApplyDamage(m_Stats.Damage);
                 StartCoroutine(cdBasicAttack.CoolDown());
             }
@@ -81,7 +82,7 @@ namespace Burmuruk.Tesis.Fighting
                 if (hability.GetSubType() == (int)type)
                 {
                     var args = GetSpecialAttackArgs(type);
-                    AbilitiesManager.habilitiesList[type]?.Invoke(args);
+                    //AbilitiesManager.habilitiesList[type]?.Invoke(args);
                     return;
                 }
             }

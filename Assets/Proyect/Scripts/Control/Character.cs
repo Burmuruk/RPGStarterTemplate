@@ -1,4 +1,3 @@
-using Assets.Proyect.Scripts.Control;
 using Burmuruk.Tesis.Stats;
 using System;
 using System.Collections.Generic;
@@ -24,7 +23,7 @@ namespace Burmuruk.Tesis.Control
         [HideInInspector] public Movement.Movement mover;
         [HideInInspector] public Fighting.Fighter fighter;
         [HideInInspector] public StatsManager stats;
-        [HideInInspector] IInventary inventary;
+        [HideInInspector] IInventory inventary;
 
         protected Collider[] eyesPerceibed, earsPerceibed;
         protected bool isTargetFar = false;
@@ -32,7 +31,7 @@ namespace Burmuruk.Tesis.Control
 
         public virtual event Action<bool> OnCombatStarted;
 
-        public IInventary Inventary { get => inventary; set => inventary = value; }
+        public IInventory Inventary { get => inventary; set => inventary = value; }
         public Collider[] CloseEnemies { get => earsPerceibed; }
         public Collider[] FarEnemies { get => eyesPerceibed; }
         public bool IsTargetFar { get => isTargetFar; }
@@ -44,7 +43,7 @@ namespace Burmuruk.Tesis.Control
             mover = GetComponent<Movement.Movement>();
             fighter = GetComponent<Fighting.Fighter>();
             stats = GetComponent<StatsManager>();
-            inventary = gameObject.GetComponent<IInventary>();
+            inventary = gameObject.GetComponent<IInventory>();
         }
 
         protected virtual void Start()
@@ -75,7 +74,7 @@ namespace Burmuruk.Tesis.Control
             Gizmos.DrawWireSphere(closePercept.position, stats.EarsRadious);
         }
 
-        private void PerceptionManager()
+        protected virtual void PerceptionManager()
         {
             if (hasFarPerception)
             {
@@ -126,6 +125,21 @@ namespace Burmuruk.Tesis.Control
         protected virtual void MovementManager()
         {
 
+        }
+
+        protected Transform GetNearestTarget(Collider[] eyesPerceibed)
+        {
+            (Transform enemy, float dis) closest = (null, float.MaxValue);
+
+            foreach (var enemy in eyesPerceibed)
+            {
+                if (Vector3.Distance(enemy.transform.position, transform.position) is var d && d < closest.dis)
+                {
+                    closest = (enemy.transform, d);
+                }
+            }
+
+            return closest.enemy;
         }
     }
 }

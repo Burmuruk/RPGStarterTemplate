@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using UnityEditor;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
@@ -61,6 +62,24 @@ namespace Burmuruk.Tesis.Control
         public void GoToMainMenu()
         {
             SceneManager.LoadScene(0);
+            Time.timeScale = 1;
+        }
+
+        public bool Continue()
+        {
+            if (state != State.Pause) return false;
+
+            state = State.Playing;
+            return true;
+        }
+
+        public bool PauseGame()
+        {
+            if (GameState != State.Playing) return false;
+
+            state = State.Pause;
+
+            return true;
         }
 
         public void ChangeScene(int idx)

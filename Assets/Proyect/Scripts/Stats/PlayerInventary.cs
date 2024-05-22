@@ -8,7 +8,7 @@ namespace Burmuruk.Tesis.Stats
 {
     public class PlayerInventary
     {
-        public Inventary MainInventary { get; set; }
+        public Inventory MainInventary { get; set; }
 
         public bool Add(ItemType type, ISaveableItem item)
         {

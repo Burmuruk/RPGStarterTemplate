@@ -74,8 +74,8 @@ namespace Burmuruk.Utilities
         {
             if (inCoolDown) yield break;
 
-            inCoolDown = true;
             CanUse = false;
+            inCoolDown = true;
             currentTime = time - Time.deltaTime;
 
             while (currentTime > 0)

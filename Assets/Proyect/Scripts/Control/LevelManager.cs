@@ -13,6 +13,7 @@ public class LevelManager : MonoBehaviour
     [SerializeField] Path path;
     [SerializeField] UnityEvent onUILoaded;
     [SerializeField] UnityEvent onUIUnLoaded;
+    [SerializeField] GameObject pauseMenu;
 
     GameManager gameManager;
     UIMenuCharacters menuCharacters;
@@ -44,7 +45,7 @@ public class LevelManager : MonoBehaviour
         if (path.Loaded && path.m_nodeList != null)
         {
             //print("Valor encontrado");
-            var movers = FindObjectsOfType<Movement>();
+            var movers = FindObjectsOfType<Movement>(true);
 
             foreach (var mover in movers)
             {
@@ -61,11 +62,6 @@ public class LevelManager : MonoBehaviour
         if (path == null && !path.Loaded) return null;
 
         return path.GetNodeList();
-    }
-
-    public void PauseGame(bool shouldPause)
-    {
-        Time.timeScale = shouldPause ? 0 : 1;
     }
 
     public void LoadGame(int idx)
@@ -136,6 +132,26 @@ public class LevelManager : MonoBehaviour
         if (!menuCharacters) return;
 
         menuCharacters.SwitchExtraData();
+    }
+
+    public void Pause()
+    {
+        if (gameManager.GameState == GameManager.State.Pause)
+        {
+            if (gameManager.Continue())
+            {
+                pauseMenu.gameObject.SetActive(false);
+                Time.timeScale = 1;
+            }
+        }
+        else if (gameManager.GameState == GameManager.State.Playing)
+        {
+            if (gameManager.PauseGame())
+            {
+                pauseMenu.gameObject.SetActive(true);
+                Time.timeScale = 0;
+            }
+        }
     }
 
     public void ExitUI()

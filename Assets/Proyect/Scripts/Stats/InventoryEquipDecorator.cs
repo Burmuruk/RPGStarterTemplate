@@ -1,15 +1,15 @@
 ﻿using Burmuruk.Tesis.Control;
 using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Stats
 {
-    public class InventaryEquipDecorator : MonoBehaviour, IInventary
+    public class InventoryEquipDecorator : MonoBehaviour, IInventory
     {
-        Inventary inventary;
+        Inventory inventary;
         PlayerCustomizationManager customazationManager;
+        (Weapon weapon, EquipedItem item) equipedWeapon = default;
 
         (ItemType itemType, EquipedItem item) alarmedRemovedItem = default;
         (ItemType itemType, Character player, EquipedItem item) alarmedEquipItem = default;
@@ -17,14 +17,14 @@ namespace Burmuruk.Tesis.Stats
         public event Action OnTryDeleteEquiped;
         public event Action OnTryAlreadyEquiped;
 
-        public Weapon EquipedWeapon { get => inventary.EquipedWeapon; }
+        public Weapon EquipedWeapon { get => equipedWeapon.weapon; }
 
         private void Start()
         {
             customazationManager = GetComponent<PlayerCustomizationManager>();
         }
 
-        public void SetInventary(Inventary inventary) => this.inventary = inventary;
+        public void SetInventary(Inventory inventary) => this.inventary = inventary;
 
         public bool Equip(Character player, ItemType itemType, int type)
         {
@@ -56,15 +56,33 @@ namespace Burmuruk.Tesis.Stats
         {
             var (itemType, player, equipedItem) = alarmedEquipItem;
             equipedItem.Equip(player);
-            
+
             var prefab = inventary.GetItem(itemType, equipedItem.GetSubType());
 
+            if (itemType == ItemType.Weapon)
+                UpdateEquipedWeapon((Weapon)prefab, equipedItem);
+
+            UpdateModel(player, prefab);
+
+            alarmedEquipItem = default;
+        }
+
+        private void UpdateModel(Character player, ISaveableItem prefab)
+        {
             if (prefab is IEquipable equipable && equipable != null)
             {
                 customazationManager.EquipModification(player, equipable);
             }
+        }
 
-            alarmedEquipItem = default; 
+        void UpdateEquipedWeapon(Weapon weapon, EquipedItem item)
+        {
+            if (EquipedWeapon != null)
+            {
+                Unequip(alarmedEquipItem.player, equipedWeapon.item);
+            }
+
+            equipedWeapon = (weapon, item);
         }
 
         public void Unequip(Character player, EquipedItem item)

@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static Burmuruk.Tesis.Stats.Inventary;
+using static Burmuruk.Tesis.Stats.Inventory;
 
 namespace Burmuruk.Tesis.Stats
 {
-    public interface IInventary
+    public interface IInventory
     {
         public Weapon EquipedWeapon { get; }
         public bool Add(ItemType type, ISaveableItem item);

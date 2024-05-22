@@ -17,7 +17,7 @@ namespace Burmuruk.Tesis.Stats
         [SerializeField] float eyesRadious;
         [SerializeField] float earsRadious;
 
-        IInventary inventary;
+        IInventory inventory;
 
         public event Action OnDied;
         public event Action<float> OnDamage;
@@ -54,7 +54,7 @@ namespace Burmuruk.Tesis.Stats
         {
             get
             {
-                return inventary.EquipedWeapon.Damage + damage;
+                return inventory.EquipedWeapon.Damage + damage;
             }
             set => damage = value;
         } 
@@ -63,12 +63,12 @@ namespace Burmuruk.Tesis.Stats
         {
             get
             {
-                if (inventary.EquipedWeapon == null)
+                if ((inventory ??= GetComponent<IInventory>()).EquipedWeapon == null)
                 {
-                    return 0;
+                    return 2;
                 }
 
-                return inventary.EquipedWeapon.DamageRate;
+                return inventory.EquipedWeapon.DamageRate;
             }
         }
         #endregion
@@ -93,9 +93,9 @@ namespace Burmuruk.Tesis.Stats
         } 
         #endregion
 
-        public void SetInventary(IInventary inventary)
+        public void SetInventary(IInventory inventory)
         {
-            this.inventary = inventary;
+            this.inventory = inventory;
         }
 
         public void ApplyDamage(int amount)
@@ -104,6 +104,7 @@ namespace Burmuruk.Tesis.Stats
             {
                 Hp = 0;
                 OnDied?.Invoke();
+                Destroy(gameObject);
             }
             else
             {
@@ -115,7 +116,7 @@ namespace Burmuruk.Tesis.Stats
 
         private void Start()
         {
-            inventary??= GetComponent<IInventary>();
+            inventory??= GetComponent<IInventory>();
             UpdateStats();
             ID = GetHashCode();
         }

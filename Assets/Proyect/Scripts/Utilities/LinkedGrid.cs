@@ -131,7 +131,7 @@ namespace Burmuruk.Collections
         //    CreateSideConnections(node2);
         //}
 
-        //public LinkedGridNode<T> AddAfter(LinkedGridNode<T> node2, ref T value)
+        //public LinkedGridNode<T> AddAfter(LinkedGridNode<T> node2, ref T ability)
         //{
         //    throw new NotImplementedException();
         //}
@@ -145,7 +145,7 @@ namespace Burmuruk.Collections
         //    TryAddHeader(node2);
         //    CreateSideConnections(node2);
         //}
-        //public LinkedGridNode<T> AddBefore(LinkedGridNode<T> node2, ref T value)
+        //public LinkedGridNode<T> AddBefore(LinkedGridNode<T> node2, ref T ability)
         //{
         //    throw new NotImplementedException();
         //}

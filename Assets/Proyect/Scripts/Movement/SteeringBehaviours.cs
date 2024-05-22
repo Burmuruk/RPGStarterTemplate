@@ -7,7 +7,7 @@ namespace Burmuruk.Tesis.Movement
     public class SteeringBehaviours
     {
         /// <summary>
-        /// Returns the next position to move the agent towards the m_direction. The y value es ignored.
+        /// Returns the next position to move the agent towards the m_direction. The y ability es ignored.
         /// </summary>
         /// <param name="agent">Object that cointains the agent</param>
         /// <param name="targetPosition">Object that cointains the position</param>
@@ -31,7 +31,7 @@ namespace Burmuruk.Tesis.Movement
         }
 
         /// <summary>
-        /// Makes the given agent moven to the opposite side of the m_direction.  The y value es ignored.
+        /// Makes the given agent moven to the opposite side of the m_direction.  The y ability es ignored.
         /// </summary>
         /// <param name="agent">Object that cointains the agent</param>
         /// <param name="targetPosition">Object that cointains the position</param>

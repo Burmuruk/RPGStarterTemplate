@@ -25,7 +25,7 @@ namespace Burmuruk.Tesis.Movement
 
         Rigidbody m_rb;
         StatsManager m_statsManager;
-        Inventary m_inventary;
+        Inventory m_inventary;
         MovementSchuduler m_scheduler;
         PathFinder m_pathFinder;
         INodeListSupplier nodeList;

@@ -1,9 +1,8 @@
-﻿using Assets.Proyect.Scripts.Control;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Control
+namespace Burmuruk.Tesis.Control.AI
 {
     public class EnemyManager : MonoBehaviour
     {

@@ -265,10 +265,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 5813016171580300768}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 06ee8e88025714c43b6cdffc121de5b0, type: 3}
+  m_Script: {fileID: 11500000, guid: 3283185997fbd3943adcbab59dcc96a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_ItemsList: {fileID: 0}
+  m_ItemsList: {fileID: 11400000, guid: 0a3f3d7e1f9d8704e976c5edafce273f, type: 2}
+  initialWeapon: {fileID: 0}
 --- !u!114 &268288380871414093
 MonoBehaviour:
   m_ObjectHideFlags: 0
