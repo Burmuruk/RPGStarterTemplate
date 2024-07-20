@@ -5,6 +5,7 @@ using Burmuruk.WorldG.Patrol;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
@@ -279,62 +280,34 @@ namespace Burmuruk.AI
         #region Connections
         private void CalculateConnections()
         {
-            var maxVerticalDis = nodDistance / Mathf.Sin(maxAngle * Mathf.PI / 180);
+            var maxVerticalDis = nodDistance * Mathf.Sin(maxAngle * Mathf.PI / 180);
             edgesToFix = new List<(IPathNode node, IPathNode hitPos)>();
 
             var enumerator = (LinkedGridEnumerator<IPathNode>)nodes.GetEnumerator();
             while (enumerator.MoveNext())
             {
                 var curLinkedNode = enumerator.CurrentLinkedNode;
-                
+
                 while (curLinkedNode != null)
                 {
                     var cur = curLinkedNode.Node;
 
                     foreach (var direction in curLinkedNode.Connections.Keys)
                     {
-                        LinkedGridNode<IPathNode> nextLinkedNode = curLinkedNode[direction];
-
-                        switch (direction)
-                        {
-                            case Direction.Previous:
-                            case Direction.Down:
-                            case Direction.Left:
-                                continue;
-
-                            case Direction.Next:
-                                if (nextLinkedNode.ColumnIdx > curLinkedNode.ColumnIdx)
-                                    continue;
-
-                                break;
-
-                            default:
-                                break;
-                        }
-
-                        while (nextLinkedNode != null)
-                        {
-                            IPathNode next = nextLinkedNode.Node;
-                            float dis = Get_VerticalDifference(cur, next);
-
-                            if (dis <= maxVerticalDis)
-                            {
-                                float normal1, normal2;
-
-                                bool hitted1 = Detect_OjbstaclesBetween(cur, next, out normal1);
-                                bool hitted2 = Detect_OjbstaclesBetween(next, cur, out normal2);
-
-                                if (!hitted1 && !hitted2)
-                                    CreateConnectionsBetween(cur, next, hitted1, hitted2);
-                            }
-
-                            nextLinkedNode = nextLinkedNode[Direction.Up];
-                        }
+                        CalculateConnectionTo(in maxVerticalDis, curLinkedNode, cur, in direction);
                     }
 
                     if (curLinkedNode.Node.NodeConnections == null || curLinkedNode.Node.NodeConnections.Count <= 0)
+                    {
                         nodes.Remove(curLinkedNode);
-                    
+
+                        if (curLinkedNode[Direction.Previous] != null)
+                        {
+                            var prevLinkedNode = curLinkedNode[Direction.Previous];
+                            CalculateConnectionTo(in maxVerticalDis, prevLinkedNode, prevLinkedNode.Node, Direction.Next);
+                        }
+                    }
+
                     curLinkedNode = curLinkedNode[Direction.Up];
                 }
             }
@@ -385,6 +358,61 @@ namespace Burmuruk.AI
                         new NodeConnection(ref nextRef, ref curRef, nodDistance, types.b));
                 }
             }
+
+            void CalculateConnectionTo(in float maxVerticalDis, LinkedGridNode<IPathNode> curLinkedNode, IPathNode cur, in Direction direction)
+            {
+                LinkedGridNode<IPathNode> nextLinkedNode = null;
+
+                switch (direction)
+                {
+                    case Direction.Previous:
+                    case Direction.Down:
+                    case Direction.Left:
+                        return;
+
+                    case Direction.Next:
+                        nextLinkedNode = curLinkedNode[direction];
+
+                        if (nextLinkedNode == null) 
+                            return;
+                        if (nextLinkedNode.ColumnIdx > curLinkedNode.ColumnIdx)
+                            return;
+                        if (nextLinkedNode.RowIdx - curLinkedNode.RowIdx > 1) 
+                            return;
+                        break;
+
+                    case Direction.Right:
+                        nextLinkedNode = curLinkedNode[direction];
+
+                        if (nextLinkedNode == null)
+                            return;
+                        if (nextLinkedNode.ColumnIdx - curLinkedNode.ColumnIdx > 1)
+                            return;
+                        break;
+
+                    default:
+                        break;
+                }
+
+                while (nextLinkedNode != null)
+                {
+                    IPathNode next = nextLinkedNode.Node;
+                    float dis = Get_VerticalDifference(cur, next);
+
+                    if (dis <= maxVerticalDis)
+                    {
+                        float normal1, normal2;
+
+                        bool hitted1 = Detect_OjbstaclesBetween(cur, next, out normal1);
+                        bool hitted2 = Detect_OjbstaclesBetween(next, cur, out normal2);
+
+                        if (!hitted1 && !hitted2)
+                            CreateConnectionsBetween(cur, next, hitted1, hitted2);
+                    }
+
+                    nextLinkedNode = nextLinkedNode[Direction.Up];
+                }
+            }
         }
 
         //private void Set_OffsetOnEdge(IPathNode a, IPathNode hitPos)
@@ -421,8 +449,8 @@ namespace Burmuruk.AI
         {
             groundNormal = 0;
             RaycastHit[] hit;
-            var pointA = nodeA.Position + new Vector3(0, pRadious, 0);
-            var pointB = nodeA.Position + new Vector3(0, 2 * pRadious + 1, 0);
+            var pointA = nodeA.Position + new Vector3(0, pRadious + .01f, 0);
+            var pointB = nodeA.Position + new Vector3(0, 2 * pRadious + 1 + .01f, 0);
 
             var dir = (nodeB.Position - nodeA.Position);
 
@@ -436,6 +464,8 @@ namespace Burmuruk.AI
                 if (Vector3.Angle(new Vector3(0, 1, 0), hit[k].normal) is var a && (a < (10) || (a > 89 && a < 90.5)) && a != 0)
                 {
                     hitted = true;
+                    //Debug.DrawRay(hit[k].point, hit[k].normal, Color.yellow, 8);
+                    //Debug.DrawLine(pointA, pointB, Color.yellow, 8);
                 }
                 else if (Vector3.Angle(new Vector3(0, 0, hit[k].normal.z), new Vector3(0, 0, 1)) is var a2 && (a2 < maxAngle || a2 == 0))
                 {
@@ -461,7 +491,7 @@ namespace Burmuruk.AI
             int height = (int)(distances.y);
             int columnIdx = 0;
 
-            for (int i = 0; i < Mathf.Abs(xIndex); i ++, columnIdx++)
+            for (int i = 0; i < Mathf.Abs(xIndex); i++, columnIdx++)
             {
                 int idx = 0;
                 for (int j = 0; j < Mathf.Abs(zIndex); j++, idx++)
@@ -473,23 +503,28 @@ namespace Burmuruk.AI
                         z = x1.transform.position.z - nodDistance * j
                     };
 
-                    Ray hi = new Ray(curPosA, Vector3.down * height);
+                    Ray detectionRay = new Ray(curPosA, Vector3.down);
 
-                    var verticalHits = Detect_Ground(height, hi);
-                    
+                    var verticalHits = Detect_Ground(height, detectionRay);
+
                     if (verticalHits != null)
                     {
                         bool added = false;
+                        verticalHits = verticalHits.OrderBy(hit => hit.magnitude).ToList();
+
                         for (int k = 0; k < verticalHits.Count; k++)
                         {
                             if (Verify_CapsuleArea(verticalHits[k]))
                             {
-                                ScrNode newNode; 
+                                ScrNode newNode;
                                 Create_Node(verticalHits[k], out newNode);
 
                                 if (added == true)
                                 {
-                                    nodes.AddUp(nodes.Last, newNode);
+                                    if (newNode.Position.y > nodes.Last.Node.Position.y)
+                                        nodes.AddUp(nodes.Last, newNode);
+                                    else
+                                        nodes.AddDown(nodes.Last, newNode);
                                 }
                                 else
                                 {
@@ -515,7 +550,7 @@ namespace Burmuruk.AI
                 z = GetSize(x1.transform.position.z, x2.transform.position.z),
             };
 
-            
+
             //if (x2.transform.position.z < x1.transform.position.z)
             //{
             //    var newPos = x1.transform.position;
@@ -526,43 +561,46 @@ namespace Burmuruk.AI
             {
                 return (x1 < 0, x2 < 0) switch
                 {
-                    (true, true) => MathF.Abs(x1 + x2),
+                    (true, true) => MathF.Abs(x1 - x2),
                     (false, true) => x1 + MathF.Abs(x2),
                     (true, false) => MathF.Abs(x1) + x2,
-                    (false, false) => x1 + x2
+                    (false, false) => MathF.Abs(x1 - x2),
                 };
             }
         }
 
-        private List<Vector3> Detect_Ground(float height, Ray hi, Vector3 offset = default)
+        private List<Vector3> Detect_Ground(float distance, Ray detectionRay)
         {
-            List<Vector3> nodes = null;
-            var offsetRay = hi;
-            offsetRay.origin = hi.origin + offset;
+            List<Vector3> nodes = new();
+            LinkedList<Collider> colliders = new();
+            var offsetRay = detectionRay;
+            RaycastHit hit;
 
-            var hits = Physics.RaycastAll(offsetRay, height, 1 << layer);
-
-            if (hits != null && hits.Length > 0)
+            while (distance > 0)
             {
-                for (int k = 0; k < hits.Length; k++)
+                if (Physics.Raycast(offsetRay, out hit, distance, 1 << layer))
                 {
-                    var angle = Vector3.Angle(hits[k].normal, Vector3.up);
+                    var angle = Vector3.Angle(hit.normal, Vector3.up);
 
-                    if (angle <= maxAngle)
+                    if (angle <= maxAngle && hit.distance > .1f)
                     {
-                        (nodes ??= new List<Vector3>()).Add(offsetRay.origin + Vector3.down * (hits[k].distance - .1f)/* + Vector3.up * 1.5f*/);
+                        foreach (var collider in colliders)
+                        {
+                            if (collider.bounds.Contains(hit.point))
+                                goto EndDetection;
+                        }
 
-                        offset += Vector3.down * (hits[k].distance + 3);
-
-                        var positions = Detect_Ground(height - hits[k].distance - 3, hi, offset);
-
-                        if (positions != null)
-                            foreach (var pos in positions)
-                            {
-                                nodes.Add(pos);
-                            }
+                        nodes.Add(hit.point);
                     }
                 }
+                else break;
+
+                EndDetection:
+                if (!colliders.Contains(hit.collider)) 
+                    colliders.AddLast(hit.collider);
+
+                offsetRay.origin += Vector3.down * (hit.distance + 1)/* + Vector3.up * 1.5f*/;
+                distance -= hit.distance + 1;
             }
 
             return nodes;
@@ -583,7 +621,7 @@ namespace Burmuruk.AI
             node = new ScrNode(nodeCount++, position);
 
             if (!phisicNodes) return;
-            
+
             var newNode = Instantiate(debugNode, transform);
             newNode.transform.position = position;
             newNode.transform.name = "Node " + node.ID.ToString();
@@ -665,7 +703,7 @@ namespace Burmuruk.AI
 
                             for (int k = 0; k < connections[i][j].Length; k++)
                             {
-                                if (k == length || 
+                                if (k == length ||
                                     (start.y >= connections[i][j][k].Position.y && start.y < connections[i][j][k + 1].Position.y))
                                 {
                                     RoundIdx(ref k, start.y, connections[i][j][k].Position.y);
@@ -777,7 +815,7 @@ namespace Burmuruk.AI
             this.pRadious = pRadious;
             this.nodDistance = maxDistance;
             this.maxAngle = maxAngle;
-            //this.height = height;
+            //this.distance = distance;
 
             //CalculateNodesConnections();
         }

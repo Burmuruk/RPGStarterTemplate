@@ -1,4 +1,6 @@
-﻿using Burmuruk.Tesis.Saving;
+﻿using Burmuruk.Tesis.Combat;
+using Burmuruk.Tesis.Inventory;
+using Burmuruk.Tesis.Saving;
 using Burmuruk.Tesis.Stats;
 using Newtonsoft.Json.Linq;
 using System;
@@ -44,10 +46,10 @@ namespace Burmuruk.Tesis.Control
                     return null;
                 }
 
-                return players[m_CurPlayer.Value].Inventary;
+                return players[m_CurPlayer.Value].Inventory;
             }
         }
-        public IInventory MainInventary { get; private set; }
+        public IInventory MainInventory { get; private set; }
         public Transform CurPlayer
         {
             get
@@ -66,14 +68,13 @@ namespace Burmuruk.Tesis.Control
         {
             playerController = FindObjectOfType<PlayerController>();
             playerController.OnFormationChanged += ChangeFormation;
-            MainInventary = GetComponent<InventoryEquipDecorator>();
-
-            ((InventoryEquipDecorator)MainInventary).SetInventary(GetComponent<Inventory>());
+            var mainInventory = GetComponent<Inventory.Inventory>();
+            MainInventory = mainInventory;
             
             foreach (var player in Players)
             {
-                player.Inventary = MainInventary;
-                player.stats.SetInventary(MainInventary);
+                player.Inventory = MainInventory;
+                player.stats.SetInventary(MainInventory);
             }
         }
 
@@ -99,13 +100,13 @@ namespace Burmuruk.Tesis.Control
             }
         }
 
-        public void UseItem(ItemType type, int subType)
+        public void UseItem(int id)
         {
-            var item = MainInventary.GetItem(type, subType);
+            var item = MainInventory.GetOwnedItem(id);
 
             if (item == null) return;
 
-            if (type == ItemType.Ability)
+            if (item.Type == ItemType.Ability)
             {
                 playerController.UseAbility((Ability)item);
             }
@@ -223,7 +224,7 @@ namespace Burmuruk.Tesis.Control
 
             //var availableColors = (from color in playerColors where !usedColors.Contains(color) select color).ToList();
 
-            //var selectedColorIdx = UnityEngine.Random.Range(0, availableColors.Count);
+            //var selectedColorIdx = UnityEngine.Random.Range(0, availableColors.MaxCount);
 
             //member.stats.Color = playerColors[selectedColorIdx];
         }

@@ -42,7 +42,7 @@ namespace Burmuruk.Tesis.Movement
             int priorityValue = (int)priority;
             //var cur = actionsList.First;
 
-            //for (int i = 0; i < actionsList.Count; i++)
+            //for (int i = 0; i < actionsList.MaxCount; i++)
             //{
             //    if (caller == cur.Caller)
             //    {

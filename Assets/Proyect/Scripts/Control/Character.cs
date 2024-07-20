@@ -1,7 +1,9 @@
-using Burmuruk.Tesis.Stats;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Burmuruk.Tesis.Stats;
+using Burmuruk.Tesis.Inventory;
+using Burmuruk.Tesis.Combat;
 
 namespace Burmuruk.Tesis.Control
 {
@@ -13,7 +15,7 @@ namespace Burmuruk.Tesis.Control
         [Space(), Header("Status"), Space()]
         [SerializeField] protected bool hasFarPerception;
         [SerializeField] protected bool hasClosePerception;
-        [SerializeField] protected BodyManager bodyManager;
+        [SerializeField] protected Equipment equipment;
 
         [Space(), Header("Settings")]
         [SerializeField] protected string enemyTag;
@@ -21,9 +23,9 @@ namespace Burmuruk.Tesis.Control
         //[SerializeField] protected float closeRadious;
 
         [HideInInspector] public Movement.Movement mover;
-        [HideInInspector] public Fighting.Fighter fighter;
-        [HideInInspector] public StatsManager stats;
-        [HideInInspector] IInventory inventary;
+        [HideInInspector] public Fighter fighter;
+        [HideInInspector] public BasicStats stats;
+        [HideInInspector] protected IInventory inventory;
 
         protected Collider[] eyesPerceibed, earsPerceibed;
         protected bool isTargetFar = false;
@@ -31,24 +33,19 @@ namespace Burmuruk.Tesis.Control
 
         public virtual event Action<bool> OnCombatStarted;
 
-        public IInventory Inventary { get => inventary; set => inventary = value; }
+        public IInventory Inventory { get => inventory; set => inventory = value; }
         public Collider[] CloseEnemies { get => earsPerceibed; }
         public Collider[] FarEnemies { get => eyesPerceibed; }
         public bool IsTargetFar { get => isTargetFar; }
         public bool IsTargetClose { get => isTargetClose; }
-        public BodyManager BodyManager { get => bodyManager; }
+        public Equipment Equipment { get => equipment; }
 
         protected virtual void Awake()
         {
             mover = GetComponent<Movement.Movement>();
-            fighter = GetComponent<Fighting.Fighter>();
-            stats = GetComponent<StatsManager>();
-            inventary = gameObject.GetComponent<IInventory>();
-        }
-
-        protected virtual void Start()
-        {
-
+            fighter = GetComponent<Fighter>();
+            stats = GetComponent<Stats.BasicStats>();
+            inventory = gameObject.GetComponent<IInventory>();
         }
 
         protected virtual void Update()
@@ -58,20 +55,20 @@ namespace Burmuruk.Tesis.Control
 
         protected virtual void FixedUpdate()
         {
-            eyesPerceibed = Physics.OverlapSphere(farPercept.position, stats.EyesRadious, 1<<10);
-            earsPerceibed = Physics.OverlapSphere(closePercept.position, stats.EarsRadious, 1 << 10);
+            eyesPerceibed = Physics.OverlapSphere(farPercept.position, stats.eyesRadious, 1<<10);
+            earsPerceibed = Physics.OverlapSphere(closePercept.position, stats.earsRadious, 1 << 10);
 
             PerceptionManager();
         }
 
         private void OnDrawGizmosSelected()
         {
-            if (!stats || !farPercept || !closePercept) return;
+            if (!stats.Initilized || !farPercept || !closePercept) return;
 
             Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(farPercept.position, stats.EyesRadious);
+            Gizmos.DrawWireSphere(farPercept.position, stats.eyesRadious);
             Gizmos.color = Color.blue;
-            Gizmos.DrawWireSphere(closePercept.position, stats.EarsRadious);
+            Gizmos.DrawWireSphere(closePercept.position, stats.earsRadious);
         }
 
         protected virtual void PerceptionManager()
@@ -112,20 +109,11 @@ namespace Burmuruk.Tesis.Control
             return founded;
         }
 
-        protected virtual void DecisionManager()
-        {
+        protected virtual void DecisionManager() { }
 
-        }
+        protected virtual void ActionManager() { }
 
-        protected virtual void ActionManager()
-        {
-
-        }
-
-        protected virtual void MovementManager()
-        {
-
-        }
+        protected virtual void MovementManager() { }
 
         protected Transform GetNearestTarget(Collider[] eyesPerceibed)
         {

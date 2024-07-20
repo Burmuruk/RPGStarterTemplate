@@ -1,70 +1,30 @@
-﻿using Burmuruk.Tesis.Control;
-using Burmuruk.Tesis.Fighting;
+﻿using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Saving;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Stats
+namespace Burmuruk.Tesis.Inventory
 {
     public class Inventory : MonoBehaviour, IInventory, ISaveable
     {
         [Header("Status")]
         [SerializeField] ItemsList m_ItemsList;
-        [SerializeField] Weapon initialWeapon;
 
-        StatsManager stats;
-
-        bool weaponAdded;
         int id;
         bool isPersistentData = false;
 
-        Dictionary<ItemType, Dictionary<int, (ISaveableItem item, int count, int maxCount)>> m_owned = new()
-        {
-            { ItemType.Weapon, new Dictionary<int, (ISaveableItem item, int count, int maxCount)>() },
-            { ItemType.Ability, new Dictionary<int, (ISaveableItem item, int count, int maxCount)>() },
-            { ItemType.Modification, new Dictionary<int, (ISaveableItem item, int count, int maxCount)>() },
-            { ItemType.Consumable, new Dictionary<int, (ISaveableItem item, int count, int maxCount)>() },
-        };
+        Dictionary<int, (InventoryItem item, int count)> m_owned = new();
 
         public event Action OnWeaponChanged;
 
         public int ID { get => id; }
         public bool IsPersistentData { get => isPersistentData; }
-        public Weapon EquipedWeapon
-        {
-            get
-            {
-                if (!weaponAdded && initialWeapon)
-                {
-                    var item = new EquipedItem(initialWeapon, ItemType.Weapon);
-                    Add(ItemType.Weapon, item);
-                    item.Equip(gameObject.GetComponent<Character>());
-                    weaponAdded = true;
-                }
-
-                if (initialWeapon) return initialWeapon;
-
-                foreach (var weapon in m_owned[ItemType.Weapon].Values)
-                {
-                    if (((EquipedItem)weapon.item) is var w && w.IsEquip)
-                    {
-                        return (Weapon)GetItem(w.Type, weapon.item.GetSubType());
-                    }
-                }
-
-                return null;
-            }
-        }
 
         private void Awake()
         {
-            //m_weapons ??= weapons;
-            ////m_habilites ??= abilities;
-            //m_modifiers ??= modifiers;
             id = GetHashCode();
-            stats = GetComponent<StatsManager>();
         }
 
         public object CaptureState()
@@ -73,97 +33,66 @@ namespace Burmuruk.Tesis.Stats
         }
         public void RestoreState(object args)
         {
-            m_owned = (Dictionary<ItemType, Dictionary<int, (ISaveableItem item, int count, int maxCount)>>)args;
+            m_owned = (Dictionary<int, (InventoryItem item, int count)>)args;
         }
 
-        public virtual bool Add(ItemType type, ISaveableItem item)
+        public virtual bool Add(int id)
         {
-            //if (GetItem(type, item.GetSubType()) == null) 
-            //    return false;
-
-            var generalList = (m_owned[type] ??= new());
-
-            int subType = item.GetSubType();
-
-            if (generalList.ContainsKey(subType))
+            if (m_owned.ContainsKey(id))
             {
-                generalList[subType] = (
-                    generalList[subType].item,
-                    generalList[subType].count + 1,
-                    generalList[subType].maxCount + 1);
-            }
-            else
-            {
-                if (m_ItemsList.Get(type, subType) == null)
+                if (m_owned[id].count < m_owned[id].item.Capacity)
                     return false;
 
-                generalList.Add(subType, (item, 1, 99));
+                m_owned[id] = (
+                    m_owned[id].item,
+                    m_owned[id].count + 1);
+            }
+            else
+            {
+                if (m_ItemsList.Get(id) is var d && d == null)
+                    return false;
+
+                m_owned.Add(id, (d, 1));
             }
 
             return true;
         }
 
-        public virtual bool Remove(ItemType type, int idx)
+        public virtual bool Remove(int id)
         {
-            if (m_owned[type][idx].count > 1)
-                m_owned[type][idx] = (m_owned[type][idx].item, m_owned[type][idx].count - 1, m_owned[type][idx].maxCount);
+            if (m_owned[id].count > 1)
+                m_owned[id] = (m_owned[id].item, m_owned[id].count - 1);
             else
-                m_owned[type].Remove(idx);
+                m_owned.Remove(id);
 
             return true;
         }
 
-        public List<ISaveableItem> GetOwnedList(ItemType type)
+        public List<InventoryItem> GetOwnedList(ItemType type)
         {
-            return (from list in m_owned[type] select list.Value.item).ToList();
+            return (from inventoryItem in m_owned.Values
+                    where inventoryItem.item.Type == type
+                    select inventoryItem.item).ToList();
         }
 
-        public ISaveableItem GetOwnedItem(ItemType type, int idx)
+        public InventoryItem GetOwnedItem(int id)
         {
-            if (m_owned[type].ContainsKey(idx))
+            if (m_owned.ContainsKey(id))
             {
-                return m_owned[type][idx].item;
+                return m_owned[id].item;
             }
 
             return null;
         }
 
-        public List<ISaveableItem> GetList(ItemType type)
+        public int GetItemCount(int id)
         {
-            List<ISaveableItem> realList = new();
-
-            foreach (var item in GetOwnedList(type))
+            if (m_owned.ContainsKey(id))
             {
-                realList.Add(m_ItemsList.Get(type, item.GetSubType()));
-            }
-
-            return realList;
-        }
-
-        public ISaveableItem GetItem(ItemType type, int subType)
-        {
-            if (GetOwnedItem(type, subType) == null) 
-                return null;
-
-            return m_ItemsList.Get(type, subType);
-        }
-
-        public int GetItemCount(ItemType type, int subType)
-        {
-            if (m_owned.ContainsKey(type))
-            {
-                if (m_owned[type].ContainsKey(subType))
-                    return m_owned[type][subType].count;
-                else
-                    return 0;
+                return m_owned[id].count;
             }
 
             return 0;
-        }
-
-        public int GetItemMaxCount(ItemType type, int subType)
-        {
-            return m_owned[type][subType].maxCount;
         }
     }
 
@@ -174,23 +103,6 @@ namespace Burmuruk.Tesis.Stats
         Ability,
         Modification,
         Weapon
-    }
-
-    public interface ISaveableItem
-    {
-        public ItemType Type { get; }
-        public int GetSubType();
-        public string GetName();
-        public string GetDescription();
-    }
-
-    public interface IEquipable
-    {
-        public BodyManager.BodyPart BodyPart { get; }
-        public GameObject Prefab { get; }
-
-        public void Equip(StatsManager stats);
-        public void Remove(StatsManager stats);
     }
 
     public interface IUsable

@@ -1,160 +1,168 @@
 ﻿using Burmuruk.Tesis.Control;
+using Burmuruk.Tesis.Inventory;
+using Burmuruk.Tesis.Stats;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Stats
+namespace Burmuruk.Tesis.Inventory
 {
     public class InventoryEquipDecorator : MonoBehaviour, IInventory
     {
-        Inventory inventary;
-        PlayerCustomizationManager customazationManager;
-        (Weapon weapon, EquipedItem item) equipedWeapon = default;
+        [SerializeField] List<InitalEquipedItemData> initialItems;
+        [SerializeField] Inventory inventory;
+        Equipment equipment;
 
-        (ItemType itemType, EquipedItem item) alarmedRemovedItem = default;
-        (ItemType itemType, Character player, EquipedItem item) alarmedEquipItem = default;
+        [Serializable]
+        struct InitalEquipedItemData
+        {
+            [SerializeField] InventoryItem item;
+            [SerializeField] bool isEquip;
+            [SerializeField] Character character;
+
+            public readonly InventoryItem Item { get =>  item; }
+            public readonly bool IsEquiped {  get => isEquip; }
+            public readonly Character Character { get => character; }
+        }
+
+        EquipeableItem alarmedRemovedItem = default;
+        (Character player, EquipeableItem item) alarmedEquipItem = default;
+        public ref Equipment Equipped { get => ref equipment; }
 
         public event Action OnTryDeleteEquiped;
         public event Action OnTryAlreadyEquiped;
 
-        public Weapon EquipedWeapon { get => equipedWeapon.weapon; }
-
         private void Start()
         {
-            customazationManager = GetComponent<PlayerCustomizationManager>();
+            InitInventory();
         }
 
-        public void SetInventary(Inventory inventary) => this.inventary = inventary;
+        public void SetInventory(Inventory inventary) => this.inventory = inventary;
 
-        public bool Equip(Character player, ItemType itemType, int type)
+        public bool TryEquip(Character player, InventoryItem item)
         {
-            var item = inventary.GetOwnedItem(itemType, type);
-
             if (item == null) return false;
 
-            var equiped = (EquipedItem)item;
+            var equiped = (EquipeableItem)item;
             if (equiped.Characters.Contains(player)) return false;
 
-            alarmedEquipItem = (itemType, player, (EquipedItem)item);
+            alarmedEquipItem = (player, (EquipeableItem)item);
 
-            if (equiped.IsEquip && !CheckHaveMoreItems(itemType, type, equiped))
+            if (equiped.IsEquip && !CheckHaveMoreItems(item.ID))
             {
                 OnTryAlreadyEquiped?.Invoke();
                 return false;
             }
 
-            EquipDirec();
+            Equip();
             return true;
 
-            bool CheckHaveMoreItems(ItemType itemType, int type, EquipedItem equiped)
+            bool CheckHaveMoreItems(in int itemId)
             {
-                return inventary.GetItemCount(itemType, type) > equiped.Characters.Count;
+                return inventory.GetItemCount(itemId) > equiped.Characters.Count;
             }
         }
 
-        public void EquipDirec()
+        private void Equip()
         {
-            var (itemType, player, equipedItem) = alarmedEquipItem;
-            equipedItem.Equip(player);
+            var (player, equipeableItem) = alarmedEquipItem;
+            equipeableItem.Equip(player);
 
-            var prefab = inventary.GetItem(itemType, equipedItem.GetSubType());
-
-            if (itemType == ItemType.Weapon)
-                UpdateEquipedWeapon((Weapon)prefab, equipedItem);
-
-            UpdateModel(player, prefab);
+            UpdateModel(player, equipeableItem);
 
             alarmedEquipItem = default;
         }
 
-        private void UpdateModel(Character player, ISaveableItem prefab)
+        private void InitInventory()
         {
-            if (prefab is IEquipable equipable && equipable != null)
+            if (initialItems != null)
             {
-                customazationManager.EquipModification(player, equipable);
+                foreach (var itemData in initialItems)
+                {
+                    Add(itemData.Item.ID);
+
+                    if (itemData.IsEquiped)
+                    {
+                        var item = inventory.GetOwnedItem(itemData.Item.ID);
+                        TryEquip(itemData.Character, itemData.Item);
+                    }
+                }
             }
         }
 
-        void UpdateEquipedWeapon(Weapon weapon, EquipedItem item)
+        private void UpdateModel(Character player, InventoryItem prefab)
         {
-            if (EquipedWeapon != null)
+            if (prefab is EquipeableItem equipable && equipable != null)
             {
-                Unequip(alarmedEquipItem.player, equipedWeapon.item);
+                CharacterCustomizationManager.EquipModification(ref equipment, equipable);
             }
-
-            equipedWeapon = (weapon, item);
         }
 
-        public void Unequip(Character player, EquipedItem item)
+        public bool Unequip(Character player, EquipeableItem item)
         {
-            if (!item.Characters.Contains(player)) return;
+            if (item is var unequipped && unequipped == null)
+                return false;
+
+            if (!item.Characters.Contains(player)) return false;
 
             item.Unequip(player);
-            //item.OnUnequiped -= Unequip;
-            var equipedItem = (IEquipable)inventary.GetItem(item.Type, item.GetSubType());
-
-            customazationManager.UnequipModification(player, equipedItem);
+            
+            CharacterCustomizationManager.UnequipModification(ref equipment, unequipped);
+            return true;
         }
 
-        public bool Add(ItemType type, ISaveableItem item)
+        public bool Add(int id)
         {
-            var equipedItem = new EquipedItem(item, type);
-
-            return inventary.Add(type, equipedItem);
+            return inventory.Add(id);
         }
 
-        public void Add(ItemType itemType, int idx)
+        public bool Remove(int id)
         {
-            inventary.Add(itemType, new EquipedItem(itemType, idx));
-        }
-
-        public bool Remove(ItemType type, int idx)
-        {
-            var item = inventary.GetOwnedItem(type, idx);
+            var item = inventory.GetOwnedItem(id);
 
             if (item == null) return false;
 
-            alarmedRemovedItem = (type, (EquipedItem)item);
+            alarmedRemovedItem = (EquipeableItem)item;
 
-            if (((EquipedItem)item).IsEquip)
+            if (((EquipeableItem)item).IsEquip)
             {
                 OnTryDeleteEquiped?.Invoke();
                 return false;
             }
 
-            RemoveDirect();
+            RemoveAlarmedItem();
 
             return true;
         }
 
-        public void RemoveDirect()
+        private void RemoveAlarmedItem()
         {
-            if (alarmedRemovedItem.item == null) return;
+            if (alarmedRemovedItem == null) return;
 
-            inventary.Remove(alarmedRemovedItem.itemType, alarmedRemovedItem.item.GetSubType());
+            inventory.Remove(alarmedRemovedItem.ID);
 
             alarmedRemovedItem = default;
         }
 
-        public ISaveableItem GetOwnedItem(ItemType type, int idx)
+        public InventoryItem GetOwnedItem(int id)
         {
-            return inventary.GetOwnedItem(type, idx);
+            return inventory.GetOwnedItem(id);
         }
 
-        public List<ISaveableItem> GetOwnedList(ItemType type)
+        public List<InventoryItem> GetOwnedList(ItemType type)
         {
-            return inventary.GetOwnedList(type);
+            return inventory.GetOwnedList(type);
         }
 
-        public List<ISaveableItem> GetEquipedItems(ItemType itemType, Character character)
+        public List<InventoryItem> GetEquipedItems(ItemType itemType, Character character)
         {
-            var items = inventary.GetOwnedList(itemType);
+            var items = inventory.GetOwnedList(itemType);
 
-            List<ISaveableItem> equipedItems = new(); 
+            List<InventoryItem> equipedItems = new(); 
 
             foreach (var item in items)
             {
-                var equiped = item as EquipedItem;
+                var equiped = item as EquipeableItem;
                 if (equiped.IsEquip && equiped.Characters.Contains(character))
                 {
                     equipedItems.Add(equiped);
@@ -164,31 +172,9 @@ namespace Burmuruk.Tesis.Stats
             return equipedItems;
         }
 
-        public List<ISaveableItem> GetList(ItemType type)
+        public int GetItemCount(int id)
         {
-            return inventary.GetList(type);
-        }
-
-        public ISaveableItem GetItem(ItemType type, int idx)
-        {
-            return inventary.GetItem(type, idx);
-        }
-
-        public bool Use(ItemType type, int subType)
-        {
-            
-
-            return true;
-        }
-
-        public int GetItemCount(ItemType type, int subType)
-        {
-            return inventary.GetItemCount(type, subType);
-        }
-
-        public int GetItemMaxCount(ItemType type, int subType)
-        {
-            return inventary.GetItemMaxCount(type, subType);
+            return inventory.GetItemCount(id);
         }
     }
 }

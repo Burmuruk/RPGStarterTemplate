@@ -1,5 +1,4 @@
-﻿using Burmuruk.Tesis.Fighting;
-using Burmuruk.Tesis.Stats;
+﻿using Burmuruk.Tesis.Stats;
 using System.Collections;
 using UnityEngine;
 
@@ -39,7 +38,7 @@ namespace Burmuruk.Tesis.Control.AI
                 GetNearestTarget(earsPerceibed);
 
             if (Vector3.Distance(m_target.position, transform.position)
-                <= Inventary.EquipedWeapon.MinDistance)
+                <= Inventory.EquipedWeapon.MinDistance)
             {
                 fighter.SetTarget(m_target);
                 fighter.BasicAttack();
@@ -52,7 +51,7 @@ namespace Burmuruk.Tesis.Control.AI
             {
                 case PlayerAction.Combat:
 
-                    var dis = Inventary.EquipedWeapon.MinDistance * .8f;
+                    var dis = Inventory.EquipedWeapon.MinDistance * .8f;
 
                     if (Vector3.Distance(m_target.position, transform.position) > dis)
                     {

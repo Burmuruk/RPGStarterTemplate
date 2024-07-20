@@ -1,4 +1,6 @@
-﻿using Burmuruk.Tesis.Control;
+﻿using Burmuruk.Tesis.Combat;
+using Burmuruk.Tesis.Control;
+using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
 using Burmuruk.Utilities;
 using System;
@@ -309,12 +311,12 @@ namespace Burmuruk.Tesis.UI
         {
             if (value)
             {
-                var inventary = playerManager.MainInventary;
+                var inventary = playerManager.MainInventory;
                 var curPlayer = playerManager.CurPlayer.GetComponent<Character>();
 
                 var abilities = (from ability in inventary.GetOwnedList(ItemType.Ability)
-                                 where ((EquipedItem)ability).Characters.Contains(curPlayer)
-                                 select (Ability)inventary.GetItem(ability.Type, ability.GetSubType()))
+                                 where ((EquipeableItem)ability).Characters.Contains(curPlayer)
+                                 select (Ability)inventary.GetOwnedItem(ability.ID))
                              .ToArray();
 
                 int j = 0;
@@ -324,12 +326,12 @@ namespace Burmuruk.Tesis.UI
 
                     if (j < abilities.Length)
                     {
-                        int subType = abilities[j].GetSubType();
+                        int id = abilities[j].ID;
                         var button = imgAbilty.GetComponent<MyItemButton>();
 
                         imgAbilty.sprite = abilities[j].Sprite;
                         button.onClick.RemoveAllListeners();
-                        button.onClick.AddListener(() => UseAbility(subType));
+                        button.onClick.AddListener(() => UseAbility(id));
 
                         j++;
                         continue;
@@ -346,7 +348,7 @@ namespace Burmuruk.Tesis.UI
 
         private void UseAbility(int id)
         {
-            playerManager.UseItem(ItemType.Ability, id);
+            playerManager.UseItem(id);
         }
 
         private void EnableHPOnDamage()

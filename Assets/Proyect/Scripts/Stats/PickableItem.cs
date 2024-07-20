@@ -1,15 +1,13 @@
-﻿using Burmuruk.Tesis.Saving;
+﻿using Burmuruk.Tesis.Inventory;
+using Burmuruk.Tesis.Saving;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Stats
 {
-    public class PickableItem : MonoBehaviour, ISaveableItem, ISaveable
+    public class PickableItem : MonoBehaviour, ISaveable
     {
-        [SerializeField] ItemsList list;
         public ItemType itemType;
-        [SerializeField] int itemIdx;
-        [SerializeField] string m_name;
-        [SerializeField] string m_description;
+        [SerializeField] int itemId;
         int id;
 
         public ItemType Type => ItemType.Consumable;
@@ -20,28 +18,6 @@ namespace Burmuruk.Tesis.Stats
         private void Awake()
         {
             id = GetHashCode();
-        }
-
-        public int GetSubType()
-        {
-            return itemIdx;
-        }
-
-        public string GetName()
-        {
-            return m_name;
-        }
-
-        public string GetDescription()
-        {
-            return m_description;
-        }
-
-        public void SetData(ItemType type, int subType, ItemsList list)
-        {
-            this.itemType = type;
-            itemIdx = subType;
-            this.list = list;
         }
 
         public object CaptureState()

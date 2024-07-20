@@ -1,12 +1,13 @@
-﻿using Burmuruk.Tesis.Fighting;
+﻿using Burmuruk.Tesis.Control;
+using Burmuruk.Tesis.Inventory;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Stats
+namespace Burmuruk.Tesis.Combat
 {
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Ability", order = 2)]
-    public class Ability : ScriptableObject, ISaveableItem, IUsable, IEquipable
+    public class Ability : EquipeableItem
     {
         [SerializeField] float speed;
         [SerializeField] AbilityType type;
@@ -19,18 +20,10 @@ namespace Burmuruk.Tesis.Stats
 
         public int Mode { get => mode; }
         public bool IsHuman { get => isHuman; }
-        public Sprite Sprite { get => sprite; }
-        public ItemType Type => ItemType.Ability;
-        public BodyManager.BodyPart BodyPart => BodyManager.BodyPart.None;
-        public GameObject Prefab => null;
+        public BodyPart BodyPart => BodyPart.None;
         public float CoolDown { get => coolDown; }
 
-        public void Equip(StatsManager stats)
-        {
-            //ModsController.CalculateStats()
-        }
-
-        public void Remove(StatsManager stats)
+        public void Remove(Character stats)
         {
             throw new System.NotImplementedException();
         }
@@ -40,9 +33,9 @@ namespace Burmuruk.Tesis.Stats
             AbilitiesManager.habilitiesList[type].Invoke(args, callback);
         }
 
-        public int GetSubType()
+        public override object GetSubType()
         {
-            return (int)type;
+            return Convert.ChangeType(type, typeof(AbilityType));
         }
 
         public string GetName()
@@ -53,6 +46,11 @@ namespace Burmuruk.Tesis.Stats
         public string GetDescription()
         {
             return m_description;
+        }
+
+        public override object GetEquipLocation()
+        {
+            return EquipmentLocation.None;
         }
     }
 

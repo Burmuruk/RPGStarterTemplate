@@ -1,45 +1,25 @@
-﻿using Burmuruk.Tesis.Control;
+﻿using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
 using Burmuruk.Utilities;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Fighting
+namespace Burmuruk.Tesis.Combat
 {
     public class Fighter : MonoBehaviour
     {
         [SerializeField] float detectionRadious = 8;
 
-        StatsManager m_Stats;
-        StatsManager m_targetStats;
-        IInventory m_inventary;
+        Stats.BasicStats m_Stats;
+        //StatsManager m_targetStats;
+        InventoryEquipDecorator m_inventory;
         Movement.Movement m_movement;
         AbilitiesManager habManager;
 
         Transform m_target;
         CoolDownAction cdBasicAttack;
+        Weapon weapon;
         public bool shouldGetClose = false;
         bool canAttack = true;
-
-        private void Awake()
-        {
-            m_Stats = GetComponent<StatsManager>();
-            m_targetStats = GetComponent<StatsManager>();
-            m_inventary = GetComponent<IInventory>();
-        }
-
-        private void Start()
-        {
-            //var decorator = m_inventary as InventoryEquipDecorator;
-
-            //if (decorator != null)
-            //{
-            //    decorator.Add(ItemType.Weapon, 0);
-            //    decorator.Equip(GetComponent<Character>(), ItemType.Weapon, 0);
-            //}
-
-            //if (m_Stats.DamageRate == 0) return;
-            cdBasicAttack = new CoolDownAction(m_Stats.DamageRate);
-        }
 
         private void FixedUpdate()
         {
@@ -50,6 +30,22 @@ namespace Burmuruk.Tesis.Fighting
 
             //if (m_Stats.DamageRate != 0)
             //    cdBasicAttack = new CoolDownAction(m_Stats.DamageRate);
+        }
+
+        public void Initilize(InventoryEquipDecorator inventory, ref BasicStats stats)
+        {
+            m_inventory = inventory;
+            m_Stats = stats;
+
+            m_inventory.Equipped.OnEquipmentChanged += (id) =>
+            {
+                if (id == (int)BodyPart.RArm)
+                {
+                    CacheWeapon();
+                }
+            };
+
+            cdBasicAttack = new CoolDownAction(weapon.DamageRate);
         }
 
         public void SetTarget(Transform target)
@@ -75,17 +71,23 @@ namespace Burmuruk.Tesis.Fighting
 
         public void SpecialAttack(AbilityType type)
         {
-            var habilities = m_inventary.GetOwnedList(ItemType.Ability);
+            var habilities = m_inventory.GetOwnedList(ItemType.Ability);
 
             foreach (var hability in habilities)
             {
-                if (hability.GetSubType() == (int)type)
+                if ((AbilityType)hability.GetSubType() == type)
                 {
                     var args = GetSpecialAttackArgs(type);
-                    //AbilitiesManager.habilitiesList[type]?.Invoke(args);
+                    //AbilitiesManager.habilitiesList[subType]?.Invoke(args);
                     return;
                 }
             }
+        }
+
+        private void CacheWeapon()
+        {
+            int id = m_inventory.Equipped[(int)BodyPart.RArm];
+            weapon = (Weapon)m_inventory.GetOwnedItem(id);
         }
 
         private object GetSpecialAttackArgs(AbilityType type) =>

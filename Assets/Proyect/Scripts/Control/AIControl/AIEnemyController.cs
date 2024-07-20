@@ -1,5 +1,7 @@
 ﻿using Burmuruk.AI.PathFinding;
+using Burmuruk.Tesis.Combat;
 using Burmuruk.Tesis.Control;
+using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
 using Burmuruk.Utilities;
 using Burmuruk.WorldG.Patrol;
@@ -11,7 +13,7 @@ namespace Burmuruk.Tesis.Control.AI
 {
     public class AIEnemyController : Character
     {
-        [SerializeField] ItemsList itemsList;
+        //[SerializeField] ItemsList itemsList;
         protected AIEnemyController leader;
         protected List<(float value, Character enemy)> rage;
         protected List<AbiltyTrigger> abilities = new();
@@ -107,12 +109,10 @@ namespace Burmuruk.Tesis.Control.AI
             }
         }
 
-        protected override void Start()
+        protected virtual void Start()
         {
-            base.Start();
-
             SetAbilities();
-            stats.OnDied += DropItem;
+            //stats.OnDied += DropItem;
         }
 
         protected override void FixedUpdate()
@@ -267,7 +267,7 @@ namespace Burmuruk.Tesis.Control.AI
 
         private void SetAbilities()
         {
-            var items = Inventary.GetList(ItemType.Ability);
+            var items = (inventory as InventoryEquipDecorator).Equipped[];
             
             for (int i = 0; i < items.Count; i++)
             {
@@ -289,12 +289,12 @@ namespace Burmuruk.Tesis.Control.AI
 
         public void DropItem()
         {
-            if (itemsList.Items == null || itemsList.Items.Count <= 0) return;
+            //if (itemsList.Items == null || itemsList.Items.Count <= 0) return;
 
-            var rand = UnityEngine.Random.Range(0, itemsList.Items.Count);
+            //var rand = UnityEngine.Random.Range(0, itemsList.Items.Count);
 
-            var item = Instantiate(itemsList.Items[rand].Prefab);
-            item.transform.position = transform.position;
+            //var item = Instantiate(itemsList.Items[rand].Prefab);
+            //item.transform.position = transform.position;
         }
     }
 }

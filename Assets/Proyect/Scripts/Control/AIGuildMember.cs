@@ -68,10 +68,8 @@ namespace Burmuruk.Tesis.Control
             }
         }
 
-        protected override void Start()
+        protected virtual void Start()
         {
-            base.Start();
-
             cdTeleport = new CoolDownAction(1.5f);
         }
 
@@ -203,7 +201,7 @@ namespace Burmuruk.Tesis.Control
                     {
                         if ((isTargetFar || isTargetClose) &&
                             Vector3.Distance(transform.position, 
-                            GetNearestTarget(eyesPerceibed).position) < Inventary.EquipedWeapon.MinDistance)
+                            GetNearestTarget(eyesPerceibed).position) < stats.MinDistance)
                         {
                             PlayerState = PlayerState.Combat;
                             attackState = AttackState.BasicAttack;
@@ -290,7 +288,7 @@ namespace Burmuruk.Tesis.Control
                     {
                         if (formation == Formation.Protect) break;
 
-                        var dis = Inventary.EquipedWeapon.MinDistance * .8f;
+                        var dis = stats.MinDistance * .8f;
                         if (Vector3.Distance(m_target.position, transform.position) > dis)
                         {
                             var destiniy = (transform.position - m_target.position).normalized * dis;

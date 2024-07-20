@@ -8,21 +8,21 @@ namespace Burmuruk.Tesis.Stats
 {
     public class PlayerInventary
     {
-        public Inventory MainInventary { get; set; }
+        //public Inventory MainInventary { get; set; }
 
-        public bool Add(ItemType type, ISaveableItem item)
-        {
-            return MainInventary.Add(type, item);
-        }
+        //public bool Add(ItemType subType, ISaveableItem item)
+        //{
+        //    return MainInventary.Add(subType, item);
+        //}
 
-        public bool Remove(ItemType type, int idx)
-        {
-            return MainInventary.Remove(type, idx);
-        }
+        //public bool Remove(ItemType subType, int idx)
+        //{
+        //    return MainInventary.Remove(subType, idx);
+        //}
 
-        public ISaveableItem GetOwnedItem(ItemType type, int idx)
-        {
-            throw new NotImplementedException();
-        }
+        //public ISaveableItem GetOwnedItem(ItemType subType, int idx)
+        //{
+        //    throw new NotImplementedException();
+        //}
     }
 }

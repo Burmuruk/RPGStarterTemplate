@@ -1,5 +1,6 @@
 ﻿using Burmuruk.AI.PathFinding;
 using Burmuruk.Tesis.Control;
+using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
 using Burmuruk.WorldG.Patrol;
 using System;
@@ -24,8 +25,8 @@ namespace Burmuruk.Tesis.Movement
         [SerializeField] float m_threshold;
 
         Rigidbody m_rb;
-        StatsManager m_statsManager;
-        Inventory m_inventary;
+        BasicStats stats;
+        InventoryEquipDecorator m_inventory;
         MovementSchuduler m_scheduler;
         PathFinder m_pathFinder;
         INodeListSupplier nodeList;
@@ -40,7 +41,6 @@ namespace Burmuruk.Tesis.Movement
         
         LinkedList<IPathNode> m_curPath;
         IEnumerator<IPathNode> enumerator;
-
 
         public event Action OnFinished = delegate { };
 
@@ -61,10 +61,10 @@ namespace Burmuruk.Tesis.Movement
         {
             get
             {
-                if (m_inventary == null)
+                if (m_inventory == null)
                     return 3;
 
-                return m_inventary.EquipedWeapon.MinDistance;
+                return stats.MinDistance;
             }
         }
 
@@ -72,16 +72,10 @@ namespace Burmuruk.Tesis.Movement
         private void Awake()
         {
             m_rb = GetComponent<Rigidbody>();
-            m_statsManager = GetComponent<StatsManager>();
             m_scheduler = new MovementSchuduler();
 
             //m_patrolController = gameObject.GetComponent<PatrolController>();
             //m_patrolController.OnFinished += m_patrolController.Execute_Tasks;
-        }
-
-        private void Start()
-        {
-
         }
 
         private void FixedUpdate()
@@ -89,6 +83,12 @@ namespace Burmuruk.Tesis.Movement
             Move();
         } 
         #endregion
+
+        public void Initlize(BasicStats stats, InventoryEquipDecorator inventory)
+        {
+            this.stats = stats;
+            this.m_inventory = inventory;
+        }
 
         public void SetConnections(INodeListSupplier nodeList)
         {
@@ -199,7 +199,7 @@ namespace Burmuruk.Tesis.Movement
         /// <returns>float m_speed</returns>
         public float GetSpeed()
         {
-            return m_statsManager.Speed;
+            return stats.Speed;
         }
 
         /// <summary>

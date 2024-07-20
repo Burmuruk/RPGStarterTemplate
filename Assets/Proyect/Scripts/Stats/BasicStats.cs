@@ -1,23 +1,23 @@
-﻿using System;
+﻿using Burmuruk.Tesis.Inventory;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Stats
 {
-    [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/CharacterStats", order = 1)]
-    public class Stats : ScriptableObject
+    [Serializable]
+    public struct BasicStats
     {
         [Header("Status")]
-        [SerializeField] bool initialized = false;
+        [SerializeField] bool initialized;
         [Space(20), Header("Basic stats")]
         [SerializeField] public float speed;
-        [SerializeField] public int hp;
-        [SerializeField] public int maxHp;
         [SerializeField] public float damage;
         [SerializeField] public Color color;
         [Space(), Header("Detection")]
         [SerializeField] public float eyesRadious;
         [SerializeField] public float earsRadious;
+        [SerializeField] float minDistance;
         [SerializeField] List<Slot> m_slots;
 
         [Serializable]
@@ -34,6 +34,12 @@ namespace Burmuruk.Tesis.Stats
         }
 
         Dictionary<ItemType, int> slots;
+
+        public bool Initilized { get => initialized; }
+        public float Speed { get => speed; }
+        public float Damage { get => damage; }
+        public Color Color { get => color; set => color = value; }
+        public float MinDistance { get => minDistance; }
 
         public void Initialize()
         {

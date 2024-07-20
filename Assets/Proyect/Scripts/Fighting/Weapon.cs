@@ -1,16 +1,14 @@
-﻿using UnityEngine;
+﻿using Burmuruk.Tesis.Inventory;
+using UnityEngine;
 
-namespace Burmuruk.Tesis.Stats
+namespace Burmuruk.Tesis.Combat
 {
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Weapon", order = 1)]
-    public class Weapon : ScriptableObject, ISaveableItem, IEquipable
+    public class Weapon : EquipeableItem
     {
         [Header("Information")]
-        [SerializeField] string m_name;
-        [SerializeField] string m_description;
         [SerializeField] WeaponType m_type;
-        [SerializeField] BodyManager.BodyPart m_bodyPart;
-        [SerializeField] GameObject prefab;
+        [SerializeField] BodyPart m_bodyPart;
         [Space(), Header("Settings")]
         [SerializeField] int m_damage;
         [SerializeField] float m_rateDamage;
@@ -19,40 +17,18 @@ namespace Burmuruk.Tesis.Stats
         [SerializeField] float reloadTime;
         [SerializeField] int maxAmmo;
 
-        public ItemType Type => ItemType.Weapon;
         public int Damage { get => m_damage; }
         public float DamageRate { get => m_rateDamage; }
         public float MinDistance { get => m_minDistance; }
         public float MaxDistance { get => m_maxDistance; }
-        public BodyManager.BodyPart BodyPart { get => m_bodyPart; }
-        public GameObject Prefab { get => prefab; }
+        public BodyPart BodyPart { get => m_bodyPart; }
         public int MaxAmmo { get => maxAmmo; }
         public int Ammo { get; private set; }
         public float ReloadTime { get => reloadTime; }
 
-        public string GetName()
+        public override object GetEquipLocation()
         {
-            return m_name;
-        }
-
-        public string GetDescription()
-        {
-            return m_description;
-        }
-
-        int ISaveableItem.GetSubType()
-        {
-            return (int)m_type;
-        }
-
-        public void Equip(StatsManager stats)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public void Remove(StatsManager stats)
-        {
-            throw new System.NotImplementedException();
+            return m_type;
         }
     }
 

@@ -101,10 +101,10 @@ public class LevelManager : MonoBehaviour
 
                 if (menuCharacters != null)
                 {
-                    var cloths = FindObjectOfType<PlayerCustomizationManager>();
+                    var cloths = FindObjectOfType<CharacterCustomizationManager>();
                     var pm = FindObjectOfType<PlayerManager>();
                     menuCharacters.SetPlayers(pm.Players);
-                    menuCharacters.SetInventary(pm.MainInventary);
+                    menuCharacters.SetInventory(pm.MainInventory);
                     break;
                 }
             }
@@ -157,6 +157,8 @@ public class LevelManager : MonoBehaviour
     public void ExitUI()
     {
         if (menuCharacters.curState != UIMenuCharacters.State.None) return;
+
+        menuCharacters.UnloadMenu();
 
         gameManager.ExitUI();
     }

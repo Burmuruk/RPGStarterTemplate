@@ -1,76 +1,40 @@
-﻿using UnityEditor;
+﻿using Burmuruk.Tesis.Control;
+using Burmuruk.Tesis.Inventory;
+using System;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Stats
 {
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Modifier", order = 3)]
-    public class Modification : ScriptableObject, ISaveableItem, IEquipable
+    public class Modification : EquipeableItem
     {
-        [SerializeField] GameObject m_Prefab;
         [SerializeField] int amount;
         [SerializeField] float amount2;
-        [SerializeField] ModificationType type;
-        [SerializeField] BodyManager.BodyPart bodyPart;
+        [SerializeField] ModsType subType;
+        [SerializeField] BodyPart equipmentPlace;
         [SerializeField] string m_name;
         [SerializeField] string m_description;
-        [SerializeField] Sprite sprite;
 
-        StatsManager stats;
+        public BodyPart Location { get => equipmentPlace; }
 
-        public ItemType Type => ItemType.Modification;
-        public BodyManager.BodyPart BodyPart { get => bodyPart; }
-        public GameObject Prefab { get => m_Prefab; }
-        public Sprite Sprite { get => sprite; }
-
-        public void Equip(StatsManager stats)
+        public void Equip(Character character, float value)
         {
-            switch (type)
-            {
-                case ModificationType.MaxHelth:
-                    Debug.Log("HP");
-                    stats.MaxHp += amount;
-                    break;
-
-                case ModificationType.MaxSpeed:
-                    Debug.Log("Supeedo");
-                    stats.Speed += amount2;
-                    break;
-
-                default:
-                    break;
-            }
+            ModsList.Add(character, subType, value);
         }
 
-        public void Remove(StatsManager stats)
+        public void Remove(Character character, float value)
         {
-            throw new System.NotImplementedException();
+            ModsList.Remove(character, subType, value);
         }
 
-        public int GetSubType()
+        public override object GetSubType()
         {
-            return (int)type;
+            return subType;
         }
 
-        public string GetName()
+        public override object GetEquipLocation()
         {
-            return m_name;
+            return equipmentPlace;
         }
-
-        public string GetDescription()
-        {
-            return m_description;
-        }
-    }
-
-    //public struct ModificationData
-    //{
-    //    public 
-    //}
-
-    public enum ModificationType
-    {
-        None,
-        MaxHelth,
-        MaxSpeed,
     }
 }

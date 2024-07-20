@@ -118,7 +118,7 @@ namespace Burmuruk.WorldG.Patrol
             finder.OnPathCalculated += () =>
             {
                 var route = finder.BestRoute;
-                //print("Total connections!! =>  " + route?.Count);
+                //print("Total connections!! =>  " + route?.MaxCount);
                 enumerator?.Dispose();
                 enumerator = null;
                 CreateSpline();

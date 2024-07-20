@@ -1,22 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static Burmuruk.Tesis.Stats.Inventory;
+﻿using System.Collections.Generic;
 
-namespace Burmuruk.Tesis.Stats
+namespace Burmuruk.Tesis.Inventory
 {
     public interface IInventory
     {
-        public Weapon EquipedWeapon { get; }
-        public bool Add(ItemType type, ISaveableItem item);
-        public bool Remove(ItemType type, int idx);
-        public List<ISaveableItem> GetOwnedList(ItemType type);
-        public List<ISaveableItem> GetList(ItemType type);
-        public ISaveableItem GetOwnedItem(ItemType type, int idx);
-        public ISaveableItem GetItem(ItemType type, int idx);
-        public int GetItemCount(ItemType type, int subType);
-        public int GetItemMaxCount(ItemType type, int subType);
+        public bool Add(int id);
+        public bool Remove(int id);
+        public List<InventoryItem> GetOwnedList(ItemType type);
+        public InventoryItem GetOwnedItem(int id);
+        public int GetItemCount(int id);
     }
 }

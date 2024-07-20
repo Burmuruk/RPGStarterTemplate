@@ -1,108 +1,48 @@
-﻿using Burmuruk.Tesis.Fighting;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Stats
+namespace Burmuruk.Tesis.Inventory
 {
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Inventary", order = 1)]
     public class ItemsList : ScriptableObject
     {
         [Header("General Lists")]
-        [SerializeField] List<Weapon> weapons;
-        [SerializeField] List<Modification> modifiers;
-        [SerializeField] List<ConsumableItem> items;
-        [SerializeField] List<Ability> abilities;
+        [SerializeField] List<InventoryItem> items;
         [SerializeField] bool Initialized;
 
-        Dictionary<ConsumableType, ConsumableItem> m_items;
-        Dictionary<WeaponType, Weapon> m_weapon;
-        Dictionary<AbilityType, Ability> m_ability;
-        Dictionary<ModificationType, Modification> m_modifications;
+        Dictionary<int, InventoryItem> _mainList;
 
-        public List<ConsumableItem> Items { get => items; }
-        public List<Modification> Modifiers { get => modifiers; }
-        public List<Ability> Abilities { get => abilities; }
-
-        public Ability GetAbility(AbilityType type)
+        public InventoryItem Get(int itemId)
         {
             if (!Initialized) Initialize();
 
-            return m_ability[type];
+            return _mainList[itemId];
         }
 
-        public ConsumableItem GetItem(ConsumableType type)
+        public List<InventoryItem> GetList(ItemType type)
         {
             if (!Initialized) Initialize();
 
-            return m_items[type];
-        }
-
-        public Modification GetItem(ModificationType type)
-        {
-            if (!Initialized) Initialize();
-
-            return m_modifications[type];
-        }
-
-        public Weapon GetItem(WeaponType type)
-        {
-            if (!Initialized) Initialize();
-
-            return m_weapon[type];
-        }
-
-        public ISaveableItem Get(ItemType item, int type)
-        {
-            if (!Initialized) Initialize();
-
-            return item switch
-            {
-                ItemType.Weapon => m_weapon[(WeaponType)type],
-                ItemType.Ability => m_ability.ContainsKey((AbilityType)type) ? m_ability[(AbilityType)type] : null,
-                ItemType.Modification => m_modifications[(ModificationType)type],
-                ItemType.Consumable => m_items[(ConsumableType)type],
-                _ => null
-            };
+            return (from item in _mainList.Values
+                    where item.Type == type
+                    select item
+                    ).ToList();
         }
 
         private void Initialize()
         {
-            m_weapon = new Dictionary<WeaponType, Weapon>();
+            if (Initialized) return;
 
-            foreach (var weapon in weapons)
+            _mainList = new Dictionary<int, InventoryItem>();
+
+            foreach (var item in items)
             {
-                var key = (WeaponType)((ISaveableItem)weapon).GetSubType();
-                if (!m_weapon.ContainsKey(key))
-                    m_weapon.Add(key, weapon);
+                _mainList.Add(item.ID, item);
             }
 
-            m_items = new Dictionary<ConsumableType, ConsumableItem>();
-
-            foreach (var pickable in items)
-            {
-                var key = (ConsumableType)((ISaveableItem)pickable).GetSubType();
-                if (!m_items.ContainsKey(key))
-                    m_items.Add(key, pickable);
-            }
-
-            m_modifications = new Dictionary<ModificationType, Modification>();
-
-            foreach (var modifier in modifiers)
-            {
-                var key = (ModificationType)((ISaveableItem)modifier).GetSubType();
-                if (!m_modifications.ContainsKey(key))
-                    m_modifications.Add(key, modifier);
-            }
-
-            m_ability = new Dictionary<AbilityType, Ability>();
-
-            foreach (var ability in abilities)
-            {
-                var key = (AbilityType)((ISaveableItem)ability).GetSubType();
-                if (!m_ability.ContainsKey(key))
-                    m_ability.Add(key, ability);
-            }
+            Initialized = true;
         }
     }
 }

@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace MyDearAnima.Controll
+namespace MyDearAnima.Control
 {
     public class DisableInTime<T>
     {

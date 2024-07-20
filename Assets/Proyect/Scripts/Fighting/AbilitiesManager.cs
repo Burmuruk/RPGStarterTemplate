@@ -3,14 +3,11 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Fighting
+namespace Burmuruk.Tesis.Combat
 {
     class AbilitiesManager : MonoBehaviour
     {
-        
-
         Movement.Movement m_movement;
-        StatsManager stats;
 
         public static readonly Dictionary<AbilityType, Action<object, Action>> habilitiesList = new()
         {

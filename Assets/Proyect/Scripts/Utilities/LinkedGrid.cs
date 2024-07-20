@@ -3,11 +3,13 @@ using Burmuruk.WorldG.Patrol;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Security.Principal;
 using UnityEngine;
+using static UnityEngine.Rendering.DebugUI;
 
 namespace Burmuruk.Collections
 {
-    public class LinkedGrid<T> :IEnumerable<T> where T : IPathNode
+    public class LinkedGrid<T> : IEnumerable<T> where T : IPathNode
     {
         int count;
         int verticalNodesCount;
@@ -22,9 +24,9 @@ namespace Burmuruk.Collections
         public List<LinkedGridNode<T>> Headers { get; private set; } = new();
         public int RowsCount { get; private set; }
         public ref LinkedGridNode<T> First { get => ref first; }
-        public ref  LinkedGridNode<T> Last { get => ref last; }
+        public ref LinkedGridNode<T> Last { get => ref last; }
         public int Count => count;
-        public int DeepCount {  get => verticalNodesCount + count; }
+        public int DeepCount { get => verticalNodesCount + count; }
 
         public bool IsReadOnly => throw new NotImplementedException();
 
@@ -110,7 +112,7 @@ namespace Burmuruk.Collections
 
         //private void MoveHeaders(int spaces)
         //{
-        //    for (int i = 0; i < Headers.Count; ++i)
+        //    for (int i = 0; i < Headers.MaxCount; ++i)
         //    {
         //        for (int j = 0; j < spaces; ++j)
         //        {
@@ -125,13 +127,13 @@ namespace Burmuruk.Collections
         //    node2[Direction.Next] = newNode;
         //    newNode[Direction.Previous] = node2;
 
-        //    count++;
+        //    maxCount++;
 
         //    TryAddHeader(node2);
         //    CreateSideConnections(node2);
         //}
 
-        //public LinkedGridNode<T> AddAfter(LinkedGridNode<T> node2, ref T ability)
+        //public LinkedGridNode<T> AddAfter(LinkedGridNode<T> node2, ref T value)
         //{
         //    throw new NotImplementedException();
         //}
@@ -141,11 +143,11 @@ namespace Burmuruk.Collections
         //    newNode[Direction.Previous] = node2[Direction.Previous];
         //    node2[Direction.Previous] = newNode;
 
-        //    count++;
+        //    maxCount++;
         //    TryAddHeader(node2);
         //    CreateSideConnections(node2);
         //}
-        //public LinkedGridNode<T> AddBefore(LinkedGridNode<T> node2, ref T ability)
+        //public LinkedGridNode<T> AddBefore(LinkedGridNode<T> node2, ref T value)
         //{
         //    throw new NotImplementedException();
         //}
@@ -153,7 +155,7 @@ namespace Burmuruk.Collections
         {
             return AddVerticalNode(node, Direction.Up, ref value);
         }
-        public LinkedGridNode<T> AddDown(LinkedGridNode<T> node, ref T value)
+        public LinkedGridNode<T> AddDown(LinkedGridNode<T> node, T value)
         {
             return AddVerticalNode(node, Direction.Down, ref value);
         }
@@ -258,32 +260,12 @@ namespace Burmuruk.Collections
                 {
                     if (node[Direction.Previous] != null)
                     {
-                        if (node[Direction.Previous][Direction.Next] == node)
-                        {
-                            if (node[Direction.Up] != null)
-                            {
-                                node[Direction.Previous][Direction.Next] = node[Direction.Up];
-                            }
-                            else
-                            {
-                                node[Direction.Previous][Direction.Next] = node[Direction.Next];
-                            }
-                        }
+                        node[Direction.Previous][Direction.Next] = node[Direction.Next];
                     }
 
                     if (node[Direction.Next] != null)
                     {
-                        if (node[Direction.Next][Direction.Previous] == node)
-                        {
-                            if (node[Direction.Up] != null)
-                            {
-                                node[Direction.Next][Direction.Previous] = node[Direction.Up];
-                            }
-                            else
-                            {
-                                node[Direction.Next][Direction.Previous] = node[Direction.Previous];
-                            }
-                        }
+                        node[Direction.Next][Direction.Previous] = node[Direction.Previous];
                     }
 
                     if (node[Direction.Down] != null)
@@ -307,24 +289,49 @@ namespace Burmuruk.Collections
 
         public bool Remove(LinkedGridNode<T> node)
         {
-            if (node[Direction.Previous] != null)
+            if (node[Direction.Up] != null)
             {
-                node[Direction.Previous][Direction.Next] = node[Direction.Next];
-            }
+                node[Direction.Up][Direction.Down] = node[Direction.Down];
+                var curNode = node[Direction.Previous];
 
-            if (node[Direction.Next] != null)
+                if (node[Direction.Previous] != null)
+                {
+                    while (curNode is not null)
+                    {
+                        curNode[Direction.Next] = node[Direction.Up];
+
+                        curNode = curNode[Direction.Up];
+                    }
+                }
+
+                if (node[Direction.Next] != null)
+                {
+                    curNode = node[Direction.Next];
+
+                    while (curNode is not null)
+                    {
+                        curNode[Direction.Previous] = node[Direction.Up];
+
+                        curNode = curNode[Direction.Up];
+                    }
+                }
+            }
+            else
             {
-                node[Direction.Next][Direction.Previous] = node[Direction.Previous];
+                if (node[Direction.Previous] != null)
+                {
+                    node[Direction.Previous][Direction.Next] = node[Direction.Next];
+                }
+
+                if (node[Direction.Next] != null)
+                {
+                    node[Direction.Next][Direction.Previous] = node[Direction.Previous];
+                }
             }
 
             if (node[Direction.Down] != null)
             {
                 node[Direction.Down][Direction.Up] = node[Direction.Up];
-            }
-
-            if (node[Direction.Up] != null)
-            {
-                node[Direction.Up][Direction.Down] = node[Direction.Down];
             }
 
             return true;
@@ -396,7 +403,7 @@ namespace Burmuruk.Collections
         }
     }
 
-    public class LinkedGridEnumerator<T> : IEnumerator<T> where T: IPathNode
+    public class LinkedGridEnumerator<T> : IEnumerator<T> where T : IPathNode
     {
         LinkedGridNode<T> current;
 
@@ -414,13 +421,13 @@ namespace Burmuruk.Collections
         public void Dispose()
         {
             current = null;
-        } 
+        }
 
         public bool MoveNext()
         {
             if (current[Direction.Next] == null) return false;
 
-            current = current[Direction.Next]; 
+            current = current[Direction.Next];
             return true;
         }
 
@@ -449,7 +456,7 @@ namespace Burmuruk.Collections
         public ref T Node { get => ref node; }
         public int RowIdx { get => gapSize; }
         public int ColumnIdx { get; private set; }
-        public uint ID { get =>  node.ID; }
+        public uint ID { get => node.ID; }
         public LinkedGridNode<T> this[Direction d]
         {
             get => connections.ContainsKey(d) ? connections[d] : null;
@@ -457,7 +464,17 @@ namespace Burmuruk.Collections
             {
                 if (connections.ContainsKey(d))
                 {
+                    if (value == null)
+                    {
+                        connections.Remove(d);
+                        return;
+                    }
+
                     connections[d] = value;
+                }
+                else if (value == null)
+                {
+                    return;
                 }
                 else
                 {
@@ -468,32 +485,8 @@ namespace Burmuruk.Collections
                 {
                     if (connections.ContainsKey(Direction.Up))
                     {
-                        try
-                        {
-                            connections[Direction.Up][d] = value;
-                        }
-                        catch (NullReferenceException)
-                        {
-
-                            throw;
-                        }
+                        connections[Direction.Up][d] = value;
                     }
-                    try
-                    {
-                    }
-                    catch (NullReferenceException)
-                    {
-
-                        throw;
-                    }
-                }
-                try
-                {
-                }
-                catch (NullReferenceException)
-                {
-
-                    throw;
                 }
             }
         }

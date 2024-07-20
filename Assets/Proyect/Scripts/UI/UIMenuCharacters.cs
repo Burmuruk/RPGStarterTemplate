@@ -1,5 +1,6 @@
+using Burmuruk.Tesis.Combat;
 using Burmuruk.Tesis.Control;
-using Burmuruk.Tesis.Fighting;
+using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
 using System;
 using System.Collections.Generic;
@@ -49,16 +50,16 @@ namespace Burmuruk.Tesis.UI
         bool isAbilitySlotUsed = false;
 
         List<AIGuildMember> players;
-        InventaryTab curInventaryTab;
-        IInventory inventary;
+        InventoryTab curInventoryTab;
+        IInventory inventory;
         WarningProblem curWarningProblem;
-        Menu curMenu = Menu.Inventary;
+        Menu curMenu = Menu.Inventory;
         MyItemButton[] btnColors;
         Dictionary<int, Image> btnColorsDict;
         Dictionary<int, (Image image, int subType)> btnAbilitiesDict;
         Dictionary<int, (Image image, int subType)> btnAbilitiesSlotDict;
         Dictionary<int, (Image image, int subType)> btnModsDict;
-        Dictionary<int, (StackableNode panel, EquipedItem item, ISaveableItem realItem)> curElementLabels = new();
+        Dictionary<int, (StackableNode panel, EquipeableItem item)> curElementLabels = new();
 
         public enum State
         {
@@ -66,12 +67,12 @@ namespace Burmuruk.Tesis.UI
             Notice,
             Loading
         }
-        enum InventaryTab
+        enum InventoryTab
         {
             None,
             Modifications,
             Weapons,
-            Inventary
+            Inventory
         }
         enum WarningProblem
         {
@@ -82,7 +83,7 @@ namespace Burmuruk.Tesis.UI
         enum Menu
         {
             None,
-            Inventary,
+            Inventory,
             Abilities,
         }
         #endregion
@@ -114,24 +115,24 @@ namespace Burmuruk.Tesis.UI
         {
             if (curState != State.None) return;
 
-            ShowElements(GetSortedItems(InventaryTab.Modifications));
-            curInventaryTab = InventaryTab.Modifications;
+            ShowElements(GetSortedItems(InventoryTab.Modifications));
+            curInventoryTab = InventoryTab.Modifications;
         }
 
         public void ShowWeapons()
         {
             if (curState != State.None) return;
 
-            ShowElements(GetSortedItems(InventaryTab.Weapons));
-            curInventaryTab = InventaryTab.Weapons;
+            ShowElements(GetSortedItems(InventoryTab.Weapons));
+            curInventoryTab = InventoryTab.Weapons;
         }
 
-        public void ShowInvantary()
+        public void ShowInventory()
         {
             if (curState != State.None) return;
 
-            ShowElements(GetSortedItems(InventaryTab.Inventary));
-            curInventaryTab = InventaryTab.Inventary;
+            ShowElements(GetSortedItems(InventoryTab.Inventory));
+            curInventoryTab = InventoryTab.Inventory;
         }
 
         public void SwitchExtraData()
@@ -156,11 +157,11 @@ namespace Burmuruk.Tesis.UI
 
             if (showInfo)
             {
-                txtExtraInfo.text = curElementLabels[curElementId].realItem.GetDescription();
+                txtExtraInfo.text = curElementLabels[curElementId].item.Description;
             }
             else
             {
-                txtExtraInfo.text = curElementLabels[curElementId].realItem.GetName();
+                txtExtraInfo.text = curElementLabels[curElementId].item.Name;
             }
         }
 
@@ -212,11 +213,11 @@ namespace Burmuruk.Tesis.UI
             if (!curElementLabels.ContainsKey(curElementId)) return;
 
             var item = curElementLabels[curElementId].item;
-            if (!inventary.Remove(item.Type, item.GetSubType())) return;
+            if (!inventory.Remove(item.ID)) return;
 
-            if (inventary.GetItemCount(item.Type, item.GetSubType()) > 0)
+            if (inventory.GetItemCount(item.ID) > 0)
             {
-                SetElementInfo(curElementLabels[curElementId].panel, item, out _);
+                SetElementInfo(curElementLabels[curElementId].panel, item);
             }
             else
             {
@@ -230,8 +231,8 @@ namespace Burmuruk.Tesis.UI
             {
                 case Menu.None:
                     break;
-                case Menu.Inventary:
-                    ShowInventaryMenu();
+                case Menu.Inventory:
+                    ShowInventoryMenu();
                     break;
 
                 case Menu.Abilities:
@@ -251,13 +252,16 @@ namespace Burmuruk.Tesis.UI
                     break;
                 case WarningProblem.EquipEquiped:
                     ChangeEquiped();
-                    break;
+                    goto default;
 
                 case WarningProblem.RemoveEquiped:
                     RemoveItem();
-                    break;
+                    goto default;
 
                 default:
+                    txtWarning.transform.parent.gameObject.SetActive(false);
+                    curWarningProblem = WarningProblem.None;
+                    curState = State.None;
                     break;
             }
         }
@@ -268,10 +272,10 @@ namespace Burmuruk.Tesis.UI
             characterModel.SetActive(false);
 
             charactersMenu.SetActive(true);
-            curMenu = Menu.Inventary;
+            curMenu = Menu.Inventory;
         }
 
-        private void ShowInventaryMenu()
+        private void ShowInventoryMenu()
         {
             charactersMenu.SetActive(false);
 
@@ -282,14 +286,14 @@ namespace Burmuruk.Tesis.UI
 
         private void ChangeEquiped()
         {
-            var item = curElementLabels[curElementId].item;
-            var lastPlayer = item.Characters.Last();
-            var inventaryDecorator = (inventary as InventoryEquipDecorator);
+            var equippedItem = curElementLabels[curElementId].item;
+            var lastPlayer = equippedItem.Characters.Last();
+            var inventaryDecorator = (inventory as InventoryEquipDecorator);
 
-            inventaryDecorator.Unequip(lastPlayer, item);
-            inventaryDecorator.Equip(players[curPlayerIdx], item.Type, item.GetSubType());
+            inventaryDecorator.Unequip(lastPlayer, equippedItem);
+            inventaryDecorator.TryEquip(players[curPlayerIdx], equippedItem);
 
-            SetPlayersColors(item, curElementLabels[curElementId].panel);
+            SetPlayersColors(equippedItem, curElementLabels[curElementId].panel);
             ShowCharacterModel();
             
             if (curAbiltySlot.HasValue)
@@ -309,31 +313,27 @@ namespace Burmuruk.Tesis.UI
             var item = curElementLabels[curElementId].item;
 
             var lastPlayer = item.Characters.Last();
-            var inventaryDecorator = (inventary as InventoryEquipDecorator);
+            var inventoryDecorator = (inventory as InventoryEquipDecorator);
 
-            inventaryDecorator.Unequip(lastPlayer, item);
+            inventoryDecorator.Unequip(lastPlayer, item);
             ShowCharacterModel();
 
-            inventary.Remove(item.Type, item.GetSubType());
+            inventory.Remove(item.ID);
 
-            if (inventary.GetItemCount(item.Type, item.GetSubType()) > 0)
+            if (inventory.GetItemCount(item.ID) > 0)
             {
-                SetElementInfo(curElementLabels[curElementId].panel, item, out _);
+                SetElementInfo(curElementLabels[curElementId].panel, item);
             }
             else
             {
                 RemoveElement(curElementLabels[curElementId].panel);
             }
-
-            txtWarning.transform.parent.gameObject.SetActive(false);
-            curWarningProblem = WarningProblem.None;
-            curState = State.None;
         }
 
         private void EquipItem(int idx)
         {
             var item = curElementLabels[idx].item;
-            (inventary as InventoryEquipDecorator).Equip(players[curPlayerIdx], item.Type, item.GetSubType());
+            (inventory as InventoryEquipDecorator).TryEquip(players[curPlayerIdx], item);
 
             SetPlayersColors(curElementLabels[idx].item, curElementLabels[idx].panel);
             ShowCharacterModel();
@@ -343,14 +343,14 @@ namespace Burmuruk.Tesis.UI
         private void UnEquipItem(int idx)
         {
             var item = curElementLabels[idx].item;
-            (inventary as InventoryEquipDecorator).Unequip(players[curPlayerIdx], curElementLabels[idx].item);
+            (inventory as InventoryEquipDecorator).Unequip(players[curPlayerIdx], curElementLabels[idx].item);
 
             SetPlayersColors(curElementLabels[idx].item, curElementLabels[idx].panel);
             ShowCharacterModel();
             UpdateModsSprites();
         }
 
-        private void ShowElements(List<ISaveableItem> items)
+        private void ShowElements(List<InventoryItem> items)
         {
             CleanElements();
             if (items.Count == 0) return;
@@ -360,13 +360,17 @@ namespace Burmuruk.Tesis.UI
             {
                 var panel = elementPanel.Get();
 
-                EquipedItem equipedItem = null;
-                SetElementInfo(panel, item, out equipedItem);
+                var equippedItem = item as EquipeableItem;
+
+                if (equippedItem == null)
+                    continue;
+
+                SetElementInfo(panel, equippedItem);
 
                 int buttonId = i++;
                 SubscribeToEvents(panel, buttonId);
 
-                curElementLabels.Add(buttonId, (panel, equipedItem, inventary.GetItem(item.Type, item.GetSubType())));
+                curElementLabels.Add(buttonId, (panel, equippedItem));
             }
 
             curElementId = 0;
@@ -382,37 +386,48 @@ namespace Burmuruk.Tesis.UI
             }
         }
 
-        private void SetElementInfo(StackableNode panel, ISaveableItem item, out EquipedItem equipedItem)
+        private void SetElementInfo(StackableNode panel, EquipeableItem item)
         {
-            panel.label.text = item.GetName();
-            equipedItem = inventary.GetOwnedItem(item.Type, item.GetSubType()) as EquipedItem;
+            panel.label.text = item.Name;
 
-            var txtCount = (from txt in panel.label.transform.GetComponentsInChildren<TextMeshProUGUI>()
-                            where txt.gameObject != panel.label.gameObject
-            select txt).First();
-            txtCount.text = inventary.GetItemCount(item.Type, item.GetSubType()).ToString();
+            TextMeshProUGUI txtCount = null;
 
-            SetPlayersColors(equipedItem, panel);
+            foreach (var label in panel.label.transform.GetComponentsInChildren<TextMeshProUGUI>())
+            {
+                if (label.gameObject != panel.label.gameObject)
+                {
+                    txtCount = label;
+                    break;
+                }
+            }
+
+            txtCount.text = inventory.GetItemCount(item.ID).ToString();
+
+            SetPlayersColors(item, panel);
         }
 
-        private void SetPlayersColors(EquipedItem equipedItem, StackableNode panel)
+        private void SetPlayersColors(EquipeableItem equipedItem, StackableNode panel)
         {
             Image[] images = panel.image.transform.GetComponentsInChildren<Image>(true)
                 .Where(image => image.transform != panel.image.transform)
                 .OrderBy(i => i.transform.name)
                 .ToArray();
 
-            if (equipedItem is EquipedItem equiped && equiped.IsEquip)
+            if (equipedItem is EquipeableItem equiped && equiped.IsEquip)
             {
+                List<Color> colors = new();
 
-                Color[] colors = (from player in players
-                                  let cur =
-                                     from character in equiped.Characters
-                                     where character.stats.ID == player.stats.ID
-                                     select character
-                                  where cur.Any()
-                                  select cur.First().stats.Color)
-                            .ToArray();
+                foreach (var player in players)
+                {
+                    foreach (var character in equiped.Characters)
+                    {
+                        if (player.stats.Color == character.stats.Color)
+                        {
+                            colors.Add(character.stats.Color);
+                            break;
+                        }
+                    }
+                }
 
                 for (int i = 0; i < images.Count(); i++)
                 {
@@ -460,27 +475,27 @@ namespace Burmuruk.Tesis.UI
             elementPanel.Release(node);
         }
 
-        private List<ISaveableItem> GetSortedItems(InventaryTab tab)
+        private List<InventoryItem> GetSortedItems(InventoryTab tab)
         {
-            List<ISaveableItem> items = null;
+            List<InventoryItem> items = null;
 
             ItemType type = tab switch
             {
-                InventaryTab.Modifications => ItemType.Modification,
-                InventaryTab.Weapons => ItemType.Weapon,
+                InventoryTab.Modifications => ItemType.Modification,
+                InventoryTab.Weapons => ItemType.Weapon,
                 _ => ItemType.None
             };
 
             if (type != ItemType.None)
-                items = inventary.GetList(type);
+                items = inventory.GetOwnedList(type);
             else
             {
-                items = inventary.GetList(ItemType.Modification);
-                inventary.GetList(ItemType.Consumable).ForEach(i => items.Add(i));
-                inventary.GetList(ItemType.Weapon).ForEach(w => items.Add(w));
+                items = inventory.GetOwnedList(ItemType.Modification);
+                items.AddRange(inventory.GetOwnedList(ItemType.Consumable));
+                items.AddRange(inventory.GetOwnedList(ItemType.Weapon));
             }
 
-            items.OrderBy(item => item.GetName());
+            items.OrderBy(item => item.Name);
 
             return items;
         }
@@ -559,9 +574,9 @@ namespace Burmuruk.Tesis.UI
 
         private void ShowCharacterAbilities()
         {
-            var abilities = (from ability in inventary.GetOwnedList(ItemType.Ability)
-                             where ((EquipedItem)ability).Characters.Contains(players[curPlayerIdx])
-                             select (Ability)inventary.GetItem(ability.Type, ability.GetSubType()))
+            Ability[] abilities = (from ability in inventory.GetOwnedList(ItemType.Ability)
+                             where ((EquipeableItem)ability).Characters.Contains(players[curPlayerIdx])
+                             select (Ability)inventory.GetOwnedItem(ability.ID))
                              .ToArray();
 
             int j = 0;
@@ -572,7 +587,7 @@ namespace Burmuruk.Tesis.UI
                 if (j < abilities.Length)
                 {
                     slot.image.sprite = abilities[j].Sprite;
-                    btnAbilitiesSlotDict[i] = (btnAbilitiesSlotDict[i].image, abilities[j].GetSubType());
+                    btnAbilitiesSlotDict[i] = (btnAbilitiesSlotDict[i].image, abilities[j].ID);
                     j++;
                     continue;
                 }
@@ -596,7 +611,7 @@ namespace Burmuruk.Tesis.UI
         {
             RemovePreviousModel();
 
-            var prefab = players[curPlayerIdx].BodyManager.GetPart(BodyManager.BodyPart.Body);
+            var prefab = players[curPlayerIdx].Equipment.GetItem();
             var inst = Instantiate(prefab, characterModel.transform);
             inst.transform.localPosition = Vector3.zero;
 
@@ -627,7 +642,7 @@ namespace Burmuruk.Tesis.UI
                 if (idx < 0)
                     return curPlayerIdx == 0 ? players.Count - 1 : curPlayerIdx - 1;
                 else
-                    return curPlayerIdx == players.Count ? 0 : curPlayerIdx + 1;
+                    return curPlayerIdx == players.Count - 1 ? 0 : curPlayerIdx + 1;
             }
 
             return 0;
@@ -673,25 +688,42 @@ namespace Burmuruk.Tesis.UI
         #endregion
 
         #region Initialization
-        public void SetInventary(IInventory inventary)
+        public void SetInventory(IInventory inventary)
         {
-            this.inventary = inventary;
-            var inventaryDecorator = inventary as InventoryEquipDecorator;
-            inventaryDecorator.OnTryAlreadyEquiped += () =>
+            this.inventory = inventary;
+            var inventoryDecorator = (inventary as InventoryEquipDecorator);
+
+            inventoryDecorator.OnTryAlreadyEquiped += () =>
             {
                 curWarningProblem = WarningProblem.EquipEquiped;
                 ShowEquipedWarning();
             };
-            inventaryDecorator.OnTryDeleteEquiped += () =>
+            inventoryDecorator.OnTryDeleteEquiped += () =>
             {
                 curWarningProblem = WarningProblem.RemoveEquiped;
                 ShowDeleteEquipedWarning();
             };
-            curInventaryTab = InventaryTab.Modifications;
+            curInventoryTab = InventoryTab.Modifications;
 
-            ShowInvantary();
+            ShowInventory();
             UpdateModsSprites();
-            InitializeHabilityButtons();
+            InitializeAbilityButtons();
+        }
+
+        public void UnloadMenu()
+        {
+            var inventoryDecorator = (inventory as InventoryEquipDecorator);
+
+            inventoryDecorator.OnTryAlreadyEquiped -= () =>
+            {
+                curWarningProblem = WarningProblem.EquipEquiped;
+                ShowEquipedWarning();
+            };
+            inventoryDecorator.OnTryDeleteEquiped -= () =>
+            {
+                curWarningProblem = WarningProblem.RemoveEquiped;
+                ShowDeleteEquipedWarning();
+            };
         }
 
         public void SetPlayers(List<AIGuildMember> players)
@@ -714,12 +746,12 @@ namespace Burmuruk.Tesis.UI
 
         private void UpdateModsSprites()
         {
-            if (inventary == null) return;
+            if (inventory == null) return;
 
-            var mods = (from mod in inventary.GetOwnedList(ItemType.Modification)
-                       let equiped = (EquipedItem)mod
+            var mods = (from mod in inventory.GetOwnedList(ItemType.Modification)
+                       let equiped = (EquipeableItem)mod
                        where equiped != null && equiped.IsEquip && equiped.Characters.Contains(players[curPlayerIdx])
-                       select (Modification)inventary.GetItem(mod.Type, mod.GetSubType())
+                       select (Modification)inventory.GetOwnedItem(mod.ID)
                        ).ToArray();
 
             int i = 0;
@@ -748,7 +780,7 @@ namespace Burmuruk.Tesis.UI
         }
 
         #region Abilities
-        private void InitializeHabilityButtons()
+        private void InitializeAbilityButtons()
         {
             btnAbilitiesDict = new();
             btnAbilitiesSlotDict = new();
@@ -757,20 +789,20 @@ namespace Burmuruk.Tesis.UI
 
             for (int i = 0; i < btnAbilitiesSlot.Length; i++)
             {
-                int id = i;
-                btnAbilitiesSlotDict.Add(id, (btnAbilitiesSlot[i], -1));
+                int idx = i;
+                btnAbilitiesSlotDict.Add(idx, (btnAbilitiesSlot[i], -1));
 
                 var button = btnAbilitiesSlot[i].transform.parent.GetComponent<MyItemButton>();
-                button.onClick.AddListener(() => SelectAbilitySlot(id));
-                button.OnRightClick += () => UnequipAbilty(id);
+                button.onClick.AddListener(() => SelectAbilitySlot(idx));
+                button.OnRightClick += () => UnequipAbilty(idx);
             }
 
             var collection = btnHumanAbilities;
 
             for (int i = 0, j = 0, k = 0; i < collection.Count() && j < 2; i++, k++)
             {
-                int id = k;
-                AddAbilitiesImage(id, collection[i]);
+                int idx = k;
+                AddAbilitiesImage(idx, collection[i]);
 
                 if (i == btnHumanAbilities.Count() - 1)
                 {
@@ -781,7 +813,7 @@ namespace Burmuruk.Tesis.UI
             }
         }
 
-        private bool AddAbilitiesImage(int id, Image image)
+        private bool AddAbilitiesImage(int idx, Image image)
         {
             int subType = -1;
             string name = image.transform.parent.name;
@@ -791,9 +823,11 @@ namespace Burmuruk.Tesis.UI
             
             if (Enum.IsDefined(typeof(AbilityType), subType))
             {
-                btnAbilitiesDict.Add(id, (image, subType));
+                var id = GetAbilityId(subType);
 
-                if (inventary.GetItem(ItemType.Ability, subType) is var item && item != null)
+                btnAbilitiesDict.Add(idx, (image, id));
+
+                if (inventory.GetOwnedItem(id) is var item && item != null)
                 {
                     var ability = (Ability)item;
                     image.sprite = ability.Sprite;
@@ -802,15 +836,30 @@ namespace Burmuruk.Tesis.UI
                 }
             }
             else
-                btnAbilitiesDict.Add(id, (image, -1));
+                btnAbilitiesDict.Add(idx, (image, -1));
 
             image.transform.parent.gameObject.SetActive(false);
             return false;
         }
 
+        private int GetAbilityId(int type)
+        {
+            var abilities = itemsList.GetList(ItemType.Ability);
+
+            foreach (var ability in abilities)
+            {
+                if (((int)ability.GetSubType()) == type)
+                {
+                    return ability.ID;
+                }
+            }
+
+            return -1;
+        }
+
         private void ShowAbilityInfo(int id)
         {
-            var ability = (Ability)inventary.GetItem(ItemType.Ability, id);
+            var ability = (Ability)inventory.GetOwnedItem(id);
 
             txtAbilityTitle.text = ability.name;
             txtAbilityInfo.text = ability.GetDescription();
@@ -831,7 +880,7 @@ namespace Burmuruk.Tesis.UI
             curAbiltySlot = null;
         }
 
-        private void SelectAbilitySlot(int id)
+        private void SelectAbilitySlot(int idx)
         {
             if (curState == State.Notice) return;
 
@@ -839,7 +888,7 @@ namespace Burmuruk.Tesis.UI
             {
                 ChangeSelectedColor();
 
-                if (curAbiltySlot.Value == id)
+                if (curAbiltySlot.Value == idx)
                 {
                     curAbiltySlot = null;
                     return;
@@ -850,7 +899,7 @@ namespace Burmuruk.Tesis.UI
                 }
             }
 
-            curAbiltySlot = id;
+            curAbiltySlot = idx;
             ChangeSelectedColor();
         }
 
@@ -858,33 +907,34 @@ namespace Burmuruk.Tesis.UI
         {
             var slot = btnAbilitiesSlotDict[curAbiltySlot.Value];
 
-            var item = inventary.GetOwnedItem(ItemType.Ability, slot.subType);
-            (inventary as InventoryEquipDecorator).Unequip(players[curPlayerIdx], (EquipedItem)item);
+            var item = inventory.GetOwnedItem(slot.subType);
+            (inventory as InventoryEquipDecorator).Unequip(players[curPlayerIdx], (EquipeableItem)item);
 
             slot.image.sprite = defaultBTNSprite;
             btnAbilitiesSlotDict[curAbiltySlot.Value] = (slot.image, -1);
         }
 
-        public void SelectAbility(int id)
+        public void SelectAbility(int idx)
         {
             if (curState == State.Notice) return;
 
             if (!curAbiltySlot.HasValue)
             {
-                ShowAbilityInfo(id);
+                ShowAbilityInfo(idx);
                 return;
             }
 
-            curAbilityId = id;
+            curAbilityId = idx;
 
-            if (((InventoryEquipDecorator)inventary).Equip(players[curPlayerIdx], ItemType.Ability, btnAbilitiesDict[id].subType))
+            var item = itemsList.Get(btnAbilitiesDict[idx].subType);
+            if (((InventoryEquipDecorator)inventory).TryEquip(players[curPlayerIdx], item))
             {
                 if (isAbilitySlotUsed)
                 {
                     UnequipCurrentAbility();
                     isAbilitySlotUsed= false;
                 }
-                SetAbilityInSlot(id);
+                SetAbilityInSlot(idx);
             }
 
             ChangeSelectedColor();
