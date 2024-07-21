@@ -1,9 +1,6 @@
 ﻿using Burmuruk.Tesis.Control;
-using Burmuruk.Tesis.Inventory;
 using System;
 using System.Collections.Generic;
-using UnityEditor;
-using UnityEngine;
 
 namespace Burmuruk.Tesis.Inventory
 {

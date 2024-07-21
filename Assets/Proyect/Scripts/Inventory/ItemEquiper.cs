@@ -1,9 +1,8 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Burmuruk.Tesis.Inventory
 {
-    public static class CharacterCustomizationManager
+    public static class ItemEquiper
     {
         public static void EquipModification(ref Equipment equipment, EquipeableItem item) 
         {
@@ -16,7 +15,7 @@ namespace Burmuruk.Tesis.Inventory
             inst.transform.localPosition = Vector3.zero;
             inst.transform.localRotation = Quaternion.Euler(Vector3.zero);
 
-            equipment.Equip(location, inst, item.ID);
+            equipment.Equip(location, inst, item);
         }
 
         public static void UnequipModification(ref Equipment equipment, EquipeableItem equipable)

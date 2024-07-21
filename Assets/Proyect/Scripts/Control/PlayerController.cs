@@ -1,5 +1,6 @@
 ﻿using Burmuruk.Tesis.Combat;
 using Burmuruk.Tesis.Control.AI;
+using Burmuruk.Tesis.Interaction;
 using Burmuruk.Tesis.Stats;
 using System;
 using System.Collections.Generic;
@@ -195,7 +196,7 @@ namespace Burmuruk.Tesis.Control
             if (HavePickable)
             {
                 var cmp = m_pickables.First().Value;
-                player.Inventory.Add(cmp.itemType, cmp, 0);
+                player.Inventory.Add(cmp.ID);
                 //var inventory = GetComponent<InventoryEquipDecorator>();
                 //inventory.Add(cmp.itemType, cmp);
                 //inventory.TryEquip(player, cmp.itemType, cmp.GetSubType());

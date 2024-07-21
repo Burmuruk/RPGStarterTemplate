@@ -1,10 +1,9 @@
 ﻿using Cinemachine;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace Burmuruk.Tesis.Control
 {
-    class CameraController : MonoBehaviour
+    class CameraTargetProvider : MonoBehaviour
     {
         //[Header("Referenes")]
         PlayerManager playerManager;

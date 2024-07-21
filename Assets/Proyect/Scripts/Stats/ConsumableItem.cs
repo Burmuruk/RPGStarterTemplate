@@ -7,7 +7,7 @@ namespace Burmuruk.Tesis.Stats
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Consumable", order = 3)]
     public class ConsumableItem : EquipeableItem
     {
-        [Space(), Header("Settings")]
+        [Space(), Header("Attributes")]
         [SerializeField] ConsumableType consumableType;
         [SerializeField] int value;
         [SerializeField] float consumptionTime;

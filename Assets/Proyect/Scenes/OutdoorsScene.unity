@@ -4183,11 +4183,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad948524d28194c44904c82246f6f7ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  list: {fileID: 11400000, guid: 0a3f3d7e1f9d8704e976c5edafce273f, type: 2}
   itemType: 4
-  itemIdx: 2
-  m_name: Gun
-  m_description: Super Gun
+  itemId: 0
 --- !u!135 &367259470
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -5509,11 +5506,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad948524d28194c44904c82246f6f7ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  list: {fileID: 11400000, guid: 0a3f3d7e1f9d8704e976c5edafce273f, type: 2}
   itemType: 4
-  itemIdx: 1
-  m_name: Gun
-  m_description: Super Gun
+  itemId: 0
 --- !u!135 &525386653
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -5842,11 +5836,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad948524d28194c44904c82246f6f7ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  list: {fileID: 11400000, guid: 0a3f3d7e1f9d8704e976c5edafce273f, type: 2}
   itemType: 4
-  itemIdx: 2
-  m_name: Gun
-  m_description: Super Gun
+  itemId: 0
 --- !u!135 &529162824
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -12008,11 +11999,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad948524d28194c44904c82246f6f7ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  list: {fileID: 11400000, guid: 0a3f3d7e1f9d8704e976c5edafce273f, type: 2}
   itemType: 4
-  itemIdx: 1
-  m_name: Gun
-  m_description: Super Gun
+  itemId: 0
 --- !u!135 &1253433384
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -15555,11 +15543,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad948524d28194c44904c82246f6f7ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  list: {fileID: 11400000, guid: 0a3f3d7e1f9d8704e976c5edafce273f, type: 2}
   itemType: 2
-  itemIdx: 1
-  m_name: Hi
-  m_description: Test
+  itemId: 0
 --- !u!135 &1613440284
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -16846,11 +16831,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad948524d28194c44904c82246f6f7ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  list: {fileID: 11400000, guid: 0a3f3d7e1f9d8704e976c5edafce273f, type: 2}
   itemType: 3
-  itemIdx: 1
-  m_name: 
-  m_description: 
+  itemId: 0
 --- !u!1 &1718061678
 GameObject:
   m_ObjectHideFlags: 0
@@ -18313,11 +18295,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad948524d28194c44904c82246f6f7ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  list: {fileID: 11400000, guid: 0a3f3d7e1f9d8704e976c5edafce273f, type: 2}
   itemType: 4
-  itemIdx: 1
-  m_name: Gun
-  m_description: Super Gun
+  itemId: 0
 --- !u!135 &1821324201
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -22551,6 +22530,7 @@ PrefabInstance:
         type: 2}
     m_RemovedComponents:
     - {fileID: 8881630530992446499, guid: 5b1195fea8aff92478fc6e922cf62f9e, type: 3}
+    - {fileID: 3472596443650887208, guid: 5b1195fea8aff92478fc6e922cf62f9e, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -23576,7 +23556,6 @@ GameObject:
   - component: {fileID: 3557922434186246056}
   - component: {fileID: 7105965157906049802}
   - component: {fileID: 8884841444929372779}
-  - component: {fileID: 8884841444929372782}
   - component: {fileID: 8884841444929372783}
   m_Layer: 0
   m_Name: Core
@@ -24460,20 +24439,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_ItemsList: {fileID: 11400000, guid: 0a3f3d7e1f9d8704e976c5edafce273f, type: 2}
-  initialWeapon: {fileID: 0}
---- !u!114 &8884841444929372782
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4003521097256569547}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c398e199e0d31e47a77f40188280767, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  spwnPoint: {fileID: 0}
 --- !u!114 &8884841444929372783
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24486,6 +24451,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8efe2cad4cc5cfc41af02844ae6093d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  initialItems: []
+  inventory: {fileID: 0}
 --- !u!1 &9008251948442357474
 GameObject:
   m_ObjectHideFlags: 0

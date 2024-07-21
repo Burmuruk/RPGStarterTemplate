@@ -1,8 +1,5 @@
-﻿using Burmuruk.AI.PathFinding;
-using Burmuruk.Tesis.Combat;
-using Burmuruk.Tesis.Control;
+﻿using Burmuruk.Tesis.Combat;
 using Burmuruk.Tesis.Inventory;
-using Burmuruk.Tesis.Stats;
 using Burmuruk.Utilities;
 using Burmuruk.WorldG.Patrol;
 using System;
@@ -213,7 +210,7 @@ namespace Burmuruk.Tesis.Control.AI
 
         protected virtual void CheckOwnState()
         {
-            if (stats.Hp < stats.MaxHp * .4f)
+            if (health.HP < health.MaxHp * .4f)
             {
                 TryHeal();
                 throw new NotImplementedException();
@@ -267,7 +264,7 @@ namespace Burmuruk.Tesis.Control.AI
 
         private void SetAbilities()
         {
-            var items = (inventory as InventoryEquipDecorator).Equipped[];
+            var items = (inventory as InventoryEquipDecorator).Equipped.GetItems((int)EquipmentType.Ability);
             
             for (int i = 0; i < items.Count; i++)
             {

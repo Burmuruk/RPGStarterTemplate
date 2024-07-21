@@ -6,10 +6,10 @@ namespace Burmuruk.Tesis.Combat
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Weapon", order = 1)]
     public class Weapon : EquipeableItem
     {
-        [Header("Information")]
-        [SerializeField] WeaponType m_type;
-        [SerializeField] BodyPart m_bodyPart;
+        [Header("Equipment")]
+        [SerializeField] EquipmentType m_bodyPart;
         [Space(), Header("Settings")]
+        [SerializeField] WeaponType weaponType;
         [SerializeField] int m_damage;
         [SerializeField] float m_rateDamage;
         [SerializeField] float m_minDistance;
@@ -21,14 +21,14 @@ namespace Burmuruk.Tesis.Combat
         public float DamageRate { get => m_rateDamage; }
         public float MinDistance { get => m_minDistance; }
         public float MaxDistance { get => m_maxDistance; }
-        public BodyPart BodyPart { get => m_bodyPart; }
+        public EquipmentType BodyPart { get => m_bodyPart; }
         public int MaxAmmo { get => maxAmmo; }
         public int Ammo { get; private set; }
         public float ReloadTime { get => reloadTime; }
 
         public override object GetEquipLocation()
         {
-            return m_type;
+            return weaponType;
         }
     }
 

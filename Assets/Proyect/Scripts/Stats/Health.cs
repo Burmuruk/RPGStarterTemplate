@@ -1,16 +1,16 @@
 ﻿using System;
-using System.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace Assets.Proyect.Scripts.Stats
+namespace Burmuruk.Tesis.Stats
 {
     public class Health : MonoBehaviour
     {
-        [SerializeField] public int hp;
-        [SerializeField] public int maxHp;
+        [SerializeField] int hp;
+        [SerializeField] int maxHp;
 
-        public event Action onDied;
+        public event Action OnDied;
+        public event Action<int> OnDamaged;
 
         public int HP { get => hp; }
         public int MaxHp { get => maxHp; }
@@ -22,7 +22,10 @@ namespace Assets.Proyect.Scripts.Stats
             if (hp <= 0)
             {
                 Die();
+                return;
             }
+
+            OnDamaged?.Invoke(hp);
         }
 
         public void Heal(int value)
@@ -32,7 +35,7 @@ namespace Assets.Proyect.Scripts.Stats
 
         private void Die()
         {
-            onDied?.Invoke();
+            OnDied?.Invoke();
         }
 
         private void GetHealth()

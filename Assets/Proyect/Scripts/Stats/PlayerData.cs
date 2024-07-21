@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Control
@@ -27,5 +25,5 @@ namespace Burmuruk.Tesis.Control
             Male,
             Female
         }
-    } 
+    }
 }

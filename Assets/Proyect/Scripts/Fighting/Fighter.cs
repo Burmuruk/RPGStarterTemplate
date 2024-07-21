@@ -9,21 +9,20 @@ namespace Burmuruk.Tesis.Combat
     {
         [SerializeField] float detectionRadious = 8;
 
-        Stats.BasicStats m_Stats;
-        //StatsManager m_targetStats;
+        BasicStats m_Stats;
+        Health m_targetHealth;
         InventoryEquipDecorator m_inventory;
         Movement.Movement m_movement;
         AbilitiesManager habManager;
 
         Transform m_target;
         CoolDownAction cdBasicAttack;
-        Weapon weapon;
         public bool shouldGetClose = false;
         bool canAttack = true;
 
         private void FixedUpdate()
         {
-            if (m_targetStats && canAttack)
+            if (m_targetHealth && canAttack)
             {
                 BasicAttack();
             }
@@ -37,21 +36,21 @@ namespace Burmuruk.Tesis.Combat
             m_inventory = inventory;
             m_Stats = stats;
 
-            m_inventory.Equipped.OnEquipmentChanged += (id) =>
-            {
-                if (id == (int)BodyPart.RArm)
-                {
-                    CacheWeapon();
-                }
-            };
+            //m_inventory.Equipped.OnEquipmentChanged += (id) =>
+            //{
+            //    if (id == (int)EquipmentType.Weapon)
+            //    {
+            //        CacheWeapon();
+            //    }
+            //};
 
-            cdBasicAttack = new CoolDownAction(weapon.DamageRate);
+            cdBasicAttack = new CoolDownAction(in stats.damageRate);
         }
 
         public void SetTarget(Transform target)
         {
             m_target = target;
-            m_targetStats = target.GetComponent<StatsManager>();
+            m_targetHealth = target.GetComponent<Health>();
         }
 
         /// <summary>
@@ -64,7 +63,7 @@ namespace Burmuruk.Tesis.Combat
             if (cdBasicAttack.CanUse)
             {
                 print(transform.name + " can use");
-                m_targetStats.ApplyDamage(m_Stats.Damage);
+                m_targetHealth.ApplyDamage(m_Stats.Damage);
                 StartCoroutine(cdBasicAttack.CoolDown());
             }
         }
@@ -82,12 +81,6 @@ namespace Burmuruk.Tesis.Combat
                     return;
                 }
             }
-        }
-
-        private void CacheWeapon()
-        {
-            int id = m_inventory.Equipped[(int)BodyPart.RArm];
-            weapon = (Weapon)m_inventory.GetOwnedItem(id);
         }
 
         private object GetSpecialAttackArgs(AbilityType type) =>

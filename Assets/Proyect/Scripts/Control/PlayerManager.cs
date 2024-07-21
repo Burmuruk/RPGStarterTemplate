@@ -1,4 +1,5 @@
 ﻿using Burmuruk.Tesis.Combat;
+using Burmuruk.Tesis.Control.AI;
 using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Saving;
 using Burmuruk.Tesis.Stats;
@@ -74,7 +75,6 @@ namespace Burmuruk.Tesis.Control
             foreach (var player in Players)
             {
                 player.Inventory = MainInventory;
-                player.stats.SetInventary(MainInventory);
             }
         }
 

@@ -1,6 +1,5 @@
 ﻿using Burmuruk.Tesis.Control;
 using Burmuruk.Tesis.Inventory;
-using System;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Stats
@@ -8,14 +7,14 @@ namespace Burmuruk.Tesis.Stats
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Modifier", order = 3)]
     public class Modification : EquipeableItem
     {
+        [Header("Equipment")]
+        [SerializeField] EquipmentType equipmentPlace;
+        [Space(), Header("Attributes")]
         [SerializeField] int amount;
         [SerializeField] float amount2;
         [SerializeField] ModsType subType;
-        [SerializeField] BodyPart equipmentPlace;
-        [SerializeField] string m_name;
-        [SerializeField] string m_description;
 
-        public BodyPart Location { get => equipmentPlace; }
+        public EquipmentType Location { get => equipmentPlace; }
 
         public void Equip(Character character, float value)
         {

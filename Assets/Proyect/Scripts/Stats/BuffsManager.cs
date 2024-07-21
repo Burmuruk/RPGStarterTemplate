@@ -22,17 +22,6 @@ namespace Burmuruk.Tesis.Stats
                 Destroy(this);
         }
 
-        void Start()
-        {
-
-        }
-
-        // Update is called once per frame
-        void Update()
-        {
-
-        }
-
         public void AddBuff(Character character, ModsType type, object value, float time = 0)
         {
             if (time > 0)
@@ -40,7 +29,7 @@ namespace Burmuruk.Tesis.Stats
                 timers.Add(new CoolDownAction(time, (_) => RemoveBuff(character, type)));
             }
 
-            ModsList.Add(character, type, value);
+            ModsList.Add(character, type, (float)value);
         }
 
         public void RemoveBuff(Character character, ModsType type)

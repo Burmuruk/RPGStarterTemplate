@@ -1,13 +1,12 @@
 ﻿using Burmuruk.Tesis.Control.AI;
-using Burmuruk.Tesis.Stats;
 using Burmuruk.Utilities;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Control
+namespace Burmuruk.Tesis.Control.AI
 {
-    public class AIGuildMember : Character, IPlayable, ISubordinate
+    public class AIGuildMember : Character, IPlayable
     {
         [SerializeField] Formation formation;
         [SerializeField] PlayerState playerState;

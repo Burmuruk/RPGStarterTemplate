@@ -2,7 +2,7 @@
 using Burmuruk.Tesis.Saving;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Stats
+namespace Burmuruk.Tesis.Interaction
 {
     public class PickableItem : MonoBehaviour, ISaveable
     {

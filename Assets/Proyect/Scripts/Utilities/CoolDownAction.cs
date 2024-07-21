@@ -37,6 +37,15 @@ namespace Burmuruk.Utilities
             OnFinished = null;
         }
 
+        public CoolDownAction(in float time)
+        {
+            this.time = time;
+            currentTime = 0;
+            canUse = true;
+            inCoolDown = false;
+            OnFinished = null;
+        }
+
         public CoolDownAction (float time, bool invert) : this (time)
         {
             invertFunction = invert;

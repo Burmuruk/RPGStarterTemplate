@@ -1,5 +1,4 @@
-﻿using Burmuruk.Tesis.Stats;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 

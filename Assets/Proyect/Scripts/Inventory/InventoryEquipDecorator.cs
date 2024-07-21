@@ -1,6 +1,4 @@
 ﻿using Burmuruk.Tesis.Control;
-using Burmuruk.Tesis.Inventory;
-using Burmuruk.Tesis.Stats;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -94,7 +92,7 @@ namespace Burmuruk.Tesis.Inventory
         {
             if (prefab is EquipeableItem equipable && equipable != null)
             {
-                CharacterCustomizationManager.EquipModification(ref equipment, equipable);
+                ItemEquiper.EquipModification(ref equipment, equipable);
             }
         }
 
@@ -107,7 +105,7 @@ namespace Burmuruk.Tesis.Inventory
 
             item.Unequip(player);
             
-            CharacterCustomizationManager.UnequipModification(ref equipment, unequipped);
+            ItemEquiper.UnequipModification(ref equipment, unequipped);
             return true;
         }
 

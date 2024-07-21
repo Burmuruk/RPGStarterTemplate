@@ -22,6 +22,7 @@ namespace Burmuruk.Tesis.Control
         //[SerializeField] protected float farRadious;
         //[SerializeField] protected float closeRadious;
 
+        [HideInInspector] protected Health health;
         [HideInInspector] public Movement.Movement mover;
         [HideInInspector] public Fighter fighter;
         [HideInInspector] public BasicStats stats;
@@ -33,6 +34,7 @@ namespace Burmuruk.Tesis.Control
 
         public virtual event Action<bool> OnCombatStarted;
 
+        public Health Health { get => health; }
         public IInventory Inventory { get => inventory; set => inventory = value; }
         public Collider[] CloseEnemies { get => earsPerceibed; }
         public Collider[] FarEnemies { get => eyesPerceibed; }
@@ -42,6 +44,7 @@ namespace Burmuruk.Tesis.Control
 
         protected virtual void Awake()
         {
+            health = GetComponent<Health>();
             mover = GetComponent<Movement.Movement>();
             fighter = GetComponent<Fighter>();
             stats = GetComponent<Stats.BasicStats>();

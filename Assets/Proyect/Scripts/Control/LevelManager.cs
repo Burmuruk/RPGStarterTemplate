@@ -1,179 +1,178 @@
-using Burmuruk.Tesis.Control;
-using Burmuruk.Tesis.Movement;
 using Burmuruk.Tesis.Movement.PathFindig;
-using Burmuruk.Tesis.Stats;
 using Burmuruk.Tesis.UI;
 using Burmuruk.WorldG.Patrol;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
-public class LevelManager : MonoBehaviour
+namespace Burmuruk.Tesis.Control
 {
-    [SerializeField] Path path;
-    [SerializeField] UnityEvent onUILoaded;
-    [SerializeField] UnityEvent onUIUnLoaded;
-    [SerializeField] GameObject pauseMenu;
-
-    GameManager gameManager;
-    UIMenuCharacters menuCharacters;
-
-    private int saveFileIdx = 0;
-    private bool initialized = false;
-
-    private void Awake()
+    public class LevelManager : MonoBehaviour
     {
+        [SerializeField] Path path;
+        [SerializeField] UnityEvent onUILoaded;
+        [SerializeField] UnityEvent onUIUnLoaded;
+        [SerializeField] GameObject pauseMenu;
 
-    }
+        GameManager gameManager;
+        UIMenuCharacters menuCharacters;
 
-    void Start()
-    {
-        gameManager = GetComponent<GameManager>();
-        SceneManager.sceneLoaded += VerifyScene;
-        SceneManager.sceneUnloaded += RestoreScene;
-    }
+        private int saveFileIdx = 0;
+        private bool initialized = false;
 
-    void Update()
-    {
-        SetPaths();
-    }
-
-    private void SetPaths()
-    {
-        if (initialized) return;
-
-        if (path.Loaded && path.m_nodeList != null)
+        private void Awake()
         {
-            //print("Valor encontrado");
-            var movers = FindObjectsOfType<Movement>(true);
 
-            foreach (var mover in movers)
-            {
-                mover.SetConnections(path.m_nodeList);
-            }
-
-            initialized = true;
         }
-    }
 
-
-    public INodeListSupplier GetNodeList()
-    {
-        if (path == null && !path.Loaded) return null;
-
-        return path.GetNodeList();
-    }
-
-    public void LoadGame(int idx)
-    {
-
-    }
-
-    public void SaveGame(int idx)
-    {
-
-    }
-
-    public void GoToMainMenu()
-    {
-        SaveGame(saveFileIdx);
-        gameManager.GoToMainMenu();
-    }
-
-    public void ExitGame()
-    {
-        SaveGame(saveFileIdx);
-        gameManager.ExitGame();
-    }
-
-    private void VerifyScene(Scene scene, LoadSceneMode mode)
-    {
-        if (scene.buildIndex == 1)
+        void Start()
         {
-            onUILoaded?.Invoke();
-            Time.timeScale = 0;
-            //SceneManager.SetActiveScene(scene);
-            var rootItems = SceneManager.GetSceneByBuildIndex(1).GetRootGameObjects();
+            gameManager = GetComponent<GameManager>();
+            SceneManager.sceneLoaded += VerifyScene;
+            SceneManager.sceneUnloaded += RestoreScene;
+        }
 
-            foreach (var item in rootItems)
+        void Update()
+        {
+            SetPaths();
+        }
+
+        private void SetPaths()
+        {
+            if (initialized) return;
+
+            if (path.Loaded && path.m_nodeList != null)
             {
-                menuCharacters = item.GetComponentInChildren<UIMenuCharacters>();
+                //print("Valor encontrado");
+                var movers = FindObjectsOfType<Movement.Movement>(true);
 
-                if (menuCharacters != null)
+                foreach (var mover in movers)
                 {
-                    var cloths = FindObjectOfType<CharacterCustomizationManager>();
-                    var pm = FindObjectOfType<PlayerManager>();
-                    menuCharacters.SetPlayers(pm.Players);
-                    menuCharacters.SetInventory(pm.MainInventory);
-                    break;
+                    mover.SetConnections(path.m_nodeList);
+                }
+
+                initialized = true;
+            }
+        }
+
+
+        public INodeListSupplier GetNodeList()
+        {
+            if (path == null && !path.Loaded) return null;
+
+            return path.GetNodeList();
+        }
+
+        public void LoadGame(int idx)
+        {
+
+        }
+
+        public void SaveGame(int idx)
+        {
+
+        }
+
+        public void GoToMainMenu()
+        {
+            SaveGame(saveFileIdx);
+            gameManager.GoToMainMenu();
+        }
+
+        public void ExitGame()
+        {
+            SaveGame(saveFileIdx);
+            gameManager.ExitGame();
+        }
+
+        private void VerifyScene(Scene scene, LoadSceneMode mode)
+        {
+            if (scene.buildIndex == 1)
+            {
+                onUILoaded?.Invoke();
+                Time.timeScale = 0;
+                //SceneManager.SetActiveScene(scene);
+                var rootItems = SceneManager.GetSceneByBuildIndex(1).GetRootGameObjects();
+
+                foreach (var item in rootItems)
+                {
+                    menuCharacters = item.GetComponentInChildren<UIMenuCharacters>();
+
+                    if (menuCharacters != null)
+                    {
+                        var pm = FindObjectOfType<PlayerManager>();
+                        menuCharacters.SetPlayers(pm.Players);
+                        menuCharacters.SetInventory(pm.MainInventory);
+                        break;
+                    }
                 }
             }
         }
-    }
 
-    private void RestoreScene(Scene scene)
-    {
-        if (scene.buildIndex == 1)
+        private void RestoreScene(Scene scene)
         {
-            onUIUnLoaded?.Invoke();
-            Time.timeScale = 1;
-        }
-    }
-
-    public void RotatePlayer(Vector2 direction)
-    {
-        if (!menuCharacters) return;
-
-        menuCharacters.RotatePlayer(direction);
-    }
-
-    public void ShowMoreOptions()
-    {
-        if (!menuCharacters) return;
-
-        menuCharacters.SwitchExtraData();
-    }
-
-    public void Pause()
-    {
-        if (gameManager.GameState == GameManager.State.Pause)
-        {
-            if (gameManager.Continue())
+            if (scene.buildIndex == 1)
             {
-                pauseMenu.gameObject.SetActive(false);
+                onUIUnLoaded?.Invoke();
                 Time.timeScale = 1;
             }
         }
-        else if (gameManager.GameState == GameManager.State.Playing)
+
+        public void RotatePlayer(Vector2 direction)
         {
-            if (gameManager.PauseGame())
+            if (!menuCharacters) return;
+
+            menuCharacters.RotatePlayer(direction);
+        }
+
+        public void ShowMoreOptions()
+        {
+            if (!menuCharacters) return;
+
+            menuCharacters.SwitchExtraData();
+        }
+
+        public void Pause()
+        {
+            if (gameManager.GameState == GameManager.State.Pause)
             {
-                pauseMenu.gameObject.SetActive(true);
-                Time.timeScale = 0;
+                if (gameManager.Continue())
+                {
+                    pauseMenu.gameObject.SetActive(false);
+                    Time.timeScale = 1;
+                }
+            }
+            else if (gameManager.GameState == GameManager.State.Playing)
+            {
+                if (gameManager.PauseGame())
+                {
+                    pauseMenu.gameObject.SetActive(true);
+                    Time.timeScale = 0;
+                }
             }
         }
-    }
 
-    public void ExitUI()
-    {
-        if (menuCharacters.curState != UIMenuCharacters.State.None) return;
+        public void ExitUI()
+        {
+            if (menuCharacters.curState != UIMenuCharacters.State.None) return;
 
-        menuCharacters.UnloadMenu();
+            menuCharacters.UnloadMenu();
 
-        gameManager.ExitUI();
-    }
+            gameManager.ExitUI();
+        }
 
-    public void Remove()
-    {
-        if (!menuCharacters) return;
+        public void Remove()
+        {
+            if (!menuCharacters) return;
 
-        menuCharacters.TryRemoveItem();
-    }
+            menuCharacters.TryRemoveItem();
+        }
 
-    public void ChangeMenu()
-    {
-        if (!menuCharacters) return;
+        public void ChangeMenu()
+        {
+            if (!menuCharacters) return;
 
-        menuCharacters.ChangeMenu();
-    }
+            menuCharacters.ChangeMenu();
+        }
+    } 
 }

@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Burmuruk.Tesis.Utilities
+namespace MyDearAnima.Control
 {
     public class DisableInTime<T>
     {

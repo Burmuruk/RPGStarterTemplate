@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Burmuruk.Tesis.Stats
+namespace Burmuruk.Tesis.Interaction
 {
     public class Interactable : MonoBehaviour
     {

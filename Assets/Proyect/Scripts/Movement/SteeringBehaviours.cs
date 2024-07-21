@@ -1,5 +1,4 @@
 using Burmuruk.Tesis.Control;
-using TMPro;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Movement

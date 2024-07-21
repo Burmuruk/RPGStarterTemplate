@@ -1,5 +1,6 @@
 using Burmuruk.Tesis.Combat;
 using Burmuruk.Tesis.Control;
+using Burmuruk.Tesis.Control.AI;
 using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
 using System;
@@ -611,7 +612,7 @@ namespace Burmuruk.Tesis.UI
         {
             RemovePreviousModel();
 
-            var prefab = players[curPlayerIdx].Equipment.GetItem();
+            var prefab = players[curPlayerIdx].Equipment.GetSpawnPoint((int)EquipmentType.None);
             var inst = Instantiate(prefab, characterModel.transform);
             inst.transform.localPosition = Vector3.zero;
 
@@ -861,8 +862,8 @@ namespace Burmuruk.Tesis.UI
         {
             var ability = (Ability)inventory.GetOwnedItem(id);
 
-            txtAbilityTitle.text = ability.name;
-            txtAbilityInfo.text = ability.GetDescription();
+            txtAbilityTitle.text = ability.Name;
+            txtAbilityInfo.text = ability.Description;
         }
 
         private void UnequipAbilty(int id)

@@ -77,7 +77,6 @@ GameObject:
   - component: {fileID: 6869620104190364405}
   - component: {fileID: 2370757275715202751}
   - component: {fileID: 2458723133459233219}
-  - component: {fileID: 3472596443650887208}
   - component: {fileID: 8881630530992446499}
   - component: {fileID: 268288380871414093}
   m_Layer: 10
@@ -237,25 +236,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   detectionRadious: 8
   shouldGetClose: 0
---- !u!114 &3472596443650887208
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5813016171580300768}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 903d2448f98708f4a9e1e9d2312d3c30, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_stats: {fileID: 11400000, guid: 6978338a843c43e4f807ab09aeb25189, type: 2}
-  speed: 5
-  hp: 100
-  damage: 3
-  color: {r: 0, g: 0, b: 0, a: 0}
-  eyesRadious: 6
-  earsRadious: 3
 --- !u!114 &8881630530992446499
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -269,7 +249,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_ItemsList: {fileID: 11400000, guid: 0a3f3d7e1f9d8704e976c5edafce273f, type: 2}
-  initialWeapon: {fileID: 0}
 --- !u!114 &268288380871414093
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -286,20 +265,19 @@ MonoBehaviour:
   closePercept: {fileID: 3175482298624863947}
   hasFarPerception: 0
   hasClosePerception: 0
-  bodyManager:
-    playerPrefab: {fileID: 2366508166910257388}
-    head: {fileID: 217768017245386133}
-    back: {fileID: 0}
-    lArm: {fileID: 2960729970952403698}
-    rArm: {fileID: 4317537489270579459}
-    lLeg: {fileID: 5885070443954122182}
-    rLeg: {fileID: 2667609907939652745}
-    lFot: {fileID: 2972787369535092477}
-    rFot: {fileID: 5141582949272975236}
   enemyTag: Enemy
   mover: {fileID: 0}
   fighter: {fileID: 0}
-  stats: {fileID: 0}
+  stats:
+    initialized: 0
+    speed: 0
+    damage: 0
+    damageRate: 0
+    color: {r: 0, g: 0, b: 0, a: 0}
+    eyesRadious: 0
+    earsRadious: 0
+    minDistance: 0
+    m_slots: []
   formation: 0
   playerState: 0
   mainPlayer: {fileID: 0}
@@ -415,57 +393,9 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e13a18626fd55624caac8ff03c455827, type: 3}
---- !u!1 &217768017245386133 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: -5831240496908328920, guid: e13a18626fd55624caac8ff03c455827,
-    type: 3}
-  m_PrefabInstance: {fileID: 3176989861449176509}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &2366508166910257388 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: e13a18626fd55624caac8ff03c455827,
-    type: 3}
-  m_PrefabInstance: {fileID: 3176989861449176509}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &2667609907939652745 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 654058105499033908, guid: e13a18626fd55624caac8ff03c455827,
-    type: 3}
-  m_PrefabInstance: {fileID: 3176989861449176509}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &2960729970952403698 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 360375151596564303, guid: e13a18626fd55624caac8ff03c455827,
-    type: 3}
-  m_PrefabInstance: {fileID: 3176989861449176509}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &2972787369535092477 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: -8838427317029428416, guid: e13a18626fd55624caac8ff03c455827,
-    type: 3}
-  m_PrefabInstance: {fileID: 3176989861449176509}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &3142481263161471574 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: e13a18626fd55624caac8ff03c455827,
-    type: 3}
-  m_PrefabInstance: {fileID: 3176989861449176509}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &4317537489270579459 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1728280593283003582, guid: e13a18626fd55624caac8ff03c455827,
-    type: 3}
-  m_PrefabInstance: {fileID: 3176989861449176509}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &5141582949272975236 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 7731692104210768441, guid: e13a18626fd55624caac8ff03c455827,
-    type: 3}
-  m_PrefabInstance: {fileID: 3176989861449176509}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &5885070443954122182 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: -162948648781793157, guid: e13a18626fd55624caac8ff03c455827,
     type: 3}
   m_PrefabInstance: {fileID: 3176989861449176509}
   m_PrefabAsset: {fileID: 0}

@@ -1,7 +1,7 @@
 ﻿using Burmuruk.Tesis.Combat;
 using Burmuruk.Tesis.Control;
+using Burmuruk.Tesis.Control.AI;
 using Burmuruk.Tesis.Inventory;
-using Burmuruk.Tesis.Stats;
 using Burmuruk.Utilities;
 using System;
 using System.Collections.Generic;
@@ -119,7 +119,7 @@ namespace Burmuruk.Tesis.UI
                 playersLife.Add(player, lifeBar);
 
                 lifeBar.label.transform.parent.position = Camera.main.WorldToScreenPoint(player.transform.position);
-                UpdateHealth(player.stats.Hp * 100 / player.stats.MaxHp, player);
+                UpdateHealth(player.Health.HP * 100 / player.Health.MaxHp, player);
                 lifeBar.label.transform.parent.gameObject.SetActive(false);
             }
         }
@@ -137,7 +137,7 @@ namespace Burmuruk.Tesis.UI
 
             foreach (var player in playerManager.Players)
             {
-                player.stats.OnDamage += (hp) => { UpdateHealth(hp, player); };
+                player.Health.OnDamaged += (hp) => { UpdateHealth(hp, player); };
             }
         }
 
@@ -151,7 +151,7 @@ namespace Burmuruk.Tesis.UI
 
             foreach (var player in playerManager.Players)
             {
-                player.stats.OnDamage -= (hp) => { UpdateHealth(hp, player); };
+                player.Health.OnDamaged -= (hp) => { UpdateHealth(hp, player); };
             }
         }
 
@@ -178,7 +178,7 @@ namespace Burmuruk.Tesis.UI
         {
             playersLife[player].image.fillAmount = hp / 100;
 
-            if (hp <= player.stats.MaxHp * .7f)
+            if (hp <= player.Health.MaxHp * .7f)
                 playersLife[player].image.transform.parent.gameObject.SetActive(true);
         }
 

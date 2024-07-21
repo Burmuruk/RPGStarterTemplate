@@ -12,7 +12,8 @@ namespace Burmuruk.Tesis.Stats
         [SerializeField] bool initialized;
         [Space(20), Header("Basic stats")]
         [SerializeField] public float speed;
-        [SerializeField] public float damage;
+        [SerializeField] int damage;
+        [SerializeField] public float damageRate;
         [SerializeField] public Color color;
         [Space(), Header("Detection")]
         [SerializeField] public float eyesRadious;
@@ -37,7 +38,8 @@ namespace Burmuruk.Tesis.Stats
 
         public bool Initilized { get => initialized; }
         public float Speed { get => speed; }
-        public float Damage { get => damage; }
+        public int Damage { get => damage; }
+        public float DamageRate { get =>  damageRate; }
         public Color Color { get => color; set => color = value; }
         public float MinDistance { get => minDistance; }
 

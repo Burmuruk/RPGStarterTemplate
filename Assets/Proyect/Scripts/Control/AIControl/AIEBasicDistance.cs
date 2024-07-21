@@ -1,5 +1,4 @@
-﻿
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Burmuruk.Tesis.Control.AI
 {
@@ -37,7 +36,7 @@ namespace Burmuruk.Tesis.Control.AI
                 GetNearestTarget(earsPerceibed);
 
             if (Vector3.Distance(m_target.position, transform.position)
-                <= Inventory.EquipedWeapon.MinDistance)
+                <= stats.MinDistance)
             {
                 fighter.SetTarget(m_target);
                 fighter.BasicAttack();
@@ -46,7 +45,7 @@ namespace Burmuruk.Tesis.Control.AI
 
         protected override void MovementManager()
         {
-            var dis = Inventory.EquipedWeapon.MinDistance * .8f;
+            var dis = stats.MinDistance * .8f;
 
             switch (playerAction)
             {
