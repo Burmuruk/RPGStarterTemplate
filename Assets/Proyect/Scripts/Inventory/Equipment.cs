@@ -8,6 +8,8 @@ namespace Burmuruk.Tesis.Inventory
     [Serializable]
     public struct Equipment
     {
+        [SerializeField] GameObject Body;
+        [SerializeField] SpawnPointData[] spawnPoints;
         Dictionary<int, (Transform spawnPoint, GameObject item, List<EquipeableItem> equipables)> _parts;
 
         public event Action<int> OnEquipmentChanged;
@@ -23,9 +25,19 @@ namespace Burmuruk.Tesis.Inventory
             }
         }
 
+        [Serializable]
+        struct SpawnPointData
+        {
+            public Transform spawnPoint;
+            public int spawnType;
+        }
+
         public void Initilize()
         {
-            _parts = new Dictionary<int, (Transform spawnPoint, GameObject item, List<EquipeableItem> equipeables)>();
+            _parts = new Dictionary<int, (Transform spawnPoint, GameObject item, List<EquipeableItem> equipeables)>()
+            {
+                { 0, (null, Body, null) }
+            };
         }
 
         public void Equip(int part, GameObject item, params EquipeableItem[] equipables)
@@ -33,17 +45,54 @@ namespace Burmuruk.Tesis.Inventory
             if (_parts == null)
                 Initilize();
 
-            if (!_parts.ContainsKey(part))
-                throw new InvalidOperationException();
+            if (part == 0) return;
 
-            _parts[part] = (_parts[part].spawnPoint, item, equipables.ToList());
+            if (!_parts.ContainsKey(part))
+                _parts.Add(part, (GetSpawnPoint(part), item, equipables.ToList()));
+            else
+                _parts[part] = (GetSpawnPoint(part), item, equipables.ToList());
             //OnEquipmentChanged?.Invoke(equipables.ID);
         }
 
-        public Transform GetSpawnPoint(int part) => _parts[part].spawnPoint;
+        public Transform GetSpawnPoint(int part)
+        {
+            if (spawnPoints == null)
+                return null;
 
-        public GameObject GetItem(int part) => _parts[part].item;
+            foreach (var spawnPoint in spawnPoints)
+            {
+                if (spawnPoint.spawnType == part)
+                    return spawnPoint.spawnPoint;
+            };
 
-        public List<EquipeableItem> GetItems(int part) => _parts[part].equipables;
+            return null;
+        }
+
+        public GameObject GetItem(int part)
+        {
+            if (_parts == null)
+                Initilize();
+
+            return _parts.ContainsKey(part) ? _parts[part].item : null;
+        }
+
+        public List<EquipeableItem> GetItems(int part)
+        {
+            if (_parts == null)
+                Initilize();
+
+            return _parts.ContainsKey(part) ? _parts[part].equipables : null;
+        }
+
+        private Transform GetSpawnPoints(int part)
+        {
+            foreach (var point in spawnPoints)
+            {
+                if (point.spawnType == part)
+                    return point.spawnPoint;
+            }
+
+            return null;
+        }
     }
 }

@@ -14,7 +14,7 @@ namespace Burmuruk.Tesis.Inventory
         [SerializeField] int m_capacity;
         private int _id = 0;
 
-        public int ID { get => _id; }
+        public int ID => _id;
         public string Name { get => m_name; }
         public string Description { get => m_description; }
         public Sprite Sprite { get => m_sprite; }
@@ -22,14 +22,7 @@ namespace Burmuruk.Tesis.Inventory
         public int Capacity { get => m_capacity; }
         public GameObject Prefab { get => pickup.Prefab; }
         public GameObject PrefabInst { get => Instantiate(Prefab); }
-        public Pickup Pickup
-        {
-            get
-            {
-                pickup.ID = _id;
-                return pickup;
-            }
-        }
+        public Pickup Pickup { get => pickup; }
 
         public virtual object GetSubType()
         {

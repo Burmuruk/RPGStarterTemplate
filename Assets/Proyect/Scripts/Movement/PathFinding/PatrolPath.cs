@@ -197,7 +197,7 @@ namespace Burmuruk.WorldG.Patrol
         //{
         //    foreach (var point in points)
         //    {
-        //        Add(point);
+        //        AddVariable(point);
         //    }
 
         //    this.cyclicType = cyclicType;

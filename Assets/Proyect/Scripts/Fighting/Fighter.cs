@@ -38,7 +38,7 @@ namespace Burmuruk.Tesis.Combat
 
             //m_inventory.Equipped.OnEquipmentChanged += (id) =>
             //{
-            //    if (id == (int)EquipmentType.Weapon)
+            //    if (id == (int)EquipmentType.WeaponR)
             //    {
             //        CacheWeapon();
             //    }
@@ -62,7 +62,6 @@ namespace Burmuruk.Tesis.Combat
 
             if (cdBasicAttack.CanUse)
             {
-                print(transform.name + " can use");
                 m_targetHealth.ApplyDamage(m_Stats.Damage);
                 StartCoroutine(cdBasicAttack.CoolDown());
             }
@@ -70,14 +69,14 @@ namespace Burmuruk.Tesis.Combat
 
         public void SpecialAttack(AbilityType type)
         {
-            var habilities = m_inventory.GetOwnedList(ItemType.Ability);
+            var habilities = m_inventory.GetList(ItemType.Ability);
 
             foreach (var hability in habilities)
             {
                 if ((AbilityType)hability.GetSubType() == type)
                 {
                     var args = GetSpecialAttackArgs(type);
-                    //AbilitiesManager.habilitiesList[subType]?.Invoke(args);
+                    //AbilitiesManager.habilitiesList[modifiableStat]?.Invoke(args);
                     return;
                 }
             }

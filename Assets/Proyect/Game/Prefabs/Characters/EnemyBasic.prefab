@@ -15,7 +15,8 @@ GameObject:
   - component: {fileID: 7537317340780004562}
   - component: {fileID: 9070186933416403932}
   - component: {fileID: 7197814264841399882}
-  - component: {fileID: 8130546791557357396}
+  - component: {fileID: 8791493188561593395}
+  - component: {fileID: 4417388710563994346}
   m_Layer: 10
   m_Name: EnemyBasic
   m_TagString: Enemy
@@ -154,7 +155,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_maxVel: 10
   m_maxSteerForce: 5
-  m_threshold: 1.5
+  m_threshold: 1
   wanderDisplacement: 0
   wanderRadious: 0
   usePathFinding: 0
@@ -172,7 +173,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   detectionRadious: 8
   shouldGetClose: 0
---- !u!114 &8130546791557357396
+--- !u!114 &8791493188561593395
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -181,10 +182,25 @@ MonoBehaviour:
   m_GameObject: {fileID: 510198339536785829}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3283185997fbd3943adcbab59dcc96a2, type: 3}
+  m_Script: {fileID: 11500000, guid: 8efe2cad4cc5cfc41af02844ae6093d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_ItemsList: {fileID: 11400000, guid: 0a3f3d7e1f9d8704e976c5edafce273f, type: 2}
+  initialItems: []
+  inventory: {fileID: 0}
+--- !u!114 &4417388710563994346
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 510198339536785829}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b9f4b1d081e12a4eb3dd11289027551, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hp: 10
+  maxHp: 2
 --- !u!1 &6807788337000474248
 GameObject:
   m_ObjectHideFlags: 0

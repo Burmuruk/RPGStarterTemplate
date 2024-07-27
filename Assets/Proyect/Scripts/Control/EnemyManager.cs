@@ -1,11 +1,17 @@
-﻿using System;
+﻿using Burmuruk.Tesis.Inventory;
+using Burmuruk.Tesis.Stats;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Control.AI
 {
     public class EnemyManager : MonoBehaviour
     {
+        [SerializeField] CharacterProgress progress;
+        [SerializeField] Inventory.Inventory inventory;
         Dictionary<int, List<AIEnemyController>> m_enemies = new();
 
         [Serializable]
@@ -37,14 +43,30 @@ namespace Burmuruk.Tesis.Control.AI
             }
         }
 
+        private void Start()
+        {
+            var enemies = FindObjectsOfType<AIEnemyController>(true);
+
+            foreach (var enemy in enemies)
+            {
+                try
+                {
+                    enemy.SetStats(progress.GetDataByLevel(enemy.CharacterType, 0));
+                    (enemy.Inventory as InventoryEquipDecorator).SetInventory(inventory);
+                    enemy.SetUpMods();
+                    //enemy.Health.OnDied += 
+                }
+                catch (NullReferenceException )
+                {
+
+                    throw;
+                }
+            }
+        }
+
         public void EnableGroup(int id)
         {
 
-        }
-
-        private void RestoreEnemies(int id)
-        {
-            
         }
     }
 }

@@ -19,7 +19,7 @@ namespace Burmuruk.Tesis.Combat
         {
             //Vector3 dir = (Vector3) direction;
 
-            //stats.Speed += 2;
+            //statsList.Speed += 2;
             print("In Dash!!!");
         }
 

@@ -17,6 +17,8 @@ namespace Burmuruk.Tesis.UI
             this.id = id;
         }
 
+        public int GetId() => id;
+
         public void SetCallback(Action callback)
         {
             this.callback = callback;

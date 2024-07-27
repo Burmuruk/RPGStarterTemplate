@@ -1,31 +1,56 @@
-﻿using Burmuruk.Tesis.Inventory;
+﻿using Burmuruk.Tesis.Control;
+using Burmuruk.Tesis.Inventory;
 using System;
 using UnityEngine;
+using Character = Burmuruk.Tesis.Control.Character;
 
 namespace Burmuruk.Tesis.Stats
 {
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Consumable", order = 3)]
-    public class ConsumableItem : EquipeableItem
+    public class ConsumableItem : EquipeableItem, IUsable
     {
         [Space(), Header("Attributes")]
-        [SerializeField] ConsumableType consumableType;
-        [SerializeField] int value;
+        [SerializeField] BuffData[] buffs;
         [SerializeField] float consumptionTime;
-        [SerializeField] int consumptionRate;
         [SerializeField] float areaRadious;
 
-        public int Value { get => value; }
+        [Serializable]
+        private struct BuffData
+        {
+            public ModifiableStat stat;
+            public float value;
+            public float duration;
+            public float rate;
+            public bool percentage;
+            public bool affectAll;
+        }
+
+        //public int Value { get => value; }
         public float ConsumptionTime { get => consumptionTime; }
-        public int ConsumptionRate { get => consumptionRate; }
 
         public override object GetEquipLocation()
         {
-            return EquipmentLocation.None;
+            return EquipmentLocation.Items;
         }
 
         public override object GetSubType()
         {
-            return consumableType;
+            if (buffs != null && buffs.Length > 0)
+                return buffs[0].stat;
+
+            return ConsumableType.None;
+        }
+
+        public void Use(object args, Action callback)
+        {
+            var character = (Character)args;
+
+            foreach (var mod in buffs)
+            {
+                ModsList.AddModification(character, mod.stat, mod.value); 
+
+                BuffsManager.Instance.AddBuff(character, mod.stat, mod.value, mod.duration);
+            }
         }
     }
 

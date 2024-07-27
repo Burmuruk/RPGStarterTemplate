@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Burmuruk.Tesis.Stats
 {
-    [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Customization", order = 4)]
+    [CreateAssetMenu(fileName = "Customization", menuName = "ScriptableObjects/Customization", order = 5)]
     public class PlayerCustomization : ScriptableObject
     {
         [SerializeField]

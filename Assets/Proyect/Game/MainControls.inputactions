@@ -263,7 +263,7 @@
                 {
                     "name": "up",
                     "id": "09eeee6d-dc25-4abc-8cdb-8b5ac661c028",
-                    "path": "",
+                    "path": "<Keyboard>/z",
                     "interactions": "",
                     "processors": "",
                     "groups": "PC",
@@ -274,7 +274,7 @@
                 {
                     "name": "down",
                     "id": "e671a2c5-8954-4bad-a51e-95a12a7ca5c5",
-                    "path": "",
+                    "path": "<Keyboard>/c",
                     "interactions": "",
                     "processors": "",
                     "groups": "PC",

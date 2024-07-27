@@ -22,9 +22,6 @@ namespace Burmuruk.Utilities
                     return;
 
                 canUse = invertFunction? !value : value;
-
-                if (OnFinished != null)
-                    OnFinished(canUse);
             }
         }
 
@@ -72,6 +69,21 @@ namespace Burmuruk.Utilities
             invertFunction = invert;
         }
 
+        public void ResetAttributes(float time = 0, Action<bool> OnFinished = null, bool invert = false)
+        {
+            currentTime = 0;
+            canUse = false;
+            inCoolDown = false;
+            this.OnFinished = OnFinished;
+            invertFunction = invert;
+
+            if (time != 0)
+                this.time = time;
+
+            if (OnFinished != null)
+                this.OnFinished = OnFinished;
+        }
+
         public void Restart()
         {
             currentTime = 0;
@@ -83,6 +95,7 @@ namespace Burmuruk.Utilities
         {
             if (inCoolDown) yield break;
 
+            var waiter = new WaitForEndOfFrame();
             CanUse = false;
             inCoolDown = true;
             currentTime = time - Time.deltaTime;
@@ -91,8 +104,11 @@ namespace Burmuruk.Utilities
             {
                 currentTime -= Time.deltaTime;
 
-                yield return new WaitForEndOfFrame();
+                yield return waiter;
             }
+
+            if (OnFinished != null)
+                OnFinished(canUse);
 
             inCoolDown = false;
             CanUse = true;

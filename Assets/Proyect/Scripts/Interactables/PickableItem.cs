@@ -1,33 +1,20 @@
 ﻿using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Saving;
+using System;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Interaction
 {
-    public class PickableItem : MonoBehaviour, ISaveable
+    public class PickableItem : MonoBehaviour
     {
-        public ItemType itemType;
-        [SerializeField] int itemId;
-        int id;
+        [SerializeField] InventoryItem item;
 
-        public ItemType Type => ItemType.Consumable;
-        public bool IsPersistentData => false;
+        public event Action<GameObject> OnPickedUp;
 
-        public int ID => id;
-
-        private void Awake()
+        public InventoryItem PickUp()
         {
-            id = GetHashCode();
-        }
-
-        public object CaptureState()
-        {
-            return gameObject.activeSelf;
-        }
-
-        public void RestoreState(object args)
-        {
-            gameObject.SetActive((bool)args);
+            OnPickedUp?.Invoke(gameObject);
+            return item;
         }
     }
 

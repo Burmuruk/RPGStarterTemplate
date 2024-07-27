@@ -1,6 +1,7 @@
 ﻿using Burmuruk.Tesis.Combat;
 using Burmuruk.Tesis.Control.AI;
 using Burmuruk.Tesis.Interaction;
+using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ namespace Burmuruk.Tesis.Control
 {
     class PlayerController : MonoBehaviour
     {
+        [SerializeField] Camera mainCamera;
         Character player;
         GameManager gameManager;
         LevelManager levelManager;
@@ -19,7 +21,7 @@ namespace Burmuruk.Tesis.Control
         bool m_shouldMove = false;
         Vector3 m_direction = default;
         bool m_canChangeFormation = false;
-        private Dictionary<Transform, PickableItem> m_pickables = new ();
+        private Dictionary<Transform, Pickup> m_pickables = new ();
         private List<IInteractable> m_interactables = new List<IInteractable>();
         int interactableIdx = 0;
         
@@ -143,7 +145,7 @@ namespace Burmuruk.Tesis.Control
                 {
                     Target = enemy.GetComponent<AIEnemyController>();
                     ((AIGuildMember)player).SetTarget(Target);
-                    //print(enemy.name);
+                    //print(enemy.itemName);
                     //player.fighter.SetTarget(Target.transform);
                 }
             }
@@ -195,16 +197,17 @@ namespace Burmuruk.Tesis.Control
 
             if (HavePickable)
             {
-                var cmp = m_pickables.First().Value;
-                player.Inventory.Add(cmp.ID);
+                var pickedUpItem = m_pickables.First().Value;
+                player.Inventory.Add(pickedUpItem.ID);
                 //var inventory = GetComponent<InventoryEquipDecorator>();
-                //inventory.Add(cmp.itemType, cmp);
-                //inventory.TryEquip(player, cmp.itemType, cmp.GetSubType());
-                cmp.gameObject.SetActive(false);
+                //inventory.AddVariable(pickedUpItem.itemType, pickedUpItem);
+                //inventory.TryEquip(player, pickedUpItem.itemType, pickedUpItem.GetSubType());
+                pickedUpItem.gameObject.SetActive(false);
 
-                //m_pickables.Remove(cmp.transform);
+                //m_pickables.RemoveVariable(pickedUpItem.transform);
 
-                OnItemPicked?.Invoke(cmp.itemType.ToString(), cmp.transform.position);
+                var itemName = player.Inventory.GetItem(pickedUpItem.ID).Name;
+                OnItemPicked?.Invoke(itemName, pickedUpItem.transform.position);
             }
             else if (m_interactables.Count > 0)
             {
@@ -217,6 +220,28 @@ namespace Burmuruk.Tesis.Control
             if (!context.performed) return;
 
             var value = context.ReadValue<Vector2>();
+
+            switch (value)
+            {
+                case { y: < 0 }:
+                    ConsumeItem();
+                    break;
+
+                case { x: < 0 }:
+                    ChangeItem(-1);
+                    break;
+
+                case { x: > 0 }:
+                    ChangeItem(1);
+                    break;
+
+                case { y: > 0}:
+                    //ShowItems()
+                    break;
+
+                default:
+                    break;
+            }
         }
 
         public void Pause(InputAction.CallbackContext context)
@@ -264,6 +289,13 @@ namespace Burmuruk.Tesis.Control
         public void UseAbility1(InputAction.CallbackContext context)
         {
             if (!context.performed) return;
+
+            var abilities = (player.Inventory as InventoryEquipDecorator).Equipped.GetItems((int)EquipmentLocation.Abilities);
+
+            if (abilities == null || abilities.Count <= 0)
+                return;
+
+            //(abilities[0] as Ability).Use(null, null);
         }
 
         public void UseAbility2(InputAction.CallbackContext context)
@@ -304,6 +336,20 @@ namespace Burmuruk.Tesis.Control
             }
         }
 
+        private void ConsumeItem()
+        {
+            var items = (player.Inventory as InventoryEquipDecorator).Equipped.GetItems((int)EquipmentLocation.Items);
+
+            if (items == null || items.Count == 0) return;
+
+            (items[0] as ConsumableItem).Use(player, null);
+        }
+
+        private void ChangeItem(int v)
+        {
+            throw new NotImplementedException();
+        }
+
         private Collider DetectEnemyInMouse()
         {
             if (!player) return null;
@@ -321,7 +367,7 @@ namespace Burmuruk.Tesis.Control
             Ray GetRayFromMouseToWorld()
             {
                 Vector3 mousePos = Mouse.current.position.ReadValue();
-                var cam = Camera.main;
+                var cam = mainCamera;
 
                 Vector3 screenPos = new(mousePos.x, cam.pixelHeight - mousePos.y, cam.nearClipPlane);
 
@@ -334,7 +380,7 @@ namespace Burmuruk.Tesis.Control
             //Physics.OverlapSphere(transform.position, .5f, 1<<11);
             //if (other.gameObject.GetComponent<Consumable>() is var itemType && itemType)
             //{
-            //    player.inventory.Add(Type.Consumable, itemType);
+            //    player.inventory.AddVariable(Type.Consumable, itemType);
             //    Destroy(other.gameObject);
             //}
         }
@@ -344,12 +390,12 @@ namespace Burmuruk.Tesis.Control
             var items = Physics.OverlapSphere(player.transform.position, 1.5f, 1 << 11);
             var hadItem = m_pickables.Count > 0;
             //m_pickables.Clear();
-            Dictionary<Transform, PickableItem> newList = new();
-            List<PickableItem> newPickables = new();
+            Dictionary<Transform, Pickup> newList = new();
+            List<Pickup> newPickables = new();
 
             foreach (var item in items)
             {
-                var cmp = item.GetComponent<PickableItem>();
+                var cmp = item.GetComponent<Pickup>();
                 if (cmp)
                 {
                     if (!m_pickables.ContainsKey(cmp.transform))
@@ -370,7 +416,7 @@ namespace Burmuruk.Tesis.Control
                     OnPickableExit?.Invoke(false, "");
 
             foreach (var item in newPickables)
-                OnPickableEnter?.Invoke(true, "Tomar"/* + m_items[0].subType.ToString()*/);
+                OnPickableEnter?.Invoke(true, "Tomar"/* + m_items[0].modifiableStat.ToString()*/);
 
             m_pickables = newList;
         }
@@ -402,15 +448,15 @@ namespace Burmuruk.Tesis.Control
 
         //private void TakeItem()
         //{
-        //    var cmp = m_pickables[0];
+        //    var pickedUpItem = m_pickables[0];
         //    var inventory = player.GetComponent<InventoryEquipDecorator>();
-        //    inventory.Add(cmp.itemType, cmp);
-        //    //inventory.ElementAction(cmp.subType, cmp.Item);
-        //    cmp.gameObject.SetActive(false);
+        //    inventory.AddVariable(pickedUpItem.itemType, pickedUpItem);
+        //    //inventory.ElementAction(pickedUpItem.modifiableStat, pickedUpItem.Item);
+        //    pickedUpItem.gameObject.SetActive(false);
 
-        //    m_pickables.Remove(cmp);
+        //    m_pickables.RemoveVariable(pickedUpItem);
 
-        //    OnItemPicked?.Invoke(cmp.itemType.ToString(), cmp.transform.position);
+        //    OnItemPicked?.Invoke(pickedUpItem.itemType.ToString(), pickedUpItem.transform.position);
         //}
         #endregion
     }

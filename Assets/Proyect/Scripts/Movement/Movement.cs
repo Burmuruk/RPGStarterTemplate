@@ -84,7 +84,7 @@ namespace Burmuruk.Tesis.Movement
         } 
         #endregion
 
-        public void Initlize(BasicStats stats, InventoryEquipDecorator inventory)
+        public void Initlize(InventoryEquipDecorator inventory, BasicStats stats)
         {
             this.stats = stats;
             this.m_inventory = inventory;
@@ -208,7 +208,7 @@ namespace Burmuruk.Tesis.Movement
         /// <returns>float m_MaxVel</returns>
         public float getMaxVel()
         {
-            return m_maxVel;
+            return m_maxVel = stats.speed;
         }
 
         /// <summary>

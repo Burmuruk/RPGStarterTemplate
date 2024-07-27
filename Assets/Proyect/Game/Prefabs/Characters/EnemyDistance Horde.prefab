@@ -123,21 +123,20 @@ MonoBehaviour:
   closePercept: {fileID: 2023578390689724229}
   hasFarPerception: 1
   hasClosePerception: 1
-  bodyManager:
-    playerPrefab: {fileID: 0}
-    head: {fileID: 0}
-    back: {fileID: 0}
-    lArm: {fileID: 0}
-    rArm: {fileID: 0}
-    lLeg: {fileID: 0}
-    rLeg: {fileID: 0}
-    lFot: {fileID: 0}
-    rFot: {fileID: 0}
+  characterType: 4
   enemyTag: Player
   mover: {fileID: 0}
   fighter: {fileID: 0}
-  stats: {fileID: 0}
-  itemsList: {fileID: 11400000, guid: 0a3f3d7e1f9d8704e976c5edafce273f, type: 2}
+  stats:
+    initialized: 0
+    speed: 0
+    damage: 0
+    damageRate: 0
+    color: {r: 0, g: 0, b: 0, a: 0}
+    eyesRadious: 0
+    earsRadious: 0
+    minDistance: 0
+    m_slots: []
   horde: {fileID: 0}
   coolDownHorde: 5
   hordeInvokeTime: 1

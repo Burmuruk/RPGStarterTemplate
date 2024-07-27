@@ -35,10 +35,11 @@ namespace Burmuruk.Tesis.Inventory
             InitInventory();
         }
 
-        public void SetInventory(Inventory inventary) => this.inventory = inventary;
+        public void SetInventory(Inventory inventory) => this.inventory = inventory;
 
-        public bool TryEquip(Character player, InventoryItem item)
+        public bool TryEquip(Character player, InventoryItem item, out List<EquipeableItem> unequippedItems)
         {
+            unequippedItems = null;
             if (item == null) return false;
 
             var equiped = (EquipeableItem)item;
@@ -52,6 +53,7 @@ namespace Burmuruk.Tesis.Inventory
                 return false;
             }
 
+            unequippedItems = UnequipWeaponSlot(player, alarmedEquipItem.item);
             Equip();
             return true;
 
@@ -59,6 +61,20 @@ namespace Burmuruk.Tesis.Inventory
             {
                 return inventory.GetItemCount(itemId) > equiped.Characters.Count;
             }
+        }
+
+        private List<EquipeableItem> UnequipWeaponSlot(Character player, EquipeableItem item)
+        {
+            var equippedItems = player.Equipment.GetItems((int)item.GetEquipLocation());
+
+            if (equippedItems == null || equippedItems.Count <= 0) return null;
+
+            foreach (var equippedItem in equippedItems)
+            {
+                Unequip(player, equippedItem);
+            }
+
+            return equippedItems;
         }
 
         private void Equip()
@@ -81,8 +97,8 @@ namespace Burmuruk.Tesis.Inventory
 
                     if (itemData.IsEquiped)
                     {
-                        var item = inventory.GetOwnedItem(itemData.Item.ID);
-                        TryEquip(itemData.Character, itemData.Item);
+                        var item = inventory.GetItem(itemData.Item.ID);
+                        TryEquip(itemData.Character, itemData.Item, out _);
                     }
                 }
             }
@@ -92,7 +108,7 @@ namespace Burmuruk.Tesis.Inventory
         {
             if (prefab is EquipeableItem equipable && equipable != null)
             {
-                ItemEquiper.EquipModification(ref equipment, equipable);
+                ItemEquiper.EquipModification(ref player.Equipment, equipable);
             }
         }
 
@@ -105,7 +121,7 @@ namespace Burmuruk.Tesis.Inventory
 
             item.Unequip(player);
             
-            ItemEquiper.UnequipModification(ref equipment, unequipped);
+            ItemEquiper.UnequipModification(ref player.Equipment, unequipped);
             return true;
         }
 
@@ -116,7 +132,7 @@ namespace Burmuruk.Tesis.Inventory
 
         public bool Remove(int id)
         {
-            var item = inventory.GetOwnedItem(id);
+            var item = inventory.GetItem(id);
 
             if (item == null) return false;
 
@@ -142,19 +158,19 @@ namespace Burmuruk.Tesis.Inventory
             alarmedRemovedItem = default;
         }
 
-        public InventoryItem GetOwnedItem(int id)
+        public InventoryItem GetItem(int id)
         {
-            return inventory.GetOwnedItem(id);
+            return inventory.GetItem(id);
         }
 
-        public List<InventoryItem> GetOwnedList(ItemType type)
+        public List<InventoryItem> GetList(ItemType type)
         {
-            return inventory.GetOwnedList(type);
+            return inventory.GetList(type);
         }
 
         public List<InventoryItem> GetEquipedItems(ItemType itemType, Character character)
         {
-            var items = inventory.GetOwnedList(itemType);
+            var items = inventory.GetList(itemType);
 
             List<InventoryItem> equipedItems = new(); 
 

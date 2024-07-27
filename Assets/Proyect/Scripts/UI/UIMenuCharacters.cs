@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,6 +16,7 @@ namespace Burmuruk.Tesis.UI
     public class UIMenuCharacters : MonoBehaviour
     {
         #region Variables
+        [SerializeField] CharacterProgress characterProgress;
         [SerializeField] GameObject charactersMenu;
         [SerializeField] StackableLabel elementPanel;
         [SerializeField] TextMeshProUGUI txtExtraInfo;
@@ -177,6 +179,7 @@ namespace Burmuruk.Tesis.UI
                 case ItemType.Ability:
                 case ItemType.Weapon:
                 case ItemType.Modification:
+                case ItemType.Armor:
 
                     EquipItem(idx);
                     break;
@@ -289,11 +292,13 @@ namespace Burmuruk.Tesis.UI
         {
             var equippedItem = curElementLabels[curElementId].item;
             var lastPlayer = equippedItem.Characters.Last();
-            var inventaryDecorator = (inventory as InventoryEquipDecorator);
+            var inventoryDecorator = (lastPlayer.Inventory as InventoryEquipDecorator);
+            List<EquipeableItem> unequipped;
 
-            inventaryDecorator.Unequip(lastPlayer, equippedItem);
-            inventaryDecorator.TryEquip(players[curPlayerIdx], equippedItem);
+            inventoryDecorator.Unequip(lastPlayer, equippedItem);
+            inventoryDecorator.TryEquip(players[curPlayerIdx], equippedItem, out unequipped);
 
+            SetPlayersColors(unequipped);
             SetPlayersColors(equippedItem, curElementLabels[curElementId].panel);
             ShowCharacterModel();
             
@@ -307,6 +312,34 @@ namespace Burmuruk.Tesis.UI
 
                 SetAbilityInSlot(curAbilityId);
             }
+        }
+
+        private void SetPlayersColors(List<EquipeableItem> items)
+        {
+            if (items != null)
+            {
+                foreach (var equipable in items)
+                {
+                    var id = FindLabelById(equipable.ID);
+
+                    if (id < 0) return;
+
+                    SetPlayersColors(curElementLabels[id].item, curElementLabels[id].panel);
+                }
+            }
+        }
+
+        private int FindLabelById(int id)
+        {
+            foreach (var label in curElementLabels)
+            {
+                if (label.Value.item.ID == id)
+                {
+                    return label.Key;
+                }
+            }
+
+            return -1;
         }
 
         private void RemoveItem()
@@ -333,20 +366,24 @@ namespace Burmuruk.Tesis.UI
 
         private void EquipItem(int idx)
         {
-            var item = curElementLabels[idx].item;
-            (inventory as InventoryEquipDecorator).TryEquip(players[curPlayerIdx], item);
+            var curElementLabel = curElementLabels[idx];
+            var item = curElementLabel.item;
+            List<EquipeableItem> unequipped = null;
+            (players[curPlayerIdx].Inventory as InventoryEquipDecorator).TryEquip(players[curPlayerIdx], item, out unequipped);
 
-            SetPlayersColors(curElementLabels[idx].item, curElementLabels[idx].panel);
+            SetPlayersColors(unequipped);
+            SetPlayersColors(curElementLabel.item, curElementLabel.panel);
             ShowCharacterModel();
             UpdateModsSprites();
         }
 
         private void UnEquipItem(int idx)
         {
-            var item = curElementLabels[idx].item;
-            (inventory as InventoryEquipDecorator).Unequip(players[curPlayerIdx], curElementLabels[idx].item);
+            var curElementLabel = curElementLabels[idx];
+            var item = curElementLabel.item;
+            (players[curPlayerIdx].Inventory as InventoryEquipDecorator).Unequip(players[curPlayerIdx], curElementLabel.item);
 
-            SetPlayersColors(curElementLabels[idx].item, curElementLabels[idx].panel);
+            SetPlayersColors(curElementLabel.item, curElementLabel.panel);
             ShowCharacterModel();
             UpdateModsSprites();
         }
@@ -488,12 +525,13 @@ namespace Burmuruk.Tesis.UI
             };
 
             if (type != ItemType.None)
-                items = inventory.GetOwnedList(type);
+                items = inventory.GetList(type);
             else
             {
-                items = inventory.GetOwnedList(ItemType.Modification);
-                items.AddRange(inventory.GetOwnedList(ItemType.Consumable));
-                items.AddRange(inventory.GetOwnedList(ItemType.Weapon));
+                items = inventory.GetList(ItemType.Modification);
+                items.AddRange(inventory.GetList(ItemType.Consumable));
+                items.AddRange(inventory.GetList(ItemType.Weapon));
+                items.AddRange(inventory.GetList(ItemType.Armor));
             }
 
             items.OrderBy(item => item.Name);
@@ -575,9 +613,9 @@ namespace Burmuruk.Tesis.UI
 
         private void ShowCharacterAbilities()
         {
-            Ability[] abilities = (from ability in inventory.GetOwnedList(ItemType.Ability)
+            Ability[] abilities = (from ability in inventory.GetList(ItemType.Ability)
                              where ((EquipeableItem)ability).Characters.Contains(players[curPlayerIdx])
-                             select (Ability)inventory.GetOwnedItem(ability.ID))
+                             select (Ability)inventory.GetItem(ability.ID))
                              .ToArray();
 
             int j = 0;
@@ -600,19 +638,20 @@ namespace Burmuruk.Tesis.UI
 
         private void ChangeColor()
         {
+            var lastColor = players[curPlayerIdx].stats.Color;
             players[curPlayerIdx].stats.Color = btnColorsDict[curBtnId].color;
+            btnColorsDict[curBtnId].color = lastColor;
 
+            print("ChangeColor");
             ShowCharacters();
             colorsPanel.SetActive(false);
-            InitializeColorButtons();
             UpdatePlayersColors();
         }
 
         private void ShowCharacterModel()
         {
             RemovePreviousModel();
-
-            var prefab = players[curPlayerIdx].Equipment.GetSpawnPoint((int)EquipmentType.None);
+            var prefab = players[curPlayerIdx].Equipment.GetItem((int)EquipmentType.None); ;
             var inst = Instantiate(prefab, characterModel.transform);
             inst.transform.localPosition = Vector3.zero;
 
@@ -649,13 +688,13 @@ namespace Burmuruk.Tesis.UI
             return 0;
         }
 
-        private void InitializeColorButtons()
+        private void UpdateColorButtons(bool shouldInit)
         {
             btnColors = colorsPanel.GetComponentsInChildren<MyItemButton>(true);
-            btnColorsDict = new();
+            if (shouldInit) 
+                btnColorsDict = new();
 
-            int btnId = 0;
-            for (int i = 0; i < btnColors.Length; i++)
+            for (int i = 0, btnId = 0; i < btnColors.Length; i++)
             {
                 var btn = btnColors[i];
 
@@ -665,46 +704,56 @@ namespace Burmuruk.Tesis.UI
                     continue;
                 }
 
-                btn.SetId(btnId);
-                btn.OnPointerEnterEvent += SelectBtnColor;
-                btn.onClick.AddListener(ChangeColor);
-                btnColorsDict.Add(btnId, btn.GetComponent<Image>());
+                if (shouldInit)
+                    InitColorButton(btn, in btnId);
 
-                btnColorsDict[btnId].color = customization.Colors[i];
+                btnColorsDict[btn.GetId()].color = customization.Colors[i];
                 btn.gameObject.SetActive(true);
                 btnId++; 
             }
+        }
 
-            bool VerifyColor(int idx)
+        bool VerifyColor(int idx)
+        {
+            foreach (var player in players)
             {
-                foreach (var player in players)
-                {
-                    if (player.stats.Color == customization.Colors[idx])
-                        return false;
-                }
-
-                return true;
+                if (player.stats.Color == customization.Colors[idx])
+                    return false;
             }
+
+            return true;
+        }
+
+        private void InitColorButton(MyItemButton btn, in int btnId)
+        {
+            btn.SetId(btnId);
+            btn.OnPointerEnterEvent += SelectBtnColor;
+            btn.onClick.AddListener(ChangeColor);
+            btnColorsDict.Add(btnId, btn.GetComponent<Image>());
         }
         #endregion
 
         #region Initialization
-        public void SetInventory(IInventory inventary)
+        public void SetInventory(IInventory inventory)
         {
-            this.inventory = inventary;
-            var inventoryDecorator = (inventary as InventoryEquipDecorator);
+            this.inventory = inventory;
 
-            inventoryDecorator.OnTryAlreadyEquiped += () =>
+            foreach (var player in players)
             {
-                curWarningProblem = WarningProblem.EquipEquiped;
-                ShowEquipedWarning();
-            };
-            inventoryDecorator.OnTryDeleteEquiped += () =>
-            {
-                curWarningProblem = WarningProblem.RemoveEquiped;
-                ShowDeleteEquipedWarning();
-            };
-            curInventoryTab = InventoryTab.Modifications;
+                var inventoryDecorator = (player.Inventory as InventoryEquipDecorator);
+
+                inventoryDecorator.OnTryAlreadyEquiped += () =>
+                {
+                    curWarningProblem = WarningProblem.EquipEquiped;
+                    ShowEquipedWarning();
+                };
+                inventoryDecorator.OnTryDeleteEquiped += () =>
+                {
+                    curWarningProblem = WarningProblem.RemoveEquiped;
+                    ShowDeleteEquipedWarning();
+                };
+            }
+            curInventoryTab = InventoryTab.Modifications; 
 
             ShowInventory();
             UpdateModsSprites();
@@ -713,18 +762,21 @@ namespace Burmuruk.Tesis.UI
 
         public void UnloadMenu()
         {
-            var inventoryDecorator = (inventory as InventoryEquipDecorator);
+            foreach (var player in players)
+            {
+                var inventoryDecorator = (player.Inventory as InventoryEquipDecorator);
 
-            inventoryDecorator.OnTryAlreadyEquiped -= () =>
-            {
-                curWarningProblem = WarningProblem.EquipEquiped;
-                ShowEquipedWarning();
-            };
-            inventoryDecorator.OnTryDeleteEquiped -= () =>
-            {
-                curWarningProblem = WarningProblem.RemoveEquiped;
-                ShowDeleteEquipedWarning();
-            };
+                inventoryDecorator.OnTryAlreadyEquiped -= () =>
+                {
+                    curWarningProblem = WarningProblem.EquipEquiped;
+                    ShowEquipedWarning();
+                };
+                inventoryDecorator.OnTryDeleteEquiped -= () =>
+                {
+                    curWarningProblem = WarningProblem.RemoveEquiped;
+                    ShowDeleteEquipedWarning();
+                }; 
+            }
         }
 
         public void SetPlayers(List<AIGuildMember> players)
@@ -741,7 +793,7 @@ namespace Burmuruk.Tesis.UI
             }
 
             ShowCharacters();
-            InitializeColorButtons();
+            UpdateColorButtons(true);
             //playersImg[1] = this.players[curPlayerIdx];
         }
 
@@ -749,10 +801,10 @@ namespace Burmuruk.Tesis.UI
         {
             if (inventory == null) return;
 
-            var mods = (from mod in inventory.GetOwnedList(ItemType.Modification)
+            var mods = (from mod in inventory.GetList(ItemType.Modification)
                        let equiped = (EquipeableItem)mod
                        where equiped != null && equiped.IsEquip && equiped.Characters.Contains(players[curPlayerIdx])
-                       select (Modification)inventory.GetOwnedItem(mod.ID)
+                       select (Modification)inventory.GetItem(mod.ID)
                        ).ToArray();
 
             int i = 0;
@@ -770,6 +822,7 @@ namespace Burmuruk.Tesis.UI
         }
         #endregion
 
+        #region Model
         public void RotatePlayer(Vector2 direction)
         {
             this.direction = direction;
@@ -778,7 +831,8 @@ namespace Burmuruk.Tesis.UI
         private void Rotate()
         {
             characterModel.transform.Rotate(Vector3.up, direction.x * rotationVelocity * -1);
-        }
+        } 
+        #endregion
 
         #region Abilities
         private void InitializeAbilityButtons()
@@ -828,7 +882,7 @@ namespace Burmuruk.Tesis.UI
 
                 btnAbilitiesDict.Add(idx, (image, id));
 
-                if (inventory.GetOwnedItem(id) is var item && item != null)
+                if (inventory.GetItem(id) is var item && item != null)
                 {
                     var ability = (Ability)item;
                     image.sprite = ability.Sprite;
@@ -860,7 +914,7 @@ namespace Burmuruk.Tesis.UI
 
         private void ShowAbilityInfo(int id)
         {
-            var ability = (Ability)inventory.GetOwnedItem(id);
+            var ability = (Ability)inventory.GetItem(id);
 
             txtAbilityTitle.text = ability.Name;
             txtAbilityInfo.text = ability.Description;
@@ -908,8 +962,8 @@ namespace Burmuruk.Tesis.UI
         {
             var slot = btnAbilitiesSlotDict[curAbiltySlot.Value];
 
-            var item = inventory.GetOwnedItem(slot.subType);
-            (inventory as InventoryEquipDecorator).Unequip(players[curPlayerIdx], (EquipeableItem)item);
+            var item = inventory.GetItem(slot.subType);
+            (players[curPlayerIdx].Inventory as InventoryEquipDecorator).Unequip(players[curPlayerIdx], (EquipeableItem)item);
 
             slot.image.sprite = defaultBTNSprite;
             btnAbilitiesSlotDict[curAbiltySlot.Value] = (slot.image, -1);
@@ -928,7 +982,7 @@ namespace Burmuruk.Tesis.UI
             curAbilityId = idx;
 
             var item = itemsList.Get(btnAbilitiesDict[idx].subType);
-            if (((InventoryEquipDecorator)inventory).TryEquip(players[curPlayerIdx], item))
+            if ((players[curPlayerIdx].Inventory as InventoryEquipDecorator).TryEquip(players[curPlayerIdx], item, out _))
             {
                 if (isAbilitySlotUsed)
                 {

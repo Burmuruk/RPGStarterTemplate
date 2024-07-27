@@ -10,7 +10,7 @@ namespace Burmuruk.Tesis.Stats
     {
         [Header("Status")]
         [SerializeField] bool initialized;
-        [Space(20), Header("Basic stats")]
+        [Space(), Header("Basic stats")]
         [SerializeField] public float speed;
         [SerializeField] int damage;
         [SerializeField] public float damageRate;
@@ -37,11 +37,11 @@ namespace Burmuruk.Tesis.Stats
         Dictionary<ItemType, int> slots;
 
         public bool Initilized { get => initialized; }
-        public float Speed { get => speed; }
-        public int Damage { get => damage; }
-        public float DamageRate { get =>  damageRate; }
+        public float Speed { get => speed; set => speed = value; }
+        public int Damage { get => damage; set => damage = value; }
+        public float DamageRate { get => damageRate; set => damageRate = value; }
         public Color Color { get => color; set => color = value; }
-        public float MinDistance { get => minDistance; }
+        public float MinDistance { get => minDistance; set => minDistance = value; }
 
         public void Initialize()
         {
@@ -51,6 +51,8 @@ namespace Burmuruk.Tesis.Stats
             {
                 slots.Add(slot.type, slot.maxAmount);
             }
+
+            initialized = true;
         }
 
         public int GetSlots(ItemType type)

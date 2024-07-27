@@ -15,6 +15,7 @@ namespace Burmuruk.Tesis.UI
     {
         [Header("References")]
         [SerializeField] PlayerManager playerManager;
+        [SerializeField] Camera mainCamera;
         PlayerController playerController;
 
         [Space()]
@@ -118,8 +119,8 @@ namespace Burmuruk.Tesis.UI
                 StackableNode lifeBar = pLife.Get();
                 playersLife.Add(player, lifeBar);
 
-                lifeBar.label.transform.parent.position = Camera.main.WorldToScreenPoint(player.transform.position);
-                UpdateHealth(player.Health.HP * 100 / player.Health.MaxHp, player);
+                lifeBar.label.transform.parent.position = mainCamera.WorldToScreenPoint(player.transform.position);
+                UpdateHealth(player.Health.HP, player);
                 lifeBar.label.transform.parent.gameObject.SetActive(false);
             }
         }
@@ -167,7 +168,7 @@ namespace Burmuruk.Tesis.UI
             foreach (var player in playerManager.Players)
             {
                 var position = Vector3.Lerp(playersLife[player].label.transform.parent.position,
-                    Camera.main.WorldToScreenPoint(player.transform.position + Vector3.up * 2),
+                    mainCamera.WorldToScreenPoint(player.transform.position + Vector3.up * 2),
                     Time.deltaTime * 20);
 
                 playersLife[player].label.transform.parent.position = position;
@@ -176,11 +177,11 @@ namespace Burmuruk.Tesis.UI
 
         private void UpdateHealth(float hp, AIGuildMember player)
         {
-            playersLife[player].image.fillAmount = hp / 100;
+            playersLife[player].image.fillAmount = hp / player.Health.MaxHp;
 
-            if (hp <= player.Health.MaxHp * .7f)
-                playersLife[player].image.transform.parent.gameObject.SetActive(true);
-        }
+            if (hp <= player.Health.MaxHp )
+                playersLife[player].image.transform.parent.parent.gameObject.SetActive(true);
+        } 
 
         private void ShowFormations(bool value)
         {
@@ -311,12 +312,12 @@ namespace Burmuruk.Tesis.UI
         {
             if (value)
             {
-                var inventary = playerManager.MainInventory;
+                var inventory = playerManager.MainInventory;
                 var curPlayer = playerManager.CurPlayer.GetComponent<Character>();
 
-                var abilities = (from ability in inventary.GetOwnedList(ItemType.Ability)
+                var abilities = (from ability in inventory.GetList(ItemType.Ability)
                                  where ((EquipeableItem)ability).Characters.Contains(curPlayer)
-                                 select (Ability)inventary.GetOwnedItem(ability.ID))
+                                 select (Ability)inventory.GetItem(ability.ID))
                              .ToArray();
 
                 int j = 0;
@@ -368,13 +369,15 @@ namespace Burmuruk.Tesis.UI
         {
             if (!pNotifications.container.activeSelf)
             {
-                pNotifications.container.transform.position = Camera.main.WorldToScreenPoint(itemPosition);
+                pNotifications.container.transform.position = mainCamera.WorldToScreenPoint(itemPosition);
                 pNotifications.container.SetActive(true);
             }
-
+            
             var panel = pNotifications.Get();
+            panel.label.text = itemName;
+
             var coolDown = new CoolDownAction(pNotifications.showingTime,
-                (value) => HideNotification(panel));
+                (_) => { HideNotification(panel); });
 
             cdNotifications.Add((panel, coolDown));
 

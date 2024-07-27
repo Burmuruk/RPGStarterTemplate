@@ -14,12 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_name: Knight Sword
   m_description: The ultimate sword.
-  m_type: 1
+  _type: 4
+  m_sprite: {fileID: 10901, guid: 0000000000000000f000000000000000, type: 0}
+  pickup: {fileID: 4177109510914828732, guid: eb1dd99c23ab41d4181940e955bad814, type: 3}
+  m_capacity: 99
   m_bodyPart: 4
-  prefab: {fileID: 932329894651717523, guid: c2016abb5e0578c469e036cf94598d26, type: 3}
-  m_damage: 1
-  m_rateDamage: 7
-  m_minDistance: 2
-  m_maxDistance: 4
+  weaponType: 1
+  m_damage: 10
+  m_rateDamage: 1
+  m_minDistance: 1
+  m_maxDistance: 1.5
   reloadTime: 0
   maxAmmo: 0

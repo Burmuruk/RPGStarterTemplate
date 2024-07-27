@@ -93,6 +93,7 @@ namespace Burmuruk.Tesis.Control
                 Time.timeScale = 0;
                 //SceneManager.SetActiveScene(scene);
                 var rootItems = SceneManager.GetSceneByBuildIndex(1).GetRootGameObjects();
+                GetComponentInChildren<Camera>().gameObject.SetActive(false);
 
                 foreach (var item in rootItems)
                 {
@@ -157,6 +158,7 @@ namespace Burmuruk.Tesis.Control
             if (menuCharacters.curState != UIMenuCharacters.State.None) return;
 
             menuCharacters.UnloadMenu();
+            GetComponentInChildren<Camera>(true).gameObject.SetActive(true);
 
             gameManager.ExitUI();
         }

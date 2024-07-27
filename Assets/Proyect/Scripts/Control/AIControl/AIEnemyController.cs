@@ -1,5 +1,6 @@
 ﻿using Burmuruk.Tesis.Combat;
 using Burmuruk.Tesis.Inventory;
+using Burmuruk.Tesis.Stats;
 using Burmuruk.Utilities;
 using Burmuruk.WorldG.Patrol;
 using System;
@@ -106,12 +107,6 @@ namespace Burmuruk.Tesis.Control.AI
             }
         }
 
-        protected virtual void Start()
-        {
-            SetAbilities();
-            //stats.OnDied += DropItem;
-        }
-
         protected override void FixedUpdate()
         {
             base.FixedUpdate();
@@ -139,6 +134,14 @@ namespace Burmuruk.Tesis.Control.AI
             curOrder = order;
         }
 
+        public override void SetStats(BasicStats stats)
+        {
+            base.SetStats(stats);
+
+            SetAbilities();
+            //statsList.OnDied += DropItem;
+        }
+
         protected override void PerceptionManager()
         {
             base.PerceptionManager();
@@ -146,7 +149,6 @@ namespace Burmuruk.Tesis.Control.AI
 
         protected override void DecisionManager()
         {
-            base.DecisionManager();
             if (playerAction == PlayerAction.Dead) return;
 
             try
@@ -265,10 +267,12 @@ namespace Burmuruk.Tesis.Control.AI
         private void SetAbilities()
         {
             var items = (inventory as InventoryEquipDecorator).Equipped.GetItems((int)EquipmentType.Ability);
+
+            if (items == null) return;
             
-            for (int i = 0; i < items.Count; i++)
+            foreach (var item in items)
             {
-                var ability = (Ability)items[i];
+                var ability = (Ability)item;
                 var cd = new CoolDownAction(ability.CoolDown);
 
                 abilities.Add(new AbiltyTrigger(ability, cd));

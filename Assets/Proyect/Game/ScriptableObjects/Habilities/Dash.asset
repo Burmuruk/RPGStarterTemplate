@@ -12,8 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4c3e54cf44c798e47b97f54a3813d8f8, type: 3}
   m_Name: Dash
   m_EditorClassIdentifier: 
-  speed: 10
-  type: 1
   m_name: Dash
   m_description: Moves fast
-  sprite: {fileID: 21300000, guid: 62d6e33d3b7a3c64aa2f24dc010cb087, type: 3}
+  _type: 2
+  m_sprite: {fileID: 10901, guid: 0000000000000000f000000000000000, type: 0}
+  pickup: {fileID: 0}
+  m_capacity: 1
+  type: 1
+  speed: 10
+  mode: 0
+  isHuman: 1
+  coolDown: 0.8

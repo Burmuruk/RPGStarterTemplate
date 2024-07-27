@@ -111,21 +111,20 @@ MonoBehaviour:
   closePercept: {fileID: 7190640923258741846}
   hasFarPerception: 1
   hasClosePerception: 1
-  bodyManager:
-    playerPrefab: {fileID: 0}
-    head: {fileID: 0}
-    back: {fileID: 0}
-    lArm: {fileID: 0}
-    rArm: {fileID: 0}
-    lLeg: {fileID: 0}
-    rLeg: {fileID: 0}
-    lFot: {fileID: 0}
-    rFot: {fileID: 0}
+  characterType: 2
   enemyTag: Player
   mover: {fileID: 0}
   fighter: {fileID: 0}
-  stats: {fileID: 0}
-  itemsList: {fileID: 11400000, guid: 0a3f3d7e1f9d8704e976c5edafce273f, type: 2}
+  stats:
+    initialized: 0
+    speed: 0
+    damage: 0
+    damageRate: 0
+    color: {r: 0, g: 0, b: 0, a: 0}
+    eyesRadious: 0
+    earsRadious: 0
+    minDistance: 0
+    m_slots: []
 --- !u!4 &2327318175012354995 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2785978298475701983, guid: 8309bf9444a004e4b854038f1c57a905,

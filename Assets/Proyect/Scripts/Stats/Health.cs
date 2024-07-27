@@ -15,6 +15,11 @@ namespace Burmuruk.Tesis.Stats
         public int HP { get => hp; }
         public int MaxHp { get => maxHp; }
 
+        private void Awake()
+        {
+            ModsList.AddVariable(GetComponent<Burmuruk.Tesis.Control.Character>(), ModifiableStat.HP, () => hp, (value) => { hp = (int)value; });
+        }
+
         public void ApplyDamage(int damage)
         {
             hp = math.max(hp - damage, 0);
@@ -22,6 +27,7 @@ namespace Burmuruk.Tesis.Stats
             if (hp <= 0)
             {
                 Die();
+                OnDied?.Invoke();
                 return;
             }
 

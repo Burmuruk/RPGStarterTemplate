@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Burmuruk.Tesis.Combat
 {
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Ability", order = 2)]
-    public class Ability : EquipeableItem
+    public class Ability : EquipeableItem, IUsable
     {
         [Header("Attributes")]
         [SerializeField] AbilityType type;

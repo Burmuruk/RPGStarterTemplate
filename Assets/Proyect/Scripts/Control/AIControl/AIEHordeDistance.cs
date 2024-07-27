@@ -1,4 +1,5 @@
-﻿using Burmuruk.Utilities;
+﻿using Burmuruk.Tesis.Stats;
+using Burmuruk.Utilities;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -16,14 +17,17 @@ namespace Burmuruk.Tesis.Control.AI
         List<AIEnemyController> hordeMembers = new();
         bool troopsDeployed;
 
-        protected override void Start()
+        protected override void Awake()
         {
-            base.Start();
+            base.Awake();
+            Initialize();
+        }
 
-            cdHorde = new CoolDownAction(coolDownHorde);
-            cdHordeInkoke = new CoolDownAction(hordeInvokeTime);
-            health.OnDamaged += (_) => DelayHorde();
-            health.OnDied += ReleaseHorde;
+        public override void SetStats(BasicStats stats)
+        {
+            Initialize();
+
+            base.SetStats(stats);
         }
 
         protected override void DecisionManager()
@@ -100,6 +104,13 @@ namespace Burmuruk.Tesis.Control.AI
             }
         }
 
+        private void Initialize()
+        {
+            cdHorde = new CoolDownAction(coolDownHorde);
+            cdHordeInkoke = new CoolDownAction(hordeInvokeTime);
+            health.OnDamaged += (_) => DelayHorde();
+        }
+
         private void SetHordePositions()
         {
             troopsDeployed = true;
@@ -115,9 +126,17 @@ namespace Burmuruk.Tesis.Control.AI
             }
         }
 
+        protected override void Dead()
+        {
+            ReleaseHorde();
+
+            base.Dead();
+        }
+
         private void ReleaseHorde()
         {
             hordeMembers.ForEach(enemy => enemy.SetOrder(LeaderOrder.None));
+            gameObject.SetActive(false);
         }
 
         private void DelayHorde()

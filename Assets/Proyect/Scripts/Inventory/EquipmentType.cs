@@ -6,7 +6,8 @@
         Body,
         Helmet,
         Chest,
-        Weapon,
+        WeaponR,
+        WeaponL,
         QuickItem,
         Ability
     }

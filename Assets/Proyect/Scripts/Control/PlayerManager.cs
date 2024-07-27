@@ -13,6 +13,7 @@ namespace Burmuruk.Tesis.Control
 {
     class PlayerManager : MonoBehaviour, IJsonSaveable
     {
+        [SerializeField] CharacterProgress progress;
         [SerializeField] PlayerCustomization customization;
 
         List<AIGuildMember> players;
@@ -38,7 +39,7 @@ namespace Burmuruk.Tesis.Control
                 return players;
             }
         }
-        public IInventory playerInventary
+        public IInventory playerInventory
         {
             get
             {
@@ -74,7 +75,13 @@ namespace Burmuruk.Tesis.Control
             
             foreach (var player in Players)
             {
-                player.Inventory = MainInventory;
+                (player.Inventory as InventoryEquipDecorator).SetInventory((Inventory.Inventory)MainInventory);
+                
+                var lastColor = player.stats.color;
+                player.SetStats(progress.GetDataByLevel(CharacterType.Player, 0));
+                player.stats.color = lastColor;
+
+                player.SetUpMods();
             }
         }
 
@@ -89,7 +96,7 @@ namespace Burmuruk.Tesis.Control
             {
                 EnableIAInRestOfPlayers(idx);
 
-                //players[idx].enabled = false;
+                players[idx].enabled = false;
                 players[idx].EnableControll();
                 playerController.SetPlayer(players[idx]);
 
@@ -102,7 +109,7 @@ namespace Burmuruk.Tesis.Control
 
         public void UseItem(int id)
         {
-            var item = MainInventory.GetOwnedItem(id);
+            var item = MainInventory.GetItem(id);
 
             if (item == null) return;
 
@@ -130,7 +137,7 @@ namespace Burmuruk.Tesis.Control
         {
             players.ForEach(p =>
             {
-                //p.enabled = true;
+                p.enabled = true;
                 p.DisableControll();
                 p.SetMainPlayer(players[mainPlayerIdx]);
                 p.Fellows = players.Where(fellow => fellow != p && p != players[mainPlayerIdx]).ToArray();
@@ -220,13 +227,13 @@ namespace Burmuruk.Tesis.Control
 
             //List<Color> usedColors = new();
 
-            //players.ForEach(p => usedColors.Add(p.stats.Color));
+            //players.ForEach(p => usedColors.AddVariable(p.statsList.Color));
 
             //var availableColors = (from color in playerColors where !usedColors.Contains(color) select color).ToList();
 
             //var selectedColorIdx = UnityEngine.Random.Range(0, availableColors.MaxCount);
 
-            //member.stats.Color = playerColors[selectedColorIdx];
+            //member.statsList.Color = playerColors[selectedColorIdx];
         }
 
         public JToken CaptureAsJToken()

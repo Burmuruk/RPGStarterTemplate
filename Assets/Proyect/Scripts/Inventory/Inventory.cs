@@ -10,6 +10,7 @@ namespace Burmuruk.Tesis.Inventory
     {
         [Header("Status")]
         [SerializeField] ItemsList m_ItemsList;
+        [SerializeField] InventoryItem[] startingItems;
 
         int id;
         bool isPersistentData = false;
@@ -24,6 +25,7 @@ namespace Burmuruk.Tesis.Inventory
         private void Awake()
         {
             id = GetHashCode();
+            Initialize();
         }
 
         public object CaptureState()
@@ -39,7 +41,7 @@ namespace Burmuruk.Tesis.Inventory
         {
             if (m_owned.ContainsKey(id))
             {
-                if (m_owned[id].count < m_owned[id].item.Capacity)
+                if (m_owned[id].count >= m_owned[id].item.Capacity)
                     return false;
 
                 m_owned[id] = (
@@ -67,14 +69,14 @@ namespace Burmuruk.Tesis.Inventory
             return true;
         }
 
-        public List<InventoryItem> GetOwnedList(ItemType type)
+        public List<InventoryItem> GetList(ItemType type)
         {
             return (from inventoryItem in m_owned.Values
                     where inventoryItem.item.Type == type
                     select inventoryItem.item).ToList();
         }
 
-        public InventoryItem GetOwnedItem(int id)
+        public InventoryItem GetItem(int id)
         {
             if (m_owned.ContainsKey(id))
             {
@@ -93,19 +95,16 @@ namespace Burmuruk.Tesis.Inventory
 
             return 0;
         }
-    }
 
-    public enum ItemType
-    {
-        None,
-        Consumable,
-        Ability,
-        Modification,
-        Weapon
-    }
+        private void Initialize()
+        {
+            if (startingItems == null || startingItems.Length == 0)
+                return;
 
-    public interface IUsable
-    {
-        void Use(object args, Action callback);
+            foreach (var item in startingItems)
+            {
+                Add(item.ID);
+            }
+        }
     }
 }

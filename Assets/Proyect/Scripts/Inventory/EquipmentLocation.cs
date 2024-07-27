@@ -6,6 +6,6 @@
         Abilities,
         Body,
         Weapon,
-
+        Items
     }
 }

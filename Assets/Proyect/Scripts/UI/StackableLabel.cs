@@ -23,7 +23,7 @@ namespace Burmuruk.Tesis.UI
 
         public void Initialize()
         {
-            pool = new(CreateElement, GetElement, ReleaseElement, RemoveElement, defaultCapacity: amount, maxSize: maxAmount);
+            pool = new ObjectPool<StackableNode>(CreateElement, GetElement, ReleaseElement, RemoveElement, defaultCapacity: amount, maxSize: maxAmount);
             activeNodes = new List<StackableNode>();
         }
 
@@ -77,10 +77,10 @@ namespace Burmuruk.Tesis.UI
                 newLabel = UnityEngine.MonoBehaviour.Instantiate(node.label.transform.parent.gameObject, node.label.transform.parent.parent);
             }
 
-            var all = newLabel.GetComponentsInChildren<Image>();
+            var all = newLabel.GetComponentsInChildren<Image>(true);
             Image newImage = null;
             foreach (var image in all)
-                if (image.transform != newLabel.transform)
+                if (image.transform.name == "MainItemImage")
                 {
                     newImage = image;
                     break;
