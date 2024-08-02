@@ -57,6 +57,9 @@ namespace Burmuruk.Tesis.Movement
         {
             get
             {
+                if (m_state == MovementState.Calculating)
+                    return true;
+
                 if (m_state == MovementState.Moving || m_state == MovementState.FollowingPath)
                     return true;
 
@@ -120,42 +123,36 @@ namespace Burmuruk.Tesis.Movement
 
                 m_state = MovementState.FollowingPath;
 
-                try
-                {
-                    m_pathFinder.Find_BestRoute<AStar>((curNodePosition, point));
-                }
-                catch (NullReferenceException)
-                {
-                    m_state = MovementState.None;
-                    FinishAction();
-                }
+                m_pathFinder.Find_BestRoute<AStar>((curNodePosition, point));
 
-                //var nearest = nodeList.FindNearestNode(point);
-
-                //if (nearest == null)
-                //{
-                //    m_state = MovementState.Moving;
-                //    return;
-                //}
-
-                //if (nodeList.ValidatePosition(point, nearest))
-                //{
-                //    target = point;
-                //    //m_pathFinder.Find_BestRoute<AStar>((transform.position, target)); 
-                //}
-                //else
-                //{
-                //    m_state = MovementState.None;
-                //    return;
-                //    target = nearest.Position;
-                //    m_pathFinder.Find_BestRoute<AStar>((transform.position, nearest.Position));
-                //}
+                m_scheduler.AddAction(this, ActionPriority.Low);
             }
-            catch (Exception e)
+            catch (NullReferenceException)
             {
                 m_state = MovementState.None;
-                throw e;
+                FinishAction();
             }
+
+            //var nearest = nodeList.FindNearestNode(point);
+
+            //if (nearest == null)
+            //{
+            //    m_state = MovementState.Moving;
+            //    return;
+            //}
+
+            //if (nodeList.ValidatePosition(point, nearest))
+            //{
+            //    target = point;
+            //    //m_pathFinder.Find_BestRoute<AStar>((transform.position, target)); 
+            //}
+            //else
+            //{
+            //    m_state = MovementState.None;
+            //    return;
+            //    target = nearest.Position;
+            //    m_pathFinder.Find_BestRoute<AStar>((transform.position, nearest.Position));
+            //}
         }
 
         public void FollowWithDistance(Movement target, float gap, params Character[] fellows)
@@ -163,7 +160,7 @@ namespace Burmuruk.Tesis.Movement
             if (IsMoving) return;
 
             Vector3 point = SteeringBehaviours.GetFollowPosition(target, this, gap, fellows);
-            m_state = MovementState.FollowingPath;
+            m_state = MovementState.Calculating;
 
             try
             {
@@ -182,17 +179,11 @@ namespace Burmuruk.Tesis.Movement
         {
             if (IsMoving) FinishAction();
 
-            try
-            {
-                curNodePosition = nodeList.FindNearestNode(point);
+            curNodePosition = nodeList.FindNearestNode(point);
 
-                if (curNodePosition == null) return;
+            if (curNodePosition == null) return;
 
-                agent.position = curNodePosition.Position;
-            }
-            catch (NullReferenceException)
-            {
-            }
+            agent.position = curNodePosition.Position;
         }
 
 
@@ -227,7 +218,7 @@ namespace Burmuruk.Tesis.Movement
         {
             if (!m_scheduler.Initilized) return;
 
-            //m_scheduler.Start(this);
+            m_scheduler.AddAction(this, ActionPriority.Low);
         }
 
         public void PauseAction()
@@ -242,13 +233,13 @@ namespace Burmuruk.Tesis.Movement
 
         public void CancelAction()
         {
-            throw new NotImplementedException();
+            m_state = MovementState.None;
         }
 
         public void StopAction()
         {
             if (m_state == MovementState.FollowingPath)
-            FinishAction();
+                FinishAction();
         }
 
         public void FinishAction()
