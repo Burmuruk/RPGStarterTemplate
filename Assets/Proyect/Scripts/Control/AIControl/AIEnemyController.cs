@@ -15,7 +15,7 @@ namespace Burmuruk.Tesis.Control.AI
         protected AIEnemyController leader;
         protected List<(float value, Character enemy)> rage;
         protected List<AbiltyTrigger> abilities = new();
-        PatrolController patrolController;
+        [SerializeField] PatrolController patrolController;
 
         protected PlayerAction playerAction;
         protected AttackState attackState;
@@ -176,17 +176,10 @@ namespace Burmuruk.Tesis.Control.AI
 
         protected virtual void CheckPatrolPath()
         {
-            var collides = Physics.OverlapSphere(transform.position, 2);
+            if (!patrolController) return;
 
-            foreach (var collider in collides)
-            {
-                if (collider.GetComponent<Spline>() is var spline && spline)
-                {
-                    patrolController ??= GetComponent<PatrolController>();
-
-                    
-                }
-            }
+            playerAction = PlayerAction.Patrol;
+            //mover.MoveTo(patrolController.NextPoint.position);
         }
 
         protected virtual void CheckLeader()

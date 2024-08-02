@@ -5,24 +5,20 @@ namespace Burmuruk.WorldG.Patrol
 {
     public interface INodeListSupplier
     {
-        public Vector3 StartNode { get; }
-        public Vector3 EndNode { get; }
-        public IEnumerable<IPathNode> Nodes { get; }
+        public float NodeDistance { get; }
+        public float PlayerRadious { get; }
+        public float MaxAngle { get; }
+        public bool Initilized { get; }
+        //public IEnumerable<IPathNode> Nodes { get; }
 
-        public void SetTarget(IPathNode[] nodes, float pRadious = .2f, float maxDistance = 2, float maxAngle = 45, float height = 1);
+        public void SetTarget(float pRadious = .2f, float maxDistance = 2, float maxAngle = 45, float height = 1);
 
         public IPathNode FindNearestNode(Vector3 start);
 
         public bool ValidatePosition(Vector3 position, IPathNode nearestPoint);
 
-        public void CalculateNodesConnections();
-
-        public void Clear();
-
-        public void ClearNodeConnections();
-
         public void SetNodes(ICollection<IPathNode> nodes);
 
-        public void SetConnections(IPathNode[][][] connections);
+        public void SetConnections(IPathNode[] connections);
     }
 }

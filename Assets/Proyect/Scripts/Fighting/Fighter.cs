@@ -62,7 +62,9 @@ namespace Burmuruk.Tesis.Combat
 
             if (cdBasicAttack.CanUse)
             {
+
                 m_targetHealth.ApplyDamage(m_Stats.Damage);
+                if (!gameObject.activeSelf) return;
                 StartCoroutine(cdBasicAttack.CoolDown());
             }
         }

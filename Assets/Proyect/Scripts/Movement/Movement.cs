@@ -2,6 +2,7 @@
 using Burmuruk.Tesis.Control;
 using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
+using Burmuruk.Tesis.Utilities;
 using Burmuruk.WorldG.Patrol;
 using System;
 using System.Collections.Generic;
@@ -18,26 +19,32 @@ namespace Burmuruk.Tesis.Movement
     }
 
     [RequireComponent(typeof(Rigidbody))]
-    public class Movement : MonoBehaviour, IMoveAction
+    public class Movement : MonoBehaviour, IScheduledAction
     {
         [SerializeField] float m_maxVel; 
         [SerializeField] float m_maxSteerForce;
         [SerializeField] float m_threshold;
+        [SerializeField] float m_slowingRadious;
 
         Rigidbody m_rb;
         BasicStats stats;
         InventoryEquipDecorator m_inventory;
-        MovementSchuduler m_scheduler;
+        ActionScheduler m_scheduler;
         PathFinder m_pathFinder;
         INodeListSupplier nodeList;
 
         Vector3 target = Vector3.zero;
+        Vector3 destiny = Vector3.zero;
         public float wanderDisplacement;
         public float wanderRadious;
         public bool usePathFinding = false;
         bool m_canMove = false;
         MovementState m_state = MovementState.None;
-        IPathNode m_curNode;
+        IPathNode m_pathNodeTarget;
+        IPathNode curNodePosition = null;
+        int curNodeIdx;
+        int nodeIdxSlowingRadious;
+        Collider col;
         
         LinkedList<IPathNode> m_curPath;
         IEnumerator<IPathNode> enumerator;
@@ -57,22 +64,23 @@ namespace Burmuruk.Tesis.Movement
             }
         }
 
-        float SlowingRadious
+        float Threshold
         {
             get
             {
                 if (m_inventory == null)
-                    return 3;
+                    return m_threshold;
 
                 return stats.MinDistance;
             }
         }
 
+        float SlowingRadious => Threshold + m_slowingRadious;
+
         #region Unity mehthods
         private void Awake()
         {
             m_rb = GetComponent<Rigidbody>();
-            m_scheduler = new MovementSchuduler();
 
             //m_patrolController = gameObject.GetComponent<PatrolController>();
             //m_patrolController.OnFinished += m_patrolController.Execute_Tasks;
@@ -81,13 +89,15 @@ namespace Burmuruk.Tesis.Movement
         private void FixedUpdate()
         {
             Move();
+            col = GetComponent<Collider>();
         } 
         #endregion
 
-        public void Initlize(InventoryEquipDecorator inventory, BasicStats stats)
+        public void Initialize(InventoryEquipDecorator inventory, ActionScheduler scheduler, BasicStats stats)
         {
             this.stats = stats;
             this.m_inventory = inventory;
+            m_scheduler = scheduler;
         }
 
         public void SetConnections(INodeListSupplier nodeList)
@@ -95,31 +105,8 @@ namespace Burmuruk.Tesis.Movement
             m_pathFinder = new PathFinder(nodeList);
             this.nodeList = nodeList;
 
-            m_pathFinder.OnPathCalculated += () =>
-            {
-                if (m_pathFinder.BestRoute == null || m_pathFinder.BestRoute.Count == 0)
-                {
-                    FinishAction();
-                    return;
-                }
-
-                m_state = MovementState.FollowingPath;
-                m_curPath = m_pathFinder.BestRoute;
-                if (!GetNextNode())
-                {
-                    FinishAction();
-                    return;
-                }
-
-                IPathNode lastNode = null;
-                foreach (var node in m_pathFinder.BestRoute)
-                {
-                    if (lastNode != null)
-                        UnityEngine.Debug.DrawLine(lastNode.Position, node.Position, Color.black, 5);
-
-                    lastNode = node;
-                }
-            };
+            m_pathFinder.OnPathCalculated += SetPath;
+            curNodePosition = nodeList.FindNearestNode(transform.position);
         }
 
         public void MoveTo(Vector3 point)
@@ -129,26 +116,40 @@ namespace Burmuruk.Tesis.Movement
 
             try
             {
-                var nearest = nodeList.FindNearestNode(point);
+                curNodePosition ??= nodeList.FindNearestNode(transform.position);
 
-                if (nearest == null)
-                {
-                    m_state = MovementState.Moving;
-                    return;
-                }
+                m_state = MovementState.FollowingPath;
 
-                if (nodeList.ValidatePosition(point, nearest))
+                try
                 {
-                    target = point;
-                    //m_pathFinder.Find_BestRoute<AStar>((transform.position, target)); 
+                    m_pathFinder.Find_BestRoute<AStar>((curNodePosition, point));
                 }
-                else
+                catch (NullReferenceException)
                 {
                     m_state = MovementState.None;
-                    return;
-                    target = nearest.Position;
-                    m_pathFinder.Find_BestRoute<AStar>((transform.position, nearest.Position));
+                    FinishAction();
                 }
+
+                //var nearest = nodeList.FindNearestNode(point);
+
+                //if (nearest == null)
+                //{
+                //    m_state = MovementState.Moving;
+                //    return;
+                //}
+
+                //if (nodeList.ValidatePosition(point, nearest))
+                //{
+                //    target = point;
+                //    //m_pathFinder.Find_BestRoute<AStar>((transform.position, target)); 
+                //}
+                //else
+                //{
+                //    m_state = MovementState.None;
+                //    return;
+                //    target = nearest.Position;
+                //    m_pathFinder.Find_BestRoute<AStar>((transform.position, nearest.Position));
+                //}
             }
             catch (Exception e)
             {
@@ -166,7 +167,9 @@ namespace Burmuruk.Tesis.Movement
 
             try
             {
-                m_pathFinder.Find_BestRoute<AStar>((transform.position, point));
+                curNodePosition ??= nodeList.FindNearestNode(transform.position);
+
+                m_pathFinder.Find_BestRoute<AStar>((curNodePosition, point));
             }
             catch (NullReferenceException)
             {
@@ -181,11 +184,11 @@ namespace Burmuruk.Tesis.Movement
 
             try
             {
-                var nearest = nodeList.FindNearestNode(point);
+                curNodePosition = nodeList.FindNearestNode(point);
 
-                if (nearest == null) return;
+                if (curNodePosition == null) return;
 
-                agent.position = nearest.Position;
+                agent.position = curNodePosition.Position;
             }
             catch (NullReferenceException)
             {
@@ -220,20 +223,32 @@ namespace Burmuruk.Tesis.Movement
             return m_maxSteerForce;
         }
 
-        public void StopAction()
-        {
-            if (m_state == MovementState.FollowingPath)
-            FinishAction();
-        }
-
         public void StartAction()
         {
-            throw new System.NotImplementedException();
+            if (!m_scheduler.Initilized) return;
+
+            //m_scheduler.Start(this);
         }
 
         public void PauseAction()
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
+        }
+
+        public void ContinueAction()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void CancelAction()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void StopAction()
+        {
+            if (m_state == MovementState.FollowingPath)
+            FinishAction();
         }
 
         public void FinishAction()
@@ -242,7 +257,7 @@ namespace Burmuruk.Tesis.Movement
             m_state = MovementState.None;
             m_curPath = null;
             enumerator = null;
-            m_curNode = null;
+            m_pathNodeTarget = null;
         }
 
         public void Flee()
@@ -260,24 +275,34 @@ namespace Burmuruk.Tesis.Movement
             if (!m_canMove && !IsMoving) return;
 
             m_rb.velocity = SteeringBehaviours.Seek2D(this, target);
-            var pos1 = new Vector3(transform.position.x, 0, transform.position.z);
-            var pos2 = new Vector3(target.x, 0, target.z);
-
-            if (Vector3.Distance(pos1, pos2) is var d && d > SlowingRadious)
-            {
-                CurDirection = m_rb.velocity.normalized;
-            }
-            else if (d <= m_threshold && 
+            var pos1 = transform.position + Vector3.down * col.bounds.extents.y;
+            var pos2 = target;
+            float d = Vector3.Distance(pos1, pos2);
+            
+            if (d <= SlowingRadious &&
                 (m_state == MovementState.Moving ||
-                (m_state == MovementState.FollowingPath && !GetNextNode())))
+                (m_state == MovementState.FollowingPath && curNodeIdx >= nodeIdxSlowingRadious)))
             {
+                m_rb.velocity = SteeringBehaviours.Arrival(this, destiny, SlowingRadious, Threshold);
+                CurDirection = Vector3.zero;
+            }
+            else
+            if (d <= Threshold &&
+                m_state == MovementState.Moving)
+            {
+                curNodePosition = m_pathNodeTarget;
                 FinishAction();
             }
-            else if (m_state == MovementState.Moving ||
-                (m_state == MovementState.FollowingPath && m_curNode.ID != m_curPath.Last.Value.ID))
+            if (d <= Threshold && m_state == MovementState.FollowingPath)
             {
-                m_rb.velocity = SteeringBehaviours.Arrival(this, target, SlowingRadious, m_threshold);
-                CurDirection = Vector3.zero;
+                if (!GetNextNode())
+                    FinishAction();
+                else
+                    curNodePosition = m_pathNodeTarget;
+            }
+            else
+            {
+                CurDirection = m_rb.velocity.normalized;
             }
 
             SteeringBehaviours.LookAt(transform, new(m_rb.velocity.x, 0, m_rb.velocity.z));
@@ -290,17 +315,50 @@ namespace Burmuruk.Tesis.Movement
                 if (enumerator == null)
                 {
                     enumerator = m_curPath.GetEnumerator();
+                    curNodeIdx = 0;
                 }
 
                 if (enumerator.MoveNext())
                 {
                     target = enumerator.Current.Position;
-                    m_curNode = enumerator.Current;
+                    m_pathNodeTarget = enumerator.Current;
+                    curNodeIdx++;
                     return true;
                 }
             }
 
             return false;
+        }
+
+        private void SetPath()
+        {
+            if (m_pathFinder.BestRoute == null || m_pathFinder.BestRoute.Count == 0)
+            {
+                FinishAction();
+                return;
+            }
+
+            m_state = MovementState.FollowingPath;
+            m_curPath = m_pathFinder.BestRoute;
+
+            if (!GetNextNode())
+            {
+                FinishAction();
+                return;
+            }
+
+            var minNodes = Mathf.Max((int)MathF.Round(SlowingRadious / nodeList.NodeDistance), 0);
+            nodeIdxSlowingRadious = m_curPath.Count - minNodes;
+            destiny = m_curPath.Last.Value.Position;
+
+            IPathNode lastNode = null;
+            foreach (var node in m_pathFinder.BestRoute)
+            {
+                if (lastNode != null)
+                    UnityEngine.Debug.DrawLine(lastNode.Position, node.Position, Color.black, 5);
+
+                lastNode = node;
+            }
         }
     }
 }

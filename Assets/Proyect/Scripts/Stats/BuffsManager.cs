@@ -1,8 +1,10 @@
 ﻿using Burmuruk.Tesis.Control;
 using Burmuruk.Utilities;
-using System.Collections;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.TextCore.Text;
 
 namespace Burmuruk.Tesis.Stats
 {
@@ -10,7 +12,7 @@ namespace Burmuruk.Tesis.Stats
     {
         [SerializeField] int timersCount = 30;
         private Queue<CoolDownAction> timers = new();
-        private List<(Character character, Coroutine coroutine, CoolDownAction cd)> runningTimers = new();
+        private Dictionary<CoolDownAction, (Control.Character character, Coroutine coroutine)> runningTimers = new();
 
         public static BuffsManager Instance { get; private set; }
 
@@ -24,7 +26,7 @@ namespace Burmuruk.Tesis.Stats
                 Destroy(this);
         }
 
-        public void AddBuff(Character character, ModifiableStat type, float value, float time = 0)
+        public void AddBuff(Control.Character character, ModifiableStat type, float value, float time = 0)
         {
             var mod = (float)value;
 
@@ -32,42 +34,42 @@ namespace Burmuruk.Tesis.Stats
             {
                 if (timers.Count <= 0) return;
 
-                SetTimer(value);
+                SetTimer(character, type, mod, time);
             }
 
             ModsList.AddModification(character, type, mod);
-
-            void SetTimer(float mod)
-            {
-                var coolDown = timers.Dequeue();
-                coolDown.ResetAttributes(time, (_) => RemoveBuff(coolDown, character, type, mod));
-
-                var coroutine = StartCoroutine(coolDown.CoolDown());
-                runningTimers.Add((character, coroutine, coolDown));
-            }
         }
 
-        public void RemoveBuff(CoolDownAction coolDown, Character character, ModifiableStat type, float modification)
+        public void RemoveBuff(CoolDownAction coolDown, Control.Character character, ModifiableStat type, float modification)
         {
             ModsList.RemoveModification(character, type, modification);
-            timers.Enqueue(coolDown);
+            RemoveTimer(coolDown);
         }
 
-        public void RemoveAllBuffs(Character character)
+        public void RemoveAllBuffs(Control.Character character)
         {
             ModsList.RemoveAllModifications(character);
 
-            for (int i = 0; i < runningTimers.Count; i++)
-            {
-                if (runningTimers[i].character == character)
-                {
-                    StopCoroutine(runningTimers[i].coroutine);
-                    timers.Enqueue(runningTimers[i].cd);
+            var coolDowns = (from timer in runningTimers
+                            where timer.Value.character == character
+                            select timer.Key)
+                            .ToArray();
 
-                    runningTimers.RemoveAt(i);
-                    return;
-                }
+            foreach (var coolDown in coolDowns)
+            {
+                StopCoroutine(runningTimers[coolDown].coroutine);
+                RemoveTimer(coolDown);
             }
+        }
+
+        public void HealOverTime(Control.Character character, int value, float time, float tickTime)
+        {
+            var coolDown = timers.Dequeue();
+
+            coolDown.ResetAttributes(time, tickTime, () => character.Health.Heal(value), (_) => RemoveTimer(coolDown));
+
+            var coroutine = StartCoroutine(coolDown.Tick());
+            runningTimers.Add(coolDown, (character, coroutine));
         }
 
         private void Initilize()
@@ -78,6 +80,22 @@ namespace Burmuruk.Tesis.Stats
             {
                 timers.Enqueue(new CoolDownAction(0));
             }
+        }
+
+        void SetTimer(Control.Character character, ModifiableStat type, float mod, float time)
+        {
+            var coolDown = timers.Dequeue();
+
+            coolDown.ResetAttributes(time, (_) => RemoveBuff(coolDown, character, type, mod));
+
+            var coroutine = StartCoroutine(coolDown.CoolDown());
+            runningTimers.Add(coolDown, (character, coroutine));
+        }
+
+        private void RemoveTimer(CoolDownAction coolDown)
+        {
+            runningTimers.Remove(coolDown);
+            timers.Enqueue(coolDown);
         }
     }
 }

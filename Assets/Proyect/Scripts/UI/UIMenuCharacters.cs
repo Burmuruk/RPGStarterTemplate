@@ -173,7 +173,7 @@ namespace Burmuruk.Tesis.UI
             switch ((curElementLabels[idx].item.Type))
             {
                 case ItemType.Consumable:
-
+                    ConsumeItem(curElementLabels[idx].item);
                     break;
 
                 case ItemType.Ability:
@@ -187,6 +187,14 @@ namespace Burmuruk.Tesis.UI
                 default:
                     break;
             }
+        }
+
+        private void ConsumeItem(EquipeableItem equipable)
+        {
+            var item = (equipable as ConsumableItem);
+            int id = item.ID;
+
+            item.Use(players[curPlayerIdx], TryRemoveItem);
         }
 
         public void ElementCancelAction(int idx)

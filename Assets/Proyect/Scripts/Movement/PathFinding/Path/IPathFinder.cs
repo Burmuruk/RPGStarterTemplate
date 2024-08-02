@@ -8,7 +8,5 @@ namespace Burmuruk.AI.PathFinding
         LinkedList<IPathNode> Get_Route(IPathNode start, IPathNode end, out float distance);
 
         LinkedList<IPathNode> Find_Route(IPathNode start, IPathNode end, out float distance);
-
-        void SetNodeList(IEnumerable<IPathNode> nodes);
     } 
 }

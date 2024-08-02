@@ -34,16 +34,6 @@ namespace Burmuruk.AI.PathFinding
 
         public AStar() { }
 
-        public void SetNodeList(IEnumerable<IPathNode> nodes)
-        {
-            weights = new Dictionary<uint, Vector3>();
-
-            foreach (IPathNode node in nodes)
-            {
-                weights.Add(node.ID, node.Position);
-            }
-        }
-
         public void ClearWeights() => weights = null;
 
         public LinkedList<IPathNode> Get_Route(IPathNode start, IPathNode end, out float distance)
@@ -147,7 +137,7 @@ namespace Burmuruk.AI.PathFinding
                             ChangeState(NodeState.Waiting, next, ref data);
                         }
 
-                        float weight =  GetDistance(next.ID, lists.end.ID);
+                        float weight =  GetDistance(next, lists.end);
 
                         if (weight < minWeight.weight)
                             minWeight = (next, weight);
@@ -243,9 +233,9 @@ namespace Burmuruk.AI.PathFinding
             lists.data.Add(node, new NodeData(NodeState.Unchecked));
         }
 
-        private float GetDistance(uint idx, uint endIdx)
+        private float GetDistance(IPathNode cur, IPathNode next)
         {
-            return Vector3.Distance(weights[idx], weights[endIdx]);
+            return Vector3.Distance(cur.Position, next.Position);
         }
     }
 }

@@ -1,12 +1,9 @@
 ﻿using Burmuruk.AI.PathFinding;
 using Burmuruk.Collections;
-using Burmuruk.Tesis.Movement.PathFindig;
 using Burmuruk.WorldG.Patrol;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
-using UnityEditor;
 using UnityEngine;
 
 namespace Burmuruk.AI
@@ -19,23 +16,23 @@ namespace Burmuruk.AI
         deleting
     }
 
-    public class NodesList : MonoBehaviour, INodeListSupplier
+    public class NodesList : MonoBehaviour
     {
         #region Variables
         [Header("Nodes Settings")]
         [Space]
+        [SerializeField] float nodDistance = 3;
+        [SerializeField] float pRadious = .5f;
         [SerializeField] float maxAngle = 45;
         [SerializeField] bool showChanges = false;
 
         [Header("Mesh Settings")]
         [Space]
         [SerializeField] GameObject debugNode;
-        [SerializeField] float nodDistance = 3;
         [SerializeField] GameObject x1;
         [SerializeField] GameObject x2;
-        [SerializeField] bool createMesh = false;
+        [SerializeField] bool canCreateMesh = false;
         [SerializeField] bool showMeshZone = false;
-        [SerializeField] float pRadious = .5f;
         [SerializeField] bool phisicNodes = false;
         [SerializeField] int layer;
 
@@ -46,45 +43,27 @@ namespace Burmuruk.AI
 
         [Header("Saving Settings"), Space()]
         [SerializeField] public ScriptableObject pathWriter;
-        INodeListSaver writer;
         IPathNode[][][] connections;
 
         [Header("Status"), Space()]
         [SerializeField, Space()] uint nodeCount = 0;
-        public pState dijkstraState = pState.None;
         public pState meshState = pState.None;
         public pState connectionsState = pState.None;
         public pState memoryFreed = pState.None;
-
-        Dijkstra dijkstra;
-        bool nearestStart = false;
-        bool nearestEnd = false;
 
         List<(IPathNode node, IPathNode hitPos)> edgesToFix;
         private LinkedGrid<IPathNode> nodes;
         #endregion
 
         #region Properties
-        public bool CreateMesh { get => createMesh; set => createMesh = value; }
-        public bool HasDijkstra
-        {
-            get
-            {
-                if (dijkstra != null && dijkstra.Calculated)
-                    return true;
-                else
-                    return false;
-            }
-        }
-        public pState DijkstraState { get => dijkstraState; }
+        public bool CanCreateMesh { get => canCreateMesh; set => canCreateMesh = value; }
         public pState MeshState { get => meshState; set => meshState = value; }
         public pState ConnectionsState { get => connectionsState; }
         public bool AreProcessRunning
         {
             get
             {
-                if (dijkstraState == pState.running ||
-                    meshState == pState.running ||
+                if (meshState == pState.running ||
                     connectionsState == pState.running ||
                     memoryFreed == pState.running)
                     return true;
@@ -98,7 +77,6 @@ namespace Burmuruk.AI
             {
                 if (meshState == pState.deleting ||
                     connectionsState == pState.deleting ||
-                    dijkstraState == pState.deleting ||
                     memoryFreed == pState.running)
                     return true;
 
@@ -106,11 +84,6 @@ namespace Burmuruk.AI
                     return false;
             }
         }
-
-        public Vector3 StartNode => throw new NotImplementedException();
-
-        public Vector3 EndNode => throw new NotImplementedException();
-
         public IEnumerable<IPathNode> Nodes
         {
             get
@@ -118,6 +91,9 @@ namespace Burmuruk.AI
                 return nodes;
             }
         }
+        public float NodeDistance => nodDistance;
+        public float PlayerRadious => pRadious;
+        public float MaxAngle => maxAngle;
         #endregion
 
         #region Unity methods
@@ -129,7 +105,7 @@ namespace Burmuruk.AI
                 return;
             }
 
-            //if (createMesh)
+            //if (canCreateMesh)
             //    Create_PathMesh();
             //CalculateConnections();
         }
@@ -157,16 +133,13 @@ namespace Burmuruk.AI
 
             if (showMeshZone)
                 Draw_MeshZone();
-
-            if (drawPath && dijkstra != null && dijkstra.Calculated)
-                Draw_Dijkstra();
         }
         #endregion
 
         #region Public methods
         public void Calculate_PathMesh()
         {
-            if (!createMesh || AreProcessRunning || AreProcessDeleting) return;
+            if (!canCreateMesh || AreProcessRunning || AreProcessDeleting) return;
 
             Destroy_Nodes();
             meshState = pState.running;
@@ -180,40 +153,6 @@ namespace Burmuruk.AI
             ClearNodeConnections();
             connectionsState = pState.running;
             CalculateConnections();
-        }
-
-        public void Calculate_Dijkstra()
-        {
-            if (!startNode || !endNode) return;
-            if (AreProcessRunning || AreProcessDeleting) return;
-
-            nearestStart = startNode.GetComponent<IPathNode>() == null ? true : false;
-            nearestEnd = endNode.GetComponent<IPathNode>() == null ? true : false;
-
-
-
-            (IPathNode start, IPathNode end) = (nearestStart, nearestEnd) switch
-            {
-                (true, true) => (FindNearestNode(startNode.transform.position), FindNearestNode(endNode.transform.position)),
-                (true, false) => (FindNearestNode(startNode.transform.position), endNode.GetComponent<IPathNode>()),
-                (false, true) => (startNode.GetComponent<IPathNode>(), FindNearestNode(endNode.transform.position)),
-                _ => (startNode.GetComponent<IPathNode>(), endNode.GetComponent<IPathNode>())
-            };
-
-            if (dijkstra != null)
-                Clear_Dijkstra();
-
-            dijkstra = new Dijkstra(start, end);
-            dijkstraState = pState.running;
-            dijkstra.Start_Algorithm(out _);
-
-            Debug.DrawLine(start.Position, start.Position + Vector3.up * 25, Color.red, 10);
-            Debug.DrawLine(end.Position, end.Position + Vector3.up * 25, Color.red, 10);
-
-            if (dijkstra.Calculated)
-                dijkstraState = pState.finished;
-            else
-                dijkstraState = pState.None;
         }
 
         public void Destroy_Nodes()
@@ -235,7 +174,7 @@ namespace Burmuruk.AI
                 Destroy(node.gameObject);
             }
 
-            CreateMesh = true;
+            CanCreateMesh = true;
             meshState = pState.None;
         }
 
@@ -249,23 +188,7 @@ namespace Burmuruk.AI
             foreach (var node in nodes)
                 node.ClearConnections();
 
-            if (HasDijkstra)
-                Clear_Dijkstra();
-
             connectionsState = pState.None;
-        }
-
-        public void Clear_Dijkstra()
-        {
-            if (AreProcessDeleting || AreProcessRunning) return;
-
-            dijkstraState = pState.deleting;
-            var nodes = transform.GetComponentsInChildren<IPathNode>();
-
-            if (dijkstra != null)
-                dijkstra.Clear();
-
-            dijkstraState = pState.None;
         }
 
         public IPathFinder Get_PathTo(Vector3 destiny)
@@ -537,7 +460,7 @@ namespace Burmuruk.AI
                 }
             }
 
-            CreateMesh = false;
+            CanCreateMesh = false;
             meshState = pState.finished;
         }
 
@@ -674,162 +597,14 @@ namespace Burmuruk.AI
         }
         #endregion
 
-        #region Dijkstra
-        public IPathNode FindNearestNode(Vector3 start)
-        {
-            if (connections == null || connections.Length <= 0) return null;
-
-            (int x, int y, int z)? index = null;
-            int length = connections.Length - 1;
-            float dis;
-
-            for (int i = 0; i < connections.Length; i++)
-            {
-                if (i == length ||
-                    (start.x >= connections[i][0][0].Position.x && start.x < connections[i + 1][0][0].Position.x))
-                {
-                    RoundIdx(ref i, start.x, connections[i][0][0].Position.x);
-
-                    length = connections[i].Length - 1;
-
-                    for (int j = 0; j < connections[i].Length; j++)
-                    {
-                        if (j == length ||
-                            (start.z >= connections[i][j][0].Position.z))
-                        {
-                            RoundIdx(ref j, start.z, connections[i][j][0].Position.z);
-
-                            length = connections[i][j].Length - 1;
-
-                            for (int k = 0; k < connections[i][j].Length; k++)
-                            {
-                                if (k == length ||
-                                    (start.y >= connections[i][j][k].Position.y && start.y < connections[i][j][k + 1].Position.y))
-                                {
-                                    RoundIdx(ref k, start.y, connections[i][j][k].Position.y);
-
-                                    index = (i, j, k);
-                                    break;
-                                }
-                            }
-
-                            break;
-                        }
-                    }
-
-                    break;
-                }
-            }
-
-            return index.HasValue ? connections[index.Value.x][index.Value.y][index.Value.z] : null;
-
-            void RoundIdx(ref int idx, float max, float min)
-            {
-                dis = max - min;
-
-                if (dis > nodDistance / 2 && idx < length)
-                {
-                    ++idx;
-                }
-            }
-        }
-
-        public bool ValidatePosition(Vector3 position, IPathNode nearestPoint)
-        {
-            var curDirections = GetDirections(nearestPoint.Position, position);
-
-            if (curDirections.Count <= 0) return false;
-
-            foreach (var nextDir in nearestPoint.NodeConnections)
-            {
-                var directions = GetDirections(nearestPoint.Position, nextDir.node.Position);
-
-                foreach (var curdir in directions)
-                {
-                    bool founded = false;
-
-                    for (int i = 0; i < curDirections.Count; i++)
-                    {
-                        if (curdir == curDirections[i])
-                        {
-                            curDirections.Remove(curDirections[i]);
-                            founded = true;
-                            break;
-                        }
-                    }
-
-                    if (founded) break;
-                }
-
-                if (curDirections.Count <= 0)
-                    return true;
-            }
-
-            return false;
-
-            List<Direction> GetDirections(Vector3 curPos, Vector3 nextPos)
-            {
-                List<Direction> directions = new();
-
-                if (nextPos.x > curPos.x)
-                {
-                    directions.Add(Direction.Right);
-                }
-                else if (nextPos.x < curPos.x)
-                {
-                    directions.Add(Direction.Left);
-                }
-
-                if (nextPos.z > curPos.z)
-                {
-                    directions.Add(Direction.Next);
-                }
-                else if (nextPos.z < curPos.z)
-                {
-                    directions.Add(Direction.Previous);
-                }
-
-                return directions;
-            }
-        }
-
-        private void Draw_Dijkstra()
-        {
-            var path = dijkstra.ShortestPath;
-            var node = path.First;
-
-            for (int i = 0; i < path.Count - 1; i++)
-            {
-                Debug.DrawLine(node.Value.Position + Vector3.up, node.Next.Value.Position + Vector3.up, Color.black);
-
-                node = node.Next;
-            }
-        }
-
-        #endregion
 
         #region List supplier
-        public void SetTarget(IPathNode[] nodes, float pRadious = 0.2F, float maxDistance = 2, float maxAngle = 45, float height = 1)
-        {
-            this.connections = null;
-            this.pRadious = pRadious;
-            this.nodDistance = maxDistance;
-            this.maxAngle = maxAngle;
-            //this.distance = distance;
-
-            //CalculateNodesConnections();
-        }
 
         public void Clear() => nodes = null;
 
         public void SetNodes(ICollection<IPathNode> nodes)
         {
             this.nodes = (LinkedGrid<IPathNode>)nodes;
-        }
-
-        public void SetConnections(IPathNode[][][] nodes)
-        {
-            connections = nodes;
         }
 
         public IPathNode[][][] FreeMemory()
@@ -871,14 +646,14 @@ namespace Burmuruk.AI
                 connections = null;
                 connections = FreeMemory();
 
-                var nodeList = new NodeListSuplier();
+                var nodeList = new NodeListSuplier(connections);
                 //SerializedObject serializedObj = new UnityEditor.SerializedObject(pathWriter);
                 //SerializedProperty myList = serializedObj.FindProperty("m_nodeList");
 
-                nodeList.SetConnections(connections);
+                nodeList.SetTarget(pRadious, nodDistance, MaxAngle);
 
                 //myList.managedReferenceValue = nodeList;
-                saver.SaveList(this);
+                saver.SaveList(nodeList);
             }
         }
 

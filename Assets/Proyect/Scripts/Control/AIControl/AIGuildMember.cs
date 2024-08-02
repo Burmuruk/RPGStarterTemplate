@@ -109,6 +109,11 @@ namespace Burmuruk.Tesis.Control.AI
                     OnCombatStarted(false);
                 }
             }
+
+            if (m_target)
+            {
+                Debug.DrawRay(m_target.transform.position, Vector3.up * 5, Color.red);
+            }
         }
 
         public void DisableControll()

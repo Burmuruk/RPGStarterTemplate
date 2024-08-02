@@ -32,9 +32,6 @@ namespace Burmuruk.AI.PathFinding
 
         #endregion
 
-        public Vector3 Start { get => nodesList.StartNode; }
-        public Vector3 End { get => nodesList.EndNode; }
-
         #region public
         public LinkedList<IPathNode> BestRoute
         {
@@ -73,15 +70,27 @@ namespace Burmuruk.AI.PathFinding
             return algorithem.Get_Route(start, end, out distance);
         }
 
-        public void Find_BestRoute<T>(params (Vector3 start, Vector3 end)[] pairs) where T : IPathFinder, new()
+        public void Find_BestRoute<T>(params (IPathNode start, Vector3 end)[] pairs) where T : IPathFinder, new()
+        {
+            var nodes = new (IPathNode start, IPathNode end)[pairs.Length];
+
+            for (int i = 0; i < pairs.Length; i++)
+            {
+                nodes[i] = (pairs[i].start, nodesList.FindNearestNode(pairs[i].end));
+            }
+
+            Find_BestRoute<T>(nodes);
+        }
+
+        public void Find_BestRoute<T>(params (IPathNode start, IPathNode end)[] pairs) where T : IPathFinder, new()
         {
             if (isCalculating) return;
-            if (nodesList.Nodes == null) return;
+            if (!nodesList.Initilized || pairs == null) return;
 
             if (algorithem == null) algorithem = new T();
-            algorithem.SetNodeList(nodesList.Nodes);
+            //algorithem.SetNodeList(nodesList.Nodes);
             shorstestNodeIdx = null;
-            curNodes = new (IPathNode start, IPathNode end)[pairs.Length];
+            curNodes = pairs;
             var distances = new List<float>();
             Task<List<float>> task;
 
@@ -90,12 +99,12 @@ namespace Burmuruk.AI.PathFinding
             int idx = paths.Count;
             int idxDis = (routeSizes ??= new()).Count;
 
-            for (int i = 0; i < pairs.Length; i++)
-            {
-                curNodes[i].start = nodesList.FindNearestNode(pairs[i].start);
-                curNodes[i].end = nodesList.FindNearestNode(pairs[i].end);
-            }
-            
+            //for (int i = 0; i < pairs.Length; i++)
+            //{
+            //    curNodes[i].start = nodesList.FindNearestNode(pairs[i].start);
+            //    curNodes[i].end = nodesList.FindNearestNode(pairs[i].end);
+            //}
+
             isCalculating = true;
             task = Task.Run(() => GetAllRoutes(curNodes));
 
@@ -123,11 +132,11 @@ namespace Burmuruk.AI.PathFinding
             return;
         }
 
-        public void GoToEnd<T>(Vector3 start) where T : IPathFinder, new()
-        {
-            Find_BestRoute<T>((start, nodesList.EndNode));
+        //public void GoToEnd<T>(Vector3 start) where T : IPathFinder, new()
+        //{
+        //    Find_BestRoute<T>((start, nodesList.EndNode));
 
-        }
+        //}
 
         public Vector3? GetNextNode()
         {

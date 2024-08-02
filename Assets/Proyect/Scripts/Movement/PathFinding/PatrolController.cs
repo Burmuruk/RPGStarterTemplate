@@ -112,7 +112,7 @@ namespace Burmuruk.WorldG.Patrol
             this.finder = new PathFinder(nodeList);
         }
 
-        public void CreatePatrolWithSpline<T>(Vector3 start, Vector3 end, CyclicType cyclicType) where T : IPathFinder, new()
+        public void CreatePatrolWithSpline<T>(IPathNode start, Vector3 end, CyclicType cyclicType) where T : IPathFinder, new()
         {
             this.cyclicType = cyclicType;
             finder.OnPathCalculated += () =>

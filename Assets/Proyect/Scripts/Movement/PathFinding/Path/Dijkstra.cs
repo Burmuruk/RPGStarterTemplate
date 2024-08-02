@@ -42,11 +42,6 @@ namespace Burmuruk.AI.PathFinding
             this.end = end;
         }
 
-        public void SetNodeList(IEnumerable<IPathNode> nodes)
-        {
-
-        }
-
         public LinkedList<IPathNode> Get_Route(IPathNode start, IPathNode end, out float distance)
         {
             distance = 0.0f;
@@ -126,7 +121,7 @@ namespace Burmuruk.AI.PathFinding
                 foreach (var conection in cur.NodeConnections)
                 {
                     //if (conection.connectionType != ConnectionType.BIDIMENSIONAL) continue;
-                    float weight = conection.magnitude + curWeight;
+                    float weight = conection.Magnitude + curWeight;
                     var next = conection.node;
 
                     if (!data.ContainsKey(next) ||

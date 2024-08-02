@@ -337,56 +337,64 @@ namespace Burmuruk.Collections
             return true;
         }
 
+        //public IPathNode[] ToArray()
+        //{
+        //    if (Count <= 0) return null;
+
+        //    IPathNode[] connections = new IPathNode[count];
+        //    var curNode = First;
+
+        //    for (int i = 0; i < count;)
+        //    {
+        //        //LinkedGridNode<T> topNode;
+
+        //        //while (curNode[Direction.Up] is var top && top != null)
+        //        //    topNode = top;
+        //        var buttomNode = curNode;
+
+        //        do
+        //        {
+        //            connections[i] = buttomNode.GetNodeCopy();
+        //            buttomNode = buttomNode[Direction.Down];
+        //            i++;
+        //        }
+        //        while (buttomNode != null);
+
+        //        curNode = curNode[Direction.Next];
+        //    }
+
+        //    return connections;
+        //}
+
         public IPathNode[][][] ToArray()
         {
             if (Count <= 0) return null;
 
-            IPathNode[][][] connections = new IPathNode[count][][];
-            int columnSize = 0;
-            int x = -1;
-            var node2 = First;
+            IPathNode[][][] connections = new IPathNode[Headers.Count + 1][][];
+            var curNode = First;
+            int columnIdx = curNode.ColumnIdx;
 
-            try
+            for (int x = 0; x < Headers.Count;)
             {
-                for (int y = 0; node2 != null; y++)
+                columnIdx = curNode.ColumnIdx;
+                List<IPathNode[]> yNodes = new();
+
+                while (curNode != null && curNode.ColumnIdx == columnIdx)
                 {
-                    var curNode = node2;
-
-                    if (x + 1 < Headers.Count && curNode == Headers[x + 1])
+                    var zNode = curNode;
+                    List<IPathNode> zNodes = new();
+                    while (zNode != null)
                     {
-                        try
-                        {
-                            if (Headers.Count > x + 2)
-                                columnSize = checked((int)(Headers[x + 2].Node.ID - Headers[x + 1].Node.ID));
-                            else
-                                columnSize = checked((int)(last.ID - Headers[x + 1].Node.ID + 1));
-                        }
-                        catch (OverflowException)
-                        {
-                            throw new OverflowException();
-                        }
-
-                        connections[x + 1] = new IPathNode[columnSize][];
-                        ++x;
-                        y = 0;
+                        zNodes.Add(zNode.GetNodeCopy());
+                        zNode = zNode[Direction.Down];
                     }
 
-                    List<IPathNode> zNodes = null;
-                    for (int z = 0; curNode != null; z++)
-                    {
-                        zNodes ??= new();
-                        zNodes.Add(node2.GetNodeCopy());
-                        curNode = curNode[Direction.Down];
-                    }
-                    connections[x][y] = zNodes.ToArray();
-
-                    node2 = node2[Direction.Next];
+                    yNodes.Add(zNodes.ToArray());
+                    curNode = curNode[Direction.Next];
                 }
-            }
-            catch (ArgumentOutOfRangeException)
-            {
 
-                throw;
+                connections[x] = yNodes.ToArray();
+                ++x;
             }
 
             return connections;

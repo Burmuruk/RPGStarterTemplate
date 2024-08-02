@@ -13,17 +13,17 @@ MonoBehaviour:
   m_Name: HP
   m_EditorClassIdentifier: 
   m_name: "Poci\xF3n de vida"
-  m_description: Restaura 8 pts. de vida al instante.
+  m_description: Restaura 20 pts. de vida al instante.
   _type: 1
   m_sprite: {fileID: 10901, guid: 0000000000000000f000000000000000, type: 0}
   pickup: {fileID: 3215936145448414887, guid: 6c5539de2b89f1e4a98057d3a0b16058, type: 3}
   m_capacity: 99
-  consumableType: 1
-  mods:
+  buffs:
   - stat: 1
-    value: 20
-    duration: 0
-    rate: 0
-    multiplier: 0
+    value: 2
+    duration: 10
+    rate: 0.5
+    percentage: 0
+    affectAll: 0
   consumptionTime: 3
   areaRadious: 0

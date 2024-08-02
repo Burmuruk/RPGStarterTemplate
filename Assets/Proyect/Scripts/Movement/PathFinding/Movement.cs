@@ -84,7 +84,7 @@ namespace Burmuruk.WorldG.Patrol
     //    {
     //    }
 
-    //    void Start()
+    //    void StartAction()
     //    {
 
     //    }
@@ -93,7 +93,7 @@ namespace Burmuruk.WorldG.Patrol
     //    {
     //        if (canMove)
     //        {
-    //            if (target && Target.magnitude >= minDistance)
+    //            if (target && Target.Magnitude >= minDistance)
     //            {
     //                transform.Translate(Target * Time.deltaTime * speed, Space.World);
 
@@ -153,7 +153,7 @@ namespace Burmuruk.WorldG.Patrol
     //        this.target = target;
     //    }
 
-    //    public void Cancel() => Destiny = default;
+    //    public void CancelAction() => Destiny = default;
 
     //    public void TurnTo(Transform target)
     //    {

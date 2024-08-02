@@ -4,6 +4,7 @@ using UnityEngine;
 using Burmuruk.Tesis.Stats;
 using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Combat;
+using Burmuruk.Tesis.Utilities;
 
 namespace Burmuruk.Tesis.Control
 {
@@ -27,6 +28,7 @@ namespace Burmuruk.Tesis.Control
         [HideInInspector] public Movement.Movement mover;
         [HideInInspector] public Fighter fighter;
         [HideInInspector] public BasicStats stats = new();
+        [HideInInspector] public ActionScheduler actionScheduler = new();
         [HideInInspector] protected IInventory inventory;
 
         protected Collider[] eyesPerceibed, earsPerceibed;
@@ -99,7 +101,7 @@ namespace Burmuruk.Tesis.Control
             if (!fighter)
                 GetComponents();
             fighter.Initilize(invent, ref this.stats);
-            mover.Initlize(invent, this.stats);
+            mover.Initialize(invent, actionScheduler, this.stats);
         }
 
         protected virtual void PerceptionManager()

@@ -47,10 +47,17 @@ namespace Burmuruk.Tesis.Stats
 
             foreach (var mod in buffs)
             {
-                ModsList.AddModification(character, mod.stat, mod.value); 
-
-                BuffsManager.Instance.AddBuff(character, mod.stat, mod.value, mod.duration);
+                if (mod.stat == ModifiableStat.HP)
+                {
+                    BuffsManager.Instance.HealOverTime(character, (int)mod.value, mod.duration, mod.rate);
+                }
+                else
+                {
+                    BuffsManager.Instance.AddBuff(character, mod.stat, mod.value, mod.duration);
+                }
             }
+
+            callback?.Invoke();
         }
     }
 

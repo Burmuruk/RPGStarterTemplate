@@ -19,7 +19,7 @@ namespace Burmuruk.WorldG
         Vector4 hi;
 
 
-        // Start is called before the first frame update
+        // StartAction is called before the first frame update
         void Start()
         {
         }

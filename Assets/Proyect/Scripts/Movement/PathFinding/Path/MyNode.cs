@@ -16,21 +16,22 @@ namespace Burmuruk.WorldG.Patrol
     {
         public IPathNode node;
         public ConnectionType connectionType;
-        public float magnitude;
+        public float Magnitude { get; private set; }
         public uint id;
 
         public NodeConnection(ref IPathNode current, ref IPathNode node)
         {
             this.node = node;
             this.connectionType = ConnectionType.None;
-            this.magnitude = 0;
+            this.Magnitude = 0;
             id  = node.ID;
-            magnitude = DistanceBewtweenNodes(current, node);
+            Magnitude = DistanceBewtweenNodes(current, node);
         }
 
         public NodeConnection(ref IPathNode current, ref IPathNode node, float magnitude, ConnectionType type = ConnectionType.None) : this(ref current, ref node)
         {
             this.connectionType = type;
+            Magnitude = magnitude;
         }
 
         private float DistanceBewtweenNodes(IPathNode a, IPathNode b)
