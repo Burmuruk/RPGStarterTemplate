@@ -133,7 +133,7 @@ namespace Burmuruk.Tesis.Control.AI
             this.formation = formation;
 
             formationArgs = args;
-            print ("Current formation: \t" + this.formation.ToString());
+            //print ("Current formation: \t" + this.formation.ToString());
         }
 
         public void SetMainPlayer(Character character)

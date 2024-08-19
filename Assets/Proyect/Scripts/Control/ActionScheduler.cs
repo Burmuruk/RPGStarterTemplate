@@ -13,9 +13,9 @@ namespace Burmuruk.Tesis.Utilities
         System
     }
 
-    public struct ActionScheduler
+    public class ActionScheduler
     {
-        LinkedList<ActionStatus> actions;
+        LinkedList<ActionStatus> actions = new();
         int curTask;
 
         public bool Initilized { get; private set; }
@@ -46,7 +46,6 @@ namespace Burmuruk.Tesis.Utilities
 
         public void AddAction(IScheduledAction action, ActionPriority priority, params Action[] tasks)
         {
-            actions ??= new();
             Initilized = true;
 
             switch (priority)
@@ -76,17 +75,9 @@ namespace Burmuruk.Tesis.Utilities
             }
 
             AddActionByPriority(new ActionStatus(action, priority, ActionState.None, tasks));
-        }
 
-        public void Start(IScheduledAction action, ActionPriority priority)
-        {
-            ActionStatus actionStatus;
-
-            if (GetAction(action, out actionStatus))
-            {
-                actionStatus.state = ActionState.Running;
-                action.StartAction();
-            }
+            if (actions.First.Value.action == action)
+                Start(actions.First);
         }
 
         public void Pause(IScheduledAction action)
@@ -113,6 +104,21 @@ namespace Burmuruk.Tesis.Utilities
             }
         }
 
+        public void CancelAll()
+        {
+            while (actions.Count > 0)
+            {
+                var first = actions.First;
+
+                if (first.Value.state == ActionState.Paused || first.Value.state == ActionState.Running)
+                {
+                    Cancel(first.Value.action);
+                }
+
+                actions.RemoveFirst();
+            }
+        }
+
         public void Finished(IScheduledAction action)
         {
             ActionStatus actionStatus;
@@ -121,7 +127,7 @@ namespace Burmuruk.Tesis.Utilities
             {
                 if (actionStatus.state == ActionState.Running)
                 {
-                    if (actionStatus.tasks != null && actionStatus.tasks.Length > 0)
+                    if (actionStatus.tasks != null && curTask < actionStatus.tasks.Length)
                     {
                         actionStatus.tasks[curTask++]?.Invoke();
                     }
@@ -141,6 +147,12 @@ namespace Burmuruk.Tesis.Utilities
 
         void AddActionByPriority(ActionStatus newAction)
         {
+            if (actions.Count == 0)
+            {
+                actions.AddFirst(newAction);
+                return;
+            }
+
             var curNode = actions.First;
             int curPriority = (int)newAction.priority;
 
@@ -179,8 +191,17 @@ namespace Burmuruk.Tesis.Utilities
 
         void Start(LinkedListNode<ActionStatus> node)
         {
-            node.Value.state = ActionState.Running;
-            node.Value.action.StartAction();
+            var actionStatus = node.Value;
+
+            if (actionStatus.tasks == null || actionStatus.tasks.Length == 0)
+                return;
+
+            if (actionStatus.state == ActionState.Running)
+                return;
+
+            actionStatus.state = ActionState.Running;
+            actionStatus.tasks[0]?.Invoke();
+            curTask = 1;
         }
     }
 

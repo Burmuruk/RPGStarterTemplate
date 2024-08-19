@@ -31,7 +31,7 @@ namespace Burmuruk.Tesis.Movement
         InventoryEquipDecorator m_inventory;
         ActionScheduler m_scheduler;
         PathFinder m_pathFinder;
-        INodeListSupplier nodeList;
+        public INodeListSupplier nodeList;
 
         Vector3 target = Vector3.zero;
         Vector3 destiny = Vector3.zero;
@@ -77,13 +77,14 @@ namespace Burmuruk.Tesis.Movement
                 return stats.MinDistance;
             }
         }
-
+        public PathFinder Finder { get => m_pathFinder; }
         float SlowingRadious => Threshold + m_slowingRadious;
 
         #region Unity mehthods
         private void Awake()
         {
             m_rb = GetComponent<Rigidbody>();
+            col = GetComponent<Collider>();
 
             //m_patrolController = gameObject.GetComponent<PatrolController>();
             //m_patrolController.OnFinished += m_patrolController.Execute_Tasks;
@@ -92,7 +93,7 @@ namespace Burmuruk.Tesis.Movement
         private void FixedUpdate()
         {
             Move();
-            col = GetComponent<Collider>();
+            
         } 
         #endregion
 
@@ -114,7 +115,7 @@ namespace Burmuruk.Tesis.Movement
 
         public void MoveTo(Vector3 point)
        {
-            if (IsMoving) return;
+            if (IsMoving || nodeList == null) return;
             m_state = MovementState.Moving;
 
             try
@@ -124,8 +125,6 @@ namespace Burmuruk.Tesis.Movement
                 m_state = MovementState.FollowingPath;
 
                 m_pathFinder.Find_BestRoute<AStar>((curNodePosition, point));
-
-                m_scheduler.AddAction(this, ActionPriority.Low);
             }
             catch (NullReferenceException)
             {
@@ -157,7 +156,7 @@ namespace Burmuruk.Tesis.Movement
 
         public void FollowWithDistance(Movement target, float gap, params Character[] fellows)
         {
-            if (IsMoving) return;
+            if (IsMoving || nodeList == null) return;
 
             Vector3 point = SteeringBehaviours.GetFollowPosition(target, this, gap, fellows);
             m_state = MovementState.Calculating;
@@ -249,6 +248,7 @@ namespace Burmuruk.Tesis.Movement
             m_curPath = null;
             enumerator = null;
             m_pathNodeTarget = null;
+            OnFinished?.Invoke();
         }
 
         public void Flee()

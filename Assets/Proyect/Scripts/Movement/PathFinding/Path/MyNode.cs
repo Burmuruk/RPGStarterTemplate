@@ -40,10 +40,12 @@ namespace Burmuruk.WorldG.Patrol
         }
     }
 
+    [ExecuteInEditMode]
     public class MyNode : MonoBehaviour, IPathNode, ISplineNode
     {
         [SerializeField]
         public List<NodeConnection> nodeConnections = new List<NodeConnection>();
+        [SerializeField] bool updateData = false;
         [HideInInspector]
         public uint idx = 0;
         public NodeData nodeData = null;
@@ -64,18 +66,30 @@ namespace Burmuruk.WorldG.Patrol
         public PatrolController PatrolController { get => patrol; set => patrol = value; }
 
         #region Unity methods
-        private void Start()
+        private void Awake()
         {
+            if (!copyData.point) return;
             
+            copyData.point.OnNodeAdded?.Invoke(copyData.point, this);
         }
 
         private void OnEnable()
         {
-            //OnNodeAdded?.Invoke();
+            if (!copyData.point) return;
+            
+            copyData.point.OnNodeAdded?.Invoke(copyData.point, this);
+        }
+
+        private void OnDisable()
+        {
+            OnNodeRemoved?.Invoke(this);
         }
 
         private void OnDrawGizmosSelected()
         {
+            Select();
+
+
             foreach (var item in nodeConnections)
             {
                 if (item.connectionType == ConnectionType.BIDIMENSIONAL)
@@ -85,11 +99,8 @@ namespace Burmuruk.WorldG.Patrol
             if (NodeData != null && nodeData.ShouldDraw)
             {
                 Gizmos.color = nodeData.NodeColor;
-                Gizmos.DrawSphere(transform.position + Vector3.up * (float)nodeData.VerticalOffset, (float)nodeData.Radius); 
+                Gizmos.DrawSphere(transform.localPosition, (float)nodeData.Radius); 
             }
-
-            Select();
-            isSelected = true;
         }
         #endregion
 
@@ -113,7 +124,10 @@ namespace Burmuruk.WorldG.Patrol
 
         private void Select()
         {
+            if (!gameObject.activeSelf) return;
+
             copyData = new CopyData(true, this);
+            isSelected = true;
         }
     }
 }

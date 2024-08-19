@@ -13,14 +13,14 @@ namespace Burmuruk.WorldG.Patrol
         [Header("Nodes")]
         [SerializeField] GameObject prefab;
         [SerializeField] NodeData nodeData;
-        [SerializeField] bool findOnStart = false;
+        [SerializeField] bool findOnStart = true;
         [Header("Spline")]
         public bool shouldDraw = true;
         [SerializeField] public CyclicType cyclicType = CyclicType.None;
         [SerializeField, ReadOnly] int nodesCount = 0;
         [SerializeField] Color lineColor = Color.yellow;
 
-        bool initialized = false;
+        [SerializeField] bool initialized = false;
         bool isAlive = true;
 
         public PatrolPath<MyNode> path { get; private set; }
@@ -37,20 +37,15 @@ namespace Burmuruk.WorldG.Patrol
         {
             if (!findOnStart) return;
 
+            initialized = false;
             Initialize();
         }
 
         private void OnEnable()
         {
-            if (path == null || path.Count <= 0) return;
+            if (initialized) return;
 
-            var point = path.FirstNode;
-            for (int i = 0; i < path.Count; i++)
-            {
-                point.Value.OnNodeAdded += (a, b) => AddNode(a, b);
-                point.Value.OnNodeRemoved += (rPoint) => path.Remove(rPoint);
-                Set_NodeSettings(point.Value);
-            }
+            Initialize();
         }
 
         private void OnDisable()
@@ -62,6 +57,8 @@ namespace Burmuruk.WorldG.Patrol
             {
                 point.Value.OnNodeAdded -= (a, b) => AddNode(a, b);
                 point.Value.OnNodeRemoved -= (rPoint) => path.Remove(rPoint);
+
+                point = point.Next;
             }
         }
 
@@ -156,6 +153,9 @@ namespace Burmuruk.WorldG.Patrol
             foreach (var point in points)
             {
                 point.SetNodeData(nodeData);
+                point.OnNodeAdded -= AddNode;
+                point.OnNodeRemoved -= (rPoint) => path.Remove(rPoint);
+
                 point.OnNodeAdded += AddNode;
                 point.OnNodeRemoved += (rPoint) => path.Remove(rPoint);
             }

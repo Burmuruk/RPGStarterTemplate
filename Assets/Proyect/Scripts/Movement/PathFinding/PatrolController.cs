@@ -7,7 +7,6 @@ using Burmuruk.Tesis.Movement;
 
 namespace Burmuruk.WorldG.Patrol
 {
-    [RequireComponent(typeof(SphereCollider))]
     public class PatrolController : MonoBehaviour
     {
         #region Variables
@@ -21,9 +20,18 @@ namespace Burmuruk.WorldG.Patrol
         Movement mover;
         PathFinder finder;
         Spline spline;
+        PatrolState state;
 
         public event Action OnFinished;
         public event Action OnPatrolFinished;
+
+        enum PatrolState
+        {
+            None,
+            Running,
+            Canceling,
+            Repeating
+        }
 
         public enum TaskType
         {
@@ -76,6 +84,7 @@ namespace Burmuruk.WorldG.Patrol
                     //    return innerController.NextPoint;
                     //}
                     //else
+                    print(enumerator.Current.Transform.name);
 
                     return currentPoint = enumerator.Current.Transform;
                 }
@@ -94,6 +103,8 @@ namespace Burmuruk.WorldG.Patrol
 
             finder = new PathFinder(nodeList);
         }
+
+
 
         public void FindNodes<U>(CyclicType cyclicType, INodeListSupplier nodeList)
             where U : MonoBehaviour, IPathNode, ISplineNode
@@ -156,6 +167,15 @@ namespace Burmuruk.WorldG.Patrol
             //Execute_Tasks();
         }
 
+        public void Initialize(Movement movement, PathFinder finder)
+        {
+            mover = movement;
+            mover.OnFinished += ContinueTasks;
+            this.finder = finder;
+
+            Initialize();
+        }
+
         public void Initialize()
         {
             if (!spline) spline = transform.GetComponentInChildren<Spline>();
@@ -174,9 +194,14 @@ namespace Burmuruk.WorldG.Patrol
 
         public void Execute_Tasks()
         {
-            if (CancelRequested) { RestartTasks(); return; }
+            if (state != PatrolState.None && state != PatrolState.Repeating) return;
 
+            if (CancelRequested || mover.IsMoving) { RestartTasks(); return; }
+
+            state = PatrolState.Running;
             currentAction++;
+            print("Action" + currentAction);
+
             if (tasksList != null && currentAction < tasksList.Count)
             {
                 taskValue = tasks[currentAction].value;
@@ -186,11 +211,13 @@ namespace Burmuruk.WorldG.Patrol
             else if (shouldRepeat && tasksList != null)
             {
                 currentAction = -1;
+                state = PatrolState.Repeating;
                 Execute_Tasks();
                 return;
             }
 
             RestartTasks();
+            state = PatrolState.None;
         }
 
         public void AbortPatrol() => CancelRequested = true;
@@ -199,22 +226,23 @@ namespace Burmuruk.WorldG.Patrol
         #region private methods
         private void Awake()
         {
-            mover = GetComponent<Movement>();
+            //mover = GetComponent<Movement>();
 
-            InitializeTasks();
+            //InitializeTasks();
         }
 
         private void OnEnable()
         {
             if (mover == null) return;
 
-            mover.OnFinished += Execute_Tasks;
+            if (mover)
+                mover.OnFinished += ContinueTasks;
         }
 
         private void OnDisable()
         {
             if (mover != null)
-                mover.OnFinished -= Execute_Tasks;
+                mover.OnFinished -= ContinueTasks;
         }
 
         private void RestartTasks()
@@ -236,10 +264,16 @@ namespace Burmuruk.WorldG.Patrol
                         Transform p = NextPoint;
                         if (p == null) { RestartTasks(); return;}
                         mover.MoveTo(p.position); } },
-                    { TaskType.Wait, () => Invoke("Execute_Tasks", (float)taskValue)}
+                    { TaskType.Wait, () => Invoke("ContinueTasks", (float)taskValue)}
                 };
 
             return true;
+        }
+
+        private void ContinueTasks()
+        {
+            state = PatrolState.None;
+            Execute_Tasks();
         }
         #endregion
     }

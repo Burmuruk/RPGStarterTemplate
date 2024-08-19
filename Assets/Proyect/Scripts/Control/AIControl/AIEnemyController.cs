@@ -140,6 +140,12 @@ namespace Burmuruk.Tesis.Control.AI
 
             SetAbilities();
             //statsList.OnDied += DropItem;
+            //patrolController = new PatrolController();
+
+            if (patrolController != null)
+            {
+                patrolController.Initialize(mover, mover.Finder);
+            }
         }
 
         protected override void PerceptionManager()
@@ -177,9 +183,10 @@ namespace Burmuruk.Tesis.Control.AI
         protected virtual void CheckPatrolPath()
         {
             if (!patrolController) return;
+            if (mover.nodeList == null) return;
 
             playerAction = PlayerAction.Patrol;
-            //mover.MoveTo(patrolController.NextPoint.position);
+            patrolController.Execute_Tasks();
         }
 
         protected virtual void CheckLeader()
