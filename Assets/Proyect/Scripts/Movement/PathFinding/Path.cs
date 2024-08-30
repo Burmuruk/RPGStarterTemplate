@@ -4,15 +4,17 @@ using Burmuruk.WorldG.Patrol;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Burmuruk.Tesis.Movement.PathFindig
 {
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Path", order = 2)]
     public class Path : ScriptableObject
     {
-        [SerializeField] bool loaded;
+        [SerializeField] bool saved;
         [SerializeField] float radious;
         [SerializeField] float distance;
         [SerializeField] float maxAngle;
@@ -25,6 +27,9 @@ namespace Burmuruk.Tesis.Movement.PathFindig
         [SerializeField] DictionaryNodeString[] nodesWaitingSaved;
         [SerializeField] DictionaryNodeInt[] addedNodesSaved;
 
+        private bool working = false;
+        public NodeListSuplier NodeList { get; private set; }
+
         private struct IdData
         {
             public uint Id;
@@ -33,7 +38,8 @@ namespace Burmuruk.Tesis.Movement.PathFindig
             public int ConnectionIdx;
         }
 
-        public bool Loaded { get => loaded; }
+        public bool Saved { get => saved; }
+        public bool Loaded { get; private set; }
 
         public void SaveList(IPathNode[][][] nodes, int count)
         {
@@ -63,7 +69,8 @@ namespace Burmuruk.Tesis.Movement.PathFindig
 
             SaveConnections();
 
-            loaded = true;
+            saved = true;
+            
             EditorUtility.SetDirty(this);
             Debug.Log("Saved");
         }
@@ -98,6 +105,8 @@ namespace Burmuruk.Tesis.Movement.PathFindig
             addedNodes = new Dictionary<uint, int>();
             towerSizes = new List<int>();
             towerHeights = new List<int>();
+            Loaded = false;
+            working = false;
         }
 
         private void SetNodeConnections(in IPathNode curNode, ref ScrNode newNode, in int nodeIdx)
@@ -142,21 +151,35 @@ namespace Burmuruk.Tesis.Movement.PathFindig
             EditorUtility.SetDirty(this);
         }
 
-        public INodeListSupplier GetNodeList()
+        private void SetNodeList(IPathNode[][][] nodes)
         {
-            var nodeList = new NodeListSuplier(GetReversedList());
+            NodeList = new NodeListSuplier(nodes);
 
-            nodeList.SetTarget(radious, distance, maxAngle);
-
-            return nodeList;
+            NodeList.SetTarget(radious, distance, maxAngle);
         }
 
+        public void LoadNavMesh()
+        {
+            if (Loaded || working) return;
+
+            working = true;
+
+            Task<IPathNode[][][]> loadDataTask = Task.Run(() => GetReversedList());
+            loadDataTask.ContinueWith((antecedent) =>
+            {
+                SetNodeList(antecedent.Result);
+                
+                Loaded = true;
+                working = false;
+            }, TaskContinuationOptions.ExecuteSynchronously);
+        }
+        
         private IPathNode[][][] GetReversedList()
         {
             var nodes = new IPathNode[towerSizes.Count][][];
             int yidx = 0;
             int idx = 0;
-
+            
             RestartDictionaries();
             UpdateIDs();
 
@@ -177,7 +200,7 @@ namespace Burmuruk.Tesis.Movement.PathFindig
                     yidx++;
                 }
             }
-            
+
             return nodes;
         }
 
@@ -264,17 +287,6 @@ namespace Burmuruk.Tesis.Movement.PathFindig
             {
                 this.key = key;
                 this.idxs = idx;
-            }
-        }
-
-        [System.Serializable]
-        private struct LinearTower
-        {
-            [SerializeField] public ScrNode[] nodes;
-
-            public LinearTower(ScrNode[] nodes)
-            {
-                this.nodes = nodes;
             }
         }
     }

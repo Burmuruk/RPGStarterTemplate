@@ -11481,7 +11481,7 @@ MeshCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1523394200}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: ba3f5a9319596764bb8d7e1e39f1577c, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -17343,6 +17343,11 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 568186869901110011, guid: 5b1195fea8aff92478fc6e922cf62f9e,
+        type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 983552356110687233, guid: 5b1195fea8aff92478fc6e922cf62f9e,
         type: 3}
       propertyPath: inventory
@@ -17411,7 +17416,7 @@ PrefabInstance:
     - target: {fileID: 5813016171580300768, guid: 5b1195fea8aff92478fc6e922cf62f9e,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6869620104190364405, guid: 5b1195fea8aff92478fc6e922cf62f9e,
         type: 3}
@@ -17858,6 +17863,11 @@ PrefabInstance:
       propertyPath: playerDistance
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 568186869901110011, guid: 5b1195fea8aff92478fc6e922cf62f9e,
+        type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 983552356110687233, guid: 5b1195fea8aff92478fc6e922cf62f9e,
         type: 3}
       propertyPath: inventory
@@ -17921,7 +17931,7 @@ PrefabInstance:
     - target: {fileID: 5813016171580300768, guid: 5b1195fea8aff92478fc6e922cf62f9e,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8881630530992446499, guid: 5b1195fea8aff92478fc6e922cf62f9e,
         type: 3}
@@ -18939,7 +18949,7 @@ PrefabInstance:
     - target: {fileID: 268288380871414093, guid: 5b1195fea8aff92478fc6e922cf62f9e,
         type: 3}
       propertyPath: playerDistance
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 268288380871414093, guid: 5b1195fea8aff92478fc6e922cf62f9e,
         type: 3}
@@ -18955,6 +18965,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Enabled
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 568186869901110011, guid: 5b1195fea8aff92478fc6e922cf62f9e,
+        type: 3}
+      propertyPath: m_Material
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 983552356110687233, guid: 5b1195fea8aff92478fc6e922cf62f9e,
         type: 3}
@@ -19427,6 +19442,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Enabled
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 568186869901110011, guid: 5b1195fea8aff92478fc6e922cf62f9e,
+        type: 3}
+      propertyPath: m_Material
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 983552356110687233, guid: 5b1195fea8aff92478fc6e922cf62f9e,
         type: 3}

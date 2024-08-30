@@ -9,20 +9,19 @@ namespace Burmuruk.Tesis.Inventory
     {
         [Header("General Lists")]
         [SerializeField] List<InventoryItem> items;
-        [SerializeField] bool Initialized;
 
         Dictionary<int, InventoryItem> _mainList;
 
         public InventoryItem Get(int itemId)
         {
-            if (!Initialized) Initialize();
+            Initialize();
 
             return _mainList[itemId];
         }
 
         public List<InventoryItem> GetList(ItemType type)
         {
-            if (!Initialized) Initialize();
+            Initialize();
 
             return (from item in _mainList.Values
                     where item.Type == type
@@ -32,7 +31,7 @@ namespace Burmuruk.Tesis.Inventory
 
         private void Initialize()
         {
-            if (Initialized) return;
+            if (_mainList != null) return;
 
             _mainList = new Dictionary<int, InventoryItem>();
 
@@ -40,8 +39,6 @@ namespace Burmuruk.Tesis.Inventory
             {
                 _mainList.Add(item.ID, item);
             }
-
-            //Initialized = true;
         }
     }
 }

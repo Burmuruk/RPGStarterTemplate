@@ -41,31 +41,33 @@ namespace Burmuruk.Tesis.Control
         {
             if (initialized) return;
 
-            if (path.Loaded)
+            if (path.Saved && path.Loaded)
             {
-                var nodeList = path.GetNodeList();
-
-                if (nodeList == null) return;
+                if (path.NodeList == null) return;
 
                 //print("Valor encontrado");
                 var movers = FindObjectsOfType<Movement.Movement>(true);
 
                 foreach (var mover in movers)
                 {
-                    mover.SetConnections(nodeList);
+                    mover.SetConnections(path.NodeList);
                 }
 
                 initialized = true;
             }
+            else
+            {
+                path.LoadNavMesh();
+            }
         }
 
 
-        public INodeListSupplier GetNodeList()
-        {
-            if (path == null && !path.Loaded) return null;
+        //public INodeListSupplier SetNodeList()
+        //{
+        //    if (path == null && !path.Saved) return null;
 
-            return path.GetNodeList();
-        }
+        //    return path.SetNodeList();
+        //}
 
         public void LoadGame(int idx)
         {
