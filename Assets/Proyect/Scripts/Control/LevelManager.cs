@@ -41,14 +41,18 @@ namespace Burmuruk.Tesis.Control
         {
             if (initialized) return;
 
-            if (path.Loaded && path.m_nodeList != null)
+            if (path.Loaded)
             {
+                var nodeList = path.GetNodeList();
+
+                if (nodeList == null) return;
+
                 //print("Valor encontrado");
                 var movers = FindObjectsOfType<Movement.Movement>(true);
 
                 foreach (var mover in movers)
                 {
-                    mover.SetConnections(path.m_nodeList);
+                    mover.SetConnections(nodeList);
                 }
 
                 initialized = true;
@@ -91,7 +95,7 @@ namespace Burmuruk.Tesis.Control
             {
                 onUILoaded?.Invoke();
                 Time.timeScale = 0;
-                //SceneManager.SetActiveScene(scene);
+                SceneManager.SetActiveScene(scene);
                 var rootItems = SceneManager.GetSceneByBuildIndex(1).GetRootGameObjects();
                 GetComponentInChildren<Camera>().gameObject.SetActive(false);
 

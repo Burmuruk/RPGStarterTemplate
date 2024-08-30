@@ -119,14 +119,14 @@ namespace Burmuruk.AI.PathFinding
                 }
                 catch (AggregateException aex)
                 {
-                    Debug.Log(aex.Message);
+                    //Debug.Log(aex.Message);
+                    Debug.LogWarning("Path not founded");
                 }
                 finally
                 {
                     isCalculating = false;
+                    OnPathCalculated?.Invoke();
                 }
-
-                OnPathCalculated?.Invoke();
             });
 
             return;
@@ -171,6 +171,8 @@ namespace Burmuruk.AI.PathFinding
             RemoveLongPaths(idx, idxDis, distances.Count - 1);
             shorstestNodeIdx = null;
 
+            if (paths[0].First == null) return;
+
             for (int i = 0; i < curNodes.Length; i++)
             {
                 if (curNodes[i].end.ID == paths[idx].Last.Value.ID || curNodes[i].end.ID == paths[idx].First.Value.ID)
@@ -184,7 +186,7 @@ namespace Burmuruk.AI.PathFinding
             if (curPath < 0)
                 curPath = idxDis;
 
-            //Debug.Log($"Sorteado index {idxDis} distance {routeSizes[idxDis].distance} to {paths[idx].Last.Value.ID}");
+            //Debug.Log($"Sorteado index {idxDis} distance {routeSizes[idxDis].distance} to {paths[idxs].Last.Value.ID}");
 
             isCalculating = false;
 

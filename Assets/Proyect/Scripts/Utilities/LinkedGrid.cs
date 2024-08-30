@@ -366,12 +366,13 @@ namespace Burmuruk.Collections
         //    return connections;
         //}
 
-        public IPathNode[][][] ToArray()
+        public (IPathNode[][][], int lenght) ToArray()
         {
-            if (Count <= 0) return null;
+            if (Count <= 0) return default;
 
-            IPathNode[][][] connections = new IPathNode[Headers.Count + 1][][];
+            IPathNode[][][] connections = new IPathNode[Headers.Count][][];
             var curNode = First;
+            int length = 0;
             int columnIdx = curNode.ColumnIdx;
 
             for (int x = 0; x < Headers.Count;)
@@ -390,6 +391,8 @@ namespace Burmuruk.Collections
                     }
 
                     yNodes.Add(zNodes.ToArray());
+                    length += zNodes.Count;
+
                     curNode = curNode[Direction.Next];
                 }
 
@@ -397,7 +400,7 @@ namespace Burmuruk.Collections
                 ++x;
             }
 
-            return connections;
+            return (connections, length);
         }
 
         IEnumerator<T> IEnumerable<T>.GetEnumerator()

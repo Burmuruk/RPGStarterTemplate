@@ -7,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -168,7 +167,7 @@ namespace Burmuruk.Tesis.UI
             }
         }
 
-        public void ElementAction(int idx)
+        public void ExecuteElementAction(int idx)
         {
             switch ((curElementLabels[idx].item.Type))
             {
@@ -426,7 +425,7 @@ namespace Burmuruk.Tesis.UI
             {
                 var button = panel.label.transform.parent.GetComponent<MyItemButton>();
                 button.SetId(buttonId);
-                button.onClick.AddListener(() => { ElementAction(buttonId); });
+                button.onClick.AddListener(() => { ExecuteElementAction(buttonId); });
                 button.OnRightClick += () => ElementCancelAction(buttonId);
                 button.OnPointerEnterEvent += SelectElement;
             }

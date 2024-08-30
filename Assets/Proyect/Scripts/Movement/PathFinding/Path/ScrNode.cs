@@ -37,6 +37,11 @@ namespace Burmuruk.AI
         //    }
         //}
 
+        public void SetConnections(List<NodeConnection> connections)
+        {
+            nodeConnections = connections;
+        }
+
         public void ClearConnections()
         {
             nodeConnections.Clear();

@@ -16,7 +16,7 @@ namespace Burmuruk.AI
 
         private void OnDrawGizmosSelected()
         {
-            if (node.NodeConnections == null) return;
+            if (node.NodeConnections == null || node.NodeConnections.Count <= 0) return;
 
             foreach (var connection in node.NodeConnections)
             {

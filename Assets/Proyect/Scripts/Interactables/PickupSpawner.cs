@@ -60,6 +60,13 @@ namespace Burmuruk.Tesis.Interaction
             }
         }
 
+        public void AddItem(InventoryItem item, Vector3 pos)
+        {
+            var pickup = Instantiate(item.Pickup, pos, Quaternion.identity, transform);
+            
+            items.Add(pickup);
+        }
+
         private void RemoveItem(GameObject itemToRemove)
         {
             for (int i = 0; i < items.Count; i++)

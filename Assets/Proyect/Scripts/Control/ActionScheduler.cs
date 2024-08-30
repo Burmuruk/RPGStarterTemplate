@@ -53,6 +53,7 @@ namespace Burmuruk.Tesis.Utilities
                 case ActionPriority.Low:
 
                     actions.AddLast(new ActionStatus(action, priority, ActionState.None, tasks));
+                    Start(actions.First);
                     return;
 
                 case ActionPriority.Medium:
@@ -125,20 +126,13 @@ namespace Burmuruk.Tesis.Utilities
 
             if (GetAction(action, out actionStatus))
             {
-                if (actionStatus.state == ActionState.Running)
+                if (actionStatus.tasks != null && curTask < actionStatus.tasks.Length)
                 {
-                    if (actionStatus.tasks != null && curTask < actionStatus.tasks.Length)
-                    {
-                        actionStatus.tasks[curTask++]?.Invoke();
-                    }
-                    else
-                    {
-                        RunNextQuest();
-                    }
+                    actionStatus.tasks[curTask++]?.Invoke();
                 }
                 else
                 {
-                    action.StartAction();
+                    RunNextQuest();
                 }
 
                 actionStatus.state = ActionState.Running;
@@ -186,22 +180,32 @@ namespace Burmuruk.Tesis.Utilities
             if (actions.Count <= 0) return;
 
             actions.RemoveFirst();
-            Start(actions.First);
+
+            if (actions.Count > 0)
+                Start(actions.First);
         }
 
         void Start(LinkedListNode<ActionStatus> node)
         {
-            var actionStatus = node.Value;
+            try
+            {
+                var actionStatus = node.Value;
 
-            if (actionStatus.tasks == null || actionStatus.tasks.Length == 0)
-                return;
+                if (actionStatus.tasks == null || actionStatus.tasks.Length == 0)
+                    return;
 
-            if (actionStatus.state == ActionState.Running)
-                return;
+                if (actionStatus.state == ActionState.Running)
+                    return;
 
-            actionStatus.state = ActionState.Running;
-            actionStatus.tasks[0]?.Invoke();
-            curTask = 1;
+                actionStatus.state = ActionState.Running;
+                actionStatus.tasks[0]?.Invoke();
+                curTask = 1;
+            }
+            catch (NullReferenceException n)
+            {
+
+                throw;
+            }
         }
     }
 

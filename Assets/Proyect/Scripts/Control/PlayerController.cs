@@ -451,7 +451,7 @@ namespace Burmuruk.Tesis.Control
         //    var pickedUpItem = m_pickables[0];
         //    var inventory = player.GetComponent<InventoryEquipDecorator>();
         //    inventory.AddVariable(pickedUpItem.itemType, pickedUpItem);
-        //    //inventory.ElementAction(pickedUpItem.modifiableStat, pickedUpItem.Item);
+        //    //inventory.ExecuteElementAction(pickedUpItem.modifiableStat, pickedUpItem.Item);
         //    pickedUpItem.gameObject.SetActive(false);
 
         //    m_pickables.RemoveVariable(pickedUpItem);

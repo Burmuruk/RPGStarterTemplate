@@ -329,17 +329,22 @@ namespace Burmuruk.Tesis.Control.AI
 
         private void MoveCloseToPlayer()
         {
-            var (x, z) = (Mathf.Cos(UnityEngine.Random.Range(-1, 1)), Mathf.Sin(UnityEngine.Random.Range(-1, .1f)));
-            var dis = freeDistance / 2;
+            if (!cdTeleport.CanUse) return;
 
-            var pos = new Vector3(x * dis, mainPlayer.transform.position.y, z * dis);
-            pos = pos.normalized * UnityEngine.Random.Range(closeDistance, freeDistance);
+            StartCoroutine(cdTeleport.CoolDown());
 
-            if (cdTeleport.CanUse)
+            Vector3 pos = default;
+            var startNode = mover.nodeList.FindNearestNode(mainPlayer.transform.position);
+
+            do
             {
-                StartCoroutine(cdTeleport.CoolDown());
-                mover.ChangePositionTo(transform, mainPlayer.transform.position + pos);
+                var (x, z) = (Mathf.Cos(UnityEngine.Random.Range(-1, 1)), Mathf.Sin(UnityEngine.Random.Range(-1, .1f)));
+                var dis = freeDistance / 2;
+
+                pos = new Vector3(x * dis, mainPlayer.transform.position.y, z * dis);
+                pos = pos.normalized * UnityEngine.Random.Range(closeDistance, freeDistance);
             }
+            while (!mover.ChangePositionCloseToNode(startNode, mainPlayer.transform.position + pos));
         }
 
         private void FollowPlayer()

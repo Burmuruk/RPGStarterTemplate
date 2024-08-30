@@ -1,4 +1,5 @@
 ﻿using Burmuruk.Tesis.Combat;
+using Burmuruk.Tesis.Interaction;
 using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
 using Burmuruk.Utilities;
@@ -11,7 +12,7 @@ namespace Burmuruk.Tesis.Control.AI
 {
     public class AIEnemyController : Character
     {
-        //[SerializeField] ItemsList itemsList;
+        [SerializeField] List<InventoryItem> itemsToDrop;
         protected AIEnemyController leader;
         protected List<(float value, Character enemy)> rage;
         protected List<AbiltyTrigger> abilities = new();
@@ -186,7 +187,7 @@ namespace Burmuruk.Tesis.Control.AI
             if (mover.nodeList == null) return;
 
             playerAction = PlayerAction.Patrol;
-            patrolController.Execute_Tasks();
+            patrolController.StartPatrolling();
         }
 
         protected virtual void CheckLeader()
@@ -288,13 +289,22 @@ namespace Burmuruk.Tesis.Control.AI
             pos = pos.normalized * UnityEngine.Random.Range(minDis, maxDis);
         }
 
+        protected override void Dead()
+        {
+            base.Dead();
+
+            DropItem();
+        }
+
         public void DropItem()
         {
-            //if (itemsList.Items == null || itemsList.Items.Count <= 0) return;
+            if (itemsToDrop == null || itemsToDrop.Count <= 0) return;
 
-            //var rand = UnityEngine.Random.Range(0, itemsList.Items.Count);
+            var rand = UnityEngine.Random.Range(0, itemsToDrop.Count);
 
-            //var item = Instantiate(itemsList.Items[rand].Prefab);
+            FindObjectOfType<PickupSpawner>().AddItem(itemsToDrop[rand], transform.position);
+
+            //var item = Instantiate(itemsToDrop.Items[rand].Prefab);
             //item.transform.position = transform.position;
         }
     }

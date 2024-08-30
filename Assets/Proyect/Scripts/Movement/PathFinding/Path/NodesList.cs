@@ -1,9 +1,11 @@
 ﻿using Burmuruk.AI.PathFinding;
 using Burmuruk.Collections;
+using Burmuruk.Tesis.Movement.PathFindig;
 using Burmuruk.WorldG.Patrol;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 
 namespace Burmuruk.AI
@@ -36,13 +38,8 @@ namespace Burmuruk.AI
         [SerializeField] bool phisicNodes = false;
         [SerializeField] int layer;
 
-        [Header("PathFinding Settings"), Space()]
-        [SerializeField] public GameObject startNode;
-        [SerializeField] public GameObject endNode;
-        [SerializeField] bool drawPath = false;
-
         [Header("Saving Settings"), Space()]
-        [SerializeField] public ScriptableObject pathWriter;
+        [SerializeField] public Path pathWriter;
         IPathNode[][][] connections;
 
         [Header("Status"), Space()]
@@ -110,21 +107,21 @@ namespace Burmuruk.AI
             //CalculateConnections();
         }
 
-        private void FixedUpdate()
-        {
-            if (meshState == pState.None && connectionsState == pState.None && memoryFreed == pState.None)
-            {
-                Calculate_PathMesh();
-            }
-            else if (meshState == pState.finished && connectionsState == pState.None && memoryFreed == pState.None)
-            {
-                CalculateNodesConnections();
-            }
-            else if (meshState == pState.finished && connectionsState == pState.finished && memoryFreed == pState.None)
-            {
-                SaveList();
-            }
-        }
+        //private void FixedUpdate()
+        //{
+        //    if (meshState == pState.None && connectionsState == pState.None && memoryFreed == pState.None)
+        //    {
+        //        Calculate_PathMesh();
+        //    }
+        //    else if (meshState == pState.finished && connectionsState == pState.None && memoryFreed == pState.None)
+        //    {
+        //        CalculateNodesConnections();
+        //    }
+        //    else if (meshState == pState.finished && connectionsState == pState.finished && memoryFreed == pState.None)
+        //    {
+        //        SaveList();
+        //    }
+        //}
 
         private void OnDrawGizmos()
         {
@@ -607,21 +604,22 @@ namespace Burmuruk.AI
             this.nodes = (LinkedGrid<IPathNode>)nodes;
         }
 
-        public IPathNode[][][] FreeMemory()
+        public (IPathNode[][][], int length) FreeMemory()
         {
-            if (nodes == null || nodes.Count <= 0) return null;
+            if (nodes == null || nodes.Count <= 0) return default;
 
             memoryFreed = pState.running;
             IPathNode[][][] connections = null;
+            int length = 0;
 
             try
             {
-                connections = nodes.ToArray();
+                (connections, length) = nodes.ToArray();
             }
             catch (OverflowException)
             {
                 Debug.LogError("The amount of nodes is too big to proceed");
-                return null;
+                return default;
             }
 
             memoryFreed = pState.None;
@@ -634,26 +632,29 @@ namespace Burmuruk.AI
 
             memoryFreed = pState.finished;
 
-            return connections;
+            return (connections, length);
         }
 
         public void SaveList()
         {
             if (memoryFreed != pState.None || pathWriter == null) return;
 
-            if (pathWriter is INodeListSaver saver && saver != null)
+            if (pathWriter != null)
             {
                 connections = null;
-                connections = FreeMemory();
+                int length = 0;
+                (connections, length) = FreeMemory();
 
-                var nodeList = new NodeListSuplier(connections);
+                //var nodeList = new NodeListSuplier(connections);
                 //SerializedObject serializedObj = new UnityEditor.SerializedObject(pathWriter);
                 //SerializedProperty myList = serializedObj.FindProperty("m_nodeList");
 
-                nodeList.SetTarget(pRadious, nodDistance, MaxAngle);
+                //nodeList.SetTarget(pRadious, nodDistance, MaxAngle);
 
                 //myList.managedReferenceValue = nodeList;
-                saver.SaveList(nodeList);
+                print(length);
+                pathWriter.SaveExtraData(pRadious, nodDistance, MaxAngle);
+                pathWriter.SaveList(connections, length);
             }
         }
 

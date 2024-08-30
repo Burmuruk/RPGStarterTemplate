@@ -84,7 +84,6 @@ namespace Burmuruk.WorldG.Patrol
                     //    return innerController.NextPoint;
                     //}
                     //else
-                    print(enumerator.Current.Transform.name);
 
                     return currentPoint = enumerator.Current.Transform;
                 }
@@ -103,8 +102,6 @@ namespace Burmuruk.WorldG.Patrol
 
             finder = new PathFinder(nodeList);
         }
-
-
 
         public void FindNodes<U>(CyclicType cyclicType, INodeListSupplier nodeList)
             where U : MonoBehaviour, IPathNode, ISplineNode
@@ -170,7 +167,6 @@ namespace Burmuruk.WorldG.Patrol
         public void Initialize(Movement movement, PathFinder finder)
         {
             mover = movement;
-            mover.OnFinished += ContinueTasks;
             this.finder = finder;
 
             Initialize();
@@ -192,15 +188,21 @@ namespace Burmuruk.WorldG.Patrol
             }
         }
 
-        public void Execute_Tasks()
+        public void StartPatrolling()
         {
-            if (state != PatrolState.None && state != PatrolState.Repeating) return;
+            if (state != PatrolState.None) return;
 
-            if (CancelRequested || mover.IsMoving) { RestartTasks(); return; }
+            mover.OnFinished += ContinueTasks;
+
+            Execute_Tasks();
+        }
+
+        private void Execute_Tasks()
+        {
+            if (CancelRequested) { FinishPatrol(); return; }
 
             state = PatrolState.Running;
             currentAction++;
-            print("Action" + currentAction);
 
             if (tasksList != null && currentAction < tasksList.Count)
             {
@@ -216,7 +218,7 @@ namespace Burmuruk.WorldG.Patrol
                 return;
             }
 
-            RestartTasks();
+            FinishPatrol();
             state = PatrolState.None;
         }
 
@@ -224,33 +226,22 @@ namespace Burmuruk.WorldG.Patrol
         #endregion
 
         #region private methods
-        private void Awake()
-        {
-            //mover = GetComponent<Movement>();
+        //private void Awake()
+        //{
+        //    //mover = GetComponent<Movement>();
 
-            //InitializeTasks();
-        }
+        //    //InitializeTasks();
+        //}
 
-        private void OnEnable()
-        {
-            if (mover == null) return;
-
-            if (mover)
-                mover.OnFinished += ContinueTasks;
-        }
-
-        private void OnDisable()
-        {
-            if (mover != null)
-                mover.OnFinished -= ContinueTasks;
-        }
-
-        private void RestartTasks()
+        private void FinishPatrol()
         {
             currentAction = -1;
             enumerator?.Reset();
             OnPatrolFinished?.Invoke();
             CancelRequested = false;
+
+            mover.OnFinished -= ContinueTasks;
+            state = PatrolState.None;
         }
 
         private bool InitializeTasks()
@@ -261,10 +252,19 @@ namespace Burmuruk.WorldG.Patrol
                 {
                     //{ TaskType.Turn, () => mover.TurnTo((float)taskValue) },
                     { TaskType.Move, () => {
+
                         Transform p = NextPoint;
-                        if (p == null) { RestartTasks(); return;}
-                        mover.MoveTo(p.position); } },
-                    { TaskType.Wait, () => Invoke("ContinueTasks", (float)taskValue)}
+                        if (p == null) 
+                        { 
+                            FinishPatrol(); 
+                            return;
+                        }
+
+                        mover.MoveTo(p.position); } 
+                    },
+                    { 
+                        TaskType.Wait, () => Invoke("ContinueTasks", (float)taskValue)
+                    }
                 };
 
             return true;

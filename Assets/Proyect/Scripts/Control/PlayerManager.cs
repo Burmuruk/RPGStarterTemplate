@@ -5,6 +5,7 @@ using Burmuruk.Tesis.Saving;
 using Burmuruk.Tesis.Stats;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -121,10 +122,12 @@ namespace Burmuruk.Tesis.Control
 
         private void FindPlayers()
         {
-            var players = (from p in FindObjectsOfType<AIGuildMember>() 
-                          where p is IPlayable 
-                          select p).ToList();
-            
+            var players = (from p in FindObjectsOfType<AIGuildMember>()
+                           where p is IPlayable
+                           select p).Distinct(new AIGuildMemberComparer()).ToList();
+
+            if (players.Count == 0) return;
+
             this.players = new();
 
             foreach (var player in players)
@@ -227,7 +230,7 @@ namespace Burmuruk.Tesis.Control
 
             //List<Color> usedColors = new();
 
-            //players.ForEach(p => usedColors.AddVariable(p.statsList.Color));
+            //checkedPlayers.ForEach(p => usedColors.AddVariable(p.statsList.Color));
 
             //var availableColors = (from color in playerColors where !usedColors.Contains(color) select color).ToList();
 

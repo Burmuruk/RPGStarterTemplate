@@ -4,6 +4,7 @@ using Burmuruk.AI;
 using Burmuruk.Collections;
 using System;
 using System.Collections;
+using System.Linq;
 
 namespace Burmuruk.WorldG.Patrol
 {
@@ -138,8 +139,39 @@ namespace Burmuruk.WorldG.Patrol
             }
 
             return false;
+        }
 
-            
+        public IPathNode FindNearestNodeAround(IPathNode start, Vector3 destiny, float maxDistance = 0)
+        {
+            float curDistance = 0;
+
+            if (maxDistance <= 0)
+                maxDistance = Vector3.Distance(start.Position, destiny);
+
+            SortedDictionary<float, IPathNode> closestNodes = new();
+            IPathNode curNode = start;
+
+            while (curDistance < maxDistance)
+            {
+                closestNodes.Clear();
+
+                foreach (var connection in curNode.NodeConnections)
+                {
+                    closestNodes.Add(Vector3.Distance(connection.node.Position, destiny), connection.node);
+                }
+
+                var nextDistance = Vector3.Distance(start.Position, closestNodes.First().Value.Position);
+
+                if (closestNodes.Count > 0 && nextDistance > curDistance && nextDistance <= maxDistance)
+                {
+                    curNode = closestNodes.First().Value;
+                    curDistance = nextDistance;
+                }
+                else
+                    break;
+            }
+
+            return curNode;
         }
 
         List<Direction> GetDirections(Vector3 curPos, Vector3 nextPos)
@@ -175,23 +207,23 @@ namespace Burmuruk.WorldG.Patrol
 
     //public class NodesEnumerator : IEnumerator<IPathNode>
     //{
-    //    IPathNode[][][] nodes;
+    //    IPathNode[][][] connection;
     //    int x = -1;
     //    int y = 0;
     //    int z = -1;
 
-    //    public IPathNode Current => nodes[x][y][z];
+    //    public IPathNode Current => connection[x][y][z];
 
-    //    object IEnumerator.Current => nodes[x][y][z];
+    //    object IEnumerator.Current => connection[x][y][z];
 
     //    public void Dispose()
     //    {
-    //        nodes = null;
+    //        connection = null;
     //    }
 
     //    public bool MoveNext()
     //    {
-    //        if (nodes[x][y][z];
+    //        if (connection[x][y][z];
     //    }
 
     //    public void Reset()
