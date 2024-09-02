@@ -119,3 +119,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   item: {fileID: 11400000, guid: df7fffcb3d5332e408140247ae3b9780, type: 2}
+  prefab: {fileID: 0}

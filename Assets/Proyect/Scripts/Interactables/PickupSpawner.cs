@@ -1,11 +1,12 @@
 ﻿using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Saving;
+using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Interaction
 {
-    public class PickupSpawner : MonoBehaviour, ISaveable
+    public class PickupSpawner : MonoBehaviour, IJsonSaveable
     {
         [SerializeField] ItemsList list;
         [SerializeField] List<Pickup> items = new();
@@ -16,6 +17,7 @@ namespace Burmuruk.Tesis.Interaction
             public int id;
             public Vector3 position;
             public Quaternion rotation;
+            [HideInInspector] public bool Picked;
         }
 
         public int ID => id == 0 ? id = GetHashCode() : id;
@@ -27,32 +29,40 @@ namespace Burmuruk.Tesis.Interaction
             items.ForEach(item => { item.OnPickedUp += RemoveItem; });
         }
 
-        public object CaptureState()
+        public JToken CaptureAsJToken()
         {
+            JObject state = new JObject();
             List<PickupItemData> pickups = new();
+            int i = 0;
 
             foreach (var item in items)
             {
-                pickups.Add(new PickupItemData()
-                {
-                    id = item.ID,
-                    position = item.transform.position,
-                    rotation = item.transform.rotation,
-                });
+                JObject itemState = new JObject();
+
+                itemState["Id"] = item.ID;
+                itemState["Position"] = VectorToJToken.CaptureVector(item.transform.position);
+                itemState["Rotation"] = VectorToJToken.CaptureVector(item.transform.rotation.eulerAngles);
+                //state["Picked"] = item.pick;
+                state[i] = itemState;
             }
 
-            return pickups.ToArray();
+            return state;
         }
 
-        public void RestoreState(object args)
+        public void RestoreFromJToken(JToken jToken)
         {
-            var savedItems = (List<PickupItemData>)args;
+            if (!(jToken is JObject state)) return;
             items.Clear();
+            int i = 0;
 
-            foreach (var item in savedItems)
+            while (state.ContainsKey(i.ToString()))
             {
-                var itemConfig = list.Get(item.id);
-                var inst = Instantiate(itemConfig.Pickup, parent: transform, position: item.position, rotation: item.rotation);
+                var item = state[i];
+                var itemConfig = list.Get(item["Id"].ToObject<int>());
+                var position = item["Position"].ToObject<Vector3>();
+                var rotation = item["Rotation"].ToObject<Vector3>();
+
+                var inst = Instantiate(itemConfig.Pickup, parent: transform, position: position, rotation: Quaternion.Euler(rotation));
 
                 inst.item = itemConfig;
                 items.Add(inst);
@@ -73,7 +83,8 @@ namespace Burmuruk.Tesis.Interaction
             {
                 if (items[i].gameObject == itemToRemove)
                 {
-                    Destroy(items[i]);
+                    items[i].enabled = false;
+                    //Destroy(items[i]);
                     items.RemoveAt(i);
                     return;
                 }

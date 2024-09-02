@@ -1,5 +1,7 @@
 ﻿using Burmuruk.Tesis.Control.AI;
+using Burmuruk.Tesis.Stats;
 using Burmuruk.Utilities;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -66,6 +68,7 @@ namespace Burmuruk.Tesis.Control.AI
                 playerState = value;
             }
         }
+        public Character Leader { get => mainPlayer; }
 
         protected virtual void Start()
         {
@@ -372,5 +375,75 @@ namespace Burmuruk.Tesis.Control.AI
 
             return (enemies[closest.idx], closest.distance);
         }
+
+        #region Saving
+        protected override JToken CaptureCharacterData()
+        {
+            var state = base.CaptureCharacterData();
+
+            state["Equipment"] = CaptureEquipment();
+            state["BasicStats"] = CaptureBasicStatus();
+
+            return state;
+        }
+
+        protected override void RestoreCharacterData(JToken jToken)
+        {
+            base.RestoreCharacterData(jToken);
+
+            RestoreBasicStatus(jToken["BasicStats"]);
+            RestoreEquipment(jToken["Equipment"]);
+        }
+
+        public JToken CaptureBuffs()
+        {
+            JObject characterState = new JObject();
+            int i = 0;
+            var buffsDic = FindObjectOfType<BuffsManager>().GetCharacterTimers(this);
+
+            foreach (var buffNode in buffsDic)
+            {
+                JObject buffState = new JObject();
+
+                buffState["CurTime"] = buffNode.Key.CurrentTime;
+                buffState["Duration"] = buffNode.Value.buff.duration;
+                buffState["Value"] = buffNode.Value.buff.value;
+                buffState["Rate"] = buffNode.Value.buff.rate;
+                buffState["Percentage"] = buffNode.Value.buff.percentage;
+                buffState["AffectAll"] = buffNode.Value.buff.affectAll;
+                buffState["Stat"] = (int)buffNode.Value.buff.stat;
+
+                characterState[i++] = buffState;
+            }
+
+            return characterState;
+        }
+
+        public void RestoreBuffs(JToken jToken)
+        {
+            if (!(jToken is JObject jObject)) return;
+
+            var buffManager = FindObjectOfType<BuffsManager>();
+            int i = 0;
+
+            while (jObject.ContainsKey(i.ToString()))
+            {
+                var curToken = jObject[i];
+
+                BuffData buffData = new BuffData()
+                {
+                    duration = curToken["Duration"].ToObject<float>(),
+                    value = curToken["Value"].ToObject<float>(),
+                    rate = curToken["Rate"].ToObject<float>(),
+                    percentage = curToken["Percentage"].ToObject<bool>(),
+                    affectAll = curToken["AffectAll"].ToObject<bool>(),
+                    stat = curToken["Stat"].ToObject<ModifiableStat>(),
+                };
+                int damage = (int)buffData.value;
+
+                buffManager.AddBuff((Character)this, buffData, () => health.ApplyDamage(damage));
+            }
+        } 
+        #endregion
     }
 }

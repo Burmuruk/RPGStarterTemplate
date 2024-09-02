@@ -27,6 +27,8 @@ namespace Burmuruk.Utilities
             }
         }
 
+        public float CurrentTime { get => currentTime; }
+
         public CoolDownAction(float time)
         {
             this.time = time;

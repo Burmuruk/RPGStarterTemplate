@@ -279,6 +279,11 @@ namespace Burmuruk.Tesis.Movement
 
         }
 
+        public void UpdatePosition()
+        {
+            curNodePosition = nodeList.FindNearestNode(transform.position);
+        }
+
         private void Move()
         {
             if (!m_canMove && !IsMoving) return;

@@ -169,11 +169,9 @@ namespace Burmuruk.Tesis.Control.AI
                 CheckPatrolPath();
             }
             catch (NotImplementedException) { }
-            finally
-            {
-                ActionManager();
-                MovementManager();
-            }
+            
+            ActionManager();
+            MovementManager();
         }
 
         protected override void ActionManager()

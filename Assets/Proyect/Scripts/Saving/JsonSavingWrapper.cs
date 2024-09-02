@@ -1,25 +1,57 @@
-﻿using System.Collections;
+﻿using Burmuruk.Tesis.Stats;
+using System.Collections;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Saving
 {
     public class JsonSavingWrapper : MonoBehaviour
     {
-        const string defaultSaveFile = "save";
+        const string defaultSaveFile = "miGuardado-";
+        const string defaultAutoSaveFile = "miAutoGuardado-";
 
-        private IEnumerator Start()
+        //private IEnumerator Start()
+        //{
+        //    yield return GetComponent<JsonSavingSystem>().LoadLastScene(defaultSaveFile);
+        //}
+
+        public void Save(int slot)
         {
-            yield return GetComponent<JsonSavingSystem>().LoadLastScene(defaultSaveFile);
+            if (slot == 0)
+            {
+                int id = System.DateTime.Now.Second + System.DateTime.Now.Hour + System.DateTime.Now.Year;
+                GetComponent<JsonSavingSystem>().Save(defaultAutoSaveFile + id);
+            }
+            else
+            {
+                GetComponent<JsonSavingSystem>().Save(defaultSaveFile + slot);
+            }
         }
 
-        public void Save()
+        public void Load(int slot)
         {
-            GetComponent<JsonSavingSystem>().Save(defaultSaveFile);
+            FindObjectOfType<BuffsManager>().RemoveAllBuffs();
+
+            if (slot == 0)
+            {
+                GetComponent<JsonSavingSystem>().Load(defaultAutoSaveFile + slot); 
+            }
+            else
+            {
+                GetComponent<JsonSavingSystem>().Load(defaultSaveFile + slot);
+            }
         }
 
-        public void Load()
+        public void Update()
         {
-            GetComponent<JsonSavingSystem>().Load(defaultSaveFile);
+            if (Input.GetKeyUp(KeyCode.K))
+            {
+                Save(1);
+            }
+
+            if (Input.GetKeyUp(KeyCode.L))
+            {
+                Load(1);
+            }
         }
     }
 }

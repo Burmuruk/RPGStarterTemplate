@@ -4,6 +4,9 @@ namespace Burmuruk.Tesis.Interaction
 {
     public class Interactable : MonoBehaviour
     {
+        public void Interact()
+        {
 
+        }
     }
 }

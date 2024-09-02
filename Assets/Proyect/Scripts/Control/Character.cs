@@ -5,10 +5,12 @@ using Burmuruk.Tesis.Stats;
 using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Combat;
 using Burmuruk.Tesis.Utilities;
+using Burmuruk.Tesis.Saving;
+using Newtonsoft.Json.Linq;
 
 namespace Burmuruk.Tesis.Control
 {
-    public class Character : MonoBehaviour
+    public class Character : MonoBehaviour, IJsonSaveable
     {
         [Header("References")]
         [SerializeField] protected Transform farPercept;
@@ -176,5 +178,159 @@ namespace Burmuruk.Tesis.Control
             StopAllCoroutines();
             FindObjectOfType<BuffsManager>().RemoveAllBuffs(this);
         }
+
+        #region Saving
+        public JToken CaptureAsJToken()
+        {
+            return CaptureCharacterData();
+        }
+
+        public void RestoreFromJToken(JToken state)
+        {
+            RestoreCharacterData(state);
+        }
+
+        protected virtual JToken CaptureCharacterData()
+        {
+            JObject state = new JObject();
+
+            state["Position"] = VectorToJToken.CaptureVector(transform.position);
+            state["Rotation"] = VectorToJToken.CaptureVector(transform.rotation.eulerAngles);
+
+            return state;
+        }
+
+        protected virtual void RestoreCharacterData(JToken jToken)
+        {
+            if (jToken is JObject jObject)
+            {
+                IDictionary<string, JToken> data = jObject;
+                transform.position = data["Position"].ToObject<Vector3>();
+                transform.rotation = Quaternion.Euler(data["Rotation"].ToObject<Vector3>());
+
+                mover.UpdatePosition();
+            }
+        }
+
+        protected JObject CaptureEquipment()
+        {
+            JObject equipmentData = new();
+
+            foreach (var part in Enum.GetValues(typeof(EquipmentType)))
+            {
+                int partId = (int)part;
+                var items = equipment.GetItems(partId);
+
+                if (items != null)
+                {
+                    equipmentData[partId.ToString()] = items[0].ID;
+                }
+            }
+
+            return equipmentData;
+        }
+
+        protected void RestoreEquipment(JToken jToken)
+        {
+            if (jToken is JObject state)
+            {
+                var equiper = inventory as InventoryEquipDecorator;
+                var enumValues = Enum.GetValues(typeof(EquipmentType));
+
+                foreach (var part in enumValues)
+                {
+                    var items = equipment.GetItems((int)part);
+
+                    if (items == null) continue;
+
+                    foreach (var item in items)
+                    {
+                        equiper.Unequip(this, item);
+                    }
+                }
+
+                foreach (var part in enumValues)
+                {
+                    int partId = (int)part;
+
+                    if (!state.ContainsKey(partId.ToString())) continue;
+
+                    var item = inventory.GetItem(state[partId.ToString()].ToObject<int>());
+
+                    equiper.TryEquip(this, item, out _);
+                }
+            }
+        }
+
+        protected JObject CaptureBasicStatus()
+        {
+            JObject basicStatsData = new();
+            Character character = (Character)this;
+
+            basicStatsData["Speed"] = ModsList.TryGetRealValue(stats.Speed, character, ModifiableStat.Speed);
+            basicStatsData["Damage"] = ModsList.TryGetRealValue(stats.Damage, character, ModifiableStat.BaseDamage);
+            basicStatsData["DamageRate"] = ModsList.TryGetRealValue(stats.DamageRate, character, ModifiableStat.GunFireRate);
+            basicStatsData["Color"] = VectorToJToken.CaptureVector(stats.color);
+            basicStatsData["EyesRadious"] = stats.eyesRadious;
+            basicStatsData["EarsRadious"] = stats.earsRadious;
+            basicStatsData["MinDistance"] = ModsList.TryGetRealValue(stats.MinDistance, character, ModifiableStat.MinDistance);
+
+            return basicStatsData;
+        }
+
+        protected void RestoreBasicStatus(JToken jToken)
+        {
+            if (jToken is JObject state)
+            {
+                stats.Speed = state["Speed"].ToObject<float>();
+                stats.Damage = state["Damage"].ToObject<int>();
+                stats.damageRate = state["DamageRate"].ToObject<float>();
+                stats.color = state["Color"].ToObject<Vector4>();
+                stats.eyesRadious = state["EyesRadious"].ToObject<float>();
+                stats.earsRadious = state["EarsRadious"].ToObject<float>();
+                stats.MinDistance = state["MinDistance"].ToObject<float>();
+            }
+        } 
+
+        public JToken CaptureInventory()
+        {
+            JObject state = new JObject();
+
+            foreach (ItemType type in Enum.GetValues(typeof(ItemType)))
+            {
+                var items = inventory.GetList(type);
+
+                if (items == null) continue;
+
+                for (int i = 0; i < items.Count; i++)
+                {
+                    JObject itemState = new();
+
+                    itemState["Id"] = items[i].ID;
+                    itemState["Count"] = inventory.GetItemCount(items[i].ID);
+                    state[i] = itemState;
+                }
+            }
+
+            return state;
+        }
+
+        public void RestoreInventory(JToken jToken)
+        {
+            if (!(jToken is JObject state)) return;
+            
+            int i = 0;
+
+            while (state.ContainsKey(i.ToString()))
+            {
+                for (int j = 0; j < state["Id"]["Count"].ToObject<int>(); j++)
+                {
+                    inventory.Add(state[i]["Id"].ToObject<int>());
+                }
+
+                i++;
+            }
+        }
+        #endregion
     }
 }

@@ -1,10 +1,12 @@
-﻿using System;
+﻿using Burmuruk.Tesis.Saving;
+using Newtonsoft.Json.Linq;
+using System;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Stats
 {
-    public class Health : MonoBehaviour
+    public class Health : MonoBehaviour, IJsonSaveable
     {
         [SerializeField] int hp;
         [SerializeField] int maxHp;
@@ -44,9 +46,14 @@ namespace Burmuruk.Tesis.Stats
             OnDied?.Invoke();
         }
 
-        private void GetHealth()
+        public JToken CaptureAsJToken()
         {
+            return JToken.FromObject(hp);
+        }
 
+        public void RestoreFromJToken(JToken state)
+        {
+            hp = state.ToObject<int>();
         }
     }
 }

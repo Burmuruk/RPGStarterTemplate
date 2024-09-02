@@ -1,13 +1,16 @@
 using Burmuruk.Tesis.Movement.PathFindig;
+using Burmuruk.Tesis.Saving;
 using Burmuruk.Tesis.UI;
 using Burmuruk.WorldG.Patrol;
+using Newtonsoft.Json.Linq;
+using System.Resources;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
 namespace Burmuruk.Tesis.Control
 {
-    public class LevelManager : MonoBehaviour
+    public class LevelManager : MonoBehaviour, IJsonSaveable
     {
         [SerializeField] Path path;
         [SerializeField] UnityEvent onUILoaded;
@@ -17,7 +20,7 @@ namespace Burmuruk.Tesis.Control
         GameManager gameManager;
         UIMenuCharacters menuCharacters;
 
-        private int saveFileIdx = 0;
+        private int saveSlotIdx = 1;
         private bool initialized = false;
 
         private void Awake()
@@ -69,25 +72,15 @@ namespace Burmuruk.Tesis.Control
         //    return path.SetNodeList();
         //}
 
-        public void LoadGame(int idx)
-        {
-
-        }
-
-        public void SaveGame(int idx)
-        {
-
-        }
-
         public void GoToMainMenu()
         {
-            SaveGame(saveFileIdx);
+            //SaveGame(saveSlotIdx);
             gameManager.GoToMainMenu();
         }
 
         public void ExitGame()
         {
-            SaveGame(saveFileIdx);
+            //SaveGame(saveSlotIdx);
             gameManager.ExitGame();
         }
 
@@ -181,6 +174,23 @@ namespace Burmuruk.Tesis.Control
             if (!menuCharacters) return;
 
             menuCharacters.ChangeMenu();
+        }
+
+        public JToken CaptureAsJToken()
+        {
+            JObject jObject = new JObject();
+
+            jObject["BuildIdx"] = SceneManager.GetActiveScene().buildIndex;
+            jObject["Slot"] = saveSlotIdx;
+            jObject["TimePlayed"] = Time.realtimeSinceStartup;
+
+            return jObject;
+        }
+
+        public void RestoreFromJToken(JToken state)
+        {
+            //SceneManager.LoadScene(state.)
+            saveSlotIdx = state["BuildIdx"].ToObject<int>();
         }
     } 
 }

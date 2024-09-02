@@ -14,17 +14,6 @@ namespace Burmuruk.Tesis.Stats
         [SerializeField] float consumptionTime;
         [SerializeField] float areaRadious;
 
-        [Serializable]
-        private struct BuffData
-        {
-            public ModifiableStat stat;
-            public float value;
-            public float duration;
-            public float rate;
-            public bool percentage;
-            public bool affectAll;
-        }
-
         //public int Value { get => value; }
         public float ConsumptionTime { get => consumptionTime; }
 
@@ -45,15 +34,15 @@ namespace Burmuruk.Tesis.Stats
         {
             var character = (Character)args;
 
-            foreach (var mod in buffs)
+            foreach (var buff in buffs)
             {
-                if (mod.stat == ModifiableStat.HP)
+                if (buff.stat == ModifiableStat.HP)
                 {
-                    BuffsManager.Instance.HealOverTime(character, (int)mod.value, mod.duration, mod.rate);
+                    BuffsManager.Instance.AddBuff(character, buff, () => character.Health.ApplyDamage((int)buff.value));
                 }
                 else
                 {
-                    BuffsManager.Instance.AddBuff(character, mod.stat, mod.value, mod.duration);
+                    BuffsManager.Instance.AddBuff(character, buff);
                 }
             }
 

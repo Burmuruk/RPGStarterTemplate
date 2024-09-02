@@ -1,6 +1,7 @@
 ﻿using Burmuruk.Tesis.Control;
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 
 namespace Burmuruk.Tesis.Stats
 {
@@ -134,6 +135,17 @@ namespace Burmuruk.Tesis.Stats
         {
             buffs.Remove(character);
             return true;
+        }
+
+        public static float TryGetRealValue(float value, Character character, ModifiableStat stat)
+        {
+            if (!buffs.ContainsKey(character) || !buffs[character].mods.ContainsKey(stat)) return value;
+
+            List<float> mods = buffs[character][stat];
+
+            mods.ForEach(mod => value -= mod);
+
+            return value;
         }
     }
 

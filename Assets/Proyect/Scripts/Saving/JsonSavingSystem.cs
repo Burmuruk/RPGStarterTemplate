@@ -82,7 +82,7 @@ namespace Burmuruk.Tesis.Saving
         {
             IDictionary<string, JToken> stateDict = state;
 
-            foreach (var saveable in FindObjectsOfType<JsonSaveableEntiry>())
+            foreach (var saveable in FindObjectsOfType<JsonSaveableEntity>())
             {
                 stateDict[saveable.GetUniqueIdentifier()] = saveable.CaptureAsJtoken();
             }
@@ -94,7 +94,7 @@ namespace Burmuruk.Tesis.Saving
         {
             IDictionary<string, JToken> stateDict = state;
 
-            foreach (var saveable in FindObjectsOfType<JsonSaveableEntiry>())
+            foreach (var saveable in FindObjectsOfType<JsonSaveableEntity>())
             {
                 string id = saveable.GetUniqueIdentifier();
 

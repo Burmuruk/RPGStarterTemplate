@@ -241,18 +241,80 @@ namespace Burmuruk.Tesis.Control
 
         public JToken CaptureAsJToken()
         {
-            List<Vector3> positions = new();
-            players.ForEach(player => { positions.Add(player.transform.position); });
-            return JToken.FromObject(positions);
+            JObject state = new JObject();
+
+            state["Players"] = CapturePlayers();
+            state["Inventory"] = CaptureInventory();
+
+            return state;
         }
 
-        public void RestoreFromJToken(JToken state)
+        public void RestoreFromJToken(JToken jToken)
         {
-            List<Vector3> positions = state.ToObject<List<Vector3>>();
+            RestorePlayers(jToken["Players"]);
+            RestoreInventory(jToken["Inventory"]);
+        }
+
+        private JToken CapturePlayers()
+        {
+            if (players.Count == 0) return null;
+
+            JObject playersState = new JObject();
+            var leaderIdentifier = players[0].Leader.GetComponent<JsonSaveableEntity>().GetUniqueIdentifier();
+
             for (int i = 0; i < players.Count; i++)
             {
-                players[i].transform.position = positions[i];
+                JObject state = new JObject();
+
+                state["ID"] = i;
+
+                string identifier = players[i].GetComponent<JsonSaveableEntity>().GetUniqueIdentifier();
+                playersState[identifier] = state;
+
+                if (leaderIdentifier == identifier)
+                    playersState["Leader"] = i;
             }
+
+            playersState["Formation"] = (int)curFormation.value;
+
+            return playersState;
+        }
+
+        private void RestorePlayers(JToken jToken)
+        {
+            if (!(jToken is JObject jObject)) return;
+
+            AIGuildMember[] members = new AIGuildMember[players.Count];
+
+            for (int i = 0; i < players.Count; i++)
+            {
+                string identifier = players[i].GetComponent<JsonSaveableEntity>().GetUniqueIdentifier();
+
+                members[jObject[identifier]["ID"].ToObject<int>()] = players[i];
+            }
+
+            players.Clear();
+            players.AddRange(members);
+            curFormation = ((Formation)jObject["Formation"].ToObject<int>(), null);
+            SetPlayerControl(jObject["Leader"].ToObject<int>());
+        }
+
+        private JToken CaptureInventory()
+        {
+            if (Players.Count == 0) return null;
+
+            JObject state = new JObject();
+
+            players[0].CaptureInventory();
+
+            return state;
+        }
+
+        private void RestoreInventory(JToken jToken)
+        {
+            if (Players.Count == 0) return;
+
+            players[0].RestoreInventory(jToken);
         }
     }
 
