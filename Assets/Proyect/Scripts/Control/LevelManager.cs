@@ -1,16 +1,16 @@
 using Burmuruk.Tesis.Movement.PathFindig;
 using Burmuruk.Tesis.Saving;
 using Burmuruk.Tesis.UI;
-using Burmuruk.WorldG.Patrol;
 using Newtonsoft.Json.Linq;
-using System.Resources;
+using System;
+using UnityEditor.Media;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
 namespace Burmuruk.Tesis.Control
 {
-    public class LevelManager : MonoBehaviour, IJsonSaveable
+    public class LevelManager : MonoBehaviour, ISlotDataProvider, IslotDataSaver
     {
         [SerializeField] Path path;
         [SerializeField] UnityEvent onUILoaded;
@@ -20,12 +20,15 @@ namespace Burmuruk.Tesis.Control
         GameManager gameManager;
         UIMenuCharacters menuCharacters;
 
-        private int saveSlotIdx = 1;
+        private int slotIdx = 1;
         private bool initialized = false;
+
+        public event Action OnNavmeshLoaded;
 
         private void Awake()
         {
-
+            path.LoadNavMesh();
+            SetPaths();
         }
 
         void Start()
@@ -33,14 +36,17 @@ namespace Burmuruk.Tesis.Control
             gameManager = GetComponent<GameManager>();
             SceneManager.sceneLoaded += VerifyScene;
             SceneManager.sceneUnloaded += RestoreScene;
+
+            gameManager.onStateChange += UpdateGameState;
+            OnNavmeshLoaded += gameManager.NotifyLevelLoaded;
         }
 
         void Update()
         {
-            SetPaths();
+            
         }
 
-        private void SetPaths()
+        public void SetPaths()
         {
             if (initialized) return;
 
@@ -57,6 +63,7 @@ namespace Burmuruk.Tesis.Control
                 }
 
                 initialized = true;
+                OnNavmeshLoaded?.Invoke();
             }
             else
             {
@@ -74,13 +81,13 @@ namespace Burmuruk.Tesis.Control
 
         public void GoToMainMenu()
         {
-            //SaveGame(saveSlotIdx);
+            //SaveGame(slotIdx);
             gameManager.GoToMainMenu();
         }
 
         public void ExitGame()
         {
-            //SaveGame(saveSlotIdx);
+            //SaveGame(slotIdx);
             gameManager.ExitGame();
         }
 
@@ -176,21 +183,45 @@ namespace Burmuruk.Tesis.Control
             menuCharacters.ChangeMenu();
         }
 
-        public JToken CaptureAsJToken()
-        {
-            JObject jObject = new JObject();
-
-            jObject["BuildIdx"] = SceneManager.GetActiveScene().buildIndex;
-            jObject["Slot"] = saveSlotIdx;
-            jObject["TimePlayed"] = Time.realtimeSinceStartup;
-
-            return jObject;
-        }
-
         public void RestoreFromJToken(JToken state)
         {
             //SceneManager.LoadScene(state.)
-            saveSlotIdx = state["BuildIdx"].ToObject<int>();
+            slotIdx = state["Slot"].ToObject<int>();
+        }
+
+        public SlotData GetSlotData()
+        {
+            SlotData slotData = new SlotData(
+                slotIdx,
+                SceneManager.GetActiveScene().buildIndex,
+                Time.realtimeSinceStartup);
+
+            return slotData;
+        }
+
+        public void SaveSlotData(SlotData slotData)
+        {
+            slotIdx = slotData.Id;
+        }
+
+        private void UpdateGameState(GameManager.State state)
+        {
+            switch (state)
+            {
+                case GameManager.State.Playing:
+
+                    break;
+                case GameManager.State.Pause:
+                    break;
+                case GameManager.State.UI:
+                    break;
+                case GameManager.State.Loading:
+                    break;
+                case GameManager.State.Cinematic:
+                    break;
+                default:
+                    break;
+            }
         }
     } 
 }

@@ -16,7 +16,7 @@ MonoBehaviour:
   m_description: Restaura 20 pts. de vida al instante.
   _type: 1
   m_sprite: {fileID: 10901, guid: 0000000000000000f000000000000000, type: 0}
-  pickup: {fileID: 3215936145448414887, guid: 6c5539de2b89f1e4a98057d3a0b16058, type: 3}
+  pickup: {fileID: 9173323199873413130, guid: b946c33e5a356fa43889624317fb30c7, type: 3}
   m_capacity: 99
   buffs:
   - stat: 1

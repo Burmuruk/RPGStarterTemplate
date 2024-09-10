@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System;
 
 namespace Burmuruk.Tesis.Saving
 {
@@ -12,25 +13,46 @@ namespace Burmuruk.Tesis.Saving
     {
         private const string extension = ".json";
 
-        public IEnumerator LoadLastScene(string saveFile)
-        {
-            JObject state = LoadJsonFromFile(saveFile);
-            IDictionary<string, JToken> stateDict = state;
+        public event Action onSceneLoaded;
 
-            int buildIndex = SceneManager.GetActiveScene().buildIndex;
-            if (stateDict.ContainsKey("lastSceneBuildIndex"))
+        public IEnumerator LoadLastScene(JObject state, int slot, Action<JObject> callback)
+        {
+            int curScene = SceneManager.GetActiveScene().buildIndex;
+            int buildIndex = 2;
+            JObject slotData = null;
+
+            if (state.ContainsKey("SlotData"))
             {
-                buildIndex = (int)stateDict["lastSceneBuildIndex"];
+                slotData = (JObject)state["SlotData"];
+                if ((int)state["SlotData"]["BuildIdx"] != SceneManager.GetActiveScene().buildIndex)
+                {
+                    buildIndex = (int)state["SlotData"]["BuildIdx"];
+                }
+            }
+            else
+            {
+                slotData = new JObject();
+                slotData["Slot"] = slot;
+                slotData["BuildIdx"] = slot;
+                slotData["TimePlayed"] = slot;
             }
 
+            
             yield return SceneManager.LoadSceneAsync(buildIndex);
+            
+            onSceneLoaded?.Invoke();
+            
             RestoreFromToken(state);
+            
+            callback?.Invoke(slotData);
+            //yield return SceneManager.UnloadSceneAsync(curScene);
+            //Debug.Log("Scene Unloaded");
         }
 
-        public void Save(string saveFile)
+        public void Save(string saveFile, JObject slotData = null)
         {
             JObject state = LoadJsonFromFile(saveFile);
-            CaptureAsToken(state);
+            CaptureAsToken(state, slotData);
             SaveFileAsJson(saveFile, state);
         }
 
@@ -39,9 +61,13 @@ namespace Burmuruk.Tesis.Saving
             File.Delete(GetPathFromSaveFile(saveFile));
         }
 
-        public void Load(string saveFile)
+        public void Load(string saveFile, int slot, Action<JObject> callback)
         {
-            RestoreFromToken(LoadJsonFromFile(saveFile));
+            JObject state = LoadJsonFromFile(saveFile);
+
+            StartCoroutine(LoadLastScene(state, slot, callback));
+
+            //RestoreFromToken(LoadJsonFromFile(saveFile));
         }
 
         private JObject LoadJsonFromFile(string saveFile)
@@ -67,7 +93,7 @@ namespace Burmuruk.Tesis.Saving
         private void SaveFileAsJson(string saveFile, JObject state)
         {
             string path = GetPathFromSaveFile(saveFile);
-            print("Saving");
+            
             using (var textWriter = File.CreateText(path))
             {
                 using (var writer = new JsonTextWriter(textWriter))
@@ -78,20 +104,25 @@ namespace Burmuruk.Tesis.Saving
             }
         }
 
-        private void CaptureAsToken(JObject state)
+        private void CaptureAsToken(JObject state, JObject slotData)
         {
             IDictionary<string, JToken> stateDict = state;
+
+            if (slotData != null)
+            {
+                stateDict["SlotData"] = slotData;
+            }
 
             foreach (var saveable in FindObjectsOfType<JsonSaveableEntity>())
             {
                 stateDict[saveable.GetUniqueIdentifier()] = saveable.CaptureAsJtoken();
             }
-
-            stateDict["lastSceneBuildIndex"] = SceneManager.GetActiveScene().buildIndex;
         }
 
         private void RestoreFromToken(JObject state)
         {
+            if (state.Count <= 0) return;
+
             IDictionary<string, JToken> stateDict = state;
 
             foreach (var saveable in FindObjectsOfType<JsonSaveableEntity>())
@@ -103,6 +134,8 @@ namespace Burmuruk.Tesis.Saving
                     saveable.RestoreFromJToken(stateDict[id]);
                 }
             }
+
+
         }
 
         private string GetPathFromSaveFile(string saveFile)
@@ -114,6 +147,13 @@ namespace Burmuruk.Tesis.Saving
         public void GetFileInfo(int id)
         {
 
+        }
+
+        public bool LookForSlots(string saveFile)
+        {
+            string path = GetPathFromSaveFile(saveFile);
+
+            return File.Exists(path);
         }
     }
 }

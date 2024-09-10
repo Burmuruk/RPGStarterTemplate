@@ -16,7 +16,7 @@ MonoBehaviour:
   m_description: Moves fast
   _type: 2
   m_sprite: {fileID: 10901, guid: 0000000000000000f000000000000000, type: 0}
-  pickup: {fileID: 0}
+  pickup: {fileID: 643253036281322976, guid: 5238de9c738cc9e4fb9908bd027fcfb4, type: 3}
   m_capacity: 1
   type: 1
   speed: 10

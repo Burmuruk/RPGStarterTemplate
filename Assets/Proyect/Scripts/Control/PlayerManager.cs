@@ -303,18 +303,86 @@ namespace Burmuruk.Tesis.Control
         {
             if (Players.Count == 0) return null;
 
-            JObject state = new JObject();
+            var itemsState = (JObject)players[0].CaptureInventory();
 
-            players[0].CaptureInventory();
+            int j = 0;
 
-            return state;
+            while (itemsState.ContainsKey(j.ToString()))
+            {
+                int id = itemsState[j.ToString()]["Id"].ToObject<int>();
+                var item = players[0].Inventory.GetItem(id);
+
+                if (item is EquipeableItem equipeable)
+                {
+                    JObject equipmentState = new JObject();
+
+                    for (int i = 0; i < players.Count; i++)
+                    {
+                        if (equipeable.Characters.Contains(players[i]))
+                            equipmentState[i.ToString()] = true;
+                    }
+
+                    itemsState[j.ToString()]["Equipped"] = equipmentState;
+                }
+
+                j++;
+            }
+
+            return itemsState;
         }
 
         private void RestoreInventory(JToken jToken)
         {
             if (Players.Count == 0) return;
 
+            if (!(jToken is JObject itemsState && itemsState != null)) return;
+
             players[0].RestoreInventory(jToken);
+
+            int j = 0;
+
+            while (itemsState.ContainsKey(j.ToString()))
+            {
+                var curItemState = itemsState[j.ToString()];
+                int id = curItemState["Id"].ToObject<int>();
+
+                AddItem(curItemState, id, curItemState["Count"].ToObject<int>());
+                var item = players[0].Inventory.GetItem(id);
+
+                if ((curItemState as JObject).ContainsKey("Equipped") && item is EquipeableItem equipeable)
+                {
+                    EquipItemToPlayers(curItemState, equipeable);
+                }
+
+                j++;
+            }
+            for (int i = 0; i < players.Count; i++)
+            {
+            }
+
+            void AddItem(JToken curItemState, int id, int count)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    players[0].Inventory.Add(id);
+                }
+            }
+
+            void EquipItemToPlayers(JToken curItemState, EquipeableItem equipeable)
+            {
+                int i = 0;
+                var equipmentState = (JObject)curItemState["Equipped"];
+
+                while (i < players.Count)
+                {
+                    if (equipmentState.ContainsKey(i.ToString()))
+                    {
+                        (players[i].Inventory as InventoryEquipDecorator).TryEquip(players[i], equipeable, out _);
+                    }
+
+                    i++;
+                }
+            }
         }
     }
 

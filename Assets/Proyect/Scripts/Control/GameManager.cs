@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Collections;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
@@ -9,6 +11,8 @@ namespace Burmuruk.Tesis.Control
         public static GameManager Instance;
         State state;
         PlayerInput playerInput;
+
+        public event Action<State> onStateChange;
 
         public State GameState { get { return state; } }
 
@@ -23,6 +27,9 @@ namespace Burmuruk.Tesis.Control
 
         private void Awake()
         {
+            StartCoroutine(StartLevel());
+            state = State.Loading;
+
             if (Instance == null)
             {
                 Instance = this;
@@ -126,6 +133,20 @@ namespace Burmuruk.Tesis.Control
 
             //playerInput.SwitchCurrentActionMap("Player");
             state = State.Playing;
+        }
+
+        public void NotifyLevelLoaded()
+        {
+            if (state == State.Loading)
+                state = State.Playing;
+        }
+
+        IEnumerator StartLevel()
+        {
+            yield return new WaitForSeconds(3);
+            
+            if (state == State.Loading)
+                state = State.Playing;
         }
     }
 }

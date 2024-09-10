@@ -26,7 +26,7 @@ namespace Burmuruk.Tesis.Saving
             {
                 JToken token = jsonSAveable.CaptureAsJToken();
                 string component = jsonSAveable.GetType().ToString();
-                Debug.Log($"{name} Capture {component} = {token.ToString()}");
+                
                 stateDict[jsonSAveable.GetType().ToString()] = token;
             }
 
@@ -44,7 +44,6 @@ namespace Burmuruk.Tesis.Saving
                 
                 if (stateDict.ContainsKey(component))
                 {
-                    Debug.Log($"{name} Restore {component} => {stateDict[component]}");
                     jsonSaveable.RestoreFromJToken(stateDict[component]);
                 }
             }

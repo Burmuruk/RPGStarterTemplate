@@ -1,7 +1,6 @@
 ﻿using Burmuruk.Tesis.Saving;
 using Newtonsoft.Json.Linq;
 using System;
-using Unity.Mathematics;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Stats
@@ -19,12 +18,12 @@ namespace Burmuruk.Tesis.Stats
 
         private void Awake()
         {
-            ModsList.AddVariable(GetComponent<Burmuruk.Tesis.Control.Character>(), ModifiableStat.HP, () => hp, (value) => { hp = (int)value; });
+            ModsList.AddVariable(GetComponent<Control.Character>(), ModifiableStat.HP, () => hp, (value) => { hp = (int)value; });
         }
 
         public void ApplyDamage(int damage)
         {
-            hp = math.max(hp - damage, 0);
+            hp = Math.Max(hp - damage, 0);
 
             if (hp <= 0)
             {
@@ -38,7 +37,7 @@ namespace Burmuruk.Tesis.Stats
 
         public void Heal(int value)
         {
-            hp = math.min(hp + value, maxHp);
+            hp = Math.Min(hp + value, maxHp);
         }
 
         private void Die()

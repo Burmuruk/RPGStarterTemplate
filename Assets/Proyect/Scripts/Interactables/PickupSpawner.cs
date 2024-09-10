@@ -9,24 +9,59 @@ namespace Burmuruk.Tesis.Interaction
     public class PickupSpawner : MonoBehaviour, IJsonSaveable
     {
         [SerializeField] ItemsList list;
-        [SerializeField] List<Pickup> items = new();
+        [SerializeField] Dictionary<int, PickupItemData> items = new();
         int id;
 
-        struct PickupItemData
+        class PickupItemData
         {
-            public int id;
             public Vector3 position;
             public Quaternion rotation;
-            [HideInInspector] public bool Picked;
+            [HideInInspector] public bool picked;
+            public Pickup pickup;
         }
 
         public int ID => id == 0 ? id = GetHashCode() : id;
 
         private void Awake()
         {
-            if (items.Count == 0) return;
+            var pickups = FindObjectsOfType<Pickup>();
+            items.Clear();
 
-            items.ForEach(item => { item.OnPickedUp += RemoveItem; });
+            foreach (var pickup in pickups)
+            {
+                PickupItemData data = new PickupItemData()
+                {
+                    position = pickup.transform.position,
+                    rotation = pickup.transform.rotation,
+                    picked = false,
+                    pickup = pickup
+                };
+
+                pickup.OnPickedUp += RemoveItem;
+
+                items[pickup.ID] = data;
+            }
+        }
+
+        private bool InstanciateLastPickups()
+        {
+            if (items.Count == 0) return false;
+
+            var pickups = FindObjectsOfType<Pickup>();
+
+            for (int i = 0; i < pickups.Length; i++)
+            {
+                Destroy(pickups[i]);
+            }
+
+            foreach (var item in items)
+            {
+                var prefab = list.Get(item.Key).Prefab;
+
+                Instantiate(prefab, item.Value.position, item.Value.rotation);
+            }
+
+            return true;
         }
 
         public JToken CaptureAsJToken()
@@ -39,11 +74,13 @@ namespace Burmuruk.Tesis.Interaction
             {
                 JObject itemState = new JObject();
 
-                itemState["Id"] = item.ID;
-                itemState["Position"] = VectorToJToken.CaptureVector(item.transform.position);
-                itemState["Rotation"] = VectorToJToken.CaptureVector(item.transform.rotation.eulerAngles);
-                //state["Picked"] = item.pick;
-                state[i] = itemState;
+                itemState["Id"] = item.Key;
+                itemState["Position"] = VectorToJToken.CaptureVector(item.Value.position);
+                itemState["Rotation"] = VectorToJToken.CaptureVector(item.Value.rotation.eulerAngles);
+                itemState["Picked"] = item.Value.picked;
+
+                state[i.ToString()] = itemState;
+                item.Value.pickup.OnPickedUp += RemoveItem;
             }
 
             return state;
@@ -57,38 +94,57 @@ namespace Burmuruk.Tesis.Interaction
 
             while (state.ContainsKey(i.ToString()))
             {
-                var item = state[i];
-                var itemConfig = list.Get(item["Id"].ToObject<int>());
-                var position = item["Position"].ToObject<Vector3>();
-                var rotation = item["Rotation"].ToObject<Vector3>();
+                if (state[i.ToString()]["Picked"].ToObject<bool>())
+                {
+                    i++;
+                    continue;
+                }
 
-                var inst = Instantiate(itemConfig.Pickup, parent: transform, position: position, rotation: Quaternion.Euler(rotation));
+                var curItemState = state[i.ToString()];
 
-                inst.item = itemConfig;
-                items.Add(inst);
+                var itemData = new PickupItemData()
+                {
+                    position = curItemState["Position"].ToObject<Vector3>(),
+                    rotation = Quaternion.Euler(curItemState["Rotation"].ToObject<Vector3>()),
+                    picked = false
+                };
+
+                var item = list.Get(curItemState["Id"].ToObject<int>());
+                var inst = Instantiate(item.Pickup, itemData.position, itemData.rotation, transform);
+
+                itemData.pickup = inst;
+                items[curItemState["Id"].ToObject<int>()] = itemData;
+
                 inst.OnPickedUp += RemoveItem;
+                i++;
             }
+
+            InstanciateLastPickups();
         }
 
         public void AddItem(InventoryItem item, Vector3 pos)
         {
             var pickup = Instantiate(item.Pickup, pos, Quaternion.identity, transform);
-            
-            items.Add(pickup);
+            var itemData = new PickupItemData()
+            {
+                position = pos,
+                rotation = pickup.transform.rotation,
+                picked = false,
+                pickup = pickup
+            };
+
+            items.Add(item.ID, itemData);
         }
 
         private void RemoveItem(GameObject itemToRemove)
         {
-            for (int i = 0; i < items.Count; i++)
-            {
-                if (items[i].gameObject == itemToRemove)
-                {
-                    items[i].enabled = false;
-                    //Destroy(items[i]);
-                    items.RemoveAt(i);
-                    return;
-                }
-            }
+            if (!itemToRemove.TryGetComponent<Pickup>(out Pickup pickup))
+                return;
+
+            var itemData = items[pickup.ID];
+
+            itemData.picked = true;
+            items[pickup.ID] = itemData;
         }
     }
 }

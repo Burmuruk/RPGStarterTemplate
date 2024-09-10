@@ -66,7 +66,7 @@ namespace Burmuruk.Tesis.Control
             if (m_shouldMove && player && GameManager.Instance.GameState == GameManager.State.Playing)
             {
                 try
-                {
+                 {
                     player.mover.MoveTo(player.transform.position + m_direction * 2);
                 }
                 catch (NullReferenceException)
@@ -342,7 +342,7 @@ namespace Burmuruk.Tesis.Control
 
             if (items == null || items.Count == 0) return;
 
-            (items[0] as ConsumableItem).Use(player, null);
+            (items[0] as ConsumableItem).Use(player, null, null);
         }
 
         private void ChangeItem(int v)

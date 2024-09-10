@@ -193,7 +193,7 @@ namespace Burmuruk.Tesis.UI
             var item = (equipable as ConsumableItem);
             int id = item.ID;
 
-            item.Use(players[curPlayerIdx], TryRemoveItem);
+            item.Use(players[curPlayerIdx], null, TryRemoveItem);
         }
 
         public void ElementCancelAction(int idx)
@@ -877,10 +877,9 @@ namespace Burmuruk.Tesis.UI
 
         private bool AddAbilitiesImage(int idx, Image image)
         {
-            int subType = -1;
             string name = image.transform.parent.name;
 
-            if (!Int32.TryParse(name.Substring(6, name.Length - 6), out subType))
+            if (!Int32.TryParse(name.Substring(6, name.Length - 6), out var subType))
                 return false;
             
             if (Enum.IsDefined(typeof(AbilityType), subType))
@@ -987,20 +986,24 @@ namespace Burmuruk.Tesis.UI
             }
 
             curAbilityId = idx;
+            EquipAbility(idx);
 
+            ChangeSelectedColor();
+            curAbiltySlot = null;
+        }
+
+        private void EquipAbility(int idx)
+        {
             var item = itemsList.Get(btnAbilitiesDict[idx].subType);
             if ((players[curPlayerIdx].Inventory as InventoryEquipDecorator).TryEquip(players[curPlayerIdx], item, out _))
             {
                 if (isAbilitySlotUsed)
                 {
                     UnequipCurrentAbility();
-                    isAbilitySlotUsed= false;
+                    isAbilitySlotUsed = false;
                 }
                 SetAbilityInSlot(idx);
             }
-
-            ChangeSelectedColor();
-            curAbiltySlot = null;
         }
 
         private void SetAbilityInSlot(int abiltyId)

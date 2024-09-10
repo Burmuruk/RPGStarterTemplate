@@ -1,11 +1,7 @@
-﻿using Burmuruk.AI;
-using Burmuruk.WorldG.Patrol;
+﻿using Burmuruk.WorldG.Patrol;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Security.Principal;
-using UnityEngine;
-using static UnityEngine.Rendering.DebugUI;
 
 namespace Burmuruk.Collections
 {

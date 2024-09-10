@@ -2,8 +2,10 @@
 using Burmuruk.Tesis.Control;
 using Burmuruk.Tesis.Control.AI;
 using Burmuruk.Tesis.Inventory;
+using Burmuruk.Tesis.Saving;
 using Burmuruk.Utilities;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -35,8 +37,12 @@ namespace Burmuruk.Tesis.UI
         [Header("Life"), Space()]
         [SerializeField] StackableLabel pLife;
 
+        [Space, Header("Saving")]
+        [SerializeField] Image imgSaving;
+
         State state;
         //PopUps activePopUps;
+        Coroutine savingNotification;
         CoolDownAction cdChangeFormation;
         CoolDownAction cdFormationInfo;
         Queue<CoolDownAction> cdMissions;
@@ -86,6 +92,9 @@ namespace Burmuruk.Tesis.UI
         {
             playerController = FindObjectOfType<PlayerController>();
             playerManager = FindObjectOfType<PlayerManager>();
+            var savingWrapper = FindObjectOfType<JsonSavingWrapper>();
+            savingWrapper.OnSaving += ShowSavingIcon;
+            savingWrapper.OnLoading += ShowSavingIcon;
         }
 
         private void Start()
@@ -308,33 +317,22 @@ namespace Burmuruk.Tesis.UI
             }
         }
 
-        private void ShowAbilities(bool value)
+        private void ShowAbilities(bool shouldShow)
         {
-            if (value)
+            if (shouldShow)
             {
                 var inventory = playerManager.MainInventory;
                 var curPlayer = playerManager.CurPlayer.GetComponent<Character>();
+                Ability[] abilities = GetEquippedAbilitites(inventory, curPlayer);
 
-                var abilities = (from ability in inventory.GetList(ItemType.Ability)
-                                 where ((EquipeableItem)ability).Characters.Contains(curPlayer)
-                                 select (Ability)inventory.GetItem(ability.ID))
-                             .ToArray();
-
-                int j = 0;
-                for (int i = 0; i < pActiveAbilities.transform.childCount; i++)
+                for (int i = 0, j = 0; i < pActiveAbilities.transform.childCount; i++)
                 {
                     var imgAbilty = pActiveAbilities.transform.GetChild(i).GetComponent<Image>();
 
                     if (j < abilities.Length)
                     {
-                        int id = abilities[j].ID;
-                        var button = imgAbilty.GetComponent<MyItemButton>();
+                        SetupAbilityButton(abilities, j++, imgAbilty);
 
-                        imgAbilty.sprite = abilities[j].Sprite;
-                        button.onClick.RemoveAllListeners();
-                        button.onClick.AddListener(() => UseAbility(id));
-
-                        j++;
                         continue;
                     }
 
@@ -343,8 +341,27 @@ namespace Burmuruk.Tesis.UI
                 }
             }
 
-            pActiveAbilities.transform.parent.gameObject.SetActive(value);
+            pActiveAbilities.transform.parent.gameObject.SetActive(shouldShow);
 
+            void SetupAbilityButton(Ability[] abilities, int j, Image imgAbilty)
+            {
+                int id = abilities[j].ID;
+                var button = imgAbilty.GetComponent<MyItemButton>();
+
+                imgAbilty.sprite = abilities[j].Sprite;
+
+                imgAbilty.gameObject.SetActive(true);
+                button.onClick.RemoveAllListeners();
+                button.onClick.AddListener(() => UseAbility(id));
+            }
+
+            Ability[] GetEquippedAbilitites(IInventory inventory, Character curPlayer)
+            {
+                return (from ability in inventory.GetList(ItemType.Ability)
+                        where ((EquipeableItem)ability).Characters.Contains(curPlayer)
+                        select (Ability)inventory.GetItem(ability.ID))
+                                             .ToArray();
+            }
         }
 
         private void UseAbility(int id)
@@ -390,6 +407,45 @@ namespace Burmuruk.Tesis.UI
 
             if (pNotifications.activeNodes.Count == 0)
                 pNotifications.container.SetActive(false);
+        }
+
+        private void ShowSavingIcon(float progress)
+        {
+            if (savingNotification != null && progress < 1)
+                return;
+            else if (progress >= 1)
+            {
+                Invoke("StopSavingNotification", 2);
+                return;
+            }
+
+            print("ShowSaving");
+            savingNotification = StartCoroutine(RotateSavingImage());
+        }
+
+        private void StopSavingNotification()
+        {
+            StopCoroutine(savingNotification);
+            imgSaving.gameObject.SetActive(false);
+            imgSaving.transform.rotation = Quaternion.identity;
+            print("End ShowSaving");
+            savingNotification = null;
+        }
+            
+
+        private IEnumerator RotateSavingImage()
+        {
+            float maxTime = 30;
+            float curTime = 0;
+
+            imgSaving.gameObject.SetActive(true);
+
+            while (curTime < maxTime)
+            {
+                yield return new WaitForEndOfFrame();
+
+                imgSaving.transform.Rotate(Vector3.forward, 2);
+            }
         }
     }
 }

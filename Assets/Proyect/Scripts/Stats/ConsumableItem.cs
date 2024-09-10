@@ -30,10 +30,8 @@ namespace Burmuruk.Tesis.Stats
             return ConsumableType.None;
         }
 
-        public void Use(object args, Action callback)
+        public void Use(Character character, object args, Action callback)
         {
-            var character = (Character)args;
-
             foreach (var buff in buffs)
             {
                 if (buff.stat == ModifiableStat.HP)

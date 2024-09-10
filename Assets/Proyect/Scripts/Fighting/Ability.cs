@@ -26,9 +26,9 @@ namespace Burmuruk.Tesis.Combat
             throw new System.NotImplementedException();
         }
 
-        public void Use(object args, Action callback)
+        public void Use(Character character, object args, Action callback)
         {
-            AbilitiesManager.habilitiesList[type].Invoke(args, callback);
+            AbilitiesManager.habilitiesList[type].Invoke(character, args, callback);
         }
 
         public override object GetSubType()

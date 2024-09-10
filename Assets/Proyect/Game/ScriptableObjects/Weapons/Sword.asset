@@ -16,7 +16,7 @@ MonoBehaviour:
   m_description: The ultimate sword.
   _type: 4
   m_sprite: {fileID: 10901, guid: 0000000000000000f000000000000000, type: 0}
-  pickup: {fileID: 4177109510914828732, guid: eb1dd99c23ab41d4181940e955bad814, type: 3}
+  pickup: {fileID: 3636312307774390648, guid: ddd3a47c894ceae4eab13698fd000154, type: 3}
   m_capacity: 99
   m_bodyPart: 4
   weaponType: 1
@@ -26,3 +26,6 @@ MonoBehaviour:
   m_maxDistance: 1.5
   reloadTime: 0
   maxAmmo: 0
+  equipment:
+    Body: {fileID: 0}
+    spawnPoints: []

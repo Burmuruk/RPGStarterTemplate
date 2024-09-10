@@ -5,12 +5,12 @@ namespace Burmuruk.Tesis.Inventory
 {
     public class Pickup : MonoBehaviour
     {
-        [SerializeField] public InventoryItem item;
+        [SerializeField] InventoryItem inventoryItem;
         [SerializeField] public GameObject prefab;
 
         public event Action<GameObject> OnPickedUp;
 
-        public int ID { get => item.ID; }
+        public int ID { get => inventoryItem.ID; }
         public GameObject Prefab { get => prefab; set => prefab = value; }
 
         public int PickUp()

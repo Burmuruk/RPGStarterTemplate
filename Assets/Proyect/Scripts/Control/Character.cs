@@ -7,6 +7,7 @@ using Burmuruk.Tesis.Combat;
 using Burmuruk.Tesis.Utilities;
 using Burmuruk.Tesis.Saving;
 using Newtonsoft.Json.Linq;
+using UnityEngine.TextCore.Text;
 
 namespace Burmuruk.Tesis.Control
 {
@@ -208,7 +209,8 @@ namespace Burmuruk.Tesis.Control
                 transform.position = data["Position"].ToObject<Vector3>();
                 transform.rotation = Quaternion.Euler(data["Rotation"].ToObject<Vector3>());
 
-                mover.UpdatePosition();
+                //mover.CancelAction();
+                //mover.UpdatePosition();
             }
         }
 
@@ -308,7 +310,11 @@ namespace Burmuruk.Tesis.Control
 
                     itemState["Id"] = items[i].ID;
                     itemState["Count"] = inventory.GetItemCount(items[i].ID);
-                    state[i] = itemState;
+
+                    if (items[i] is EquipeableItem equipeable && equipeable.Characters.Contains(this))
+                        itemState["Equipped"] = true;
+
+                    state[i.ToString()] = itemState;
                 }
             }
 
@@ -323,9 +329,16 @@ namespace Burmuruk.Tesis.Control
 
             while (state.ContainsKey(i.ToString()))
             {
-                for (int j = 0; j < state["Id"]["Count"].ToObject<int>(); j++)
+                int id = state[i.ToString()]["Id"].ToObject<int>();
+
+                for (int j = 0; j < state[i.ToString()]["Count"].ToObject<int>(); j++)
                 {
-                    inventory.Add(state[i]["Id"].ToObject<int>());
+                    inventory.Add(id);
+                }
+
+                if (inventory.GetItem(id) is EquipeableItem equipeable && state.ContainsKey("Equipped"))
+                {
+                    (inventory as InventoryEquipDecorator).TryEquip(this, equipeable, out _);
                 }
 
                 i++;

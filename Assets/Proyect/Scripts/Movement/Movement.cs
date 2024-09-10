@@ -237,17 +237,31 @@ namespace Burmuruk.Tesis.Movement
 
         public void PauseAction()
         {
-            throw new NotImplementedException();
+            m_canMove = false;
         }
 
         public void ContinueAction()
         {
-            throw new NotImplementedException();
+            m_canMove = true;
         }
+
+        public void CancelAll() => m_scheduler.CancelAll();
 
         public void CancelAction()
         {
-            m_state = MovementState.None;
+            switch (m_state)
+            {
+                case MovementState.FollowingPath:
+                case MovementState.Moving:
+                    FinishAction();
+                    break;
+                case MovementState.Calculating:
+                    m_state = MovementState.None;
+                    break;
+                case MovementState.None:
+                default:
+                    break;
+            }
         }
 
         public void StopAction()
@@ -355,24 +369,20 @@ namespace Burmuruk.Tesis.Movement
         private void SetPath()
         {
             if (m_pathFinder.BestRoute == null || m_pathFinder.BestRoute.Count == 0)
-            {
-                FinishAction();
-                return;
-            }
+                Cancel();
 
             m_curPath = m_pathFinder.BestRoute;
 
-            if (!GetNextNode())
-            {
-                FinishAction();
-                return;
-            }
+            if (!GetNextNode()) Cancel();
 
             var minNodes = Mathf.Max((int)MathF.Round(SlowingRadious / nodeList.NodeDistance), 0);
             nodeIdxSlowingRadious = m_curPath.Count - minNodes;
 
             colYExtents = Vector3.down * col.bounds.extents.y;
             destiny = m_curPath.Last.Value.Position;
+
+            if (m_state == MovementState.None) Cancel();
+
             m_state = MovementState.FollowingPath;
 
             DrawCurrentPath();
@@ -387,6 +397,12 @@ namespace Burmuruk.Tesis.Movement
 
                     lastNode = node;
                 }
+            }
+            
+            void Cancel()
+            {
+                FinishAction();
+                return;
             }
         }
     }

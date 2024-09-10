@@ -1,21 +1,25 @@
-﻿using System;
+﻿using Burmuruk.Tesis.Control;
+using Burmuruk.Utilities;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Combat
 {
-    class AbilitiesManager : MonoBehaviour
-    {
+     public class AbilitiesManager : MonoBehaviour
+     {
         Movement.Movement m_movement;
+        Queue<Coroutine> coolDowns = new Queue<Coroutine>();
+        CoolDownAction cd_Action;
 
-        public static readonly Dictionary<AbilityType, Action<object, Action>> habilitiesList = new()
+        public static readonly Dictionary<AbilityType, Action<Character, object, Action>> habilitiesList = new()
         {
             { AbilityType.Dash, Dash },
             { AbilityType.Jump, Jump },
             { AbilityType.StealHealth, StealLife },
         };
 
-        public static void Dash(object args, Action callback)
+        public static void Dash(Character character, object args, Action callback)
         {
             //Vector3 dir = (Vector3) direction;
 
@@ -23,14 +27,14 @@ namespace Burmuruk.Tesis.Combat
             print("In Dash!!!");
         }
 
-        public static void Jump(object args, Action callback)
+        public static void Jump(Character character, object args, Action callback)
         {
-
+            print("Jump!!!");
         }
 
-        public static void StealLife(object args, Action callback)
+        public static void StealLife(Character character, object args, Action callback)
         {
-
+            print("In Dash!!!");
         }
     }
 

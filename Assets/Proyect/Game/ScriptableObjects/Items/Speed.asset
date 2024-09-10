@@ -16,14 +16,8 @@ MonoBehaviour:
   m_description: Aumenta 3 pts. de velocidad al instante.
   _type: 1
   m_sprite: {fileID: 10901, guid: 0000000000000000f000000000000000, type: 0}
-  pickup: {fileID: 5650716473014336067, guid: dfc807b54f4cc91499fe47613fb5ee9f, type: 3}
+  pickup: {fileID: 5399989111385226738, guid: 42238752b796f814b8e57516926610d5, type: 3}
   m_capacity: 99
-  consumableType: 2
-  mods:
-  - stat: 2
-    value: 15
-    duration: 10
-    rate: 0
-    multiplier: 1
+  buffs: []
   consumptionTime: 0
   areaRadious: 0

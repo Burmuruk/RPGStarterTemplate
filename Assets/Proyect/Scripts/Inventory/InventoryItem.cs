@@ -22,7 +22,13 @@ namespace Burmuruk.Tesis.Inventory
         public int Capacity { get => m_capacity; }
         public GameObject Prefab { get => pickup.Prefab; }
         public GameObject PrefabInst { get => Instantiate(Prefab); }
-        public Pickup Pickup { get => pickup; }
+        public Pickup Pickup
+        {
+            get
+            {
+                return pickup;
+            }
+        }
 
         public virtual object GetSubType()
         {
