@@ -6,6 +6,8 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System;
+using System.Text;
+using System.Linq;
 
 namespace Burmuruk.Tesis.Saving
 {
@@ -14,45 +16,47 @@ namespace Burmuruk.Tesis.Saving
         private const string extension = ".json";
 
         public event Action onSceneLoaded;
+        public event Action<int> OnLoadingStateFinished;
 
         public IEnumerator LoadLastScene(JObject state, int slot, Action<JObject> callback)
         {
+            JObject slotState = new JObject();
             int curScene = SceneManager.GetActiveScene().buildIndex;
-            int buildIndex = 2;
+            int nextScene = 2;
             JObject slotData = null;
 
-            if (state.ContainsKey("SlotData"))
+            if (state.ContainsKey(slot.ToString()) && (state[slot.ToString()] as JObject).ContainsKey("SlotData"))
             {
-                slotData = (JObject)state["SlotData"];
-                if ((int)state["SlotData"]["BuildIdx"] != SceneManager.GetActiveScene().buildIndex)
-                {
-                    buildIndex = (int)state["SlotData"]["BuildIdx"];
-                }
+                slotState = (JObject)state[slot.ToString()];
+                slotData = (JObject)slotState["SlotData"];
+                nextScene = (int)slotState["SlotData"]["BuildIdx"];
             }
             else
             {
                 slotData = new JObject();
                 slotData["Slot"] = slot;
-                slotData["BuildIdx"] = slot;
-                slotData["TimePlayed"] = slot;
+                slotData["BuildIdx"] = nextScene;
+                slotData["TimePlayed"] = 0;
+                slotData["MembersCount"] = 1;
+
+                slotState["SlotData"] = slotData;
             }
 
-            
-            yield return SceneManager.LoadSceneAsync(buildIndex);
+            yield return SceneManager.LoadSceneAsync(nextScene);
             
             onSceneLoaded?.Invoke();
-            
-            RestoreFromToken(state);
+
+            RestoreFromToken(slotState);
             
             callback?.Invoke(slotData);
             //yield return SceneManager.UnloadSceneAsync(curScene);
             //Debug.Log("Scene Unloaded");
         }
 
-        public void Save(string saveFile, JObject slotData = null)
+        public void Save(string saveFile, int slot, JObject slotData = null)
         {
             JObject state = LoadJsonFromFile(saveFile);
-            CaptureAsToken(state, slotData);
+            CaptureAsToken(ref state, slotData, slot);
             SaveFileAsJson(saveFile, state);
         }
 
@@ -79,6 +83,23 @@ namespace Burmuruk.Tesis.Saving
                 return new JObject();
             }
 
+            //using (Stream stream = new FileStream(path, FileMode.Open))
+            //{
+            //    //List<byte[]> text = new();
+            //    //int result = 0;
+            //    //do
+            //    //{
+            //    //    byte[] buffer = new byte[64];
+            //    //    result = stream.Read(buffer, 0, 64); 
+
+            //    //} while (result != 0);
+
+            //    //var total = text.ToArray();
+
+            //    //JObject hi = new JObject(Encrypter.Decrypt());
+
+            //    //return hi;
+            //}
             using (var textReader = File.OpenText(path))
             {
                 using (var reader = new JsonTextReader(textReader))
@@ -94,29 +115,70 @@ namespace Burmuruk.Tesis.Saving
         {
             string path = GetPathFromSaveFile(saveFile);
             
+            //using (Stream textWriter = new FileStream (path, FileMode.Create))
+            //{
+            //    //var buffer = Encoding.UTF8.GetBytes(Encrypter.EncryptString(state));
+            //    //textWriter.Write(buffer, 0, buffer.Length);
+
+            //}
+
             using (var textWriter = File.CreateText(path))
             {
                 using (var writer = new JsonTextWriter(textWriter))
                 {
                     writer.Formatting = Formatting.Indented;
                     state.WriteTo(writer);
-                } 
+                }
             }
         }
 
-        private void CaptureAsToken(JObject state, JObject slotData)
+        private void CaptureAsToken(ref JObject state, JObject slotData, int slot)
         {
             IDictionary<string, JToken> stateDict = state;
 
-            if (slotData != null)
+            //if (!state.ContainsKey(slot.ToString())) return;
+
+            JObject slotState = new();
+
+            if (state.ContainsKey(slot.ToString()))
             {
-                stateDict["SlotData"] = slotData;
+                slotState = (JObject)stateDict[slot.ToString()];
             }
+
+            slotState["SlotData"] = slotData;
 
             foreach (var saveable in FindObjectsOfType<JsonSaveableEntity>())
             {
-                stateDict[saveable.GetUniqueIdentifier()] = saveable.CaptureAsJtoken();
+                var idComponents = saveable.CaptureAsJtoken(out JObject UniqueItemns);
+
+                if (idComponents != null)
+                    slotState[saveable.GetUniqueIdentifier()] = idComponents;
+
+                if (UniqueItemns == null) continue;
+
+                foreach (var item in UniqueItemns)
+                {
+                    if (slotState.ContainsKey(item.Key))
+                    {
+                        foreach (var component in (JObject)item.Value)
+                        {
+                            slotState[item.Key][component.Key] = component.Value;
+                        }
+                    }
+                    else
+                    {
+                        JObject newComponents = new JObject();
+                        foreach (var component in (JObject)item.Value)
+                        {
+                            newComponents[component.Key] = component.Value;
+                        }
+
+                        slotState[item.Key] = newComponents;
+                    }
+                }
             }
+
+            stateDict[slot.ToString()] = slotState;
         }
 
         private void RestoreFromToken(JObject state)
@@ -125,17 +187,38 @@ namespace Burmuruk.Tesis.Saving
 
             IDictionary<string, JToken> stateDict = state;
 
-            foreach (var saveable in FindObjectsOfType<JsonSaveableEntity>())
+            var saveables = FindObjectsOfType<JsonSaveableEntity>().ToList();
+
+            for (int i = 0; i < Enum.GetValues(typeof(SavingExecution)).Length; i++)
             {
-                string id = saveable.GetUniqueIdentifier();
+                if (!stateDict.ContainsKey(((SavingExecution)i).ToString()))
+                    continue;
+
+                for (int x = 0; x < saveables.Count; x++)
+                {
+                    string id = saveables[x].GetUniqueIdentifier();
+
+                    saveables[x].RestoreFromJToken(state, (SavingExecution)i);
+                    //if (!stateDict.ContainsKey(id))
+                    //{
+                    //    //saveables.RemoveAt(x);
+                    //}
+                }
+
+                OnLoadingStateFinished?.Invoke(i);
+            }
+
+            for (int i = 0; i < saveables.Count; i++)
+            {
+                string id = saveables[i].GetUniqueIdentifier();
 
                 if (stateDict.ContainsKey(id))
                 {
-                    saveable.RestoreFromJToken(stateDict[id]);
-                }
+                    saveables[i].RestoreFromJToken(stateDict[id], SavingExecution.General);
+                } 
             }
 
-
+            OnLoadingStateFinished?.Invoke((int)SavingExecution.General);
         }
 
         private string GetPathFromSaveFile(string saveFile)
@@ -149,11 +232,21 @@ namespace Burmuruk.Tesis.Saving
 
         }
 
-        public bool LookForSlots(string saveFile)
+        public List<(int id, JObject slotData)> LookForSlots(string saveFile)
         {
-            string path = GetPathFromSaveFile(saveFile);
+            var data = LoadJsonFromFile(saveFile);
 
-            return File.Exists(path);
+            IDictionary<string, JToken> stateDict = data;
+            List<(int id, JObject slotData)> slots = new();
+            int i = 0;
+
+            foreach (var slot in stateDict)
+            {
+                int id = Int32.Parse(slot.Key);
+                slots.Add((id, (JObject)slot.Value["SlotData"]));
+            }
+
+            return slots;
         }
     }
 }

@@ -8,56 +8,89 @@ namespace Burmuruk.Tesis.Saving
 {
     public static class Encrypter
     {
-        static byte[] key = null;
-        static byte[] iv = null;
-
-        public static void EncryptAEs(JObject data, string path)
+        static readonly byte[] key = new byte[16]
         {
-            SetKeys();
+            114,
+            87,
+            231,
+            104,
+            128,
+            218,
+            92,
+            150,
+            170,
+            152,
+            119,
+            229,
+            164,
+            199,
+            150,
+            160
+        };
+        static readonly byte[] iv = new byte[16]
+        {
+            118,
+            46,
+            166,
+            109,
+            156,
+            127,
+            80,
+            85,
+            21,
+            152,
+            195,
+            168,
+            2,
+            4,
+            8,
+            152
+        };
 
-            Convert.ToBase64String(Encrypt(Encoding.UTF8.GetBytes(data.ToString())));
+        public static string EncryptString(JObject data)
+        {
+            //SetKeys();
+
+            return Convert.ToBase64String(Encrypt(Encoding.UTF8.GetBytes(data.ToString())));
         }
 
-        public static void DecryptAEs(string data)
+        public static string DecryptString(string data)
         {
-            Convert.ToBase64String(Encrypt(Encoding.UTF8.GetBytes(data.ToString())));
+            return Encoding.UTF8.GetString(Decrypt(Convert.FromBase64String(data)));
         }
 
         private static void SetKeys()
         {
-            if (key != null || iv != null) return;
+            //if (key != null || iv != null) return;
 
-            key = new byte[16];
-            iv = new byte[16];
+            //key = new byte[16];
+            //iv = new byte[16];
 
-            var cryptToAEs = RandomNumberGenerator.Create();
-            cryptToAEs.GetBytes(key);
-            cryptToAEs.GetBytes(iv);
+            //var cryptToAEs = RandomNumberGenerator.Create();
+            //cryptToAEs.GetBytes(key);
+            //cryptToAEs.GetBytes(iv);
         }
 
-        private static byte[] Encrypt(byte[] data)
+        public static byte[] Encrypt(byte[] data)
         {
             using (Aes algorithm = Aes.Create())
             {
+                algorithm.Padding = PaddingMode.PKCS7;
                 using (ICryptoTransform cryptoTransform = algorithm.CreateEncryptor(key, iv))
                 {
-                    Crypt(data, cryptoTransform);
-                    return null;
+                    return Crypt(data, cryptoTransform);
                 }
             }
         }
 
-        private static byte[] Decrypt(byte[] data)
+        public static byte[] Decrypt(byte[] data)
         {
             using (Aes aes = Aes.Create())
             {
+                aes.Padding = PaddingMode.PKCS7;
                 using (ICryptoTransform decryptor = aes.CreateDecryptor(key, iv))
                 {
-                    MemoryStream ms = new MemoryStream();
-                    using (Stream stream = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
-                    {
-                        return null;
-                    }
+                    return Crypt(data, decryptor);
                 }
             }
         }
@@ -65,10 +98,10 @@ namespace Burmuruk.Tesis.Saving
         private static byte[] Crypt(byte[] data, ICryptoTransform cryptoTransform)
         {
             MemoryStream ms = new MemoryStream();
-            using (Stream stream = new CryptoStream(ms, cryptoTransform, CryptoStreamMode.Read))
+            using (Stream stream = new CryptoStream(ms, cryptoTransform, CryptoStreamMode.Write))
             {
                 stream.Write(data, 0, data.Length);
-                return null;
+                return ms.ToArray();
             }
         }
     }

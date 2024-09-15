@@ -93,8 +93,11 @@ namespace Burmuruk.Tesis.UI
             playerController = FindObjectOfType<PlayerController>();
             playerManager = FindObjectOfType<PlayerManager>();
             var savingWrapper = FindObjectOfType<JsonSavingWrapper>();
-            savingWrapper.OnSaving += ShowSavingIcon;
-            savingWrapper.OnLoading += ShowSavingIcon;
+            if (savingWrapper)
+            {
+                savingWrapper.OnSaving += ShowSavingIcon;
+                savingWrapper.OnLoading += ShowSavingIcon;
+            }
         }
 
         private void Start()
@@ -106,9 +109,12 @@ namespace Burmuruk.Tesis.UI
             });
             cdFormationInfo = new CoolDownAction(.5f, EnableFormationsInfo);
             cdMissions = new Queue<CoolDownAction>();
+            mainCamera = Camera.main;
 
             InitializeStackables();
             CreateHPPlayersBar();
+
+            DontDestroyOnLoad(transform.parent.gameObject);
         }
 
         private void InitializeStackables()
@@ -167,6 +173,7 @@ namespace Burmuruk.Tesis.UI
 
         private void LateUpdate()
         {
+            return;
             UpdateHealthPosition();
         }
 
@@ -322,7 +329,7 @@ namespace Burmuruk.Tesis.UI
             if (shouldShow)
             {
                 var inventory = playerManager.MainInventory;
-                var curPlayer = playerManager.CurPlayer.GetComponent<Character>();
+                var curPlayer = playerManager.CurPlayer.transform.GetComponent<Character>();
                 Ability[] abilities = GetEquippedAbilitites(inventory, curPlayer);
 
                 for (int i = 0, j = 0; i < pActiveAbilities.transform.childCount; i++)
@@ -418,8 +425,7 @@ namespace Burmuruk.Tesis.UI
                 Invoke("StopSavingNotification", 2);
                 return;
             }
-
-            print("ShowSaving");
+            
             savingNotification = StartCoroutine(RotateSavingImage());
         }
 
@@ -428,7 +434,7 @@ namespace Burmuruk.Tesis.UI
             StopCoroutine(savingNotification);
             imgSaving.gameObject.SetActive(false);
             imgSaving.transform.rotation = Quaternion.identity;
-            print("End ShowSaving");
+            
             savingNotification = null;
         }
             

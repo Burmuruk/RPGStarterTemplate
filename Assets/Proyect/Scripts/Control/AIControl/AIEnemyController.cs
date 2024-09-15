@@ -182,7 +182,7 @@ namespace Burmuruk.Tesis.Control.AI
         protected virtual void CheckPatrolPath()
         {
             if (!patrolController) return;
-            if (mover.nodeList == null) return;
+            if (mover == null || mover.nodeList == null) return;
 
             playerAction = PlayerAction.Patrol;
             patrolController.StartPatrolling();

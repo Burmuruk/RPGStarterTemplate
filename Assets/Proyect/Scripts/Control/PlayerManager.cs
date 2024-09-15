@@ -8,6 +8,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Control
@@ -16,7 +17,9 @@ namespace Burmuruk.Tesis.Control
     {
         [SerializeField] CharacterProgress progress;
         [SerializeField] PlayerCustomization customization;
+        [SerializeField] GameObject PlayerPrefab;
 
+        GameObject playersParent;
         List<AIGuildMember> players;
         PlayerController playerController;
         int? m_CurPlayer;
@@ -26,6 +29,7 @@ namespace Burmuruk.Tesis.Control
         public event Action OnPlayerChanged;
         public event Action OnFormationChanged;
         public event Action<bool> OnCombatEnter;
+        public event Action<Character> OnPlayerAdded;
 
         public List<AIGuildMember> Players
         {
@@ -33,7 +37,8 @@ namespace Burmuruk.Tesis.Control
             {
                 if (players == null)
                 {
-                    FindPlayers();
+                    DestroyPlayers();
+                    AddMember(CreatePlayer());
                     return players;
                 }
 
@@ -53,13 +58,13 @@ namespace Burmuruk.Tesis.Control
             }
         }
         public IInventory MainInventory { get; private set; }
-        public Transform CurPlayer
+        public AIGuildMember CurPlayer
         {
             get
             {
                 if (m_CurPlayer.HasValue)
                 {
-                    return players[m_CurPlayer.Value].transform;
+                    return players[m_CurPlayer.Value];
                 }
 
                 return null;
@@ -73,22 +78,24 @@ namespace Burmuruk.Tesis.Control
             playerController.OnFormationChanged += ChangeFormation;
             var mainInventory = GetComponent<Inventory.Inventory>();
             MainInventory = mainInventory;
-            
-            foreach (var player in Players)
-            {
-                (player.Inventory as InventoryEquipDecorator).SetInventory((Inventory.Inventory)MainInventory);
-                
-                var lastColor = player.stats.color;
-                player.SetStats(progress.GetDataByLevel(CharacterType.Player, 0));
-                player.stats.color = lastColor;
-
-                player.SetUpMods();
-            }
         }
 
         private void Start()
         {
             SetPlayerControl();
+            DontDestroyOnLoad(CurPlayer.gameObject.transform.parent);
+        }
+
+        public void UpdateLeaderPosition()
+        {
+            print("Scene changed");
+            var playerSpawner = FindObjectOfType<PlayerSpawner>();
+
+            if (playerSpawner && playerSpawner.Enabled)
+            {
+                print("Change position");
+                CurPlayer.SetPosition(playerSpawner.transform.position);
+            }
         }
 
         public void SetPlayerControl(int idx)
@@ -120,20 +127,56 @@ namespace Burmuruk.Tesis.Control
             }
         }
 
-        private void FindPlayers()
+        private AIGuildMember CreatePlayer()
         {
-            var players = (from p in FindObjectsOfType<AIGuildMember>()
-                           where p is IPlayable
-                           select p).Distinct(new AIGuildMemberComparer()).ToList();
+            players = new();
+            playersParent ??= new GameObject("Players");
+            Vector3 position = default;
+            foreach (var spawner in FindObjectsOfType<PlayerSpawner>())
+            {
+                if (spawner.Enabled)
+                {
+                    position = spawner.transform.position;
+                }
+            }
 
-            if (players.Count == 0) return;
+            var instance = Instantiate(PlayerPrefab, position, Quaternion.identity, playersParent.transform);
 
-            this.players = new();
+            var player = instance.GetComponent<AIGuildMember>();
+            instance.GetComponent<JsonSaveableEntity>().SetUniqueIdentifier();
+
+            return player;
+        }
+
+        private void SetUpPlayers(AIGuildMember player)
+        {
+            (player.Inventory as InventoryEquipDecorator).SetInventory((Inventory.Inventory)MainInventory);
+
+            //var lastColor = player.stats.color;
+            player.SetStats(progress.GetDataByLevel(CharacterType.Player, 0));
+            //player.stats.color = lastColor;
+
+            SetColor(player);
+            player.SetUpMods();
+        }
+
+        private void DestroyPlayers()
+        {
+            var players = FindObjectsOfType<AIGuildMember>();
+
+            if (players.Length == 0) return;
 
             foreach (var player in players)
             {
-                AddMember(player);
+                Destroy(player.gameObject);
             }
+
+            this.players = new();
+
+            //foreach (var player in players)
+            //{
+            //    AddMember(player);
+            //}
         }
 
         private void EnableIAInRestOfPlayers(int mainPlayerIdx)
@@ -190,7 +233,8 @@ namespace Burmuruk.Tesis.Control
             member.SetFormation(curFormation.value, curFormation.args);
 
             players.Add(member);
-            SetColor (member);
+            SetUpPlayers(member);
+            OnPlayerAdded?.Invoke(member);
         }
 
         public void RemoveMember(AIGuildMember member)
@@ -239,8 +283,9 @@ namespace Burmuruk.Tesis.Control
             //member.statsList.Color = playerColors[selectedColorIdx];
         }
 
-        public JToken CaptureAsJToken()
+        public JToken CaptureAsJToken(out SavingExecution execution)
         {
+            execution = SavingExecution.Organization;
             JObject state = new JObject();
 
             state["Players"] = CapturePlayers();
@@ -251,6 +296,7 @@ namespace Burmuruk.Tesis.Control
 
         public void RestoreFromJToken(JToken jToken)
         {
+            DestroyPlayers();
             RestorePlayers(jToken["Players"]);
             RestoreInventory(jToken["Inventory"]);
         }
@@ -266,13 +312,13 @@ namespace Burmuruk.Tesis.Control
             {
                 JObject state = new JObject();
 
-                state["ID"] = i;
-
                 string identifier = players[i].GetComponent<JsonSaveableEntity>().GetUniqueIdentifier();
-                playersState[identifier] = state;
+                state["ID"] = identifier;
 
                 if (leaderIdentifier == identifier)
-                    playersState["Leader"] = i;
+                    state["Leader"] = i;
+
+                playersState[i.ToString()] = state;
             }
 
             playersState["Formation"] = (int)curFormation.value;
@@ -282,21 +328,34 @@ namespace Burmuruk.Tesis.Control
 
         private void RestorePlayers(JToken jToken)
         {
-            if (!(jToken is JObject jObject)) return;
+            IDictionary<string, JToken> state = (JObject)jToken;
 
-            AIGuildMember[] members = new AIGuildMember[players.Count];
+            AIGuildMember[] members = new AIGuildMember[state.Count - 1];
+            int leaderIdx = 0;
 
-            for (int i = 0; i < players.Count; i++)
+            for (int i = 0; i < state.Count - 1; i++)
             {
-                string identifier = players[i].GetComponent<JsonSaveableEntity>().GetUniqueIdentifier();
+                var newPlayer = CreatePlayer();
+                newPlayer.GetComponent<JsonSaveableEntity>().SetUniqueIdentifier((state[i.ToString()] as JObject)["ID"].ToString());
+                members[i] = newPlayer;
 
-                members[jObject[identifier]["ID"].ToObject<int>()] = players[i];
+                if ((state[i.ToString()] as JObject).ContainsKey("Leader"))
+                    leaderIdx = i;
+
+                OnPlayerAdded?.Invoke(newPlayer);
             }
+
+            //for (int i = 0; i < players.Count; i++)
+            //{
+            //    string identifier = players[i].GetComponent<JsonSaveableEntity>().GetUniqueIdentifier();
+
+            //    members[state[identifier]["ID"].ToObject<int>()] = players[i];
+            //}
 
             players.Clear();
             players.AddRange(members);
-            curFormation = ((Formation)jObject["Formation"].ToObject<int>(), null);
-            SetPlayerControl(jObject["Leader"].ToObject<int>());
+            curFormation = ((Formation)state["Formation"].ToObject<int>(), null);
+            SetPlayerControl(leaderIdx);
         }
 
         private JToken CaptureInventory()

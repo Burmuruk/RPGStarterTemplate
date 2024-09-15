@@ -2,7 +2,11 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Burmuruk.Tesis.Saving
 {
@@ -15,10 +19,20 @@ namespace Burmuruk.Tesis.Saving
         public event Action<float> OnLoading;
         public event Action onSceneLoaded;
         public event Action<JObject> OnLoaded;
+        public UnityEvent OnSavingUI;
+        public UnityEvent OnLoadingUI;
+        public UnityEvent OnLoadedUI;
+
+        public event Action<int> OnLoadingStateFinished
+        {
+            add => GetComponent<JsonSavingSystem>().OnLoadingStateFinished += value;
+            remove => GetComponent<JsonSavingSystem>().OnLoadingStateFinished -= value;
+        }
 
         private void Awake()
         {
-            GetComponent<JsonSavingSystem>().onSceneLoaded += onSceneLoaded;
+            var saver = GetComponent<JsonSavingSystem>();
+            saver.onSceneLoaded += onSceneLoaded;
         }
 
         //private IEnumerator Start()
@@ -29,48 +43,53 @@ namespace Burmuruk.Tesis.Saving
         public void Save(int slot, JObject slotData = null)
         {
             OnSaving?.Invoke(0);
+
             if (slot == 0)
             {
                 int id = System.DateTime.Now.Second + System.DateTime.Now.Hour + System.DateTime.Now.Year;
-                GetComponent<JsonSavingSystem>().Save(defaultAutoSaveFile + id, slotData);
+                GetComponent<JsonSavingSystem>().Save(defaultAutoSaveFile + id, -1, slotData);
             }
             else
             {
-                GetComponent<JsonSavingSystem>().Save(defaultSaveFile + slot, slotData);
+                GetComponent<JsonSavingSystem>().Save(defaultSaveFile, slot, slotData);
             }
+
             OnSaving?.Invoke(1);
         }
 
         public void Load(int slot)
         {
             OnLoading?.Invoke(0);
+            OnLoadingUI?.Invoke();
             FindObjectOfType<BuffsManager>()?.RemoveAllBuffs();
 
+            //Timer timer = new Timer(500);
+            //timer.Elapsed += (obj, args) => LoadWithoutFade(slot);
+            //timer.Start();
+            Task.Delay(50).GetAwaiter().OnCompleted(() => LoadWithoutFade(slot));
+
+        }
+
+        private void LoadWithoutFade(int slot)
+        {
             if (slot < 0)
             {
-                GetComponent<JsonSavingSystem>().Load(defaultAutoSaveFile + slot, slot, OnLoaded);
+                GetComponent<JsonSavingSystem>().Load(defaultAutoSaveFile, slot, 
+                    (args) => { OnLoaded?.Invoke(args); OnLoadedUI?.Invoke(); });
             }
             else
             {
-                GetComponent<JsonSavingSystem>().Load(defaultSaveFile + slot, slot, OnLoaded);
+                GetComponent<JsonSavingSystem>().Load(defaultSaveFile, slot,
+                    (args) => { OnLoaded?.Invoke(args); OnLoadedUI?.Invoke(); });
             }
             OnLoading?.Invoke(1);
         }
 
-        public void LookForSlots(out int slotsCount, out int autosaveCount)
+        public List<(int id, JObject slotData)> LookForSlots()
         {
-            slotsCount = 0;
-            autosaveCount = 0;
             var saver = GetComponent<JsonSavingSystem>();
 
-            for (int i = 0, j = 0; i < 3; i++, j--)
-            {
-                if (saver.LookForSlots(defaultSaveFile + (i + 1)))
-                    slotsCount++;
-
-                if (saver.LookForSlots(defaultAutoSaveFile + (j -1)))
-                    autosaveCount++;
-            }
+            return saver.LookForSlots(defaultSaveFile);
         }
     }
 }

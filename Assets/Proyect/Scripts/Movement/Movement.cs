@@ -200,6 +200,25 @@ namespace Burmuruk.Tesis.Movement
             return true;
         }
 
+        public void ChangePositionTo(Vector3 position)
+        {
+            if (IsWorking) m_scheduler.CancelAll();
+            m_state = MovementState.Calculating;
+
+            var nextNode = nodeList.FindNearestNode(position);
+
+            if (nextNode == null)
+            {
+                m_state = MovementState.None;
+                return;
+            }
+
+            curNodePosition = nextNode;
+            transform.position = nextNode.Position + Vector3.up * col.bounds.extents.y;
+
+            m_state = MovementState.None;
+            return;
+        }
 
         /// <summary>
         /// Gives access to max speed of node

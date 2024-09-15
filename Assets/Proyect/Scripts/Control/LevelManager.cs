@@ -3,6 +3,7 @@ using Burmuruk.Tesis.Saving;
 using Burmuruk.Tesis.UI;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections;
 using UnityEditor.Media;
 using UnityEngine;
 using UnityEngine.Events;
@@ -16,9 +17,11 @@ namespace Burmuruk.Tesis.Control
         [SerializeField] UnityEvent onUILoaded;
         [SerializeField] UnityEvent onUIUnLoaded;
         [SerializeField] GameObject pauseMenu;
+        JsonSavingWrapper savingWrapper;
 
         GameManager gameManager;
         UIMenuCharacters menuCharacters;
+        PlayerManager playerManager;
 
         private int slotIdx = 1;
         private bool initialized = false;
@@ -27,8 +30,11 @@ namespace Burmuruk.Tesis.Control
 
         private void Awake()
         {
-            path.LoadNavMesh();
-            SetPaths();
+            savingWrapper = FindObjectOfType<JsonSavingWrapper>();
+            savingWrapper.onSceneLoaded += LoadPaths;
+            savingWrapper.OnLoadingStateFinished += LoadStage;
+            playerManager = FindObjectOfType<PlayerManager>();
+            //playerManager.OnPlayerAdded += SetPathToCharacter;
         }
 
         void Start()
@@ -39,39 +45,61 @@ namespace Burmuruk.Tesis.Control
 
             gameManager.onStateChange += UpdateGameState;
             OnNavmeshLoaded += gameManager.NotifyLevelLoaded;
+
+            StartCoroutine(Autosave());
+            DontDestroyOnLoad(gameObject);
         }
 
-        void Update()
+        public void Update()
         {
-            
+            if (Input.GetKeyUp(KeyCode.K))
+            {
+                var data = CaptureLevelData();
+
+                savingWrapper.Save(data["Slot"].ToObject<int>(), data);
+            }
+
+            if (Input.GetKeyUp(KeyCode.L))
+            {
+                //ScreenCapture.)
+                TemporalSaver.RemoveAllData();
+                savingWrapper.Load(GetSlotData().Id);
+            }
+        }
+
+        private void OnLevelWasLoaded()
+        {
+            path.LoadNavMesh();
+            SetPaths();
+
+            playerManager.UpdateLeaderPosition();
+        }
+
+        public void LoadPaths()
+        {
+            path.LoadNavMesh();
+            print("path loaded");
         }
 
         public void SetPaths()
         {
-            if (initialized) return;
+            if (path.NodeList == null) return;
 
-            if (path.Saved && path.Loaded)
+            //print("Valor encontrado");
+            var movers = FindObjectsOfType<Movement.Movement>(true);
+
+            foreach (var mover in movers)
             {
-                if (path.NodeList == null) return;
-
-                //print("Valor encontrado");
-                var movers = FindObjectsOfType<Movement.Movement>(true);
-
-                foreach (var mover in movers)
-                {
-                    mover.SetConnections(path.NodeList);
-                }
-
-                initialized = true;
-                OnNavmeshLoaded?.Invoke();
+                mover.SetConnections(path.NodeList);
             }
-            else
-            {
-                path.LoadNavMesh();
-            }
+
+            OnNavmeshLoaded?.Invoke();
         }
 
-
+        public void SetPathToCharacter(Character character)
+        {
+            character.mover.SetConnections(path.NodeList);
+        }
         //public INodeListSupplier SetNodeList()
         //{
         //    if (path == null && !path.Saved) return null;
@@ -220,6 +248,49 @@ namespace Burmuruk.Tesis.Control
                 case GameManager.State.Cinematic:
                     break;
                 default:
+                    break;
+            }
+        }
+
+        IEnumerator Autosave()
+        {
+            while (true)
+            {
+                yield return new WaitForSeconds(600);
+
+                while (gameManager.GameState != GameManager.State.Playing)
+                {
+                    yield return new WaitForSeconds(60);
+                }
+
+                var data = CaptureLevelData();
+                FindObjectOfType<JsonSavingWrapper>().Save(0, data);
+            }
+        }
+
+        private JObject CaptureLevelData()
+        {
+            var slotData = GetSlotData();
+
+            JObject data = new JObject();
+            data["Slot"] = slotData.Id;
+            data["BuildIdx"] = slotData.BuildIdx;
+            data["TimePlayed"] = slotData.PlayedTime;
+            data["MembersCount"] = FindObjectOfType<PlayerManager>().Players.Count;
+
+            return data;
+        }
+
+        private void LoadStage(int stage)
+        {
+            switch ((SavingExecution)stage)
+            {
+                case SavingExecution.System:
+                    TemporalSaver.RemoveAllData();
+                    break;
+                case SavingExecution.General:
+                    print("path setted");
+                    FindObjectOfType<LevelManager>().SetPaths();
                     break;
             }
         }

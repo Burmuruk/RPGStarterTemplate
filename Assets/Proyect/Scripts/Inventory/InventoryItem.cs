@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Burmuruk.Tesis.Inventory
 {
+    [CreateAssetMenu(fileName = "New Item", menuName = "ScriptableObjects/Inventory/IntemsList", order = 1)]
     public class InventoryItem : ScriptableObject, ISerializationCallbackReceiver
     {
         [Header("Information")]

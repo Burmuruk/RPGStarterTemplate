@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Burmuruk.AI
 {
     [Serializable]
-    public struct ScrNode : IPathNode
+    public class ScrNode : IPathNode
     {
         [SerializeField]
         List<NodeConnection> nodeConnections;

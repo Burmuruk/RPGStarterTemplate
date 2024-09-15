@@ -116,7 +116,7 @@ namespace Burmuruk.Tesis.Utilities
                     Cancel(first.Value.action);
                 }
 
-                actions.RemoveFirst();
+                //actions.RemoveFirst();
             }
         }
 

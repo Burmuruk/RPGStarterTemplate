@@ -17,36 +17,95 @@ namespace Burmuruk.Tesis.Saving
             return uniqueIdentifier;
         }
 
-        public JToken CaptureAsJtoken()
+        public JToken CaptureAsJtoken(out JObject UniqueItems)
         {
-            JObject state = new JObject();
-            IDictionary<string, JToken> stateDict = state;
+            UniqueItems = null;
+            JObject state = null;
+            SortedDictionary<int, JObject> sortedDict = null;
+            SortedDictionary<int, JObject> sortedUniqueDict = null;
 
-            foreach (var jsonSAveable in GetComponents<IJsonSaveable>())
+            foreach (var jsonSaveable in GetComponents<IJsonSaveable>())
             {
-                JToken token = jsonSAveable.CaptureAsJToken();
-                string component = jsonSAveable.GetType().ToString();
-                
-                stateDict[jsonSAveable.GetType().ToString()] = token;
+                JToken token = jsonSaveable.CaptureAsJToken(out SavingExecution execution);
+
+                if (token == null) continue;
+
+                if (((int)execution) <= (int)SavingExecution.Organization)
+                {
+                    sortedUniqueDict ??= new();
+
+                    if (!sortedUniqueDict.ContainsKey((int)execution))
+                        sortedUniqueDict.Add((int)execution, new JObject());
+
+                    sortedUniqueDict[(int)execution][jsonSaveable.GetType().ToString()] = token;
+                }
+                else
+                {
+                    sortedDict ??= new();
+
+                    if (!sortedDict.ContainsKey((int)execution))
+                        sortedDict.Add((int)execution, new JObject());
+
+                    sortedDict[(int)execution][jsonSaveable.GetType().ToString()] = token;
+                }
+            }
+
+            ConvertSortedToNormalDic(sortedDict, ref state);
+            ConvertSortedToNormalDic(sortedUniqueDict, ref UniqueItems);
+
+            void ConvertSortedToNormalDic(SortedDictionary<int, JObject> sorted, ref JObject target)
+            {
+                if (sorted == null) return;
+                target ??= new();
+
+                foreach (var chunk in sorted)
+                {
+                    target[((SavingExecution)chunk.Key).ToString()] = chunk.Value;
+                }
             }
 
             return state;
         }
 
-        public void RestoreFromJToken(JToken s)
+        public void RestoreFromJToken(JToken s, SavingExecution execution)
         {
             JObject state = s.ToObject<JObject>();
-            IDictionary<string, JToken> stateDict = state;
+
+            if (!state.ContainsKey(execution.ToString())) return;
+
+            JObject executionState = (JObject)state[execution.ToString()];
 
             foreach (IJsonSaveable jsonSaveable in GetComponents<IJsonSaveable>())
             {
                 string component = jsonSaveable.GetType().ToString();
                 
-                if (stateDict.ContainsKey(component))
+                if (executionState.ContainsKey(component))
                 {
-                    jsonSaveable.RestoreFromJToken(stateDict[component]);
+                    jsonSaveable.RestoreFromJToken(executionState[component]);
                 }
             }
+        }
+
+        public void SetUniqueIdentifier(string identifier)
+        {
+            if (globalLookup.ContainsKey(identifier))
+            {
+                //var lastItem = globalLookup[identifier];
+                globalLookup.Remove(identifier);
+            }
+
+            uniqueIdentifier = identifier;
+            globalLookup[identifier] = this;
+        }
+
+        public void SetUniqueIdentifier()
+        {
+            if (string.IsNullOrEmpty(uniqueIdentifier) || !IsUnique(uniqueIdentifier))
+            {
+                uniqueIdentifier = System.Guid.NewGuid().ToString();
+            }
+
+            globalLookup[uniqueIdentifier] = this;
         }
 
 #if UNITY_EDITOR

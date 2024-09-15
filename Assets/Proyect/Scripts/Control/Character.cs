@@ -13,6 +13,7 @@ namespace Burmuruk.Tesis.Control
 {
     public class Character : MonoBehaviour, IJsonSaveable
     {
+        #region Variables
         [Header("References")]
         [SerializeField] protected Transform farPercept;
         [SerializeField] protected Transform closePercept;
@@ -36,12 +37,15 @@ namespace Burmuruk.Tesis.Control
 
         protected Collider[] eyesPerceibed, earsPerceibed;
         protected bool isTargetFar = false;
-        protected bool isTargetClose = false;
+        protected bool isTargetClose = false; 
+        #endregion
 
         public virtual event Action<bool> OnCombatStarted;
 
+        #region Proerties
         public Health Health { get => health; }
-        public IInventory Inventory {
+        public IInventory Inventory
+        {
             get
             {
                 return (inventory ??= gameObject.GetComponent<IInventory>());
@@ -53,8 +57,10 @@ namespace Burmuruk.Tesis.Control
         public bool IsTargetFar { get => isTargetFar; }
         public bool IsTargetClose { get => isTargetClose; }
         public ref Equipment Equipment { get => ref equipment; }
-        public CharacterType CharacterType { get => characterType; }
+        public CharacterType CharacterType { get => characterType; } 
+        #endregion
 
+        #region Unity methods
         protected virtual void Awake()
         {
             GetComponents();
@@ -87,7 +93,9 @@ namespace Burmuruk.Tesis.Control
             Gizmos.color = Color.blue;
             Gizmos.DrawWireSphere(closePercept.position, stats.earsRadious);
         }
+        #endregion
 
+        #region Public methods
         public void SetUpMods()
         {
             //ModsList.AddVariable(this, ModifiableStat.HP, _=>health.HP, (value) => health.HP = value);
@@ -107,6 +115,21 @@ namespace Burmuruk.Tesis.Control
             mover.Initialize(invent, actionScheduler, this.stats);
         }
 
+        public void SetPosition(Vector3 position)
+        {
+            mover.CancelAll();
+            mover.ChangePositionTo(position);
+            //mover.UpdatePosition();
+        } 
+        #endregion
+
+        private void GetComponents()
+        {
+            health ??= GetComponent<Health>();
+            mover ??= GetComponent<Movement.Movement>();
+            fighter ??= GetComponent<Fighter>();
+        }
+
         protected virtual void PerceptionManager()
         {
             if (hasFarPerception)
@@ -117,13 +140,6 @@ namespace Burmuruk.Tesis.Control
             {
                 isTargetClose = PerceptEnemy(ref earsPerceibed);
             }
-        }
-
-        private void GetComponents()
-        {
-            health ??= GetComponent<Health>();
-            mover ??= GetComponent<Movement.Movement>();
-            fighter ??= GetComponent<Fighter>();
         }
 
         protected virtual bool PerceptEnemy(ref Collider[] perceibed)
@@ -181,14 +197,66 @@ namespace Burmuruk.Tesis.Control
         }
 
         #region Saving
-        public JToken CaptureAsJToken()
+        public JToken CaptureAsJToken(out SavingExecution execution)
         {
+            execution = SavingExecution.General;
             return CaptureCharacterData();
         }
 
         public void RestoreFromJToken(JToken state)
         {
             RestoreCharacterData(state);
+        }
+
+        public JToken CaptureInventory()
+        {
+            JObject state = new JObject();
+
+            foreach (ItemType type in Enum.GetValues(typeof(ItemType)))
+            {
+                var items = inventory.GetList(type);
+
+                if (items == null) continue;
+
+                for (int i = 0; i < items.Count; i++)
+                {
+                    JObject itemState = new();
+
+                    itemState["Id"] = items[i].ID;
+                    itemState["Count"] = inventory.GetItemCount(items[i].ID);
+
+                    if (items[i] is EquipeableItem equipeable && equipeable.Characters.Contains(this))
+                        itemState["Equipped"] = true;
+
+                    state[i.ToString()] = itemState;
+                }
+            }
+
+            return state;
+        }
+
+        public void RestoreInventory(JToken jToken)
+        {
+            if (!(jToken is JObject state)) return;
+
+            int i = 0;
+
+            while (state.ContainsKey(i.ToString()))
+            {
+                int id = state[i.ToString()]["Id"].ToObject<int>();
+
+                for (int j = 0; j < state[i.ToString()]["Count"].ToObject<int>(); j++)
+                {
+                    inventory.Add(id);
+                }
+
+                if (inventory.GetItem(id) is EquipeableItem equipeable && state.ContainsKey("Equipped"))
+                {
+                    (inventory as InventoryEquipDecorator).TryEquip(this, equipeable, out _);
+                }
+
+                i++;
+            }
         }
 
         protected virtual JToken CaptureCharacterData()
@@ -209,8 +277,8 @@ namespace Burmuruk.Tesis.Control
                 transform.position = data["Position"].ToObject<Vector3>();
                 transform.rotation = Quaternion.Euler(data["Rotation"].ToObject<Vector3>());
 
-                //mover.CancelAction();
-                //mover.UpdatePosition();
+                mover.CancelAction();
+                mover.UpdatePosition();
             }
         }
 
@@ -293,57 +361,6 @@ namespace Burmuruk.Tesis.Control
                 stats.MinDistance = state["MinDistance"].ToObject<float>();
             }
         } 
-
-        public JToken CaptureInventory()
-        {
-            JObject state = new JObject();
-
-            foreach (ItemType type in Enum.GetValues(typeof(ItemType)))
-            {
-                var items = inventory.GetList(type);
-
-                if (items == null) continue;
-
-                for (int i = 0; i < items.Count; i++)
-                {
-                    JObject itemState = new();
-
-                    itemState["Id"] = items[i].ID;
-                    itemState["Count"] = inventory.GetItemCount(items[i].ID);
-
-                    if (items[i] is EquipeableItem equipeable && equipeable.Characters.Contains(this))
-                        itemState["Equipped"] = true;
-
-                    state[i.ToString()] = itemState;
-                }
-            }
-
-            return state;
-        }
-
-        public void RestoreInventory(JToken jToken)
-        {
-            if (!(jToken is JObject state)) return;
-            
-            int i = 0;
-
-            while (state.ContainsKey(i.ToString()))
-            {
-                int id = state[i.ToString()]["Id"].ToObject<int>();
-
-                for (int j = 0; j < state[i.ToString()]["Count"].ToObject<int>(); j++)
-                {
-                    inventory.Add(id);
-                }
-
-                if (inventory.GetItem(id) is EquipeableItem equipeable && state.ContainsKey("Equipped"))
-                {
-                    (inventory as InventoryEquipDecorator).TryEquip(this, equipeable, out _);
-                }
-
-                i++;
-            }
-        }
         #endregion
     }
 }

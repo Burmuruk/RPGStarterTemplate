@@ -90,6 +90,7 @@ namespace Burmuruk.Tesis.Control
 
         public void ChangeScene(int idx)
         {
+            state = State.Loading;
             SceneManager.LoadScene(idx);
         }
 
@@ -143,7 +144,7 @@ namespace Burmuruk.Tesis.Control
 
         IEnumerator StartLevel()
         {
-            yield return new WaitForSeconds(3);
+            yield return new WaitForSeconds(.5f);
             
             if (state == State.Loading)
                 state = State.Playing;

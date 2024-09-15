@@ -18,7 +18,7 @@ namespace Burmuruk.Tesis.Control
 
         void SetTarget()
         {
-            camera.Follow = playerManager.CurPlayer;
+            camera.Follow = playerManager.CurPlayer.transform;
         }
     }
 }

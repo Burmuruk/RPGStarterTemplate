@@ -1,6 +1,7 @@
 using Burmuruk.Tesis.Control;
 using Burmuruk.Tesis.Saving;
 using Newtonsoft.Json.Linq;
+using System.Collections;
 using UnityEngine;
 
 public class MainMenuLevelManager : MonoBehaviour
@@ -16,28 +17,26 @@ public class MainMenuLevelManager : MonoBehaviour
         savingUI = FindObjectOfType<SavingUI>();
         savingUI.OnSlotAdded += AddSlot;
 
-        savingWrapper.onSceneLoaded += () => FindObjectOfType<LevelManager>().SetPaths() ;
-        savingWrapper.OnLoaded += RestoreSlotData;
         FindAvailableSlots();
 
         DontDestroyOnLoad(gameObject);
     }
 
-    public void Update()
-    {
-        if (Input.GetKeyUp(KeyCode.K))
-        {
-            var data = CaptureLevelData();
+    //public void Update()
+    //{
+    //    if (Input.GetKeyUp(KeyCode.K))
+    //    {
+    //        var data = CaptureLevelData();
 
-            savingWrapper.Save(data["Slot"].ToObject<int>(), data);
-        }
+    //        savingWrapper.Save(data["Slot"].ToObject<int>(), data);
+    //    }
 
-        if (Input.GetKeyUp(KeyCode.L))
-        {
-            //ScreenCapture.)
-            savingWrapper.Load(GetSlotId());
-        }
-    }
+    //    if (Input.GetKeyUp(KeyCode.L))
+    //    {
+    //        //ScreenCapture.)
+    //        savingWrapper.Load(GetSlotId());
+    //    }
+    //}
 
     public void ShowSlots()
     {
@@ -55,16 +54,18 @@ public class MainMenuLevelManager : MonoBehaviour
     public void LoadSlot(int slot)
     {
         ShowMenu(false);
+        savingWrapper.onSceneLoaded += () => FindObjectOfType<LevelManager>().LoadPaths();
+        savingWrapper.OnLoaded += RestoreSlotData;
+        savingWrapper.OnLoadingStateFinished += LoadStage;
 
-        
         savingWrapper.Load(slot);
     }
 
     private void FindAvailableSlots()
     {
-        savingWrapper.LookForSlots(out int slotsCount, out int autoSaveCount);
+        var slots = savingWrapper.LookForSlots();
 
-        savingUI.EnableCurrentSlots(slotsCount, autoSaveCount);
+        savingUI.EnableCurrentSlots(slots);
     }
 
     private void ShowMenu(bool shouldShow)
@@ -93,7 +94,6 @@ public class MainMenuLevelManager : MonoBehaviour
 
     private void RestoreSlotData(JObject slotData)
     {
-        Debug.Log("SlotData to be Updated");
         var data = new SlotData(
             slotData["Slot"].ToObject<int>(),
             slotData["BuildIdx"].ToObject<int>(),
@@ -101,6 +101,21 @@ public class MainMenuLevelManager : MonoBehaviour
 
         FindObjectOfType<LevelManager>().SaveSlotData(data);
 
-        Debug.Log("SlotData Updated");
+        savingWrapper.onSceneLoaded -= () => FindObjectOfType<LevelManager>().SetPaths();
+        savingWrapper.OnLoaded -= RestoreSlotData;
+        savingWrapper.OnLoadingStateFinished -= LoadStage;
+    }
+
+    private void LoadStage(int stage)
+    {
+        switch ((SavingExecution)stage)
+        {
+            case SavingExecution.System:
+                TemporalSaver.RemoveAllData();
+                break;
+            case SavingExecution.General:
+                FindObjectOfType<LevelManager>().SetPaths();
+                break;
+        }
     }
 }

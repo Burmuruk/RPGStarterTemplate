@@ -64,8 +64,9 @@ namespace Burmuruk.Tesis.Interaction
             return true;
         }
 
-        public JToken CaptureAsJToken()
+        public JToken CaptureAsJToken(out SavingExecution execution)
         {
+            execution = SavingExecution.General;
             JObject state = new JObject();
             List<PickupItemData> pickups = new();
             int i = 0;

@@ -2,8 +2,6 @@
 using Burmuruk.Tesis.Stats;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Control.AI
@@ -45,6 +43,10 @@ namespace Burmuruk.Tesis.Control.AI
 
         private void Start()
         {
+            inventory = FindObjectOfType<LevelManager>().gameObject.GetComponent<Inventory.Inventory>();
+
+            if (inventory == null) return;
+
             var enemies = FindObjectsOfType<AIEnemyController>(true);
 
             foreach (var enemy in enemies)
@@ -56,7 +58,7 @@ namespace Burmuruk.Tesis.Control.AI
                     enemy.SetUpMods();
                     //enemy.Health.OnDied += 
                 }
-                catch (NullReferenceException )
+                catch (NullReferenceException)
                 {
 
                     throw;

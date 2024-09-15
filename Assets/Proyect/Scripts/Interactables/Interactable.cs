@@ -8,8 +8,9 @@ namespace Burmuruk.Tesis.Interaction
     {
         private bool disabled;
 
-        public JToken CaptureAsJToken()
+        public JToken CaptureAsJToken(out SavingExecution execution)
         {
+            execution = SavingExecution.General;
             JObject state = new JObject();
 
             state["Disabled"] = true;

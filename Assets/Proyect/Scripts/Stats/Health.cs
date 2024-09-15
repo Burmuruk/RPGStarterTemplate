@@ -45,8 +45,9 @@ namespace Burmuruk.Tesis.Stats
             OnDied?.Invoke();
         }
 
-        public JToken CaptureAsJToken()
+        public JToken CaptureAsJToken(out SavingExecution execution)
         {
+            execution = SavingExecution.General;
             return JToken.FromObject(hp);
         }
 

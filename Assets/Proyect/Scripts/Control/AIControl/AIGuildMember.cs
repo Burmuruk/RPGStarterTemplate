@@ -72,10 +72,13 @@ namespace Burmuruk.Tesis.Control.AI
         protected virtual void Start()
         {
             cdTeleport = new CoolDownAction(1.5f);
+            
         }
 
         protected override void FixedUpdate()
         {
+            if (mainPlayer == null) return;
+
             playerDistance = Vector3.Distance(mainPlayer.transform.position, transform.position) switch
             {
                 <= closeDistance => PlayerDistance.Close,

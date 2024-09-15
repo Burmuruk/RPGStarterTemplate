@@ -24,5 +24,5 @@ MonoBehaviour:
       color: {r: 0, g: 0, b: 0, a: 0}
       eyesRadious: 3
       earsRadious: 2
-      minDistance: 1.5
+      minDistance: 1.1
       m_slots: []
