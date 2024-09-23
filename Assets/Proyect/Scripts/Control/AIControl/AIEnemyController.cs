@@ -17,14 +17,18 @@ namespace Burmuruk.Tesis.Control.AI
         protected List<(float value, Character enemy)> rage;
         protected List<AbiltyTrigger> abilities = new();
         [SerializeField] PatrolController patrolController;
+        List<Character> _enemies = new();
+        protected Character m_target;
 
-        protected PlayerAction playerAction;
-        protected AttackState attackState;
-        protected PlayerDistance playerDistance;
-        protected PlayerState playerState;
-        protected RageState rageState;
-        protected Awareness awareness;
-        protected LeaderOrder curOrder;
+        [SerializeField] protected PlayerAction playerAction;
+        [SerializeField] protected AttackState attackState;
+        [SerializeField] protected PlayerDistance playerDistance;
+        [SerializeField] protected PlayerState playerState;
+        [SerializeField] protected RageState rageState;
+        [SerializeField] protected Awareness awareness;
+        [SerializeField] protected LeaderOrder curOrder;
+
+        public Character CurEnemy { get; private set; }
 
         #region Enums
         public enum PlayerAction
@@ -128,6 +132,11 @@ namespace Burmuruk.Tesis.Control.AI
             }
 
             this.leader = leader;
+        }
+
+        public void SetTarget(Character target)
+        {
+            m_target = target;
         }
 
         public void SetOrder(LeaderOrder order)

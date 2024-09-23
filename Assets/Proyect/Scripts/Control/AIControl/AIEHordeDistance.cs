@@ -11,7 +11,7 @@ namespace Burmuruk.Tesis.Control.AI
         [SerializeField] float coolDownHorde;
         [SerializeField] float hordeInvokeTime;
         //[SerializeField] List<AIEnemyController> horde = new();
-        Transform m_target;
+        
         CoolDownAction cdHorde;
         CoolDownAction cdHordeInkoke;
         List<AIEnemyController> hordeMembers = new();
@@ -62,25 +62,28 @@ namespace Burmuruk.Tesis.Control.AI
 
         private void Attack()
         {
-            if (IsTargetFar && !IsTargetClose && !troopsDeployed && cdHorde.CanUse)
-            {
-                if (cdHordeInkoke.CanUse)
-                    StartCoroutine(cdHordeInkoke.CoolDown());
+            //if (IsTargetFar && !IsTargetClose && !troopsDeployed && cdHorde.CanUse)
+            //{
+            //    if (cdHordeInkoke.CanUse)
+            //        StartCoroutine(cdHordeInkoke.CoolDown());
 
-                Invoke("SetHordePositions", hordeInvokeTime * .8f);
-                playerAction = PlayerAction.None;
-                return;
-            }
+            //    Invoke("EnableHorde", hordeInvokeTime * .8f);
+            //    playerAction = PlayerAction.None;
+            //    return;
+            //}
 
-            m_target = GetNearestTarget(eyesPerceibed);
+            m_target = GetNearestTarget(eyesPerceibed)?.GetComponent<Character>();
             if (m_target == null)
-                m_target = GetNearestTarget(earsPerceibed);
+                m_target = GetNearestTarget(earsPerceibed)?.GetComponent<Character>();
 
-            if (Vector3.Distance(m_target.position, transform.position)
-                <= stats.MinDistance)
+            if (m_target == null) return;
+
+            if (isTargetFar && !IsTargetClose)
             {
-                fighter.SetTarget(m_target);
+                fighter.SetTarget(m_target.transform);
                 fighter.BasicAttack();
+                EnableHorde();
+                hordeMembers.ForEach(enemy => enemy.SetTarget(m_target));
                 hordeMembers.ForEach(enemy => enemy.SetOrder(LeaderOrder.Attack));
             }
         }
@@ -91,16 +94,30 @@ namespace Burmuruk.Tesis.Control.AI
             {
                 case PlayerAction.Combat:
 
-                    var dis = stats.MinDistance * .8f;
-
-                    if (Vector3.Distance(m_target.position, transform.position) > dis)
+                    if (troopsDeployed)
                     {
-                        Vector3 destiny = (transform.position - m_target.position).normalized * dis;
-                        destiny += m_target.position;
+                        if (!m_target) return;
 
-                        mover.MoveTo(destiny);
+                        var dis = stats.MinDistance * .8f;
+
+                        if (Vector3.Distance(m_target.transform.position, transform.position) > dis)
+                        {
+                            Vector3 destiny = (transform.position - m_target.transform.position).normalized * dis;
+                            destiny += m_target.transform.position;
+
+                            mover.MoveTo(destiny);
+                        }
                     }
-                break;
+                    else if (IsTargetClose)
+                    {
+                        mover.Flee(m_target.transform.position);
+                    }
+                    else if (isTargetFar && !IsTargetClose)
+                    {
+
+                    }
+
+                    break;
             }
         }
 
@@ -111,7 +128,7 @@ namespace Burmuruk.Tesis.Control.AI
             health.OnDamaged += (_) => DelayHorde();
         }
 
-        private void SetHordePositions()
+        private void EnableHorde()
         {
             troopsDeployed = true;
             horde.SetActive(true);
@@ -122,7 +139,7 @@ namespace Burmuruk.Tesis.Control.AI
 
                 hordeMembers.Add(enemy);
                 enemy.SetLeader(this);
-                enemy.SetOrder(LeaderOrder.Follow);
+                //enemy.SetOrder(LeaderOrder.Follow);
             }
         }
 

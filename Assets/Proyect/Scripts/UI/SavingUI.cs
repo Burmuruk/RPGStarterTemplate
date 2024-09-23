@@ -1,3 +1,4 @@
+using Burmuruk.Tesis.Saving;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
@@ -5,18 +6,21 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static Burmuruk.Tesis.Stats.BasicStats;
 
 public class SavingUI : MonoBehaviour
 {
     [Header("References")]
+    [SerializeField] GameObject slotsContainer;
+    [SerializeField] GameObject mainMenu;
     [SerializeField] SlotUI[] slots;
     [SerializeField] SlotUI[] autoSaves;
     [SerializeField] GameObject btnAddMore;
     [SerializeField] GameObject btnLoad;
 
+    JsonSavingWrapper savingWrapper;
+
     int curSlots = 0;
-    int curAutoSave = 0;
-    int curSlot = 1;
 
     [Serializable]
     private struct SlotUI
@@ -36,9 +40,24 @@ public class SavingUI : MonoBehaviour
 
     public event Action<int> OnSlotAdded;
 
-    void Start()
+    private void Awake()
     {
-        //DontDestroyOnLoad(this);
+        savingWrapper = FindObjectOfType<JsonSavingWrapper>();
+
+        EnableCurrentSlots(savingWrapper.FindAvailableSlots());
+    }
+
+    public void ShowSlots()
+    {
+        EnableCurrentSlots(savingWrapper.FindAvailableSlots());
+        slotsContainer.SetActive(!slotsContainer.activeSelf);
+    }
+
+    public void LoadSlot(int slot)
+    {
+        ShowMenu(false);
+
+        savingWrapper.Load(slot);
     }
 
     public void EnableCurrentSlots(List<(int id, JObject slotData)> slots)
@@ -65,7 +84,15 @@ public class SavingUI : MonoBehaviour
 
     public void AddSlot()
     {
-        OnSlotAdded?.Invoke(curSlots + 1);
+        ShowMenu(false);
+
+        savingWrapper.Load(curSlots + 1);
+    }
+
+    private void ShowMenu(bool shouldShow)
+    {
+        mainMenu.SetActive(shouldShow);
+        slotsContainer.SetActive(false);
     }
 
     private void DisableSlots()
@@ -87,7 +114,16 @@ public class SavingUI : MonoBehaviour
 
         foreach (var slot in slots)
         {
-            SlotUI curSlot = slot.id < 0 ? autoSaves[slot.id * -1] : this.slots[slot.id - 1];
+            SlotUI curSlot = default;
+            if (slot.id < 0)
+            {
+                curSlot = autoSaves[slot.id * -1];
+            }
+            else
+            {
+                curSlot = this.slots[slot.id - 1];
+                ++slotsCount;
+            }
 
             curSlot.Title = "Guardado " + slot.id;
             curSlot.PlayedTime = slot.slotData["TimePlayed"].ToString();

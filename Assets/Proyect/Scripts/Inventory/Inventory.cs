@@ -17,8 +17,6 @@ namespace Burmuruk.Tesis.Inventory
 
         Dictionary<int, (InventoryItem item, int count)> m_owned = new();
 
-        public event Action OnWeaponChanged;
-
         public int ID { get => id; }
         public bool IsPersistentData { get => isPersistentData; }
 

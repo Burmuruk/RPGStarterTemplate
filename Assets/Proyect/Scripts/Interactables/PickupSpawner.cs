@@ -22,7 +22,7 @@ namespace Burmuruk.Tesis.Interaction
 
         public int ID => id == 0 ? id = GetHashCode() : id;
 
-        private void Awake()
+        public void RegisterCurrentItems()
         {
             var pickups = FindObjectsOfType<Pickup>();
             items.Clear();
@@ -41,27 +41,6 @@ namespace Burmuruk.Tesis.Interaction
 
                 items[pickup.ID] = data;
             }
-        }
-
-        private bool InstanciateLastPickups()
-        {
-            if (items.Count == 0) return false;
-
-            var pickups = FindObjectsOfType<Pickup>();
-
-            for (int i = 0; i < pickups.Length; i++)
-            {
-                Destroy(pickups[i]);
-            }
-
-            foreach (var item in items)
-            {
-                var prefab = list.Get(item.Key).Prefab;
-
-                Instantiate(prefab, item.Value.position, item.Value.rotation);
-            }
-
-            return true;
         }
 
         public JToken CaptureAsJToken(out SavingExecution execution)
@@ -93,6 +72,8 @@ namespace Burmuruk.Tesis.Interaction
             items.Clear();
             int i = 0;
 
+            InstanciateLastPickups();
+
             while (state.ContainsKey(i.ToString()))
             {
                 if (state[i.ToString()]["Picked"].ToObject<bool>())
@@ -120,9 +101,29 @@ namespace Burmuruk.Tesis.Interaction
                 i++;
             }
 
-            InstanciateLastPickups();
+            //InstanciateLastPickups();
         }
 
+        private bool InstanciateLastPickups()
+        {
+            var pickups = FindObjectsOfType<Pickup>();
+
+            if (pickups == null || pickups.Length == 0) return false;
+
+            for (int i = 0; i < pickups.Length; i++)
+            {
+                Destroy(pickups[i].gameObject);
+            }
+
+            //foreach (var item in items)
+            //{
+            //    var prefab = list.Get(item.Key).Prefab;
+
+            //    Instantiate(prefab, item.Value.position, item.Value.rotation);
+            //}
+
+            return true;
+        }
         public void AddItem(InventoryItem item, Vector3 pos)
         {
             var pickup = Instantiate(item.Pickup, pos, Quaternion.identity, transform);

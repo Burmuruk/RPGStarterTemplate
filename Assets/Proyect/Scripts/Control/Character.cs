@@ -11,12 +11,13 @@ using UnityEngine.TextCore.Text;
 
 namespace Burmuruk.Tesis.Control
 {
-    public class Character : MonoBehaviour, IJsonSaveable
+    public class Character : MonoBehaviour, IJsonSaveable, ISelectable
     {
         #region Variables
         [Header("References")]
         [SerializeField] protected Transform farPercept;
         [SerializeField] protected Transform closePercept;
+        [SerializeField] protected Material[] shaders;
         [Space(), Header("Status"), Space()]
         [SerializeField] protected bool hasFarPerception;
         [SerializeField] protected bool hasClosePerception;
@@ -37,8 +38,14 @@ namespace Burmuruk.Tesis.Control
 
         protected Collider[] eyesPerceibed, earsPerceibed;
         protected bool isTargetFar = false;
-        protected bool isTargetClose = false; 
+        protected bool isTargetClose = false;
         #endregion
+
+        [Serializable]
+        public struct ShaderRef
+        {
+            public string name; public Renderer Renderer;
+        }
 
         public virtual event Action<bool> OnCombatStarted;
 
@@ -57,7 +64,8 @@ namespace Burmuruk.Tesis.Control
         public bool IsTargetFar { get => isTargetFar; }
         public bool IsTargetClose { get => isTargetClose; }
         public ref Equipment Equipment { get => ref equipment; }
-        public CharacterType CharacterType { get => characterType; } 
+        public CharacterType CharacterType { get => characterType; }
+        public bool IsSelected => throw new NotImplementedException();
         #endregion
 
         #region Unity methods
@@ -180,6 +188,8 @@ namespace Burmuruk.Tesis.Control
 
             foreach (var enemy in eyesPerceibed)
             {
+                if (!enemy.CompareTag(enemyTag)) continue;
+
                 if (Vector3.Distance(enemy.transform.position, transform.position) is var d && d < closest.dis)
                 {
                     closest = (enemy.transform, d);
@@ -279,6 +289,7 @@ namespace Burmuruk.Tesis.Control
 
                 mover.CancelAction();
                 mover.UpdatePosition();
+                name = "Jugador Colocado";
             }
         }
 
@@ -359,8 +370,38 @@ namespace Burmuruk.Tesis.Control
                 stats.eyesRadious = state["EyesRadious"].ToObject<float>();
                 stats.earsRadious = state["EarsRadious"].ToObject<float>();
                 stats.MinDistance = state["MinDistance"].ToObject<float>();
+
+                SetStats(stats);
             }
-        } 
+        }
         #endregion
+
+        public void Select()
+        {
+            var rend = GetComponent<Renderer>();
+
+            foreach (var material in rend.materials)
+            {
+                if (material.shader.name.Contains("Outliner"))
+                {
+                    material.SetFloat("_Enabled", 1);
+                    break;
+                }
+            }
+        }
+
+        public void Deselect()
+        {
+            var rend = GetComponent<Renderer>();
+
+            foreach (var material in rend.materials)
+            {
+                if (material.shader.name.Contains("Outliner"))
+                {
+                    material.SetFloat("_Enabled", 0);
+                    break;
+                }
+            }
+        }
     }
 }

@@ -109,9 +109,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   farPercept: {fileID: 2327318175012354995}
   closePercept: {fileID: 7190640923258741846}
+  shaders:
+  - {fileID: 2100000, guid: f68d266fb92ffd04597989926c400e58, type: 2}
   hasFarPerception: 1
   hasClosePerception: 1
   characterType: 3
+  equipment:
+    Body: {fileID: 0}
+    spawnPoints: []
   enemyTag: Player
   mover: {fileID: 0}
   fighter: {fileID: 0}
@@ -125,6 +130,8 @@ MonoBehaviour:
     earsRadious: 0
     minDistance: 0
     m_slots: []
+  itemsToDrop: []
+  patrolController: {fileID: 0}
 --- !u!4 &2327318175012354995 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2785978298475701983, guid: 8309bf9444a004e4b854038f1c57a905,

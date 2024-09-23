@@ -48,7 +48,7 @@ MonoBehaviour:
       color: {r: 0, g: 0, b: 0, a: 0}
       eyesRadious: 4
       earsRadious: 2
-      minDistance: 2
+      minDistance: 3
       m_slots: []
   - charactyerType: 6
     level: 0
@@ -73,4 +73,16 @@ MonoBehaviour:
       eyesRadious: 4
       earsRadious: 2
       minDistance: 2
+      m_slots: []
+  - charactyerType: 5
+    level: 0
+    stats:
+      initialized: 0
+      speed: 4
+      damage: 5
+      damageRate: 1.2
+      color: {r: 0, g: 0, b: 0, a: 0}
+      eyesRadious: 4
+      earsRadious: 2
+      minDistance: 3
       m_slots: []

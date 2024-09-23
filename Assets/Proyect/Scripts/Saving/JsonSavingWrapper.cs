@@ -1,12 +1,16 @@
-﻿using Burmuruk.Tesis.Stats;
+﻿using Burmuruk.Tesis.Control;
+using Burmuruk.Tesis.Stats;
+using Burmuruk.Tesis.UI;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 
 namespace Burmuruk.Tesis.Saving
 {
@@ -15,9 +19,10 @@ namespace Burmuruk.Tesis.Saving
         const string defaultSaveFile = "miGuardado-";
         const string defaultAutoSaveFile = "miAutoGuardado-";
 
+        private int _lastBuildIdx = 0;
+
         public event Action<float> OnSaving;
         public event Action<float> OnLoading;
-        public event Action onSceneLoaded;
         public event Action<JObject> OnLoaded;
         public UnityEvent OnSavingUI;
         public UnityEvent OnLoadingUI;
@@ -32,7 +37,23 @@ namespace Burmuruk.Tesis.Saving
         private void Awake()
         {
             var saver = GetComponent<JsonSavingSystem>();
-            saver.onSceneLoaded += onSceneLoaded;
+
+            saver.onSceneLoaded += () =>
+            {
+                Movement.PathFindig.Path.Restart();
+                Movement.PathFindig.Path.LoadNavMesh();
+                TemporalSaver.RemoveAllData();
+
+                if (_lastBuildIdx == 0)
+                {
+                    GetComponent<PersistentObjSpawner>().TrySpawnObjects();
+                }
+            };
+            
+            OnLoaded += RestoreSlotData;
+            OnLoadingStateFinished += LoadStage;
+
+            DontDestroyOnLoad(gameObject);
         }
 
         //private IEnumerator Start()
@@ -59,6 +80,7 @@ namespace Burmuruk.Tesis.Saving
 
         public void Load(int slot)
         {
+            _lastBuildIdx = SceneManager.GetActiveScene().buildIndex;
             OnLoading?.Invoke(0);
             OnLoadingUI?.Invoke();
             FindObjectOfType<BuffsManager>()?.RemoveAllBuffs();
@@ -90,6 +112,47 @@ namespace Burmuruk.Tesis.Saving
             var saver = GetComponent<JsonSavingSystem>();
 
             return saver.LookForSlots(defaultSaveFile);
+        }
+        
+        public List<(int id, JObject slotData)> FindAvailableSlots()
+        {
+            return LookForSlots();
+        }
+
+        private void RestoreSlotData(JObject slotData)
+        {
+            var data = new SlotData(
+                slotData["Slot"].ToObject<int>(),
+                slotData["BuildIdx"].ToObject<int>(),
+                slotData["TimePlayed"].ToObject<float>());
+
+            FindObjectOfType<LevelManager>().SaveSlotData(data);
+        }
+
+        private void LoadStage(int stage)
+        {
+            switch ((SavingExecution)stage)
+            {
+                case SavingExecution.Admin:
+                    break;
+
+                case SavingExecution.System:
+                    
+                    break;
+
+                case SavingExecution.Organization:
+                    FindObjectOfType<LevelManager>().SetPaths();
+                    FindObjectOfType<PlayerManager>().UpdateLeaderPosition();
+
+                    break;
+
+                case SavingExecution.General:
+
+                    if (_lastBuildIdx != 0) break;
+
+                    FindObjectOfType<HUDManager>().Init();
+                    break;
+            }
         }
     }
 }

@@ -1,3 +1,4 @@
+using Burmuruk.Tesis.Interaction;
 using Burmuruk.Tesis.Movement.PathFindig;
 using Burmuruk.Tesis.Saving;
 using Burmuruk.Tesis.UI;
@@ -13,7 +14,6 @@ namespace Burmuruk.Tesis.Control
 {
     public class LevelManager : MonoBehaviour, ISlotDataProvider, IslotDataSaver
     {
-        [SerializeField] Path path;
         [SerializeField] UnityEvent onUILoaded;
         [SerializeField] UnityEvent onUIUnLoaded;
         [SerializeField] GameObject pauseMenu;
@@ -31,10 +31,12 @@ namespace Burmuruk.Tesis.Control
         private void Awake()
         {
             savingWrapper = FindObjectOfType<JsonSavingWrapper>();
-            savingWrapper.onSceneLoaded += LoadPaths;
-            savingWrapper.OnLoadingStateFinished += LoadStage;
             playerManager = FindObjectOfType<PlayerManager>();
             //playerManager.OnPlayerAdded += SetPathToCharacter;
+
+            Path.Restart();
+            Path.LoadNavMesh();
+            FindObjectOfType<PickupSpawner>().RegisterCurrentItems();
         }
 
         void Start()
@@ -67,44 +69,25 @@ namespace Burmuruk.Tesis.Control
             }
         }
 
-        private void OnLevelWasLoaded()
-        {
-            path.LoadNavMesh();
-            SetPaths();
-
-            playerManager.UpdateLeaderPosition();
-        }
-
-        public void LoadPaths()
-        {
-            path.LoadNavMesh();
-            print("path loaded");
-        }
-
         public void SetPaths()
         {
-            if (path.NodeList == null) return;
+            if (Path.NodeList == null) return;
 
             //print("Valor encontrado");
             var movers = FindObjectsOfType<Movement.Movement>(true);
 
             foreach (var mover in movers)
             {
-                mover.SetConnections(path.NodeList);
+                mover.SetConnections(Path.NodeList);
             }
 
             OnNavmeshLoaded?.Invoke();
         }
-
-        public void SetPathToCharacter(Character character)
-        {
-            character.mover.SetConnections(path.NodeList);
-        }
         //public INodeListSupplier SetNodeList()
         //{
-        //    if (path == null && !path.Saved) return null;
+        //    if (Path == null && !Path.Saved) return null;
 
-        //    return path.SetNodeList();
+        //    return Path.SetNodeList();
         //}
 
         public void GoToMainMenu()
@@ -252,22 +235,6 @@ namespace Burmuruk.Tesis.Control
             }
         }
 
-        IEnumerator Autosave()
-        {
-            while (true)
-            {
-                yield return new WaitForSeconds(600);
-
-                while (gameManager.GameState != GameManager.State.Playing)
-                {
-                    yield return new WaitForSeconds(60);
-                }
-
-                var data = CaptureLevelData();
-                FindObjectOfType<JsonSavingWrapper>().Save(0, data);
-            }
-        }
-
         private JObject CaptureLevelData()
         {
             var slotData = GetSlotData();
@@ -281,17 +248,19 @@ namespace Burmuruk.Tesis.Control
             return data;
         }
 
-        private void LoadStage(int stage)
+        IEnumerator Autosave()
         {
-            switch ((SavingExecution)stage)
+            while (true)
             {
-                case SavingExecution.System:
-                    TemporalSaver.RemoveAllData();
-                    break;
-                case SavingExecution.General:
-                    print("path setted");
-                    FindObjectOfType<LevelManager>().SetPaths();
-                    break;
+                yield return new WaitForSeconds(600);
+
+                while (gameManager.GameState != GameManager.State.Playing)
+                {
+                    yield return new WaitForSeconds(60);
+                }
+
+                var data = CaptureLevelData();
+                FindObjectOfType<JsonSavingWrapper>().Save(0, data);
             }
         }
     } 

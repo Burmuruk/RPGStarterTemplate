@@ -189,14 +189,17 @@ namespace Burmuruk.Tesis.Saving
 
             var saveables = FindObjectsOfType<JsonSaveableEntity>().ToList();
 
-            for (int i = 0; i < Enum.GetValues(typeof(SavingExecution)).Length; i++)
+            for (int i = 0; i < (int)SavingExecution.General; i++)
             {
                 if (!stateDict.ContainsKey(((SavingExecution)i).ToString()))
+                {
+                    OnLoadingStateFinished?.Invoke(i);
                     continue;
+                }
 
                 for (int x = 0; x < saveables.Count; x++)
                 {
-                    string id = saveables[x].GetUniqueIdentifier();
+                    //string id = saveables[x].GetUniqueIdentifier();
 
                     saveables[x].RestoreFromJToken(state, (SavingExecution)i);
                     //if (!stateDict.ContainsKey(id))
@@ -207,6 +210,8 @@ namespace Burmuruk.Tesis.Saving
 
                 OnLoadingStateFinished?.Invoke(i);
             }
+
+            saveables = FindObjectsOfType<JsonSaveableEntity>().ToList();
 
             for (int i = 0; i < saveables.Count; i++)
             {
@@ -227,18 +232,12 @@ namespace Burmuruk.Tesis.Saving
             return Path.Combine(Application.persistentDataPath, saveFile + extension);
         }
 
-        public void GetFileInfo(int id)
-        {
-
-        }
-
         public List<(int id, JObject slotData)> LookForSlots(string saveFile)
         {
             var data = LoadJsonFromFile(saveFile);
 
             IDictionary<string, JToken> stateDict = data;
             List<(int id, JObject slotData)> slots = new();
-            int i = 0;
 
             foreach (var slot in stateDict)
             {

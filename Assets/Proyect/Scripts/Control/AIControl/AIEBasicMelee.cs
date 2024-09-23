@@ -29,11 +29,19 @@ namespace Burmuruk.Tesis.Control.AI
             }
         }
 
+        protected override void ChooseAttack()
+        {
+            if (isTargetFar || isTargetClose)
+                playerAction = PlayerAction.Combat;
+        }
+
         private void Attack()
         {
             m_target = GetNearestTarget(eyesPerceibed);
             if (m_target == null)
-                GetNearestTarget(earsPerceibed);
+                m_target = GetNearestTarget(earsPerceibed);
+
+            if (m_target == null) return;
 
             if (Vector3.Distance(m_target.position, transform.position)
                 <= stats.MinDistance)

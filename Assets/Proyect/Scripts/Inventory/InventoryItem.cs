@@ -15,7 +15,16 @@ namespace Burmuruk.Tesis.Inventory
         [SerializeField] int m_capacity;
         private int _id = 0;
 
-        public int ID => _id;
+        public int ID
+        {
+            get
+            {
+                if (_id == 0)
+                    _id = GetHashCode();
+
+                return _id;
+            }
+        }
         public string Name { get => m_name; }
         public string Description { get => m_description; }
         public Sprite Sprite { get => m_sprite; }

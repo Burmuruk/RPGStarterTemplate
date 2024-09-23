@@ -6,20 +6,26 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-public class PersistentObjSpawner : MonoBehaviour, IJsonSaveable, ISerializationCallbackReceiver
+public class PersistentObjSpawner : MonoBehaviour
 {
     [SerializeField] List<GameObject> persistentObjectsPref;
     [SerializeField] private int _id = 0;
     bool hasSpawned = false;
 
-    private void Awake()
+    public int Id
     {
-        TrySpawnObjects();
+        get
+        {
+            if (_id == 0)
+                _id = GetHashCode();
+
+            return _id;
+        }
     }
 
-    private void TrySpawnObjects()
+    public void TrySpawnObjects()
     {
-        if (TemporalSaver.TryLoad(_id, out object data))
+        if (TemporalSaver.TryLoad(Id, out object data))
             hasSpawned = (bool)data;
 
         if (hasSpawned) return;
@@ -27,7 +33,7 @@ public class PersistentObjSpawner : MonoBehaviour, IJsonSaveable, ISerialization
         SpawnObjects();
 
         hasSpawned = true;
-        TemporalSaver.Save(_id, true);
+        TemporalSaver.Save(Id, true);
     }
 
     private void SpawnObjects()
@@ -41,7 +47,7 @@ public class PersistentObjSpawner : MonoBehaviour, IJsonSaveable, ISerialization
 
     public JToken CaptureAsJToken(out SavingExecution execution)
     {
-        execution = SavingExecution.System;
+        execution = SavingExecution.Admin;
         JObject state = new JObject();
 
         state["HasSpawned"] = hasSpawned;
@@ -52,7 +58,7 @@ public class PersistentObjSpawner : MonoBehaviour, IJsonSaveable, ISerialization
     public void RestoreFromJToken(JToken state)
     {
         hasSpawned = (state as JObject)["HasSpawned"].ToObject<bool>();
-
+        
         TrySpawnObjects();
     }
 

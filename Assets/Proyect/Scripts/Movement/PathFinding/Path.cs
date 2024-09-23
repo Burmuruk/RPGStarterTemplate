@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
@@ -12,37 +13,37 @@ using UnityEngine.SceneManagement;
 
 namespace Burmuruk.Tesis.Movement.PathFindig
 {
-    [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Path", order = 2)]
-    public class Path : ScriptableObject
+    public static class Path
     {
-        [SerializeField] bool saved;
-        [SerializeField] float radious;
-        [SerializeField] float distance;
-        [SerializeField] float maxAngle;
-        [SerializeField] List<int> towerSizes;
-        [SerializeField] List<int> towerHeights;
-        [SerializeField] ScrNode[] towers;
+        static bool saved;
+        static float radious;
+        static float distance;
+        static float maxAngle;
 
-        Dictionary<uint, Queue<((int x, int y, int z) idx, int connectionIdx)>> nodesWaiting;
-        Dictionary<uint, IPathNode> addedNodes;
+        static Dictionary<uint, Queue<((int x, int y, int z) idx, int connectionIdx)>> nodesWaiting;
+        static Dictionary<uint, IPathNode> addedNodes;
 
         const string fileName = "NavGrid";
-        [SerializeField] private bool working = false;
-        [SerializeField] bool loaded;
-        public NodeListSuplier NodeList { get; private set; }
+        static private bool working = false;
+        static bool loaded;
+        public static NodeListSuplier NodeList { get; private set; }
 
-        private struct IdData
+        public static event Action OnPathLoaded;
+
+        public static bool Saved { get => saved; }
+        public static bool Loaded { get => loaded; private set => loaded = value; }
+
+        public static void Restart()
         {
-            public uint Id;
-            
-            public int idx;
-            public int ConnectionIdx;
+            if (working) return;
+
+            saved = false;
+            nodesWaiting = null;
+            addedNodes = null;
+            loaded = false;
         }
 
-        public bool Saved { get => saved; }
-        public bool Loaded { get => loaded; private set => loaded = value; }
-
-        public void SaveList(IPathNode[][][] nodes, int count)
+        public static void SaveList(IPathNode[][][] nodes, int count)
         {
             LinkedList<string> text = new LinkedList<string>();
             text.AddFirst(nodes.Length.ToString() + ">" + nodes[0][0][0].Position.x.ToString() + "|");
@@ -68,7 +69,7 @@ namespace Burmuruk.Tesis.Movement.PathFindig
             saved = true;
         }
 
-        private void Write(LinkedList<string> text)
+        private static void Write(LinkedList<string> text)
         {
             string path = UnityEngine.Application.persistentDataPath + fileName + SceneManager.GetActiveScene().buildIndex + ".txt";
 
@@ -82,7 +83,7 @@ namespace Burmuruk.Tesis.Movement.PathFindig
             }
         }
 
-        private string GetNodeConnections(IPathNode node)
+        private static string GetNodeConnections(IPathNode node)
         {
             string connections = "";
 
@@ -94,42 +95,43 @@ namespace Burmuruk.Tesis.Movement.PathFindig
             return connections += ")";
         }
 
-        public void SaveExtraData(float radious, float distance, float maxAngle)
+        public static void SaveExtraData(float radious, float distance, float maxAngle)
         {
-            this.distance = distance;
-            this.maxAngle = maxAngle;
-            this.radious = radious;
-
-            EditorUtility.SetDirty(this);
+            Path.distance = distance;
+            Path.maxAngle = maxAngle;
+            Path.radious = radious;
         }
 
-        private void SetNodeList(IPathNode[][][] nodes)
+        private static void SetNodeList(IPathNode[][][] nodes)
         {
             NodeList = new NodeListSuplier(nodes);
 
             NodeList.SetTarget(radious, distance, maxAngle);
         }
 
-        public void LoadNavMesh()
+        public static void LoadNavMesh()
         {
-            if (/*Loaded ||*/ working) return;
+            if (Loaded || working) return;
 
             working = true;
-
-            SetNodeList(GetReversedList());
-            UnityEngine.Debug.Log("Nav loaded");
-            //Loaded = true;
-            //Task<IPathNode[][][]> loadDataTask = Task.Run(() => GetReversedList());
+            SynchronizationContext context = SynchronizationContext.Current;
+            SetNodeList(GenerateNodesArray());
+            
+            Loaded = true;
+            working = false;
+            //Task<IPathNode[][][]> loadDataTask = Task.Run(() => GenerateNodesArray());
             //loadDataTask.ContinueWith((antecedent) =>
             //{
             //    SetNodeList(antecedent.Result);
-                
+
             //    Loaded = true;
-            working = false;
+            //    working = false;
+
+            //    context.Post(_ => OnPathLoaded?.Invoke(), null);
             //}, TaskContinuationOptions.ExecuteSynchronously);
         }
-        
-        private IPathNode[][][] GetReversedList()
+
+        private static IPathNode[][][] GenerateNodesArray()
         {
             addedNodes = new ();
             nodesWaiting = new ();
@@ -141,7 +143,7 @@ namespace Burmuruk.Tesis.Movement.PathFindig
             return nodes;
         }
 
-        private void GetNodesFromText(LinkedList<char[]> text, out IPathNode[][][] nodes)
+        private static void GetNodesFromText(LinkedList<char[]> text, out IPathNode[][][] nodes)
         {
             nodes = null;
             Queue<uint> ids = new();
@@ -238,7 +240,7 @@ namespace Burmuruk.Tesis.Movement.PathFindig
             }
         }
 
-        private void RegisterConnections(IPathNode[][][] nodes, Queue<uint> ids, int x, int y, int z)
+        private static void RegisterConnections(IPathNode[][][] nodes, Queue<uint> ids, int x, int y, int z)
         {
             addedNodes.Add(nodes[x][y][z].ID, nodes[x][y][z]);
 
@@ -267,7 +269,7 @@ namespace Burmuruk.Tesis.Movement.PathFindig
             nodes[x][y][z] = nodeCopy;
         }
 
-        private void SetConnections(IPathNode[][][] nodes)
+        private static void SetConnections(IPathNode[][][] nodes)
         {
             foreach (var node in nodesWaiting)
             {
@@ -288,7 +290,7 @@ namespace Burmuruk.Tesis.Movement.PathFindig
             }
         }
 
-        private LinkedList<char[]> LoadFromFile()
+        private static LinkedList<char[]> LoadFromFile()
         {
             string path = UnityEngine.Application.persistentDataPath + fileName + SceneManager.GetActiveScene().buildIndex + ".txt";
             var text = new LinkedList<char[]>();

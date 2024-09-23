@@ -48,6 +48,7 @@ namespace Burmuruk.Tesis.UI
         Queue<CoolDownAction> cdMissions;
         List<(StackableNode node, CoolDownAction coolDown)> cdNotifications = new();
         public FormationState formationState = FormationState.None;
+        bool hasInitialized = false;
 
         Dictionary<AIGuildMember, StackableNode> playersLife;
 
@@ -102,19 +103,7 @@ namespace Burmuruk.Tesis.UI
 
         private void Start()
         {
-            cdChangeFormation = new CoolDownAction(2, (value) =>
-            {
-                formationState = FormationState.Showing;
-                ShowFormations(!value);
-            });
-            cdFormationInfo = new CoolDownAction(.5f, EnableFormationsInfo);
-            cdMissions = new Queue<CoolDownAction>();
-            mainCamera = Camera.main;
-
-            InitializeStackables();
-            CreateHPPlayersBar();
-
-            DontDestroyOnLoad(transform.parent.gameObject);
+            
         }
 
         private void InitializeStackables()
@@ -126,7 +115,7 @@ namespace Burmuruk.Tesis.UI
             pLife.Initialize();
         }
 
-        private void CreateHPPlayersBar()
+        public void CreateHPPlayersBar()
         {
             playersLife = new();
             foreach (var player in playerManager.Players)
@@ -141,6 +130,37 @@ namespace Burmuruk.Tesis.UI
         }
 
         private void OnEnable()
+        {
+            if (!hasInitialized) { return; }
+
+            UpdateSubscripttions();
+        }
+
+        private void OnDisable()
+        {
+            if (!hasInitialized) { return; }
+
+            playerManager.OnCombatEnter -= EnableHPPlayersBar;
+            playerManager.OnCombatEnter -= ShowAbilities;
+            playerManager.OnFormationChanged -= ChangeFormation;
+            playerController.OnFormationHold -= ShowFormations;
+            playerController.OnPickableEnter -= ShowInteractionButton;
+            playerController.OnPickableExit -= ShowInteractionButton;
+            playerController.OnItemPicked -= ShowNotification;
+
+            foreach (var player in playerManager.Players)
+            {
+                player.Health.OnDamaged -= (hp) => { UpdateHealth(hp, player); };
+            }
+        }
+
+        private void LateUpdate()
+        {
+            //return;
+            UpdateHealthPosition();
+        }
+
+        private void UpdateSubscripttions()
         {
             playerManager.OnCombatEnter += EnableHPPlayersBar;
             playerManager.OnCombatEnter += ShowAbilities;
@@ -157,26 +177,6 @@ namespace Burmuruk.Tesis.UI
             }
         }
 
-        private void OnDisable()
-        {
-            playerManager.OnFormationChanged -= ChangeFormation;
-            playerController.OnFormationHold -= ShowFormations;
-            playerController.OnPickableEnter -= ShowInteractionButton;
-            playerController.OnPickableExit -= ShowInteractionButton;
-            playerController.OnItemPicked -= ShowNotification;
-
-            foreach (var player in playerManager.Players)
-            {
-                player.Health.OnDamaged -= (hp) => { UpdateHealth(hp, player); };
-            }
-        }
-
-        private void LateUpdate()
-        {
-            return;
-            UpdateHealthPosition();
-        }
-
         private void UpdateHealthPosition()
         {
             if (playersLife.Count <= 0) return;
@@ -189,6 +189,30 @@ namespace Burmuruk.Tesis.UI
 
                 playersLife[player].label.transform.parent.position = position;
             }
+        }
+
+        public void Init()
+        {
+            cdChangeFormation = new CoolDownAction(2, (value) =>
+            {
+                formationState = FormationState.Showing;
+                ShowFormations(!value);
+            });
+            cdFormationInfo = new CoolDownAction(.5f, EnableFormationsInfo);
+            cdMissions = new Queue<CoolDownAction>();
+            mainCamera = Camera.main;
+
+            InitializeStackables();
+            CreateHPPlayersBar();
+            hasInitialized = true;
+
+            UpdateSubscripttions();
+            DontDestroyOnLoad(transform.parent.gameObject);
+        }
+
+        public void RestartPlayersTags()
+        {
+            CreateHPPlayersBar();
         }
 
         private void UpdateHealth(float hp, AIGuildMember player)

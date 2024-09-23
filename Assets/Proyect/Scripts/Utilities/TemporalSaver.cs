@@ -30,7 +30,7 @@ namespace Burmuruk.Tesis.Saving
 
         public static void RemoveAllData()
         {
-            data.Clear();
+            data?.Clear();
         }
     }
 }

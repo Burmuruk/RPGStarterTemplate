@@ -39,7 +39,6 @@ namespace Burmuruk.AI
         [SerializeField] int layer;
 
         [Header("Saving Settings"), Space()]
-        [SerializeField] public Path pathWriter;
         IPathNode[][][] connections;
 
         [Header("Status"), Space()]
@@ -637,25 +636,22 @@ namespace Burmuruk.AI
 
         public void SaveList()
         {
-            if (memoryFreed != pState.None || pathWriter == null) return;
+            if (memoryFreed != pState.None) return;
 
-            if (pathWriter != null)
-            {
-                connections = null;
-                int length = 0;
-                (connections, length) = FreeMemory();
+            connections = null;
+            int length = 0;
+            (connections, length) = FreeMemory();
 
-                //var nodeList = new NodeListSuplier(connections);
-                //SerializedObject serializedObj = new UnityEditor.SerializedObject(pathWriter);
-                //SerializedProperty myList = serializedObj.FindProperty("m_nodeList");
+            //var nodeList = new NodeListSuplier(connections);
+            //SerializedObject serializedObj = new UnityEditor.SerializedObject(Path);
+            //SerializedProperty myList = serializedObj.FindProperty("m_nodeList");
 
-                //nodeList.SetTarget(pRadious, nodDistance, MaxAngle);
+            //nodeList.SetTarget(pRadious, nodDistance, MaxAngle);
 
-                //myList.managedReferenceValue = nodeList;
-                print(length);
-                pathWriter.SaveExtraData(pRadious, nodDistance, MaxAngle);
-                pathWriter.SaveList(connections, length);
-            }
+            //myList.managedReferenceValue = nodeList;
+            print(length);
+            Path.SaveExtraData(pRadious, nodDistance, MaxAngle);
+            Path.SaveList(connections, length);
         }
 
         public void LoadList()

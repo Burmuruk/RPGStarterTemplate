@@ -407,6 +407,7 @@ GameObject:
   - component: {fileID: 71509252}
   - component: {fileID: 71509251}
   - component: {fileID: 71509253}
+  - component: {fileID: 71509254}
   m_Layer: 0
   m_Name: Directional Light
   m_TagString: Untagged
@@ -503,6 +504,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a68c43fe1f2a47cfa234b5eeaa98012, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &71509254
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 71509250}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Version: 3
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_LightLayerMask: 1
+  m_RenderingLayers: 1
+  m_CustomShadowLayers: 0
+  m_ShadowLayerMask: 1
+  m_ShadowRenderingLayers: 1
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
 --- !u!1 &98307499
 GameObject:
   m_ObjectHideFlags: 0
@@ -676,9 +700,9 @@ RectTransform:
   - {fileID: 889179486}
   m_Father: {fileID: 7862739586895647387}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 25.485382, y: -362.327}
   m_SizeDelta: {x: 877.0037, y: 128.9308}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &107496564
@@ -725,8 +749,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 326100394}
-        m_TargetAssemblyTypeName: MainMenuLevelManager, Assembly-CSharp
+      - m_Target: {fileID: 326100393}
+        m_TargetAssemblyTypeName: SavingUI, Assembly-CSharp
         m_MethodName: LoadSlot
         m_Mode: 3
         m_Arguments:
@@ -1408,7 +1432,7 @@ GameObject:
   - component: {fileID: 326100391}
   - component: {fileID: 326100390}
   - component: {fileID: 326100393}
-  - component: {fileID: 326100394}
+  - component: {fileID: 326100395}
   m_Layer: 0
   m_Name: LoadingSystem
   m_TagString: Untagged
@@ -1515,6 +1539,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 634152fb6479fc4448b47076132f3eab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  slotsContainer: {fileID: 689528532}
+  mainMenu: {fileID: 1528920280746032065}
   slots:
   - item: {fileID: 7807651253576846721}
     title: {fileID: 7240027660586622165}
@@ -1549,7 +1575,7 @@ MonoBehaviour:
     picture: {fileID: 930004302}
   btnAddMore: {fileID: 7138779873054831798}
   btnLoad: {fileID: 5907456648659472139}
---- !u!114 &326100394
+--- !u!114 &326100395
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1558,11 +1584,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 326100389}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cbe071c18a566ad4b8fe14f958cf47bd, type: 3}
+  m_Script: {fileID: 11500000, guid: 9c60cca84177bbf48bd1cb2d182007c4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  slotsContainer: {fileID: 689528532}
-  mainMenu: {fileID: 1528920280746032065}
+  persistentObjectsPref:
+  - {fileID: 6644779621799997188, guid: 994e59ec2ebbfea4c80f662756bf8eaf, type: 3}
+  - {fileID: 9181562843577513936, guid: 1dcb0cf7172e3a544878ce85eaf538e6, type: 3}
+  _id: 0
 --- !u!1 &375119869
 GameObject:
   m_ObjectHideFlags: 0
@@ -1600,9 +1628,9 @@ RectTransform:
   - {fileID: 238180685}
   m_Father: {fileID: 7862739586895647387}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 25.485382, y: -223.39621}
   m_SizeDelta: {x: 877.0037, y: 128.9308}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &375119871
@@ -1649,8 +1677,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 326100394}
-        m_TargetAssemblyTypeName: MainMenuLevelManager, Assembly-CSharp
+      - m_Target: {fileID: 326100393}
+        m_TargetAssemblyTypeName: SavingUI, Assembly-CSharp
         m_MethodName: LoadSlot
         m_Mode: 3
         m_Arguments:
@@ -1872,9 +1900,9 @@ RectTransform:
   - {fileID: 1367764376}
   m_Father: {fileID: 7862739586895647387}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 25.485382, y: -779.1194}
   m_SizeDelta: {x: 877.0037, y: 128.9308}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &497456117
@@ -1921,8 +1949,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 326100394}
-        m_TargetAssemblyTypeName: MainMenuLevelManager, Assembly-CSharp
+      - m_Target: {fileID: 326100393}
+        m_TargetAssemblyTypeName: SavingUI, Assembly-CSharp
         m_MethodName: LoadSlot
         m_Mode: 3
         m_Arguments:
@@ -2200,7 +2228,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &689528533
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2321,9 +2349,9 @@ RectTransform:
   - {fileID: 646185535}
   m_Father: {fileID: 7862739586895647387}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 25.485382, y: -640.1886}
   m_SizeDelta: {x: 877.0037, y: 128.9308}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &710888879
@@ -2370,8 +2398,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 326100394}
-        m_TargetAssemblyTypeName: MainMenuLevelManager, Assembly-CSharp
+      - m_Target: {fileID: 326100393}
+        m_TargetAssemblyTypeName: SavingUI, Assembly-CSharp
         m_MethodName: LoadSlot
         m_Mode: 3
         m_Arguments:
@@ -3249,9 +3277,9 @@ RectTransform:
   - {fileID: 930004301}
   m_Father: {fileID: 7862739586895647387}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 25.485382, y: -918.0502}
   m_SizeDelta: {x: 877.0037, y: 128.9308}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &1354746905
@@ -3298,8 +3326,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 326100394}
-        m_TargetAssemblyTypeName: MainMenuLevelManager, Assembly-CSharp
+      - m_Target: {fileID: 326100393}
+        m_TargetAssemblyTypeName: SavingUI, Assembly-CSharp
         m_MethodName: LoadSlot
         m_Mode: 3
         m_Arguments:
@@ -4534,9 +4562,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 8851969399588207170}
-        m_TargetAssemblyTypeName: SceneChanger, Assembly-CSharp
-        m_MethodName: StartGame
+      - m_Target: {fileID: 326100393}
+        m_TargetAssemblyTypeName: SavingUI, Assembly-CSharp
+        m_MethodName: AddSlot
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -5613,8 +5641,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 326100394}
-        m_TargetAssemblyTypeName: MainMenuLevelManager, Assembly-CSharp
+      - m_Target: {fileID: 326100393}
+        m_TargetAssemblyTypeName: SavingUI, Assembly-CSharp
         m_MethodName: LoadSlot
         m_Mode: 3
         m_Arguments:
@@ -5891,9 +5919,9 @@ RectTransform:
   - {fileID: 2196872580948028657}
   m_Father: {fileID: 7862739586895647387}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 25.485382, y: -501.2578}
   m_SizeDelta: {x: 877.0037, y: 128.9308}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &7400487089235709613
@@ -5940,8 +5968,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 326100394}
-        m_TargetAssemblyTypeName: MainMenuLevelManager, Assembly-CSharp
+      - m_Target: {fileID: 326100393}
+        m_TargetAssemblyTypeName: SavingUI, Assembly-CSharp
         m_MethodName: ShowSlots
         m_Mode: 1
         m_Arguments:
@@ -6502,9 +6530,9 @@ RectTransform:
   - {fileID: 1751020851859981679}
   m_Father: {fileID: 7862739586895647387}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 25.485382, y: -84.4654}
   m_SizeDelta: {x: 877.0037, y: 128.9308}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &8596442268833411241

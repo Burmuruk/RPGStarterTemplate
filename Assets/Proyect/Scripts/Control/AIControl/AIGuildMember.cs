@@ -151,6 +151,23 @@ namespace Burmuruk.Tesis.Control.AI
             m_target = enemy.transform;
         }
 
+        public void AttackEnemy(AIEnemyController enemy)
+        {
+            SetTarget(enemy);
+            PlayerState = PlayerState.Combat;
+            OnCombatStarted?.Invoke(true);
+
+            fighter.SetTarget(m_target);
+            fighter.BasicAttack();
+        }
+
+        public void AnalizeDamage()
+        {
+            if (PlayerState == PlayerState.Dead) return;
+            
+            PlayerState = PlayerState.Combat;
+        }
+
         protected override void DecisionManager()
         {
             if (IsControlled)

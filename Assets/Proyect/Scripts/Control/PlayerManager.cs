@@ -1,6 +1,7 @@
 ﻿using Burmuruk.Tesis.Combat;
 using Burmuruk.Tesis.Control.AI;
 using Burmuruk.Tesis.Inventory;
+using Burmuruk.Tesis.Movement.PathFindig;
 using Burmuruk.Tesis.Saving;
 using Burmuruk.Tesis.Stats;
 using Newtonsoft.Json.Linq;
@@ -38,7 +39,12 @@ namespace Burmuruk.Tesis.Control
                 if (players == null)
                 {
                     DestroyPlayers();
-                    AddMember(CreatePlayer());
+                    var member = CreatePlayer();
+                    AddMember(member);
+                    SetUpPlayer(member);
+                    FindObjectOfType<LevelManager>().SetPaths();
+                    //AddMember(CreatePlayer());
+                    //SetPlayerControl(0);
                     return players;
                 }
 
@@ -83,17 +89,22 @@ namespace Burmuruk.Tesis.Control
         private void Start()
         {
             SetPlayerControl();
-            DontDestroyOnLoad(CurPlayer.gameObject.transform.parent);
+        }
+
+        private void OnLevelWasLoaded(int level)
+        {
+            Path.Restart();
+            Path.LoadNavMesh();
+            FindAnyObjectByType<LevelManager>().SetPaths();
+            UpdateLeaderPosition();
         }
 
         public void UpdateLeaderPosition()
         {
-            print("Scene changed");
             var playerSpawner = FindObjectOfType<PlayerSpawner>();
 
             if (playerSpawner && playerSpawner.Enabled)
             {
-                print("Change position");
                 CurPlayer.SetPosition(playerSpawner.transform.position);
             }
         }
@@ -144,17 +155,18 @@ namespace Burmuruk.Tesis.Control
 
             var player = instance.GetComponent<AIGuildMember>();
             instance.GetComponent<JsonSaveableEntity>().SetUniqueIdentifier();
+            SetUpPlayer(player);
 
             return player;
         }
 
-        private void SetUpPlayers(AIGuildMember player)
+        private void SetUpPlayer(AIGuildMember player)
         {
             (player.Inventory as InventoryEquipDecorator).SetInventory((Inventory.Inventory)MainInventory);
 
-            //var lastColor = player.stats.color;
+            //var lastColor = member.stats.color;
             player.SetStats(progress.GetDataByLevel(CharacterType.Player, 0));
-            //player.stats.color = lastColor;
+            //member.stats.color = lastColor;
 
             SetColor(player);
             player.SetUpMods();
@@ -168,14 +180,15 @@ namespace Burmuruk.Tesis.Control
 
             foreach (var player in players)
             {
+                RemoveMember(player);
                 Destroy(player.gameObject);
             }
 
             this.players = new();
 
-            //foreach (var player in players)
+            //foreach (var member in players)
             //{
-            //    AddMember(player);
+            //    AddMember(member);
             //}
         }
 
@@ -233,13 +246,14 @@ namespace Burmuruk.Tesis.Control
             member.SetFormation(curFormation.value, curFormation.args);
 
             players.Add(member);
-            SetUpPlayers(member);
             OnPlayerAdded?.Invoke(member);
         }
 
         public void RemoveMember(AIGuildMember member)
         {
             member.OnCombatStarted -= EnterToCombatMode;
+            if (players != null && players.Contains(member))
+                players.Remove(member);
         }
 
         private void SetColor(AIGuildMember member)
@@ -353,7 +367,12 @@ namespace Burmuruk.Tesis.Control
             //}
 
             players.Clear();
-            players.AddRange(members);
+
+            foreach (var member in members)
+                AddMember(member);
+
+            DontDestroyOnLoad(players[0].gameObject.transform.parent);
+
             curFormation = ((Formation)state["Formation"].ToObject<int>(), null);
             SetPlayerControl(leaderIdx);
         }

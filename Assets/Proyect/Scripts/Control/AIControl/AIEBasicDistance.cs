@@ -1,10 +1,25 @@
-﻿using UnityEngine;
+﻿using Burmuruk.Utilities;
+using System;
+using UnityEngine;
 
 namespace Burmuruk.Tesis.Control.AI
 {
     public class AIEBasicDistance : AIEnemyController
     {
-        Transform m_target;
+        [Space(), Header("Shaders")]
+        [SerializeField] float DissolveTime = 2;
+        CoolDownAction cd_Appear;
+        Material dissolveShader;
+        bool visible = false;
+
+        private void Start()
+        {
+            var delta = Time.deltaTime * 4;
+            var cyclesCount = DissolveTime / delta;
+            var rate = 1 / cyclesCount;
+            cd_Appear = new CoolDownAction(DissolveTime, delta, () => EncreaseDissolve(rate), _ => { mover.ContinueAction(); visible = true; });
+            GetDissolveShader();
+        }
 
         protected override void FindEnemies()
         {
@@ -29,16 +44,57 @@ namespace Burmuruk.Tesis.Control.AI
             }
         }
 
+        protected override void CheckLeader()
+        {
+            if (!leader) return;
+
+            switch (curOrder)
+            {
+                case LeaderOrder.Attack:
+                    
+                    if (!cd_Appear.CanUse) return;
+
+                    if (!visible)
+                    {
+                        mover.CancelAll();
+                        mover.PauseAction();
+                        playerAction = PlayerAction.None;
+                        StartCoroutine(cd_Appear.Tick());
+                        break;
+                    }
+                    else if (m_target)
+                    {
+                        playerAction = PlayerAction.Combat;
+                    }
+
+                    break;
+
+                case LeaderOrder.Follow:
+                    playerAction = PlayerAction.Following;
+                    break;
+
+                default:
+                    return;
+            }
+
+            throw new NotImplementedException();
+        }
+
         private void Attack()
         {
-            m_target = GetNearestTarget(eyesPerceibed);
             if (m_target == null)
-                GetNearestTarget(earsPerceibed);
+            {
+                m_target = GetNearestTarget(eyesPerceibed).GetComponent<Character>();
+                if (m_target == null)
+                    GetNearestTarget(earsPerceibed); 
+            }
 
-            if (Vector3.Distance(m_target.position, transform.position)
+            if (m_target == null) return;
+
+            if (Vector3.Distance(m_target.transform.position, transform.position)
                 <= stats.MinDistance)
             {
-                fighter.SetTarget(m_target);
+                fighter.SetTarget(m_target.transform);
                 fighter.BasicAttack();
             }
         }
@@ -62,14 +118,35 @@ namespace Burmuruk.Tesis.Control.AI
 
                 case PlayerAction.Combat:
 
-                    if (Vector3.Distance(m_target.position, transform.position) > dis)
+                    if (Vector3.Distance(m_target.transform.position, transform.position) > dis)
                     {
-                        Vector3 destiny = (transform.position - m_target.position).normalized * dis;
-                        destiny += m_target.position;
+                        Vector3 destiny = (transform.position - m_target.transform.position).normalized * dis;
+                        destiny += m_target.transform.position;
 
                         mover.MoveTo(destiny);
                     }
                     break;
+            }
+        }
+
+        private void EncreaseDissolve(float value)
+        {
+            var cur = dissolveShader.GetFloat("_Intensity");
+            cur = Mathf.Min(cur + value, 1);
+            dissolveShader.SetFloat("_Intensity", cur);
+        }
+
+        private void GetDissolveShader()
+        {
+            var rend = GetComponent<Renderer>();
+
+            foreach (var material in rend.materials)
+            {
+                if (material.shader.name.Contains("Dissolve"))
+                {
+                    dissolveShader = material;
+                    break;
+                }
             }
         }
     }

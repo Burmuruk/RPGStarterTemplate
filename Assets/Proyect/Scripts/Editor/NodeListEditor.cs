@@ -11,7 +11,6 @@ namespace Burmuruk.AI
         public override void OnInspectorGUI()
         {
             nodeList = (NodesList)target;
-            pState runningState = pState.running;
 
             DrawDefaultInspector();
 
@@ -60,8 +59,7 @@ namespace Burmuruk.AI
                 } 
             }
 
-            if (nodeList.connectionsState == pState.finished && nodeList.meshState == pState.finished
-                && nodeList.pathWriter != null)
+            if (nodeList.connectionsState == pState.finished && nodeList.meshState == pState.finished)
             {
                 GUILayout.Space(10);
 

@@ -143,10 +143,16 @@ namespace Burmuruk.Tesis.Control
 
                 if (enemy)
                 {
-                    Target = enemy.GetComponent<AIEnemyController>();
-                    ((AIGuildMember)player).SetTarget(Target);
+                    var newTarget = enemy.GetComponent<AIEnemyController>();
+                    ((AIGuildMember)player).SetTarget(newTarget);
+
+                    if (Target != null && Target == newTarget)
+                        Target.Deselect();
+
+                    Target = newTarget;
+                    Target.Select();
                     //print(enemy.itemName);
-                    //player.fighter.SetTarget(Target.transform);
+                    (player as AIGuildMember).AttackEnemy(Target);
                 }
             }
         }
