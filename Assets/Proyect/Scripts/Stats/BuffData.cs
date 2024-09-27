@@ -11,5 +11,6 @@ namespace Burmuruk.Tesis.Stats
         public float rate;
         public bool percentage;
         public bool affectAll;
+        public float probability;
     }
 }

@@ -42,7 +42,7 @@ namespace Burmuruk.Tesis.Control
             return state;
         }
 
-        public void RestoreFromJToken(JToken state)
+        public void LoadAsJToken(JToken state)
         {
             Enabled = (state as JObject)["Enabled"].ToObject<bool>();
         }

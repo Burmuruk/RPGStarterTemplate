@@ -67,7 +67,7 @@ namespace Burmuruk.Tesis.Control
             {
                 try
                  {
-                    player.mover.MoveTo(player.transform.position + m_direction * 2);
+                    player.mover.MoveTo(player.transform.position + m_direction * 2, true);
                 }
                 catch (NullReferenceException)
                 {
@@ -208,8 +208,8 @@ namespace Burmuruk.Tesis.Control
                 //var inventory = GetComponent<InventoryEquipDecorator>();
                 //inventory.AddVariable(pickedUpItem.itemType, pickedUpItem);
                 //inventory.TryEquip(player, pickedUpItem.itemType, pickedUpItem.GetSubType());
-                pickedUpItem.gameObject.SetActive(false);
-
+                //pickedUpItem.gameObject.SetActive(false);
+                pickedUpItem.PickUp();
                 //m_pickables.RemoveVariable(pickedUpItem.transform);
 
                 var itemName = player.Inventory.GetItem(pickedUpItem.ID).Name;
@@ -252,6 +252,8 @@ namespace Burmuruk.Tesis.Control
 
         public void Pause(InputAction.CallbackContext context)
         {
+            if (!context.performed) return;
+
             if (gameManager.GameState == GameManager.State.UI)
             {
                 levelManager.ExitUI();

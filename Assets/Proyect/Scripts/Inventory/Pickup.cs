@@ -16,7 +16,13 @@ namespace Burmuruk.Tesis.Inventory
         public int PickUp()
         {
             OnPickedUp?.Invoke(gameObject);
+            Invoke("DestroyItem", .1f);
             return ID;
+        }
+
+        private void DestroyItem()
+        {
+            Destroy(gameObject);
         }
     }
 }

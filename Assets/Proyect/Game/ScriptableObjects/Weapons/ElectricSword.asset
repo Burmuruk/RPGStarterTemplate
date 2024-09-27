@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b77ef1b6c010ebe438dded9187084dbd, type: 3}
-  m_Name: Sword
+  m_Name: ElectricSword
   m_EditorClassIdentifier: 
   m_name: Knight Sword
   m_description: The ultimate sword.
@@ -18,7 +18,7 @@ MonoBehaviour:
   m_sprite: {fileID: 10901, guid: 0000000000000000f000000000000000, type: 0}
   pickup: {fileID: 3636312307774390648, guid: ddd3a47c894ceae4eab13698fd000154, type: 3}
   m_capacity: 99
-  _id: 28758
+  _id: 28759
   m_bodyPart: 4
   weaponType: 1
   m_damage: 10

@@ -38,6 +38,8 @@ namespace Burmuruk.Tesis.Movement
         public bool usePathFinding = false;
         bool m_canMove = false;
         int nodeIdxSlowingRadious;
+        bool abortOnLargerPath = false;
+        float maxDistance = 0;
 
         MovementState m_state = MovementState.None;
         Vector3 colYExtents = Vector3.zero;
@@ -118,11 +120,17 @@ namespace Burmuruk.Tesis.Movement
             curNodePosition = nodeList.FindNearestNode(transform.position);
         }
 
-        public void MoveTo(Vector3 point)
+        public void MoveTo(Vector3 point, bool abortWhenLarger = false)
        {
             if (IsWorking || nodeList == null) return;
 
             m_state = MovementState.Calculating;
+
+            if (abortWhenLarger)
+            {
+                this.abortOnLargerPath = abortWhenLarger;
+                maxDistance = Vector3.Distance(point, transform.position);
+            }
 
             try
             {
@@ -135,6 +143,7 @@ namespace Burmuruk.Tesis.Movement
             {
                 m_state = MovementState.None;
                 FinishAction();
+                abortOnLargerPath = false;
             }
 
             //var nearest = nodeList.FindNearestNode(point);
@@ -410,6 +419,12 @@ namespace Burmuruk.Tesis.Movement
             m_curPath = m_pathFinder.BestRoute;
 
             if (!GetNextNode()) { Cancel(); return; }
+            if (abortOnLargerPath && m_curPath.Count * .5f > maxDistance + .5f * 5)
+            {
+                print("count: " + m_curPath + "maxDistance" + maxDistance);
+                Cancel();
+                return;
+            }
 
             var minNodes = Mathf.Max((int)MathF.Round(SlowingRadious / nodeList.NodeDistance), 0);
             nodeIdxSlowingRadious = m_curPath.Count - minNodes;

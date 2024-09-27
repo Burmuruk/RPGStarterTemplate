@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3815148262700432905}
   - component: {fileID: 6949957821102677530}
   m_Layer: 0
-  m_Name: 1H_Sword
+  m_Name: 1H_FireSword
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -61,7 +61,7 @@ MeshRenderer:
   m_RenderingLayerMask: 257
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 3cd95146f5f80a24aac9f2167c06330e, type: 2}
+  - {fileID: 2100000, guid: 240c366d94845054cb93db728e04e237, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

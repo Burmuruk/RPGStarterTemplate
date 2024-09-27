@@ -19,6 +19,7 @@ namespace Burmuruk.Tesis.UI
         [SerializeField] PlayerManager playerManager;
         [SerializeField] Camera mainCamera;
         PlayerController playerController;
+        GameManager gameManager;
 
         [Space()]
         [Header("Abilities"), Space()]
@@ -93,17 +94,14 @@ namespace Burmuruk.Tesis.UI
         {
             playerController = FindObjectOfType<PlayerController>();
             playerManager = FindObjectOfType<PlayerManager>();
+            gameManager = FindObjectOfType<GameManager>();
+
             var savingWrapper = FindObjectOfType<JsonSavingWrapper>();
             if (savingWrapper)
             {
                 savingWrapper.OnSaving += ShowSavingIcon;
                 savingWrapper.OnLoading += ShowSavingIcon;
             }
-        }
-
-        private void Start()
-        {
-            
         }
 
         private void InitializeStackables()
@@ -117,7 +115,15 @@ namespace Burmuruk.Tesis.UI
 
         public void CreateHPPlayersBar()
         {
+            if (playersLife != null && playersLife.Count > 0)
+            {
+                foreach (var item in playersLife.Values)
+                {
+                    pLife.Release(item);
+                }
+            }
             playersLife = new();
+            
             foreach (var player in playerManager.Players)
             {
                 StackableNode lifeBar = pLife.Get();
@@ -131,33 +137,35 @@ namespace Burmuruk.Tesis.UI
 
         private void OnEnable()
         {
-            if (!hasInitialized) { return; }
+            //if (!hasInitialized) { return; }
 
-            UpdateSubscripttions();
+            //UpdateSubscripttions();
         }
 
         private void OnDisable()
         {
-            if (!hasInitialized) { return; }
+            //if (!hasInitialized) { return; }
 
-            playerManager.OnCombatEnter -= EnableHPPlayersBar;
-            playerManager.OnCombatEnter -= ShowAbilities;
-            playerManager.OnFormationChanged -= ChangeFormation;
-            playerController.OnFormationHold -= ShowFormations;
-            playerController.OnPickableEnter -= ShowInteractionButton;
-            playerController.OnPickableExit -= ShowInteractionButton;
-            playerController.OnItemPicked -= ShowNotification;
+            //playerManager.OnCombatEnter -= EnableHPPlayersBar;
+            //playerManager.OnCombatEnter -= ShowAbilities;
+            //playerManager.OnFormationChanged -= ChangeFormation;
+            //playerController.OnFormationHold -= ShowFormations;
+            //playerController.OnPickableEnter -= ShowInteractionButton;
+            //playerController.OnPickableExit -= ShowInteractionButton;
+            //playerController.OnItemPicked -= ShowNotification;
 
-            foreach (var player in playerManager.Players)
-            {
-                player.Health.OnDamaged -= (hp) => { UpdateHealth(hp, player); };
-            }
+            //foreach (var player in playerManager.Players)
+            //{
+            //    player.Health.OnDamaged -= (hp) => { UpdateHealth(hp, player); };
+            //}
         }
 
         private void LateUpdate()
         {
-            //return;
-            UpdateHealthPosition();
+            if (gameManager.GameState == GameManager.State.Playing)
+            {
+                UpdateHealthPosition();
+            }
         }
 
         private void UpdateSubscripttions()
@@ -198,7 +206,7 @@ namespace Burmuruk.Tesis.UI
                 formationState = FormationState.Showing;
                 ShowFormations(!value);
             });
-            cdFormationInfo = new CoolDownAction(.5f, EnableFormationsInfo);
+            cdFormationInfo = new CoolDownAction(.5f, EnableFormationsInfo, true);
             cdMissions = new Queue<CoolDownAction>();
             mainCamera = Camera.main;
 
@@ -212,6 +220,11 @@ namespace Burmuruk.Tesis.UI
 
         public void RestartPlayersTags()
         {
+            //pFormationState.Initialize();
+            //pInteractable.Initialize();
+            //pNotifications.Initialize();
+            //pMissions.Initialize();
+            //pLife.Initialize();
             CreateHPPlayersBar();
         }
 
@@ -239,21 +252,21 @@ namespace Burmuruk.Tesis.UI
                 UpdateFormationText();
                 pFormationInfo.SetActive(false);
 
-                if (cdFormationInfo.CanUse)
-                    StartCoroutine(cdFormationInfo.CoolDown());
-
                 formationState = FormationState.Showing;
             }
             else
             {
                 if (formationState == FormationState.Changing) return;
 
-                StopCoroutine(cdFormationInfo.CoolDown());
                 pFormationState.container.SetActive(false);
                 pFormationState.Release();
 
                 formationState = FormationState.None;
             }
+
+            StopCoroutine(cdFormationInfo.CoolDown());
+            cdFormationInfo.Restart();
+            StartCoroutine(cdFormationInfo.CoolDown());
         }
 
         private void ChangeFormation()
@@ -274,7 +287,7 @@ namespace Burmuruk.Tesis.UI
         {
             if (formationState == FormationState.Changing)
                 return;
-
+            
             pFormationInfo.SetActive(value);
         }
 

@@ -5,6 +5,7 @@ using Burmuruk.Tesis.UI;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEditor.Media;
 using UnityEngine;
 using UnityEngine.Events;
@@ -26,6 +27,7 @@ namespace Burmuruk.Tesis.Control
         private int slotIdx = 1;
         private bool initialized = false;
 
+        //public static List<Coroutine> activeCoroutines = new();
         public event Action OnNavmeshLoaded;
 
         private void Awake()
@@ -220,11 +222,12 @@ namespace Burmuruk.Tesis.Control
             switch (state)
             {
                 case GameManager.State.Playing:
-
+                    FindObjectOfType<HUDManager>(true).gameObject.SetActive(true);
                     break;
                 case GameManager.State.Pause:
                     break;
                 case GameManager.State.UI:
+                    FindObjectOfType<HUDManager>().gameObject.SetActive(false);
                     break;
                 case GameManager.State.Loading:
                     break;

@@ -213,7 +213,7 @@ namespace Burmuruk.Tesis.Control
             return CaptureCharacterData();
         }
 
-        public void RestoreFromJToken(JToken state)
+        public void LoadAsJToken(JToken state)
         {
             RestoreCharacterData(state);
         }
@@ -221,6 +221,7 @@ namespace Burmuruk.Tesis.Control
         public JToken CaptureInventory()
         {
             JObject state = new JObject();
+            int i = 0;
 
             foreach (ItemType type in Enum.GetValues(typeof(ItemType)))
             {
@@ -228,17 +229,17 @@ namespace Burmuruk.Tesis.Control
 
                 if (items == null) continue;
 
-                for (int i = 0; i < items.Count; i++)
+                for (int j = 0; j < items.Count; j++)
                 {
                     JObject itemState = new();
 
-                    itemState["Id"] = items[i].ID;
-                    itemState["Count"] = inventory.GetItemCount(items[i].ID);
+                    itemState["Id"] = items[j].ID;
+                    itemState["Count"] = inventory.GetItemCount(items[j].ID);
 
-                    if (items[i] is EquipeableItem equipeable && equipeable.Characters.Contains(this))
+                    if (items[j] is EquipeableItem equipeable && equipeable.Characters.Contains(this))
                         itemState["Equipped"] = true;
 
-                    state[i.ToString()] = itemState;
+                    state[i++.ToString()] = itemState;
                 }
             }
 

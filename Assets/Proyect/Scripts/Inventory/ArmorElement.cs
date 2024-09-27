@@ -23,6 +23,8 @@ namespace Burmuruk.Tesis.Inventory
 
         public override void Equip(Character character)
         {
+            base.Equip(character);
+
             foreach (var mod in modifications)
             {
                 ModsList.AddModification(character, mod.ModsStat, mod.value); 

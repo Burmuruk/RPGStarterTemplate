@@ -1,6 +1,8 @@
 ﻿using Burmuruk.Tesis.Control;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using UnityEngine;
 
 namespace Burmuruk.Tesis.Inventory
 {

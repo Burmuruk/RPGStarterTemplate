@@ -36,7 +36,12 @@ namespace Burmuruk.Tesis.Stats
             {
                 if (buff.stat == ModifiableStat.HP)
                 {
-                    BuffsManager.Instance.AddBuff(character, buff, () => character.Health.ApplyDamage((int)buff.value));
+                    if (buff.value < 0)
+                    {
+                        BuffsManager.Instance.AddBuff(character, buff, () => character.Health.ApplyDamage((int)buff.value)); 
+                    }
+                    else
+                        BuffsManager.Instance.AddBuff(character, buff, () => character.Health.Heal((int)buff.value));
                 }
                 else
                 {

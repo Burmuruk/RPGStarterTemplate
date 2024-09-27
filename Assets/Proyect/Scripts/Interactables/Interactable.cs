@@ -30,7 +30,7 @@ namespace Burmuruk.Tesis.Interaction
             SetDisabled(false);
         }
 
-        public void RestoreFromJToken(JToken state)
+        public void LoadAsJToken(JToken state)
         {
             SetDisabled(state["Disabled"].ToObject<bool>());
         }

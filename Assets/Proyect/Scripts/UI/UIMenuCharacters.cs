@@ -409,7 +409,7 @@ namespace Burmuruk.Tesis.UI
 
                 if (equippedItem == null)
                     continue;
-
+                
                 SetElementInfo(panel, equippedItem);
 
                 int buttonId = i++;
@@ -457,14 +457,14 @@ namespace Burmuruk.Tesis.UI
                 .Where(image => image.transform != panel.image.transform)
                 .OrderBy(i => i.transform.name)
                 .ToArray();
-
-            if (equipedItem is EquipeableItem equiped && equiped.IsEquip)
+            
+            if (equipedItem.IsEquip)
             {
                 List<Color> colors = new();
 
                 foreach (var player in players)
                 {
-                    foreach (var character in equiped.Characters)
+                    foreach (var character in equipedItem.Characters)
                     {
                         if (player.stats.Color == character.stats.Color)
                         {
@@ -473,7 +473,7 @@ namespace Burmuruk.Tesis.UI
                         }
                     }
                 }
-
+                
                 for (int i = 0; i < images.Count(); i++)
                 {
                     if (i < colors.Count())

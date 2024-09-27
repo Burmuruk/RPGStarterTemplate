@@ -72,17 +72,19 @@ namespace Burmuruk.Tesis.Stats
         void SetTimer(Character character, BuffData buff, Action tickAction)
         {
             var coolDown = timers.Dequeue();
+            Coroutine coroutine = null;
 
-            if (tickAction != null)
+            if (tickAction == null)
             {
                 coolDown.ResetAttributes(buff.duration, (_) => RemoveBuff(coolDown, character, buff.stat, buff.value));
+                coroutine = StartCoroutine(coolDown.CoolDown());
             }
             else
             {
                 coolDown.ResetAttributes(buff.duration, buff.rate, tickAction, (_) => RemoveTimer(coolDown));
+                coroutine = StartCoroutine(coolDown.Tick());
             }
 
-            var coroutine = StartCoroutine(coolDown.CoolDown());
             runningTimers.Add(coolDown, (character, coroutine, buff));
         }
 

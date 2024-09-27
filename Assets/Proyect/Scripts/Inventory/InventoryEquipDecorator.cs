@@ -81,7 +81,7 @@ namespace Burmuruk.Tesis.Inventory
         {
             var (player, equipeableItem) = alarmedEquipItem;
             equipeableItem.Equip(player);
-
+            
             UpdateModel(player, equipeableItem);
 
             alarmedEquipItem = default;
@@ -118,7 +118,7 @@ namespace Burmuruk.Tesis.Inventory
                 return false;
 
             if (!item.Characters.Contains(player)) return false;
-
+            
             item.Unequip(player);
             
             ItemEquiper.UnequipModification(ref player.Equipment, unequipped);

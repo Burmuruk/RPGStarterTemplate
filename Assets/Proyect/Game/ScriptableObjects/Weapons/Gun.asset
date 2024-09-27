@@ -18,6 +18,7 @@ MonoBehaviour:
   m_sprite: {fileID: 10901, guid: 0000000000000000f000000000000000, type: 0}
   pickup: {fileID: 0}
   m_capacity: 99
+  _id: 28852
   m_bodyPart: 4
   weaponType: 2
   m_damage: 4
@@ -26,3 +27,7 @@ MonoBehaviour:
   m_maxDistance: 9
   reloadTime: 2
   maxAmmo: 30
+  m_buffsData: []
+  equipment:
+    Body: {fileID: 0}
+    spawnPoints: []

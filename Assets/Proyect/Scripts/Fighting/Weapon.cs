@@ -1,6 +1,7 @@
 ﻿using Burmuruk.Tesis.Control;
 using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
+using System.Linq;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Combat
@@ -18,6 +19,8 @@ namespace Burmuruk.Tesis.Combat
         [SerializeField] float m_maxDistance;
         [SerializeField] float reloadTime;
         [SerializeField] int maxAmmo;
+        [Space(), Header("Buffs")]
+        [SerializeField] BuffData[] m_buffsData;
         [Space(), Header("Modifications")]
         [SerializeField] Equipment equipment;
 
@@ -29,6 +32,21 @@ namespace Burmuruk.Tesis.Combat
         public int MaxAmmo { get => maxAmmo; }
         public int Ammo { get; private set; }
         public float ReloadTime { get => reloadTime; }
+        public BuffData[] BuffsData { get => m_buffsData; }
+
+        public BuffData TryGetBuff()
+        {
+            if (m_buffsData == null || m_buffsData.Length == 0) return default;
+
+            int idx = Random.Range(0, m_buffsData.Length);
+
+            if (m_buffsData[idx].probability == 1) return m_buffsData[idx];
+
+            var probability = Random.Range(0, 1);
+            if (Mathf.Abs(m_buffsData[idx].probability - probability) <= probability)
+                return m_buffsData[idx];
+            else return default;
+        }
 
         public override object GetEquipLocation()
         {

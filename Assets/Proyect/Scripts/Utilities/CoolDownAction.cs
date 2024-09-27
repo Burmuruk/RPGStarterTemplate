@@ -142,7 +142,7 @@ namespace Burmuruk.Utilities
             while (currentTime < time)
             {
                 currentTime += Time.fixedDeltaTime;
-
+                
                 yield return new WaitForFixedUpdate();
 
                 if (currentTime / (tickLaps * tickTime) >= 1)

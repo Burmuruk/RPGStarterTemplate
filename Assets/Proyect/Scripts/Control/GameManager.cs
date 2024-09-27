@@ -14,7 +14,17 @@ namespace Burmuruk.Tesis.Control
 
         public event Action<State> onStateChange;
 
-        public State GameState { get { return state; } }
+        public State GameState
+        {
+            get => state;
+            private set
+            {
+                if (state != value)
+                    onStateChange?.Invoke(value);
+
+                state = value;
+            }
+        }
 
         public enum State
         {
@@ -27,9 +37,6 @@ namespace Burmuruk.Tesis.Control
 
         private void Awake()
         {
-            StartCoroutine(StartLevel());
-            state = State.Loading;
-
             if (Instance == null)
             {
                 Instance = this;
@@ -42,10 +49,10 @@ namespace Burmuruk.Tesis.Control
 
         public bool EnableUI(bool shouldEnable)
         {
-            if (state != State.Playing)
+            if (GameState != State.Playing)
                 return false;
 
-            state = State.UI;
+            GameState = State.UI;
             playerInput.SwitchCurrentActionMap("UI");
 
             return true;
@@ -56,12 +63,9 @@ namespace Burmuruk.Tesis.Control
             return true;
         }
 
-        public bool LoadFile(int idx)
+        public bool SetState(State GameState)
         {
-            if (state != State.UI) return false;
-
-            state = State.Loading;
-
+            this.GameState = GameState;
             return true;
         }
 
@@ -73,9 +77,9 @@ namespace Burmuruk.Tesis.Control
 
         public bool Continue()
         {
-            if (state != State.Pause) return false;
+            if (GameState != State.Pause) return false;
 
-            state = State.Playing;
+            GameState = State.Playing;
             return true;
         }
 
@@ -83,14 +87,14 @@ namespace Burmuruk.Tesis.Control
         {
             if (GameState != State.Playing) return false;
 
-            state = State.Pause;
+            GameState = State.Pause;
 
             return true;
         }
 
         public void ChangeScene(int idx)
         {
-            state = State.Loading;
+            GameState = State.Loading;
             SceneManager.LoadScene(idx);
         }
 
@@ -106,22 +110,22 @@ namespace Burmuruk.Tesis.Control
 
         public void StartCinematic()
         {
-            state = State.Cinematic;
+            GameState = State.Cinematic;
         }
 
         public bool ShowCharactersMenu()
         {
-            if (state != State.Playing)
+            if (GameState != State.Playing)
                 return false;
 
-            state = State.UI;
+            GameState = State.UI;
 
             return true;
         }
 
         public void ExitUI()
         {
-            if (state != State.UI) return;
+            if (GameState != State.UI) return;
 
             if (SceneManager.GetSceneByBuildIndex(1).isLoaded)
             {
@@ -133,21 +137,13 @@ namespace Burmuruk.Tesis.Control
             }
 
             //playerInput.SwitchCurrentActionMap("Player");
-            state = State.Playing;
+            GameState = State.Playing;
         }
 
         public void NotifyLevelLoaded()
         {
-            if (state == State.Loading)
-                state = State.Playing;
-        }
-
-        IEnumerator StartLevel()
-        {
-            yield return new WaitForSeconds(.5f);
-            
-            if (state == State.Loading)
-                state = State.Playing;
+            if (GameState == State.Loading)
+                GameState = State.Playing;
         }
     }
 }

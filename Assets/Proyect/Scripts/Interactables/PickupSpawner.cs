@@ -9,7 +9,7 @@ namespace Burmuruk.Tesis.Interaction
     public class PickupSpawner : MonoBehaviour, IJsonSaveable
     {
         [SerializeField] ItemsList list;
-        [SerializeField] Dictionary<int, PickupItemData> items = new();
+        [SerializeField] Dictionary<GameObject, PickupItemData> items = new();
         int id;
 
         class PickupItemData
@@ -18,6 +18,7 @@ namespace Burmuruk.Tesis.Interaction
             public Quaternion rotation;
             [HideInInspector] public bool picked;
             public Pickup pickup;
+            public int id;
         }
 
         public int ID => id == 0 ? id = GetHashCode() : id;
@@ -26,6 +27,7 @@ namespace Burmuruk.Tesis.Interaction
         {
             var pickups = FindObjectsOfType<Pickup>();
             items.Clear();
+            int i = 0;
 
             foreach (var pickup in pickups)
             {
@@ -34,12 +36,13 @@ namespace Burmuruk.Tesis.Interaction
                     position = pickup.transform.position,
                     rotation = pickup.transform.rotation,
                     picked = false,
-                    pickup = pickup
+                    pickup = pickup,
+                    id = pickup.ID,
                 };
 
                 pickup.OnPickedUp += RemoveItem;
 
-                items[pickup.ID] = data;
+                items[pickup.gameObject] = data;
             }
         }
 
@@ -54,25 +57,25 @@ namespace Burmuruk.Tesis.Interaction
             {
                 JObject itemState = new JObject();
 
-                itemState["Id"] = item.Key;
+                itemState["Id"] = item.Value.id;
                 itemState["Position"] = VectorToJToken.CaptureVector(item.Value.position);
                 itemState["Rotation"] = VectorToJToken.CaptureVector(item.Value.rotation.eulerAngles);
                 itemState["Picked"] = item.Value.picked;
 
-                state[i.ToString()] = itemState;
+                state[i++.ToString()] = itemState;
                 item.Value.pickup.OnPickedUp += RemoveItem;
             }
 
             return state;
         }
 
-        public void RestoreFromJToken(JToken jToken)
+        public void LoadAsJToken(JToken jToken)
         {
             if (!(jToken is JObject state)) return;
             items.Clear();
             int i = 0;
 
-            InstanciateLastPickups();
+            DestroyLastItems();
 
             while (state.ContainsKey(i.ToString()))
             {
@@ -88,23 +91,24 @@ namespace Burmuruk.Tesis.Interaction
                 {
                     position = curItemState["Position"].ToObject<Vector3>(),
                     rotation = Quaternion.Euler(curItemState["Rotation"].ToObject<Vector3>()),
-                    picked = false
+                    picked = false,
+                    id = curItemState["Id"].ToObject<int>(),
                 };
 
                 var item = list.Get(curItemState["Id"].ToObject<int>());
-                var inst = Instantiate(item.Pickup, itemData.position, itemData.rotation, transform);
+                Pickup inst = Instantiate(item.Pickup, itemData.position, itemData.rotation, transform);
 
                 itemData.pickup = inst;
-                items[curItemState["Id"].ToObject<int>()] = itemData;
+                items[inst.gameObject] = itemData;
 
                 inst.OnPickedUp += RemoveItem;
                 i++;
             }
 
-            //InstanciateLastPickups();
+            //DestroyLastItems();
         }
 
-        private bool InstanciateLastPickups()
+        private bool DestroyLastItems()
         {
             var pickups = FindObjectsOfType<Pickup>();
 
@@ -135,7 +139,7 @@ namespace Burmuruk.Tesis.Interaction
                 pickup = pickup
             };
 
-            items.Add(item.ID, itemData);
+            items.Add(pickup.gameObject, itemData);
         }
 
         private void RemoveItem(GameObject itemToRemove)
@@ -143,10 +147,10 @@ namespace Burmuruk.Tesis.Interaction
             if (!itemToRemove.TryGetComponent<Pickup>(out Pickup pickup))
                 return;
 
-            var itemData = items[pickup.ID];
+            var itemData = items[itemToRemove];
 
             itemData.picked = true;
-            items[pickup.ID] = itemData;
+            items[itemToRemove] = itemData;
         }
     }
 }

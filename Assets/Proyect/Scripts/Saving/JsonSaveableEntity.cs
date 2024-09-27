@@ -81,7 +81,7 @@ namespace Burmuruk.Tesis.Saving
                 
                 if (executionState.ContainsKey(component))
                 {
-                    jsonSaveable.RestoreFromJToken(executionState[component]);
+                    jsonSaveable.LoadAsJToken(executionState[component]);
                 }
             }
         }

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Inventory
@@ -13,14 +15,36 @@ namespace Burmuruk.Tesis.Inventory
         [SerializeField] Sprite m_sprite;
         [SerializeField] Pickup pickup;
         [SerializeField] int m_capacity;
-        private int _id = 0;
+        [SerializeField] private int _id = 0;
+
+        private static List<int> m_itemsIds;
 
         public int ID
         {
             get
             {
                 if (_id == 0)
+                {
                     _id = GetHashCode();
+                    m_itemsIds ??= new();
+                    if (!m_itemsIds.Contains(_id))
+                    {
+                        m_itemsIds.Add(_id);
+                    }
+                    else
+                    {
+                        while (!m_itemsIds.Contains(_id))
+                            _id += 1;
+
+                        m_itemsIds.Add(_id);
+                    }
+                }
+
+#if UNITY_EDITOR
+                SerializedObject serializedObject = new(this);
+                SerializedProperty property = serializedObject.FindProperty("_id");
+                serializedObject.ApplyModifiedProperties(); 
+#endif
 
                 return _id;
             }
@@ -52,8 +76,26 @@ namespace Burmuruk.Tesis.Inventory
 
         public void OnBeforeSerialize()
         {
+#if UNITY_EDITOR
             if (_id == 0)
+            {
                 _id = GetHashCode();
+                m_itemsIds ??= new();
+                if (!m_itemsIds.Contains(_id))
+                {
+                    m_itemsIds.Add(_id);
+                }
+                else
+                {
+                    while (!m_itemsIds.Contains(_id))
+                        _id += 1;
+
+                    m_itemsIds.Add(_id);
+                }
+            }
+
+            //EditorUtility.SetDirty(this);
+#endif
         }
     }
 }

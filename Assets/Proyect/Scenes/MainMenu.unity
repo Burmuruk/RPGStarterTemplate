@@ -1588,8 +1588,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   persistentObjectsPref:
-  - {fileID: 6644779621799997188, guid: 994e59ec2ebbfea4c80f662756bf8eaf, type: 3}
-  - {fileID: 9181562843577513936, guid: 1dcb0cf7172e3a544878ce85eaf538e6, type: 3}
+  - {fileID: 5583744468729511784, guid: 3d51ff316519f984fafa3ea07537b3ea, type: 3}
   _id: 0
 --- !u!1 &375119869
 GameObject:

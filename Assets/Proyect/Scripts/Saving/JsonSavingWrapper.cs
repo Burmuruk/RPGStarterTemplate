@@ -37,6 +37,7 @@ namespace Burmuruk.Tesis.Saving
         private void Awake()
         {
             var saver = GetComponent<JsonSavingSystem>();
+            OnLoading += (_) => { FindObjectOfType<GameManager>()?.SetState(GameManager.State.Loading); };
 
             saver.onSceneLoaded += () =>
             {
@@ -49,8 +50,11 @@ namespace Burmuruk.Tesis.Saving
                     GetComponent<PersistentObjSpawner>().TrySpawnObjects();
                 }
             };
-            
-            OnLoaded += RestoreSlotData;
+
+            OnLoaded += (args) => { 
+                RestoreSlotData(args);
+                FindObjectOfType<GameManager>()?.SetState(GameManager.State.Playing);
+            };
             OnLoadingStateFinished += LoadStage;
 
             DontDestroyOnLoad(gameObject);
@@ -148,7 +152,7 @@ namespace Burmuruk.Tesis.Saving
 
                 case SavingExecution.General:
 
-                    if (_lastBuildIdx != 0) break;
+                    //if (_lastBuildIdx == 0) break;
 
                     FindObjectOfType<HUDManager>().Init();
                     break;

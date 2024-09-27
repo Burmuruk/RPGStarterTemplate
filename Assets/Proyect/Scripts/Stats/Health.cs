@@ -51,7 +51,7 @@ namespace Burmuruk.Tesis.Stats
             return JToken.FromObject(hp);
         }
 
-        public void RestoreFromJToken(JToken state)
+        public void LoadAsJToken(JToken state)
         {
             hp = state.ToObject<int>();
         }

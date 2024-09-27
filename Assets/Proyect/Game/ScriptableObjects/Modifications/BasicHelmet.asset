@@ -18,6 +18,7 @@ MonoBehaviour:
   m_sprite: {fileID: 10901, guid: 0000000000000000f000000000000000, type: 0}
   pickup: {fileID: 7123218294171020916, guid: b830eff0f9799f743bc4a29b6fdc37c2, type: 3}
   m_capacity: 99
+  _id: 28868
   m_bodyPart: 2
   modifications:
   - ModsStat: 1
