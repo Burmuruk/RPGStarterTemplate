@@ -1,4 +1,5 @@
 using Burmuruk.Tesis.Saving;
+using Burmuruk.Tesis.UI;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
@@ -21,6 +22,8 @@ public class SavingUI : MonoBehaviour
     JsonSavingWrapper savingWrapper;
 
     int curSlots = 0;
+    int? selectedSlot;
+    bool deleting = false;
 
     [Serializable]
     private struct SlotUI
@@ -45,6 +48,21 @@ public class SavingUI : MonoBehaviour
         savingWrapper = FindObjectOfType<JsonSavingWrapper>();
 
         EnableCurrentSlots(savingWrapper.FindAvailableSlots());
+        int i = 1;
+
+        foreach (var button in slots)
+        {
+            button.GameObject.GetComponent<MyItemButton>().SetId(i++);
+            button.GameObject.GetComponent<MyItemButton>().OnPointerEnterEvent += SelectSlot;
+        }
+
+        i = -1;
+
+        foreach (var button in autoSaves)
+        {
+            button.GameObject.GetComponent<MyItemButton>().SetId(i--);
+            button.GameObject.GetComponent<MyItemButton>().OnPointerEnterEvent += SelectSlot;
+        }
     }
 
     public void ShowSlots()
@@ -55,9 +73,22 @@ public class SavingUI : MonoBehaviour
 
     public void LoadSlot(int slot)
     {
-        ShowMenu(false);
+        if (!deleting)
+        {
+            ShowMenu(false);
 
-        savingWrapper.Load(slot);
+            savingWrapper.Load(slot); 
+        }
+        else
+        {
+
+        }
+    }
+
+    public void LoadSelectedSlot()
+    {
+        if (selectedSlot.HasValue)
+            LoadSlot(selectedSlot.Value);
     }
 
     public void EnableCurrentSlots(List<(int id, JObject slotData)> slots)
@@ -87,6 +118,24 @@ public class SavingUI : MonoBehaviour
         ShowMenu(false);
 
         savingWrapper.Load(curSlots + 1);
+    }
+
+    public void DeleteSlot(int idx)
+    {
+
+    }
+
+    public void DeleteSelectedSlot()
+    {
+        //if (selectedSlot.HasValue)
+        //    DeleteSlot(selectedSlot.Value);
+
+        deleting = !deleting;
+    }
+
+    private void SelectSlot(int idx)
+    {
+
     }
 
     private void ShowMenu(bool shouldShow)

@@ -1,4 +1,4 @@
-﻿using Burmuruk.Tesis.Combat;
+﻿  using Burmuruk.Tesis.Combat;
 using Burmuruk.Tesis.Control.AI;
 using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Movement.PathFindig;
@@ -142,7 +142,11 @@ namespace Burmuruk.Tesis.Control
         {
             players = new();
             if (playersParent == null)
+            {
                 playersParent = new GameObject("Players");
+                DontDestroyOnLoad(playersParent);
+            }
+
             Vector3 position = default;
             foreach (var spawner in FindObjectsOfType<PlayerSpawner>())
             {

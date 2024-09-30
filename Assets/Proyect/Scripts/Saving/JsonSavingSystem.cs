@@ -8,6 +8,7 @@ using UnityEngine.SceneManagement;
 using System;
 using System.Text;
 using System.Linq;
+using static Burmuruk.Tesis.Stats.BasicStats;
 
 namespace Burmuruk.Tesis.Saving
 {
@@ -60,9 +61,18 @@ namespace Burmuruk.Tesis.Saving
             SaveFileAsJson(saveFile, state);
         }
 
-        public void Delete (string saveFile)
+        public void Delete (string saveFile, int idx)
         {
-            File.Delete(GetPathFromSaveFile(saveFile));
+            JObject state = LoadJsonFromFile(saveFile);
+
+            if (state.ContainsKey(idx.ToString()))
+            {
+                int curIdx = idx;
+                while (state.ContainsKey((curIdx + 1).ToString()))
+                {
+                    state[curIdx] = state[curIdx + 1];
+                }
+            }
         }
 
         public void Load(string saveFile, int slot, Action<JObject> callback)
@@ -246,6 +256,11 @@ namespace Burmuruk.Tesis.Saving
             }
 
             return slots;
+        }
+
+        public void DeleteSlot(string file, int slot)
+        {
+            LoadJsonFromFile()
         }
     }
 }

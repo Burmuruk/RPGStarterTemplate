@@ -96,6 +96,11 @@ namespace Burmuruk.Tesis.Saving
 
         }
 
+        public void DeleteSlot(int idx)
+        {
+            GetComponent<JsonSavingSystem>().Delete(defaultSaveFile, idx);
+        }
+
         private void LoadWithoutFade(int slot)
         {
             if (slot < 0)

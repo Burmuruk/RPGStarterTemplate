@@ -30,7 +30,7 @@ namespace Burmuruk.Tesis.Stats
             return ConsumableType.None;
         }
 
-        public void Use(Character character, object args, Action callback)
+        public virtual void Use(Character character, object args, Action callback)
         {
             foreach (var buff in buffs)
             {

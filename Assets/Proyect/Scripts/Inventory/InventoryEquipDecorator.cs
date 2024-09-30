@@ -81,10 +81,17 @@ namespace Burmuruk.Tesis.Inventory
         {
             var (player, equipeableItem) = alarmedEquipItem;
             equipeableItem.Equip(player);
-            
+
+            VerifyBonus(equipeableItem, player);
             UpdateModel(player, equipeableItem);
 
             alarmedEquipItem = default;
+        }
+
+        private void VerifyBonus(EquipeableItem equipeableItem, Character player)
+        {
+            var place = equipeableItem.GetEquipLocation();
+            //equipment.par
         }
 
         private void InitInventory()
