@@ -18,7 +18,6 @@ namespace Burmuruk.Tesis.Control.AI
         protected List<AbiltyTrigger> abilities = new();
         [SerializeField] PatrolController patrolController;
         List<Character> _enemies = new();
-        protected Character m_target;
 
         [SerializeField] protected PlayerAction playerAction;
         [SerializeField] protected AttackState attackState;
@@ -134,9 +133,9 @@ namespace Burmuruk.Tesis.Control.AI
             this.leader = leader;
         }
 
-        public void SetTarget(Character target)
+        public void SetTarget(Transform target)
         {
-            m_target = target;
+            Target = target;
         }
 
         public void SetOrder(LeaderOrder order)

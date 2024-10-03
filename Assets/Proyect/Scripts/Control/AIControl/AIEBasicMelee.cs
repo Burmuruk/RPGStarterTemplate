@@ -4,8 +4,6 @@ namespace Burmuruk.Tesis.Control.AI
 {
     public class AIEBasicMelee : AIEnemyController
     {
-        Transform m_target;
-
         protected override void FindEnemies()
         {
             if (!IsTargetClose && !IsTargetFar) return;
@@ -37,16 +35,20 @@ namespace Burmuruk.Tesis.Control.AI
 
         private void Attack()
         {
-            m_target = GetNearestTarget(eyesPerceibed);
-            if (m_target == null)
-                m_target = GetNearestTarget(earsPerceibed);
+            if (IsTargetFar)
+            {
+                Target = GetNearestTarget(eyesPerceibed);
+            }
+            else if (IsTargetClose)
+            {
+                Target = GetNearestTarget(earsPerceibed);
+            }
+            else if (Target == null) return;
 
-            if (m_target == null) return;
-
-            if (Vector3.Distance(m_target.position, transform.position)
+            if (Vector3.Distance(Target.position, transform.position)
                 <= stats.MinDistance)
             {
-                fighter.SetTarget(m_target);
+                fighter.SetTarget(Target);
                 fighter.BasicAttack();
             }
         }
@@ -70,10 +72,10 @@ namespace Burmuruk.Tesis.Control.AI
 
                 case PlayerAction.Combat:
 
-                    if (Vector3.Distance(m_target.position, transform.position) > dis)
+                    if (Vector3.Distance(Target.position, transform.position) > dis)
                     {
-                        Vector3 destiny = (transform.position - m_target.position).normalized * dis;
-                        destiny += m_target.position;
+                        Vector3 destiny = (transform.position - Target.position).normalized * dis;
+                        destiny += Target.position;
 
                         mover.MoveTo(destiny);
                     }

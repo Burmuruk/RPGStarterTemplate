@@ -62,9 +62,21 @@ namespace Burmuruk.Tesis.Combat
 
             if (cdBasicAttack.CanUse)
             {
+                if (Vector3.Distance(m_target.position, transform.position) > m_Stats.MinDistance)
+                    return;
 
                 m_targetHealth.ApplyDamage(m_Stats.Damage);
+
+                EquipeableItem weapon = m_inventory.Equipped[(int)Inventory.EquipmentType.WeaponR];
+
+                if (weapon != null && (weapon as Weapon).TryGetBuff(out BuffData? buff))
+                {
+                    if (buff.HasValue)
+                        BuffsManager.Instance.AddBuff(transform.GetComponent<Control.Character>(), buff.Value, () => m_targetHealth.ApplyDamage(m_Stats.Damage));
+                }
+
                 if (!gameObject.activeSelf) return;
+
                 StartCoroutine(cdBasicAttack.CoolDown());
             }
         }

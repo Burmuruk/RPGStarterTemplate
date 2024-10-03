@@ -62,7 +62,7 @@ namespace Burmuruk.Tesis.Control.AI
                         StartCoroutine(cd_Appear.Tick());
                         break;
                     }
-                    else if (m_target)
+                    else if (Target)
                     {
                         playerAction = PlayerAction.Combat;
                     }
@@ -82,19 +82,19 @@ namespace Burmuruk.Tesis.Control.AI
 
         private void Attack()
         {
-            if (m_target == null)
+            if (Target == null)
             {
-                m_target = GetNearestTarget(eyesPerceibed).GetComponent<Character>();
-                if (m_target == null)
+                Target = GetNearestTarget(eyesPerceibed).GetComponent<Character>().transform;
+                if (Target == null)
                     GetNearestTarget(earsPerceibed); 
             }
 
-            if (m_target == null) return;
+            if (Target == null) return;
 
-            if (Vector3.Distance(m_target.transform.position, transform.position)
+            if (Vector3.Distance(Target.transform.position, transform.position)
                 <= stats.MinDistance)
             {
-                fighter.SetTarget(m_target.transform);
+                fighter.SetTarget(Target.transform);
                 fighter.BasicAttack();
             }
         }
@@ -118,10 +118,10 @@ namespace Burmuruk.Tesis.Control.AI
 
                 case PlayerAction.Combat:
 
-                    if (Vector3.Distance(m_target.transform.position, transform.position) > dis)
+                    if (Vector3.Distance(Target.transform.position, transform.position) > dis)
                     {
-                        Vector3 destiny = (transform.position - m_target.transform.position).normalized * dis;
-                        destiny += m_target.transform.position;
+                        Vector3 destiny = (transform.position - Target.transform.position).normalized * dis;
+                        destiny += Target.transform.position;
 
                         mover.MoveTo(destiny);
                     }

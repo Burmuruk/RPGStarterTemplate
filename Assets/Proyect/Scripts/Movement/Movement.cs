@@ -33,6 +33,7 @@ namespace Burmuruk.Tesis.Movement
         PathFinder m_pathFinder;
         Collider col;
 
+        public bool moveInWorldPosition = false;
         public float wanderDisplacement;
         public float wanderRadious;
         public bool usePathFinding = false;
@@ -81,10 +82,11 @@ namespace Burmuruk.Tesis.Movement
         {
             get
             {
-                if (m_inventory == null)
-                    return m_threshold;
+                return m_threshold;
+                //if (m_inventory == null)
+                //    return m_threshold;
 
-                return stats.MinDistance;
+                //return stats.MinDistance;
             }
         }
         public PathFinder Finder { get => m_pathFinder; }
@@ -120,6 +122,42 @@ namespace Burmuruk.Tesis.Movement
             curNodePosition = nodeList.FindNearestNode(transform.position);
         }
 
+        public void MoveToDirection(Vector3 direction, bool abortWhenLarger = true)
+        {
+            if (IsWorking || nodeList == null) return;
+
+            m_state = MovementState.Calculating;
+
+            if (abortWhenLarger)
+            {
+                this.abortOnLargerPath = abortWhenLarger;
+                maxDistance = direction.magnitude;
+            }
+
+            try
+            {
+                curNodePosition ??= nodeList.FindNearestNode(transform.position);
+
+                m_scheduler.AddAction(this, ActionPriority.Low, () =>
+                    {
+                        Vector3 point = transform.position + direction;
+                        var nearestPoint = nodeList.FindNearestNode(point);
+                        bool result = nodeList.ValidatePosition(point, nearestPoint);
+
+                        if (result)
+                        {
+                            m_state = MovementState.Moving;
+                            target = point;
+                            m_pathNodeTarget = nearestPoint;
+                        }
+                    });
+            }
+            catch (NullReferenceException)
+            {
+                FinishAction();
+            }
+        }
+
         public void MoveTo(Vector3 point, bool abortWhenLarger = false)
        {
             if (IsWorking || nodeList == null) return;
@@ -141,9 +179,7 @@ namespace Burmuruk.Tesis.Movement
             }
             catch (NullReferenceException)
             {
-                m_state = MovementState.None;
                 FinishAction();
-                abortOnLargerPath = false;
             }
 
             //var nearest = nodeList.FindNearestNode(point);
@@ -304,7 +340,8 @@ namespace Burmuruk.Tesis.Movement
             m_curPath = null;
             enumerator = null;
             m_pathNodeTarget = null;
-            
+            abortOnLargerPath = false;
+
             OnFinished?.Invoke();
 
             m_state = MovementState.None;
@@ -352,7 +389,6 @@ namespace Burmuruk.Tesis.Movement
             var pos2 = target;
             float d = Vector3.Distance(pos1, pos2);
 
-
             if (d <= Threshold)
             {
                 if (m_state == MovementState.FollowingPath)
@@ -372,10 +408,17 @@ namespace Burmuruk.Tesis.Movement
                 (m_state == MovementState.Moving ||
                 (m_state == MovementState.FollowingPath && curNodeIdx >= nodeIdxSlowingRadious)))
             {
-                m_rb.velocity = SteeringBehaviours.Arrival(this, destiny, SlowingRadious, Threshold);
+                if (moveInWorldPosition)
+                {
+                    m_rb.velocity = Vector3.ProjectOnPlane(SteeringBehaviours.Arrival(this, destiny, SlowingRadious, Threshold), transform.forward);
+                }
+                else
+                {
+                    m_rb.velocity = SteeringBehaviours.Arrival(this, destiny, SlowingRadious, Threshold);
+                }
+
                 CurDirection = Vector3.zero;
             }
-            
             else
             {
                 CurDirection = m_rb.velocity.normalized;

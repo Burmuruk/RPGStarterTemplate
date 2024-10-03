@@ -61,18 +61,25 @@ namespace Burmuruk.Tesis.Saving
             SaveFileAsJson(saveFile, state);
         }
 
-        public void Delete (string saveFile, int idx)
+        public void DeleteSlot(string fileName, int slot)
         {
-            JObject state = LoadJsonFromFile(saveFile);
+            var savingData = LoadJsonFromFile(fileName);
 
-            if (state.ContainsKey(idx.ToString()))
+            IDictionary<string, JToken> data = savingData;
+
+            if (!data.ContainsKey(slot.ToString())) return;
+
+            int curSlot = slot;
+
+            while (data.ContainsKey((curSlot + 1).ToString()))
             {
-                int curIdx = idx;
-                while (state.ContainsKey((curIdx + 1).ToString()))
-                {
-                    state[curIdx] = state[curIdx + 1];
-                }
+                data[curSlot.ToString()] = data[(curSlot + 1).ToString()];
+                ++curSlot;
             }
+
+            data.Remove(curSlot.ToString());
+
+            SaveFileAsJson(fileName, (JObject)data);
         }
 
         public void Load(string saveFile, int slot, Action<JObject> callback)
@@ -256,11 +263,6 @@ namespace Burmuruk.Tesis.Saving
             }
 
             return slots;
-        }
-
-        public void DeleteSlot(string file, int slot)
-        {
-            LoadJsonFromFile()
         }
     }
 }

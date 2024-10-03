@@ -7,7 +7,7 @@ using Burmuruk.Tesis.Combat;
 using Burmuruk.Tesis.Utilities;
 using Burmuruk.Tesis.Saving;
 using Newtonsoft.Json.Linq;
-using UnityEngine.TextCore.Text;
+using System.Linq;
 
 namespace Burmuruk.Tesis.Control
 {
@@ -39,6 +39,7 @@ namespace Burmuruk.Tesis.Control
         protected Collider[] eyesPerceibed, earsPerceibed;
         protected bool isTargetFar = false;
         protected bool isTargetClose = false;
+        protected Transform m_target;
         #endregion
 
         [Serializable]
@@ -66,13 +67,37 @@ namespace Burmuruk.Tesis.Control
         public ref Equipment Equipment { get => ref equipment; }
         public CharacterType CharacterType { get => characterType; }
         public bool IsSelected => throw new NotImplementedException();
+        public Transform Target
+        {
+            get => m_target;
+            set
+            {
+                if (m_target != null)
+                {
+                    if (value != m_target)
+                    {
+                        m_target.GetComponent<Health>().OnDied -= VerifyTargetsHealth;
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
+
+                m_target = value;
+                fighter.SetTarget(value);
+
+                if (value != null)
+                    m_target.GetComponent<Health>().OnDied += VerifyTargetsHealth;
+            }
+        }
         #endregion
 
         #region Unity methods
         protected virtual void Awake()
         {
             GetComponents();
-            health.OnDied += Dead;
+            health.OnDied += _ => Dead();
         }
 
         protected virtual void Update()
@@ -199,6 +224,43 @@ namespace Burmuruk.Tesis.Control
             return closest.enemy;
         }
 
+        protected virtual void VerifyTargetsHealth(Transform target)
+        {
+            var nearEnemies = (from enemy in Physics.OverlapSphere(transform.position, 12, 1 << 10)
+                                 where enemy.TryGetComponent<Character>(out _) && enemy.transform.CompareTag(enemyTag)
+                                 select enemy).ToArray();
+
+            var result = GetClosestEnemy(nearEnemies);
+
+            if (result.obj == null)
+            {
+                Target = null;
+                OnCombatStarted?.Invoke(false);
+            }
+            else
+            {
+                Target = result.obj.transform;
+            }
+        }
+
+        protected (Component obj, float dis) GetClosestEnemy(Component[] enemies)
+        {
+            if (enemies == null || enemies.Length == 0) return default;
+
+            (int idx, float distance) closest = (0, float.MaxValue);
+
+            for (int i = 0; i < enemies.Length; i++)
+            {
+                var dis = Vector3.Distance(enemies[i].transform.position, transform.position);
+                if (dis < closest.distance)
+                {
+                    closest = (i, dis);
+                }
+            }
+
+            return (enemies[closest.idx], closest.distance);
+        }
+
         protected virtual void Dead()
         {
             gameObject.SetActive(false);
@@ -290,7 +352,6 @@ namespace Burmuruk.Tesis.Control
 
                 mover.CancelAction();
                 mover.UpdatePosition();
-                name = "Jugador Colocado";
             }
         }
 

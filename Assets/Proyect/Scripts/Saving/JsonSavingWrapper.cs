@@ -3,10 +3,8 @@ using Burmuruk.Tesis.Stats;
 using Burmuruk.Tesis.UI;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
@@ -18,6 +16,8 @@ namespace Burmuruk.Tesis.Saving
     {
         const string defaultSaveFile = "miGuardado-";
         const string defaultAutoSaveFile = "miAutoGuardado-";
+        const string defaultImageName = "Slot";
+        const string defaultImageExtention = ".png";
 
         private int _lastBuildIdx = 0;
 
@@ -48,10 +48,12 @@ namespace Burmuruk.Tesis.Saving
                 if (_lastBuildIdx == 0)
                 {
                     GetComponent<PersistentObjSpawner>().TrySpawnObjects();
+                    //FindObjectOfType<LevelManager>().pauseMenu = 
                 }
             };
 
-            OnLoaded += (args) => { 
+            OnLoaded += (args) =>
+            {
                 RestoreSlotData(args);
                 FindObjectOfType<GameManager>()?.SetState(GameManager.State.Playing);
             };
@@ -79,6 +81,9 @@ namespace Burmuruk.Tesis.Saving
                 GetComponent<JsonSavingSystem>().Save(defaultSaveFile, slot, slotData);
             }
 
+            string path = Path.Combine(Application.persistentDataPath, defaultImageName + slot.ToString() + defaultImageExtention);
+            ScreenCapture.CaptureScreenshot(path);
+
             OnSaving?.Invoke(1);
         }
 
@@ -98,14 +103,17 @@ namespace Burmuruk.Tesis.Saving
 
         public void DeleteSlot(int idx)
         {
-            GetComponent<JsonSavingSystem>().Delete(defaultSaveFile, idx);
+            GetComponent<JsonSavingSystem>().DeleteSlot(defaultSaveFile, idx);
+
+            string path = Path.Combine(Application.persistentDataPath, defaultImageName + idx.ToString() + defaultImageExtention);
+            File.Delete(path);
         }
 
         private void LoadWithoutFade(int slot)
         {
             if (slot < 0)
             {
-                GetComponent<JsonSavingSystem>().Load(defaultAutoSaveFile, slot, 
+                GetComponent<JsonSavingSystem>().Load(defaultAutoSaveFile, slot,
                     (args) => { OnLoaded?.Invoke(args); OnLoadedUI?.Invoke(); });
             }
             else
@@ -116,16 +124,41 @@ namespace Burmuruk.Tesis.Saving
             OnLoading?.Invoke(1);
         }
 
-        public List<(int id, JObject slotData)> LookForSlots()
+        public List<(int id, JObject slotData)> FindAvailableSlots(out List<(int id, Sprite sprite)> images)
         {
+            images = null;
             var saver = GetComponent<JsonSavingSystem>();
 
-            return saver.LookForSlots(defaultSaveFile);
+            var slots = saver.LookForSlots(defaultSaveFile);
+
+            if (slots is null) return null;
+
+            foreach (var slot in slots)
+            {
+                if (TryLoadSlotImage(slot.id, out Sprite newSprite))
+                {
+                    (images ??= new()).Add((slot.id, newSprite));
+                }
+            }
+
+            return slots;
         }
-        
-        public List<(int id, JObject slotData)> FindAvailableSlots()
+
+        private bool TryLoadSlotImage(int slot, out Sprite sprite)
         {
-            return LookForSlots();
+            sprite = null;
+            string path = Path.Combine(Application.persistentDataPath, defaultImageName + slot.ToString() + defaultImageExtention);
+
+            if (!File.Exists(path))
+                return false;
+
+            byte[] data = File.ReadAllBytes(path);
+
+            Texture2D tex = new Texture2D(2, 2);
+            ImageConversion.LoadImage(tex, data);
+
+            sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(.5f, .5f));
+            return true;
         }
 
         private void RestoreSlotData(JObject slotData)
@@ -146,7 +179,7 @@ namespace Burmuruk.Tesis.Saving
                     break;
 
                 case SavingExecution.System:
-                    
+
                     break;
 
                 case SavingExecution.Organization:

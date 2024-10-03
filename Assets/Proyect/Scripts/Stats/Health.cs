@@ -10,11 +10,12 @@ namespace Burmuruk.Tesis.Stats
         [SerializeField] int hp;
         [SerializeField] int maxHp;
 
-        public event Action OnDied;
+        public event Action<Transform> OnDied;
         public event Action<int> OnDamaged;
 
         public int HP { get => hp; }
         public int MaxHp { get => maxHp; }
+        public bool IsAlive { get => hp > 0; }
 
         private void Awake()
         {
@@ -23,12 +24,13 @@ namespace Burmuruk.Tesis.Stats
 
         public void ApplyDamage(int damage)
         {
+            if (!IsAlive) return;
+
             hp = Math.Max(hp - damage, 0);
 
             if (hp <= 0)
             {
                 Die();
-                OnDied?.Invoke();
                 return;
             }
 
@@ -42,7 +44,7 @@ namespace Burmuruk.Tesis.Stats
 
         private void Die()
         {
-            OnDied?.Invoke();
+            OnDied?.Invoke(transform);
         }
 
         public JToken CaptureAsJToken(out SavingExecution execution)

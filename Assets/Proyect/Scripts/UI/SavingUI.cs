@@ -18,6 +18,7 @@ public class SavingUI : MonoBehaviour
     [SerializeField] SlotUI[] autoSaves;
     [SerializeField] GameObject btnAddMore;
     [SerializeField] GameObject btnLoad;
+    [SerializeField] Image testImage;
 
     JsonSavingWrapper savingWrapper;
 
@@ -47,7 +48,7 @@ public class SavingUI : MonoBehaviour
     {
         savingWrapper = FindObjectOfType<JsonSavingWrapper>();
 
-        EnableCurrentSlots(savingWrapper.FindAvailableSlots());
+        EnableCurrentSlots(savingWrapper.FindAvailableSlots(out var sprites), sprites);
         int i = 1;
 
         foreach (var button in slots)
@@ -63,11 +64,28 @@ public class SavingUI : MonoBehaviour
             button.GameObject.GetComponent<MyItemButton>().SetId(i--);
             button.GameObject.GetComponent<MyItemButton>().OnPointerEnterEvent += SelectSlot;
         }
+
+        SetSlotColour(Color.white);
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyUp(KeyCode.O))
+        {
+            string path = System.IO.Path.Combine(Application.persistentDataPath, "Capture one.png");
+            var data = System.IO.File.ReadAllBytes(path);
+
+            Texture2D tex = new Texture2D(2, 2);
+            ImageConversion.LoadImage(tex, data);
+
+            Sprite screenshotSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(.5f, .5f));
+            testImage.sprite = screenshotSprite;
+        }
     }
 
     public void ShowSlots()
     {
-        EnableCurrentSlots(savingWrapper.FindAvailableSlots());
+        EnableCurrentSlots(savingWrapper.FindAvailableSlots(out var sprites), sprites);
         slotsContainer.SetActive(!slotsContainer.activeSelf);
     }
 
@@ -77,11 +95,13 @@ public class SavingUI : MonoBehaviour
         {
             ShowMenu(false);
 
-            savingWrapper.Load(slot); 
+            savingWrapper.Load(slot);
         }
         else
         {
-
+            savingWrapper.DeleteSlot(slot);
+            EnterDeletingMode();
+            ShowSlots();
         }
     }
 
@@ -91,10 +111,10 @@ public class SavingUI : MonoBehaviour
             LoadSlot(selectedSlot.Value);
     }
 
-    public void EnableCurrentSlots(List<(int id, JObject slotData)> slots)
+    public void EnableCurrentSlots(List<(int id, JObject slotData)> slots, List<(int id, Sprite sprite)> images)
     {
         DisableSlots();
-        EnableSlots(slots, out int slotsCount);
+        EnableSlots(slots, images, out int slotsCount);
         
         curSlots = slotsCount;
 
@@ -125,12 +145,33 @@ public class SavingUI : MonoBehaviour
 
     }
 
-    public void DeleteSelectedSlot()
+    public void EnterDeletingMode()
     {
         //if (selectedSlot.HasValue)
         //    DeleteSlot(selectedSlot.Value);
-
         deleting = !deleting;
+
+        if (deleting)
+        {
+            SetSlotColour(Color.red);
+        }
+        else
+        {
+            SetSlotColour(Color.white);
+        }
+    }
+
+    private void SetSlotColour(Color newColour)
+    {
+        foreach (var item in slots)
+        {
+            var buttons = item.GameObject.GetComponent<MyItemButton>();
+            var colours = buttons.colors;
+            colours.highlightedColor = newColour;
+            colours.selectedColor = newColour;
+
+            item.GameObject.GetComponent<MyItemButton>().colors = colours;
+        }
     }
 
     private void SelectSlot(int idx)
@@ -157,7 +198,7 @@ public class SavingUI : MonoBehaviour
         }
     }
 
-    private void EnableSlots(List<(int id, JObject slotData)> slots, out int slotsCount)
+    private void EnableSlots(List<(int id, JObject slotData)> slots, List<(int id, Sprite sprite)> images, out int slotsCount)
     {
         slotsCount = 0;
 
@@ -178,6 +219,22 @@ public class SavingUI : MonoBehaviour
             curSlot.PlayedTime = slot.slotData["TimePlayed"].ToString();
             curSlot.MembersCount = slot.slotData["MembersCount"].ToObject<int>();
             curSlot.GameObject.SetActive(true);
+
+            
+            curSlot.Sprite = GetImage(slot.id);
+
+            Sprite GetImage(int id)
+            {
+                if (images is null) return null;
+
+                foreach (var image in images)
+                {
+                    if (image.id == id)
+                        return image.sprite;
+                }
+
+                return null;
+            }
         }
     }
 }

@@ -27,6 +27,19 @@ namespace Burmuruk.Tesis.Stats
 
         public void AddBuff(Character character, in BuffData buff, Action tickAction = null)
         {
+            var characterTimers = GetCharacterTimers(character);
+            if (characterTimers != null)
+            {
+                foreach (var timer in characterTimers)
+                {
+                    if (timer.Value.buff == buff)
+                    {
+                        timer.Key.Restart();
+
+                        return;
+                    }
+                }
+            }
             if (buff.duration > 0)
             {
                 if (timers.Count <= 0) return;

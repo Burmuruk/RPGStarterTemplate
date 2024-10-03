@@ -34,18 +34,28 @@ namespace Burmuruk.Tesis.Combat
         public float ReloadTime { get => reloadTime; }
         public BuffData[] BuffsData { get => m_buffsData; }
 
-        public BuffData TryGetBuff()
+        public bool TryGetBuff(out BuffData? buffData)
         {
-            if (m_buffsData == null || m_buffsData.Length == 0) return default;
+            buffData = null;
+
+            if (m_buffsData == null || m_buffsData.Length == 0) return false;
 
             int idx = Random.Range(0, m_buffsData.Length);
 
-            if (m_buffsData[idx].probability == 1) return m_buffsData[idx];
+            if (m_buffsData[idx].probability == 1)
+            {
+                buffData = m_buffsData[idx];
+                return true;
+            }
 
             var probability = Random.Range(0, 1);
+
             if (Mathf.Abs(m_buffsData[idx].probability - probability) <= probability)
-                return m_buffsData[idx];
-            else return default;
+            {
+                buffData = m_buffsData[idx];
+                return true;
+            }
+            else return false;
         }
 
         public override object GetEquipLocation()

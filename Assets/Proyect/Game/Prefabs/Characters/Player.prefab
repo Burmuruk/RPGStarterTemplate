@@ -220,7 +220,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_maxVel: 10
   m_maxSteerForce: 5
-  m_threshold: 0.3
+  m_threshold: 1
   m_slowingRadious: 2
   wanderDisplacement: 0
   wanderRadious: 0
@@ -253,6 +253,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   farPercept: {fileID: 8042658847600417243}
   closePercept: {fileID: 3175482298624863947}
+  shaders: []
   hasFarPerception: 1
   hasClosePerception: 1
   characterType: 1

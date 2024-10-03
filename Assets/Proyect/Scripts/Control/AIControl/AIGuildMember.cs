@@ -17,7 +17,6 @@ namespace Burmuruk.Tesis.Control.AI
         [SerializeField] float fellowGap;
 
         object formationArgs;
-        Transform m_target;
         CoolDownAction cdTeleport;
         public int id = -1;
 
@@ -115,9 +114,9 @@ namespace Burmuruk.Tesis.Control.AI
                 }
             }
 
-            if (m_target)
+            if (Target)
             {
-                Debug.DrawRay(m_target.transform.position, Vector3.up * 5, Color.red);
+                Debug.DrawRay(Target.transform.position, Vector3.up * 5, Color.red);
             }
         }
 
@@ -148,16 +147,15 @@ namespace Burmuruk.Tesis.Control.AI
 
         public void SetTarget(AIEnemyController enemy)
         {
-            m_target = enemy.transform;
+            Target = enemy.transform;
         }
 
         public void AttackEnemy(AIEnemyController enemy)
         {
-            SetTarget(enemy);
+            Target = enemy.transform;
             PlayerState = PlayerState.Combat;
             OnCombatStarted?.Invoke(true);
 
-            fighter.SetTarget(m_target);
             fighter.BasicAttack();
         }
 
@@ -166,6 +164,18 @@ namespace Burmuruk.Tesis.Control.AI
             if (PlayerState == PlayerState.Dead) return;
             
             PlayerState = PlayerState.Combat;
+        }
+
+        protected override void VerifyTargetsHealth(Transform target)
+        {
+            base.VerifyTargetsHealth(target);
+
+            if (IsControlled)
+            {
+                target.GetComponent<Character>().Deselect();
+                if (Target)
+                    Target.GetComponent<Character>().Select();
+            }
         }
 
         protected override void DecisionManager()
@@ -272,24 +282,24 @@ namespace Burmuruk.Tesis.Control.AI
                     break;
 
                 case (PlayerState.Combat, AttackState.BasicAttack):
-                    if (isTargetFar || isTargetClose || m_target)
+                    if (isTargetFar || isTargetClose || Target)
                     {
                         if (formation == Formation.LockTarget)
                         {
-                            m_target = ((Character)formationArgs).transform;
+                            Target = ((Character)formationArgs).transform;
                         }
-                        else if (m_target == null)
+                        else if (Target == null)
                         {
-                            m_target = GetNearestTarget(eyesPerceibed);
+                            Target = GetNearestTarget(eyesPerceibed);
                         }
 
                         OnCombatStarted?.Invoke(true);
-                        fighter.SetTarget(m_target);
+                        fighter.SetTarget(Target);
                         fighter.BasicAttack();
                     }
-                    else if (m_target == null)
+                    else if (Target == null)
                     {
-                        m_target = GetNearestTarget(eyesPerceibed);
+                        Target = GetNearestTarget(eyesPerceibed);
                     }
                     break;
 
@@ -315,10 +325,10 @@ namespace Burmuruk.Tesis.Control.AI
                         if (formation == Formation.Protect) break;
 
                         var dis = stats.MinDistance * .8f;
-                        if (Vector3.Distance(m_target.position, transform.position) > dis)
+                        if (Vector3.Distance(Target.position, transform.position) > dis)
                         {
-                            var destiniy = (transform.position - m_target.position).normalized * dis;
-                            destiniy += m_target.position;
+                            var destiniy = (transform.position - Target.position).normalized * dis;
+                            destiniy += Target.position;
                             mover.MoveTo(destiniy);
                             Debug.DrawRay(destiniy, Vector3.up * 5);
                         }
@@ -338,7 +348,7 @@ namespace Burmuruk.Tesis.Control.AI
 
         private void ControlledDecisionManager()
         {
-            if (m_target || isTargetClose || isTargetFar)
+            if (Target || isTargetClose || isTargetFar)
             {
                 OnCombatStarted?.Invoke(true);
 
@@ -377,22 +387,6 @@ namespace Burmuruk.Tesis.Control.AI
         private void GetRemainEnemies()
         {
             
-        }
-
-        private (Component obj, float dis) GetClosestEnemy(Component[] enemies)
-        {
-            (int idx, float distance) closest = (0, float.MaxValue);
-
-            for (int i = 0; i < enemies.Length; i++)
-            {
-                var dis = Vector3.Distance(enemies[i].transform.position, transform.position);
-                if (dis < closest.distance)
-                {
-                    closest = (i, dis);
-                }
-            }
-
-            return (enemies[closest.idx], closest.distance);
         }
 
         #region Saving

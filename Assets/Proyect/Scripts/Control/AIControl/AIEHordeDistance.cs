@@ -1,5 +1,6 @@
 ﻿using Burmuruk.Tesis.Stats;
 using Burmuruk.Utilities;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -72,18 +73,18 @@ namespace Burmuruk.Tesis.Control.AI
             //    return;
             //}
 
-            m_target = GetNearestTarget(eyesPerceibed)?.GetComponent<Character>();
-            if (m_target == null)
-                m_target = GetNearestTarget(earsPerceibed)?.GetComponent<Character>();
+            Target = GetNearestTarget(eyesPerceibed)?.GetComponent<Character>().transform;
+            if (Target == null)
+                Target = GetNearestTarget(earsPerceibed)?.GetComponent<Character>().transform;
 
-            if (m_target == null) return;
+            if (Target == null) return;
 
             if (isTargetFar && !IsTargetClose)
             {
-                fighter.SetTarget(m_target.transform);
+                fighter.SetTarget(Target.transform);
                 fighter.BasicAttack();
                 EnableHorde();
-                hordeMembers.ForEach(enemy => enemy.SetTarget(m_target));
+                hordeMembers.ForEach(enemy => enemy.SetTarget(Target));
                 hordeMembers.ForEach(enemy => enemy.SetOrder(LeaderOrder.Attack));
             }
         }
@@ -96,21 +97,21 @@ namespace Burmuruk.Tesis.Control.AI
 
                     if (troopsDeployed)
                     {
-                        if (!m_target) return;
+                        if (!Target) return;
 
                         var dis = stats.MinDistance * .8f;
 
-                        if (Vector3.Distance(m_target.transform.position, transform.position) > dis)
+                        if (Vector3.Distance(Target.transform.position, transform.position) > dis)
                         {
-                            Vector3 destiny = (transform.position - m_target.transform.position).normalized * dis;
-                            destiny += m_target.transform.position;
+                            Vector3 destiny = (transform.position - Target.transform.position).normalized * dis;
+                            destiny += Target.transform.position;
 
                             mover.MoveTo(destiny);
                         }
                     }
                     else if (IsTargetClose)
                     {
-                        mover.Flee(m_target.transform.position);
+                        mover.Flee(Target.transform.position);
                     }
                     else if (isTargetFar && !IsTargetClose)
                     {

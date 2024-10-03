@@ -17,7 +17,7 @@ namespace Burmuruk.Tesis.Control
     {
         [SerializeField] UnityEvent onUILoaded;
         [SerializeField] UnityEvent onUIUnLoaded;
-        [SerializeField] GameObject pauseMenu;
+        [SerializeField] public GameObject pauseMenu;
         JsonSavingWrapper savingWrapper;
 
         GameManager gameManager;
@@ -65,10 +65,17 @@ namespace Burmuruk.Tesis.Control
 
             if (Input.GetKeyUp(KeyCode.L))
             {
-                //ScreenCapture.)
+                
+
                 TemporalSaver.RemoveAllData();
                 savingWrapper.Load(GetSlotData().Id);
             }
+            if (Input.GetKeyUp(KeyCode.P))
+            {
+                string path = System.IO.Path.Combine(Application.persistentDataPath, "Capture one.png");
+                ScreenCapture.CaptureScreenshot(path);
+            }
+            
         }
 
         public void SetPaths()
