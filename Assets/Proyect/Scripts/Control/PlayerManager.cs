@@ -1,4 +1,4 @@
-﻿  using Burmuruk.Tesis.Combat;
+﻿using Burmuruk.Tesis.Combat;
 using Burmuruk.Tesis.Control.AI;
 using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Movement.PathFindig;
@@ -6,10 +6,8 @@ using Burmuruk.Tesis.Saving;
 using Burmuruk.Tesis.Stats;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Control
@@ -413,7 +411,7 @@ namespace Burmuruk.Tesis.Control
                     }
 
                     itemState["Equipped"] = equipmentState;
-                    state[i++.ToString()] = itemState; 
+                    state[i++.ToString()] = itemState;
                 }
             }
 

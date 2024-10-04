@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using UnityEditor;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using static Unity.VisualScripting.Icons;
 
 namespace Burmuruk.Tesis.Control
 {
@@ -12,12 +11,13 @@ namespace Burmuruk.Tesis.Control
         [SerializeField] GameObject warninigWindow;
         [SerializeField] Button btnEnemiesHealth;
         [SerializeField] Button btnLanguage;
-        [SerializeField] Button btnContent;
+        [SerializeField] Button btnWindowMode;
         [SerializeField] Button btnResolution;
         [SerializeField] Button btnVsync;
         [SerializeField] Button btnFPSLimit;
         [SerializeField] Slider sldVolume;
         [SerializeField] GameObject[] extraOptions;
+        [SerializeField] GameObject EOCancelPanel;
 
         [SerializeField] Button btnApply;
         [SerializeField] Button btnCancel;
@@ -25,10 +25,9 @@ namespace Burmuruk.Tesis.Control
         FullScreenMode fullScreenMode;
         int frameRate = 0;
         int vSync = 0;
-        Resolution resolution;
+        int[] resolution = new int[2];
         int language;
         float volume = 0;
-        int? activeOption;
 
         Dictionary<string, Action> changes = new();
 
@@ -41,23 +40,30 @@ namespace Burmuruk.Tesis.Control
 
         private void Start()
         {
-            UpdateCurrentValues();
-            //LoadSettings();
+            StartValues();
         }
 
         public void ShowMenu()
         {
             gameObject.SetActive(!gameObject.activeSelf);
+            
+            if (gameObject.activeSelf)
+                StartValues();
         }
 
         public void ShowExtraOptions(int idx)
         {
             extraOptions[idx].SetActive(true);
+        }
 
-            if (activeOption.HasValue)
-                extraOptions[activeOption.Value].SetActive(false);
+        public void DisableExtraOptions()
+        {
+            foreach (var option in extraOptions)
+            {
+                option.SetActive(false);
+            }
 
-            activeOption = idx;
+            EOCancelPanel.SetActive(false);
         }
 
         public void Setlanguage(int idx)
@@ -68,7 +74,8 @@ namespace Burmuruk.Tesis.Control
                 _ => GameLanguage.English,
             };
 
-            btnLanguage.GetComponentInChildren<Text>().text = language.ToString();
+            btnLanguage.GetComponentInChildren<TextMeshProUGUI>().text = language.ToString();
+            CheckChanges();
         }
 
         public void SetWindowMode(int idx)
@@ -90,12 +97,13 @@ namespace Burmuruk.Tesis.Control
                 changes["FullscreenMode"] = () => Screen.fullScreenMode = mode;
             }
 
-            btnLanguage.GetComponentInChildren<Text>().text = mode.ToString();
+            btnWindowMode.GetComponentInChildren<TextMeshProUGUI>().text = mode.ToString();
+            CheckChanges();
         }
 
         public void LimitFPS(int newFrameRate)
-        {
-            if (newFrameRate == frameRate)
+         {
+             if (newFrameRate == frameRate)
             {
                 if (changes.ContainsKey("FrameRate"))
                     changes.Remove("FrameRate");
@@ -105,27 +113,28 @@ namespace Burmuruk.Tesis.Control
                 changes["FrameRate"] = () => Application.targetFrameRate = newFrameRate;
             }
 
-            btnLanguage.GetComponentInChildren<Text>().text = newFrameRate.ToString();
+            btnFPSLimit.GetComponentInChildren<TextMeshProUGUI>().text = newFrameRate <= 0 ? "-" : newFrameRate.ToString();
+            CheckChanges();
         }
 
         public void EnableVSync()
         {
             int newVsync = 0;
 
-            if (QualitySettings.vSyncCount > 0)
+            if (btnVsync.GetComponentInChildren<TextMeshProUGUI>().text == "Of")
             {
                 btnFPSLimit.enabled = true;
                 newVsync = 60;
-                btnLanguage.GetComponentInChildren<Text>().text = "On";
+                btnVsync.GetComponentInChildren<TextMeshProUGUI>().text = "On";
             }
             else
             {
                 newVsync = -1;
                 btnFPSLimit.enabled = false;
-                btnLanguage.GetComponentInChildren<Text>().text = "Of";
+                btnVsync.GetComponentInChildren<TextMeshProUGUI>().text = "Of";
             }
 
-            if (QualitySettings.vSyncCount == vSync)
+            if (vSync == newVsync)
             {
                 if (changes.ContainsKey("VSync"))
                     changes.Remove("VSync");
@@ -134,11 +143,13 @@ namespace Burmuruk.Tesis.Control
             {
                 changes["VSync"] = () => QualitySettings.vSyncCount = newVsync;
             }
+
+            CheckChanges();
         }
 
         public void SetResolution(Vector2Int resolution)
         {
-            if (resolution.x == this.resolution.width && resolution.y == this.resolution.height)
+            if (resolution.x == this.resolution[0] && resolution.y == this.resolution[1])
             {
                 if (changes.ContainsKey("Resolution"))
                     changes.Remove("Resolution");
@@ -148,7 +159,8 @@ namespace Burmuruk.Tesis.Control
                 changes["Resolution"] = () => Screen.SetResolution(resolution.x, resolution.y, fullScreenMode);
             }
 
-            btnLanguage.GetComponentInChildren<Text>().text = resolution.x + " x " + resolution.y;
+            btnResolution.GetComponentInChildren<TextMeshProUGUI>().text = resolution.x + " x " + resolution.y;
+            CheckChanges();
         }
 
         public void ApplyChanges()
@@ -161,14 +173,43 @@ namespace Burmuruk.Tesis.Control
             }
 
             SaveSettings();
-            UpdateCurrentValues();
+            StartValues();
         }
 
         public void Cancel()
         {
-            if (changes.Count <= 0) return;
+            foreach (var option in extraOptions)
+            {
+                if (option.activeSelf)
+                {
+                    DisableExtraOptions();
+                    return;
+                }
+            }
 
             changes.Clear();
+        }
+
+        private void StartValues()
+        {
+            LoadSettings();
+            UpdateCurrentValues();
+            CheckChanges();
+            DisableExtraOptions();
+        }
+
+        private void CheckChanges()
+        {
+            if (changes == null || changes.Count <= 0)
+            {
+                btnApply.enabled = false;
+                btnCancel.enabled = false;
+            }
+            else
+            {
+                btnApply.enabled = true;
+                btnCancel.enabled = true;
+            }
         }
 
         private void UpdateCurrentValues()
@@ -176,7 +217,14 @@ namespace Burmuruk.Tesis.Control
             fullScreenMode = Screen.fullScreenMode;
             frameRate = Application.targetFrameRate;
             vSync = QualitySettings.vSyncCount;
-            resolution = Screen.currentResolution;
+            resolution[0] = Screen.currentResolution.width;
+            resolution[1] = Screen.currentResolution.width;
+
+            btnLanguage.GetComponentInChildren<TextMeshProUGUI>().text = ((GameLanguage)language).ToString();
+            btnWindowMode.GetComponentInChildren<TextMeshProUGUI>().text = fullScreenMode.ToString();
+            btnFPSLimit.GetComponentInChildren<TextMeshProUGUI>().text = frameRate <= 0 ? "-" : frameRate.ToString();
+            btnVsync.GetComponentInChildren<TextMeshProUGUI>().text = vSync > 0 ? "On" : "Of";
+            btnResolution.GetComponentInChildren<TextMeshProUGUI>().text = resolution[0] + " x " + resolution[1];
         }
 
         private void SaveSettings()
@@ -187,16 +235,25 @@ namespace Burmuruk.Tesis.Control
             PlayerPrefs.SetInt("VSync", vSync);
             PlayerPrefs.SetInt("LimitFPS", frameRate);
             PlayerPrefs.SetFloat("MasterVolume", volume);
-            PlayerPrefs.SetString("Resolution", "");
+            PlayerPrefs.SetString("Resolution", resolution[0].ToString() + "x" + resolution[1].ToString());
         }
 
         private void LoadSettings()
         {
-            string[] resolution = PlayerPrefs.GetString("Resolution").Split('x');
-            //Screen.SetResolution(resolution.x, resolution.y, fullScreenMode);
-            QualitySettings.vSyncCount = PlayerPrefs.GetInt("VSync");
-            Screen.fullScreenMode = (FullScreenMode)PlayerPrefs.GetInt("WindowMode");
-            Application.targetFrameRate = PlayerPrefs.GetInt("LimitFPS");
+            if (PlayerPrefs.HasKey("WindowMode"))
+                Screen.fullScreenMode = (FullScreenMode)PlayerPrefs.GetInt("WindowMode");
+
+            if (PlayerPrefs.HasKey("LimitFPS"))
+                Application.targetFrameRate = PlayerPrefs.GetInt("LimitFPS");
+
+            if (PlayerPrefs.HasKey("VSync"))
+                QualitySettings.vSyncCount = PlayerPrefs.GetInt("VSync");
+
+            if (PlayerPrefs.HasKey("Resolution"))
+            {
+                string[] resolution = PlayerPrefs.GetString("Resolution").Split('x');
+                Screen.SetResolution(int.Parse(resolution[0]), int.Parse(resolution[1]), Screen.fullScreen);
+            }
         }
     }
 }

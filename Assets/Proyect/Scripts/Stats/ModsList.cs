@@ -1,7 +1,6 @@
 ﻿using Burmuruk.Tesis.Control;
 using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 
 namespace Burmuruk.Tesis.Stats
 {
@@ -9,18 +8,18 @@ namespace Burmuruk.Tesis.Stats
     {
         static Dictionary<Character, BuffData> buffs = new();
         public struct BuffVariables
-            {
-                public Func<float> get;
-                public Action<float> set;
-                public List<float> modifications;
+        {
+            public Func<float> get;
+            public Action<float> set;
+            public List<float> modifications;
 
-                public BuffVariables(Func<float> get, Action<float> set)
-                {
-                    this.get = get;
-                    this.set = set;
-                    this.modifications = new();
-                }
+            public BuffVariables(Func<float> get, Action<float> set)
+            {
+                this.get = get;
+                this.set = set;
+                this.modifications = new();
             }
+        }
 
         private struct BuffData
         {
@@ -32,7 +31,7 @@ namespace Burmuruk.Tesis.Stats
             public BuffData(Character character, ModifiableStat modsType, Func<float> get, Action<float> set)
             {
                 this.Character = character;
-                mods = new ()
+                mods = new()
                 {
                     { modsType, new BuffVariables(get, set) }
                 };
@@ -104,7 +103,7 @@ namespace Burmuruk.Tesis.Stats
         {
             if (!buffs.ContainsKey(character)) return;
 
-            
+
             buffs[character].mods.Remove(modsStat);
         }
 
