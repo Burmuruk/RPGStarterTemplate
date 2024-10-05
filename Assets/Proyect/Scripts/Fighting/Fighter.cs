@@ -1,6 +1,7 @@
 ﻿using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
 using Burmuruk.Utilities;
+using System;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Combat
@@ -9,7 +10,7 @@ namespace Burmuruk.Tesis.Combat
     {
         [SerializeField] float detectionRadious = 8;
 
-        BasicStats m_Stats;
+        Func<BasicStats> m_Stats;
         Health m_targetHealth;
         InventoryEquipDecorator m_inventory;
         Movement.Movement m_movement;
@@ -19,6 +20,8 @@ namespace Burmuruk.Tesis.Combat
         CoolDownAction cdBasicAttack;
         public bool shouldGetClose = false;
         bool canAttack = true;
+
+        BasicStats Stats { get => m_Stats.Invoke(); }
 
         private void FixedUpdate()
         {
@@ -31,7 +34,7 @@ namespace Burmuruk.Tesis.Combat
             //    cdBasicAttack = new CoolDownAction(m_Stats.DamageRate);
         }
 
-        public void Initilize(InventoryEquipDecorator inventory, ref BasicStats stats)
+        public void Initilize(InventoryEquipDecorator inventory, Func<BasicStats> stats)
         {
             m_inventory = inventory;
             m_Stats = stats;
@@ -44,7 +47,8 @@ namespace Burmuruk.Tesis.Combat
             //    }
             //};
 
-            cdBasicAttack = new CoolDownAction(in stats.damageRate);
+            float rate = m_Stats.Invoke().DamageRate;
+            cdBasicAttack = new CoolDownAction(in rate);
         }
 
         public void SetTarget(Transform target)
@@ -62,17 +66,17 @@ namespace Burmuruk.Tesis.Combat
 
             if (cdBasicAttack.CanUse)
             {
-                if (Vector3.Distance(m_target.position, transform.position) > m_Stats.MinDistance)
+                if (Vector3.Distance(m_target.position, transform.position) > Stats.MinDistance)
                     return;
 
-                m_targetHealth.ApplyDamage(m_Stats.Damage);
+                m_targetHealth.ApplyDamage(Stats.Damage);
 
                 EquipeableItem weapon = m_inventory.Equipped[(int)Inventory.EquipmentType.WeaponR];
 
                 if (weapon != null && (weapon as Weapon).TryGetBuff(out BuffData? buff))
                 {
                     if (buff.HasValue)
-                        BuffsManager.Instance.AddBuff(transform.GetComponent<Control.Character>(), buff.Value, () => m_targetHealth.ApplyDamage(m_Stats.Damage));
+                        BuffsManager.Instance.AddBuff(transform.GetComponent<Control.Character>(), buff.Value, () => m_targetHealth.ApplyDamage(Stats.Damage));
                 }
 
                 if (!gameObject.activeSelf) return;

@@ -9,7 +9,7 @@ namespace Burmuruk.Tesis.Inventory
     {
         [SerializeField] List<InitalEquipedItemData> initialItems;
         [SerializeField] Inventory inventory;
-        Equipment equipment;
+        [SerializeField] Equipment equipment;
 
         [Serializable]
         struct InitalEquipedItemData

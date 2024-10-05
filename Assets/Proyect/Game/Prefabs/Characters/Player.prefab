@@ -222,6 +222,7 @@ MonoBehaviour:
   m_maxSteerForce: 5
   m_threshold: 1
   m_slowingRadious: 2
+  moveInWorldPosition: 0
   wanderDisplacement: 0
   wanderRadious: 0
   usePathFinding: 0
@@ -257,17 +258,6 @@ MonoBehaviour:
   hasFarPerception: 1
   hasClosePerception: 1
   characterType: 1
-  equipment:
-    Body: {fileID: 2366508166910257388}
-    spawnPoints:
-    - spawnPoint: {fileID: 2616323288374331912}
-      spawnType: 2
-    - spawnPoint: {fileID: 3117318993867093379}
-      spawnType: 3
-    - spawnPoint: {fileID: 962674945576811559}
-      spawnType: 4
-    - spawnPoint: {fileID: 2599430714543775213}
-      spawnType: 5
   enemyTag: Enemy
   mover: {fileID: 0}
   fighter: {fileID: 0}
@@ -302,6 +292,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   initialItems: []
   inventory: {fileID: 0}
+  equipment:
+    Body: {fileID: 2366508166910257388}
+    spawnPoints:
+    - spawnPoint: {fileID: 2616323288374331912}
+      spawnType: 2
+    - spawnPoint: {fileID: 3117318993867093379}
+      spawnType: 3
+    - spawnPoint: {fileID: 962674945576811559}
+      spawnType: 4
+    - spawnPoint: {fileID: 2599430714543775213}
+      spawnType: 5
 --- !u!114 &3180834427988795490
 MonoBehaviour:
   m_ObjectHideFlags: 0

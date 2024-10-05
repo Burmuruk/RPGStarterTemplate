@@ -24,6 +24,7 @@ namespace Burmuruk.Tesis.Control
         private Dictionary<Transform, Pickup> m_pickables = new ();
         private List<IInteractable> m_interactables = new List<IInteractable>();
         int interactableIdx = 0;
+        bool detachRotation = false;
         
         enum Interactions
         {
@@ -66,7 +67,17 @@ namespace Burmuruk.Tesis.Control
             if (m_shouldMove && player && GameManager.Instance.GameState == GameManager.State.Playing)
             {
                 try
-                 {
+                {
+                    if (player.Target)
+                    {
+                        if (detachRotation)
+                            player.mover.DetachRotation = true;
+
+                        player.transform.LookAt(Target.transform);
+                    }
+                    else
+                        detachRotation = false;
+
                     player.mover.MoveTo(player.transform.position + m_direction * 2, true);
                 }
                 catch (NullReferenceException)
@@ -153,6 +164,7 @@ namespace Burmuruk.Tesis.Control
                     Target.Select();
                     //print(enemy.itemName);
                     (player as AIGuildMember).AttackEnemy(Target);
+                    detachRotation = true;
                 }
             }
         }

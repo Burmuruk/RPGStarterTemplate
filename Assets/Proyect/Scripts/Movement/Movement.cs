@@ -27,13 +27,13 @@ namespace Burmuruk.Tesis.Movement
         [SerializeField] float m_slowingRadious;
 
         Rigidbody m_rb;
-        BasicStats stats;
+        Func<BasicStats> stats;
         InventoryEquipDecorator m_inventory;
         ActionScheduler m_scheduler;
         PathFinder m_pathFinder;
         Collider col;
 
-        public bool moveInWorldPosition = false;
+        bool detachRotation = false;
         public float wanderDisplacement;
         public float wanderRadious;
         public bool usePathFinding = false;
@@ -78,6 +78,16 @@ namespace Burmuruk.Tesis.Movement
                 return false;
             }
         }
+        public bool DetachRotation
+        {
+            get => detachRotation; 
+            set
+            {
+                if (m_state == MovementState.None) 
+                    detachRotation = value;
+            }
+        }
+
         float Threshold
         {
             get
@@ -89,6 +99,8 @@ namespace Burmuruk.Tesis.Movement
                 //return stats.MinDistance;
             }
         }
+        BasicStats Stats { get => stats.Invoke(); }
+
         public PathFinder Finder { get => m_pathFinder; }
         float SlowingRadious => Threshold + m_slowingRadious;
 
@@ -106,7 +118,7 @@ namespace Burmuruk.Tesis.Movement
         } 
         #endregion
 
-        public void Initialize(InventoryEquipDecorator inventory, ActionScheduler scheduler, BasicStats stats)
+        public void Initialize(InventoryEquipDecorator inventory, ActionScheduler scheduler, Func<BasicStats> stats)
         {
             this.stats = stats;
             this.m_inventory = inventory;
@@ -271,7 +283,7 @@ namespace Burmuruk.Tesis.Movement
         /// <returns>float m_speed</returns>
         public float GetSpeed()
         {
-            return stats.Speed;
+            return Stats.Speed;
         }
 
         /// <summary>
@@ -280,7 +292,7 @@ namespace Burmuruk.Tesis.Movement
         /// <returns>float m_MaxVel</returns>
         public float getMaxVel()
         {
-            return m_maxVel = stats.speed;
+            return m_maxVel = Stats.speed;
         }
 
         /// <summary>
@@ -341,6 +353,7 @@ namespace Burmuruk.Tesis.Movement
             enumerator = null;
             m_pathNodeTarget = null;
             abortOnLargerPath = false;
+            detachRotation = false;
 
             OnFinished?.Invoke();
 
@@ -408,9 +421,9 @@ namespace Burmuruk.Tesis.Movement
                 (m_state == MovementState.Moving ||
                 (m_state == MovementState.FollowingPath && curNodeIdx >= nodeIdxSlowingRadious)))
             {
-                if (moveInWorldPosition)
+                if (detachRotation)
                 {
-                    m_rb.velocity = Vector3.ProjectOnPlane(SteeringBehaviours.Arrival(this, destiny, SlowingRadious, Threshold), transform.forward);
+                    m_rb.velocity = Vector3.ProjectOnPlane(SteeringBehaviours.Arrival(this, destiny, SlowingRadious, Threshold), new Vector3(0,1,0));
                 }
                 else
                 {
@@ -424,7 +437,14 @@ namespace Burmuruk.Tesis.Movement
                 CurDirection = m_rb.velocity.normalized;
             }
 
-            SteeringBehaviours.LookAt(transform, new(m_rb.velocity.x, 0, m_rb.velocity.z));
+            if (!detachRotation)
+                SteeringBehaviours.LookAt(transform, new(m_rb.velocity.x, 0, m_rb.velocity.z));
+            else
+            {
+                //Vector3 dir = target - transform.position;
+
+                //SteeringBehaviours.LookAt(transform, new Vector3(0, dir.y, 0));
+            }
         }
 
         private bool GetNextNode()

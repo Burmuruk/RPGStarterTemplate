@@ -22,7 +22,6 @@ namespace Burmuruk.Tesis.Control
         [SerializeField] protected bool hasFarPerception;
         [SerializeField] protected bool hasClosePerception;
         [SerializeField] CharacterType characterType;
-        [SerializeField] protected Equipment equipment;
 
         [Space(), Header("Settings")]
         [SerializeField] protected string enemyTag;
@@ -32,9 +31,9 @@ namespace Burmuruk.Tesis.Control
         [HideInInspector] protected Health health;
         [HideInInspector] public Movement.Movement mover;
         [HideInInspector] public Fighter fighter;
-        [HideInInspector] public BasicStats stats = new();
         [HideInInspector] public ActionScheduler actionScheduler = new();
         [HideInInspector] protected IInventory inventory;
+        [SerializeField] public BasicStats stats;
 
         protected Collider[] eyesPerceibed, earsPerceibed;
         protected bool isTargetFar = false;
@@ -64,9 +63,9 @@ namespace Burmuruk.Tesis.Control
         public Collider[] FarEnemies { get => eyesPerceibed; }
         public bool IsTargetFar { get => isTargetFar; }
         public bool IsTargetClose { get => isTargetClose; }
-        public ref Equipment Equipment { get => ref equipment; }
         public CharacterType CharacterType { get => characterType; }
         public bool IsSelected => throw new NotImplementedException();
+        public ref Equipment Equipment { get => ref (inventory as InventoryEquipDecorator).Equipped; }
         public Transform Target
         {
             get => m_target;
@@ -119,7 +118,7 @@ namespace Burmuruk.Tesis.Control
 
         private void OnDrawGizmosSelected()
         {
-            if (/*!stats.Initilized ||*/ !farPercept || !closePercept) return;
+            if (/*!newStats.Initilized ||*/ !farPercept || !closePercept) return;
 
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(farPercept.position, stats.eyesRadious);
@@ -138,14 +137,14 @@ namespace Burmuruk.Tesis.Control
             ModsList.AddVariable((Character)this, ModifiableStat.MinDistance, () => stats.MinDistance, (value) => { stats.MinDistance = value; });
         }
 
-        public virtual void SetStats(BasicStats stats)
+        public virtual void SetStats(BasicStats newStats)
         {
-            this.stats = stats;
+            stats = newStats;
             var invent = Inventory as InventoryEquipDecorator;
             if (!fighter)
                 GetComponents();
-            fighter.Initilize(invent, ref this.stats);
-            mover.Initialize(invent, actionScheduler, this.stats);
+            fighter.Initilize(invent, () => stats);
+            mover.Initialize(invent, actionScheduler, () => stats);
         }
 
         public void SetPosition(Vector3 position)
@@ -359,10 +358,14 @@ namespace Burmuruk.Tesis.Control
         {
             JObject equipmentData = new();
 
+            var equipper = this.inventory as InventoryEquipDecorator;
+
+            if (equipper != null) return equipmentData;
+
             foreach (var part in Enum.GetValues(typeof(EquipmentType)))
             {
                 int partId = (int)part;
-                var items = equipment.GetItems(partId);
+                var items = equipper.Equipped.GetItems(partId);
 
                 if (items != null)
                 {
@@ -382,7 +385,7 @@ namespace Burmuruk.Tesis.Control
 
                 foreach (var part in enumValues)
                 {
-                    var items = equipment.GetItems((int)part);
+                    var items = equiper.Equipped.GetItems((int)part);
 
                     if (items == null) continue;
 

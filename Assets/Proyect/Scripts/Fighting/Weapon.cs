@@ -48,9 +48,9 @@ namespace Burmuruk.Tesis.Combat
                 return true;
             }
 
-            var probability = Random.Range(0, 1);
+            float probability = Random.Range(0, 1.0f);
 
-            if (Mathf.Abs(m_buffsData[idx].probability - probability) <= probability)
+            if (probability <= m_buffsData[idx].probability)
             {
                 buffData = m_buffsData[idx];
                 return true;

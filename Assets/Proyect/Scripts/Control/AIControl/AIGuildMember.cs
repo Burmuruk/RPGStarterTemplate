@@ -42,6 +42,7 @@ namespace Burmuruk.Tesis.Control.AI
         const float closeDistance = 3;
         const float freeDistance = 6;
         const float farDistance = 9;
+        bool detachRotation = false;
 
         public event Action OnEnemyDetected;
         public  event Action OnFormationChanged;
