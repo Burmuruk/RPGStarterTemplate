@@ -131,6 +131,22 @@ namespace Burmuruk.Tesis.Control.AI
             IsControlled = true;
         }
 
+        public override void StopActions(bool shouldPause)
+        {
+            if (shouldPause)
+            {
+                playerState = PlayerState.None;
+                mover.PauseAction();
+            }
+            else
+            {
+                playerState = PlayerState.None;
+                mover.ContinueAction();
+            }
+
+            fighter.Pause(shouldPause);
+        }
+
         public void SetFormation(Formation formation, object args)
         {
             //if (playerState != PlayerAction.Combat) return;
@@ -181,6 +197,8 @@ namespace Burmuruk.Tesis.Control.AI
 
         protected override void DecisionManager()
         {
+            if (PlayerState == PlayerState.Paused) return;
+
             if (IsControlled)
             {
                 ControlledDecisionManager();
@@ -360,7 +378,7 @@ namespace Burmuruk.Tesis.Control.AI
                 OnCombatStarted?.Invoke(false);
         }
 
-        private void MoveCloseToPlayer()
+        public void MoveCloseToPlayer()
         {
             if (!cdTeleport.CanUse) return;
 

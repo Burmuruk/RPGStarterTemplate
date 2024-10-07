@@ -8,11 +8,12 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.ConstrainedExecution;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Control
 {
-    class PlayerManager : MonoBehaviour, IJsonSaveable
+    public class PlayerManager : MonoBehaviour, IJsonSaveable
     {
         [SerializeField] CharacterProgress progress;
         [SerializeField] PlayerCustomization customization;
@@ -34,17 +35,7 @@ namespace Burmuruk.Tesis.Control
         {
             get
             {
-                if (players == null)
-                {
-                    DestroyPlayers();
-                    var member = CreatePlayer();
-                    AddMember(member);
-                    SetUpPlayer(member);
-                    FindObjectOfType<LevelManager>().SetPaths();
-                    //AddMember(CreatePlayer());
-                    //SetPlayerControl(0);
-                    return players;
-                }
+                
 
                 return players;
             }
@@ -82,19 +73,19 @@ namespace Burmuruk.Tesis.Control
             playerController.OnFormationChanged += ChangeFormation;
             var mainInventory = GetComponent<Inventory.Inventory>();
             MainInventory = mainInventory;
+
+            DestroyPlayers();
+            var member = CreatePlayer();
+            AddMember(member);
+            SetUpPlayer(member);
+            SetPlayerControl(0);
+            //AddMember(CreatePlayer());
+            //SetPlayerControl(0);
         }
 
         private void Start()
         {
             SetPlayerControl();
-        }
-
-        private void OnLevelWasLoaded(int level)
-        {
-            Path.Restart();
-            Path.LoadNavMesh();
-            FindAnyObjectByType<LevelManager>().SetPaths();
-            UpdateLeaderPosition();
         }
 
         public void UpdateLeaderPosition()
@@ -115,6 +106,7 @@ namespace Burmuruk.Tesis.Control
 
                 players[idx].enabled = false;
                 players[idx].EnableControll();
+                players[idx].SetMainPlayer(players[idx]);
                 playerController.SetPlayer(players[idx]);
 
                 m_CurPlayer = idx;
@@ -136,9 +128,8 @@ namespace Burmuruk.Tesis.Control
             }
         }
 
-        private AIGuildMember CreatePlayer()
+        public AIGuildMember CreatePlayer()
         {
-            players = new();
             if (playersParent == null)
             {
                 playersParent = new GameObject("Players");
@@ -189,6 +180,7 @@ namespace Burmuruk.Tesis.Control
 
             this.players = new();
 
+            m_CurPlayer = null;
             //foreach (var member in players)
             //{
             //    AddMember(member);
@@ -248,15 +240,48 @@ namespace Burmuruk.Tesis.Control
             member.OnCombatStarted += EnterToCombatMode;
             member.SetFormation(curFormation.value, curFormation.args);
 
+            AIGuildMember mainPlayer = null;
+            if (players != null && players.Count > 0)
+            {
+                if (m_CurPlayer.HasValue)
+                    mainPlayer = CurPlayer;
+                else
+                {
+                    m_CurPlayer = 0;
+                    mainPlayer = CurPlayer;
+                }
+            }
+
             players.Add(member);
             OnPlayerAdded?.Invoke(member);
+
+            
+
+            for (int i = 0; i < players.Count; i++)
+            {
+                if (players[i] == mainPlayer)
+                {
+                    SetPlayerControl(i);
+                    break;
+                }
+            }
+
+            if (m_CurPlayer.HasValue)
+                member.SetMainPlayer(CurPlayer);
+            //member.SetMainPlayer(CurPlayer);
         }
 
         public void RemoveMember(AIGuildMember member)
         {
             member.OnCombatStarted -= EnterToCombatMode;
-            if (players != null && players.Contains(member))
-                players.Remove(member);
+            if (players != null)
+            { 
+                if (players.Contains(member))
+                    players.Remove(member);
+
+                if (players.Count <= 0)
+                    m_CurPlayer = null;
+            }
         }
 
         private void SetColor(AIGuildMember member)
@@ -461,6 +486,7 @@ namespace Burmuruk.Tesis.Control
     public enum PlayerState
     {
         None,
+        Paused,
         Combat,
         FollowPlayer,
         Patrol,

@@ -23,6 +23,13 @@ namespace Burmuruk.Tesis.Combat
 
         BasicStats Stats { get => m_Stats.Invoke(); }
 
+        enum Satate
+        {
+            None,
+            Paused,
+            Working,
+        }
+
         private void FixedUpdate()
         {
             if (m_targetHealth && canAttack)
@@ -49,6 +56,11 @@ namespace Burmuruk.Tesis.Combat
 
             float rate = m_Stats.Invoke().DamageRate;
             cdBasicAttack = new CoolDownAction(in rate);
+        }
+
+        public void Pause(bool shouldPause)
+        {
+            canAttack = shouldPause;
         }
 
         public void SetTarget(Transform target)

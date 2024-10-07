@@ -10,7 +10,7 @@ namespace Burmuruk.Tesis.Control
     {
         public static GameManager Instance;
         State state;
-        PlayerInput playerInput;
+        [SerializeField] PlayerInput playerInput;
 
         public event Action<State> onStateChange;
 
@@ -53,7 +53,8 @@ namespace Burmuruk.Tesis.Control
                 return false;
 
             GameState = State.UI;
-            playerInput.SwitchCurrentActionMap("UI");
+            //playerInput.SwitchCurrentActionMap("UI");
+            playerInput.actions.FindActionMap("UI").Enable();
 
             return true;
         }

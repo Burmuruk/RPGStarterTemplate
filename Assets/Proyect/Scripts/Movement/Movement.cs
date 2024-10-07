@@ -37,7 +37,7 @@ namespace Burmuruk.Tesis.Movement
         public float wanderDisplacement;
         public float wanderRadious;
         public bool usePathFinding = false;
-        bool m_canMove = false;
+        bool m_canMove = true;
         int nodeIdxSlowingRadious;
         bool abortOnLargerPath = false;
         float maxDistance = 0;
@@ -87,7 +87,6 @@ namespace Burmuruk.Tesis.Movement
                     detachRotation = value;
             }
         }
-
         float Threshold
         {
             get
@@ -98,6 +97,15 @@ namespace Burmuruk.Tesis.Movement
 
                 //return stats.MinDistance;
             }
+        }
+        bool CanMove 
+        { 
+            get
+            {
+                if (nodeList == null || !m_canMove) return false;
+
+                return true;
+            } 
         }
         BasicStats Stats { get => stats.Invoke(); }
 
@@ -136,7 +144,7 @@ namespace Burmuruk.Tesis.Movement
 
         public void MoveToDirection(Vector3 direction, bool abortWhenLarger = true)
         {
-            if (IsWorking || nodeList == null) return;
+            if (IsWorking || !CanMove) return;
 
             m_state = MovementState.Calculating;
 
@@ -172,7 +180,7 @@ namespace Burmuruk.Tesis.Movement
 
         public void MoveTo(Vector3 point, bool abortWhenLarger = false)
        {
-            if (IsWorking || nodeList == null) return;
+            if (IsWorking || !CanMove) return;
 
             m_state = MovementState.Calculating;
 
@@ -218,7 +226,7 @@ namespace Burmuruk.Tesis.Movement
 
         public void FollowWithDistance(Movement target, float gap, params Character[] fellows)
         {
-            if (IsWorking || nodeList == null) return;
+            if (IsWorking || !CanMove) return;
 
             m_state = MovementState.Calculating;
             Vector3 point = SteeringBehaviours.GetFollowPosition(target, this, gap, fellows);
@@ -314,6 +322,7 @@ namespace Burmuruk.Tesis.Movement
         public void PauseAction()
         {
             m_canMove = false;
+            m_rb.velocity = Vector3.zero;
         }
 
         public void ContinueAction()
@@ -395,7 +404,7 @@ namespace Burmuruk.Tesis.Movement
 
         private void Move()
         {
-            if (!m_canMove && !IsMoving) return;
+            if (!m_canMove || !IsMoving) return;
 
             m_rb.velocity = SteeringBehaviours.Seek2D(this, target);
             var pos1 = transform.position + colYExtents;

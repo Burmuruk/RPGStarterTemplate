@@ -15,19 +15,24 @@ namespace Burmuruk.Tesis.UI
     public class UIMenuCharacters : MonoBehaviour
     {
         #region Variables
+        [Header("Extra references")]
         [SerializeField] CharacterProgress characterProgress;
+        [SerializeField] PlayerCustomization customization;
+        [SerializeField] ItemsList itemsList;
+        [Space(), Header("Characters")]
+        [SerializeField] GameObject characterModel;
         [SerializeField] GameObject charactersMenu;
+        [SerializeField] Image[] playersImg;
+        [SerializeField] Image mainPlayerImg;
+        [SerializeField] GameObject colorsPanel;
+        [Space(), Header("Elements")]
         [SerializeField] StackableLabel elementPanel;
         [SerializeField] TextMeshProUGUI txtExtraInfo;
-        [SerializeField] GameObject characterModel;
-        [SerializeField] Image[] playersImg;
         [SerializeField] float rotationVelocity;
-        [SerializeField] TextMeshProUGUI txtWarning;
         [SerializeField] MyItemButton[] WarningButtons;
-        [SerializeField] GameObject AmountPanel;
-        [SerializeField] GameObject colorsPanel;
-        [SerializeField] PlayerCustomization customization;
         [SerializeField] Image[] btnModificationSlots;
+        [SerializeField] TextMeshProUGUI txtWarning;
+        [SerializeField] GameObject AmountPanel;
         [Space(), Header("Abilities")]
         [SerializeField] GameObject abilitiesMenu;
         [SerializeField] Image[] btnHumanAbilities;
@@ -35,7 +40,6 @@ namespace Burmuruk.Tesis.UI
         [SerializeField] Image[] btnAbilitiesSlot;
         [SerializeField] Color selectedColor;
         [SerializeField] Sprite defaultBTNSprite;
-        [SerializeField] ItemsList itemsList;
         [SerializeField] TextMeshProUGUI txtAbilityInfo;
         [SerializeField] TextMeshProUGUI txtAbilityTitle;
 
@@ -51,6 +55,7 @@ namespace Burmuruk.Tesis.UI
         int curAbilityId;
         bool isAbilitySlotUsed = false;
 
+        PlayerManager playerManager;
         List<AIGuildMember> players;
         InventoryTab curInventoryTab;
         IInventory inventory;
@@ -62,6 +67,8 @@ namespace Burmuruk.Tesis.UI
         Dictionary<int, (Image image, int subType)> btnAbilitiesSlotDict;
         Dictionary<int, (Image image, int subType)> btnModsDict;
         Dictionary<int, (StackableNode panel, EquipeableItem item)> curElementLabels = new();
+
+        public event Action<int> OnMainPlayerChanged;
 
         public enum State
         {
@@ -582,9 +589,27 @@ namespace Burmuruk.Tesis.UI
         #region Characters panel
         public void ShowCharacters()
         {
+            var mainPlayer = players[0].Leader;
+            mainPlayerImg.gameObject.SetActive(false);
+
             playersImg[0].color = players[GetNextPlayerIdx(-1)].stats.Color;
             playersImg[1].color = players[curPlayerIdx].stats.Color;
             playersImg[2].color = players[GetNextPlayerIdx(1)].stats.Color;
+
+            int[] idxs = new int[3]
+            {
+                curPlayerIdx, -1, 1
+            };
+            for (int i = 0; i < 3; i++)
+            {
+                if (players[GetNextPlayerIdx(idxs[i])] == mainPlayer)
+                {
+                    int idx = 1 - i < 0 ? 2 : 1 - i;
+
+                    SelectMainPlayerButton(playersImg[idx]);
+                    break;
+                }
+            }
 
             ShowCharacterModel();
             UpdateModsSprites();
@@ -593,6 +618,13 @@ namespace Burmuruk.Tesis.UI
             {
                 ShowCharacterAbilities();
             }
+        }
+
+        private void SelectMainPlayerButton(Image playerImg)
+        {
+            mainPlayerImg.rectTransform.position = playerImg.rectTransform.position;
+            mainPlayerImg.rectTransform.sizeDelta = playerImg.rectTransform.sizeDelta + playerImg.rectTransform.sizeDelta / 10;
+            mainPlayerImg.gameObject.SetActive(true);
         }
 
         public void ShowNextPlayer()
@@ -614,6 +646,12 @@ namespace Burmuruk.Tesis.UI
         public void ChangePlayerColor()
         {
             colorsPanel.SetActive(!colorsPanel.activeSelf);
+        }
+
+        public void ChangeMainCharacter()
+        {
+            OnMainPlayerChanged?.Invoke(curPlayerIdx);
+            ShowCharacters();
         }
 
         public void SelectBtnColor(int id) => curBtnId = id;
@@ -765,6 +803,11 @@ namespace Burmuruk.Tesis.UI
             ShowInventory();
             UpdateModsSprites();
             InitializeAbilityButtons();
+        }
+
+        public void SetPlayerManager(PlayerManager playerManager)
+        {
+            this.playerManager = playerManager;
         }
 
         public void UnloadMenu()

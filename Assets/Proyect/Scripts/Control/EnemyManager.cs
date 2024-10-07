@@ -10,7 +10,7 @@ namespace Burmuruk.Tesis.Control.AI
     {
         [SerializeField] CharacterProgress progress;
         [SerializeField] Inventory.Inventory inventory;
-        Dictionary<int, List<AIEnemyController>> m_enemies = new();
+        [SerializeField] List<EnemyGroup> m_enemies = new();
 
         [Serializable]
         public struct EnemyGroup
@@ -19,6 +19,8 @@ namespace Burmuruk.Tesis.Control.AI
             [SerializeField] List<AIEnemyController> enemies;
             [SerializeField] bool canBeRespawned;
             public State GroupState { get; private set; }
+            public List<AIEnemyController> Enemies { get => enemies; }
+            public int Id { get; private set; }
 
             public enum State
             {
@@ -45,23 +47,15 @@ namespace Burmuruk.Tesis.Control.AI
         {
             inventory = FindObjectOfType<LevelManager>().gameObject.GetComponent<Inventory.Inventory>();
 
-            if (inventory == null) return;
+            if (inventory == null || m_enemies == null) return;
 
-            var enemies = FindObjectsOfType<AIEnemyController>(true);
-
-            foreach (var enemy in enemies)
+            foreach (var group in m_enemies)
             {
-                try
+                foreach (var enemy in group.Enemies)
                 {
                     enemy.SetStats(progress.GetDataByLevel(enemy.CharacterType, 0));
                     (enemy.Inventory as InventoryEquipDecorator).SetInventory(inventory);
                     enemy.SetUpMods();
-                    //enemy.Health.OnDied += 
-                }
-                catch (NullReferenceException)
-                {
-
-                    throw;
                 }
             }
         }

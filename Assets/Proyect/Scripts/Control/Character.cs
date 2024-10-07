@@ -162,6 +162,8 @@ namespace Burmuruk.Tesis.Control
             fighter ??= GetComponent<Fighter>();
         }
 
+        public virtual void StopActions(bool shouldPause) { }
+
         protected virtual void PerceptionManager()
         {
             if (hasFarPerception)

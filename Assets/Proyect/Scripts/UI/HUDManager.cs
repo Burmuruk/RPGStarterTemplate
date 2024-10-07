@@ -20,6 +20,7 @@ namespace Burmuruk.Tesis.UI
         [SerializeField] Camera mainCamera;
         PlayerController playerController;
         GameManager gameManager;
+        Missions.MissionManager missionsManager;
 
         [Space()]
         [Header("Abilities"), Space()]
@@ -95,6 +96,8 @@ namespace Burmuruk.Tesis.UI
             playerController = FindObjectOfType<PlayerController>();
             playerManager = FindObjectOfType<PlayerManager>();
             gameManager = FindObjectOfType<GameManager>();
+            missionsManager = FindAnyObjectByType<Missions.MissionManager>();
+            missionsManager.OnMissionStarted += (m) => ShowMission( m.Description );
 
             var savingWrapper = FindObjectOfType<JsonSavingWrapper>();
             if (savingWrapper)
@@ -162,6 +165,7 @@ namespace Burmuruk.Tesis.UI
 
         private void LateUpdate()
         {
+            return;
             if (gameManager.GameState == GameManager.State.Playing)
             {
                 UpdateHealthPosition();
@@ -316,8 +320,10 @@ namespace Burmuruk.Tesis.UI
             node.label.text = newText;
         }
 
-        private void ShowMission(string[] missions)
+        private void ShowMission(params string[] missions)
         {
+            if (missions == null || missions.Length > 0) return;
+
             if (!pMissions.container.activeSelf)
                 pMissions.container.SetActive(true);
 
@@ -332,7 +338,12 @@ namespace Burmuruk.Tesis.UI
 
         private void ReleaseMission(bool value)
         {
-            pMissions.Release();
+            if (!value) return;
+
+            for (int i = 0; i < pMissions.activeNodes.Count; i++)
+            {
+                pMissions.Release();
+            }
 
             if (pMissions.activeNodes.Count <= 0)
             {

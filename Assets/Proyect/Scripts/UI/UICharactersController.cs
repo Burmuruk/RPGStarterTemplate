@@ -15,6 +15,7 @@ namespace Burmuruk.Tesis.UI
 
         public void RotatePlayer(InputAction.CallbackContext context)
         {
+            print("switched action map");
             if (GameManager.Instance.GameState != GameManager.State.UI)
                 return;
 

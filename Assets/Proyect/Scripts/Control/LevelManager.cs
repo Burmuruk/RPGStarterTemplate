@@ -1,3 +1,4 @@
+using Burmuruk.Tesis.Control.AI;
 using Burmuruk.Tesis.Interaction;
 using Burmuruk.Tesis.Movement.PathFindig;
 using Burmuruk.Tesis.Saving;
@@ -52,6 +53,19 @@ namespace Burmuruk.Tesis.Control
 
             StartCoroutine(Autosave());
             DontDestroyOnLoad(gameObject);
+
+            Path.Restart();
+            Path.LoadNavMesh();
+            FindAnyObjectByType<LevelManager>().SetPaths();
+            UpdatePlayerPosition();
+        }
+
+        private void OnLevelWasLoaded(int level)
+        {
+            Path.Restart();
+            Path.LoadNavMesh();
+            FindAnyObjectByType<LevelManager>().SetPaths();
+            UpdatePlayerPosition();
         }
 
         public void Update()
@@ -92,12 +106,24 @@ namespace Burmuruk.Tesis.Control
 
             OnNavmeshLoaded?.Invoke();
         }
-        //public INodeListSupplier SetNodeList()
-        //{
-        //    if (Path == null && !Path.Saved) return null;
+        
+        public void SetPathToPlayer(Character character)
+        {
+            if (Path.NodeList == null) return;
 
-        //    return Path.SetNodeList();
-        //}
+            character.mover.SetConnections(Path.NodeList);
+        }
+
+        public void UpdatePlayerPosition()
+        {
+            var playerSpawner = FindObjectOfType<PlayerSpawner>();
+            var mainPlayer = FindObjectOfType<AIGuildMember>(true).Leader;
+
+            if (playerSpawner && playerSpawner.Enabled)
+            {
+                mainPlayer.SetPosition(playerSpawner.transform.position);
+            }
+        }
 
         public void GoToMainMenu()
         {
@@ -130,6 +156,9 @@ namespace Burmuruk.Tesis.Control
                         var pm = FindObjectOfType<PlayerManager>();
                         menuCharacters.SetPlayers(pm.Players);
                         menuCharacters.SetInventory(pm.MainInventory);
+                        menuCharacters.SetPlayerManager(FindObjectOfType<PlayerManager>());
+
+                        menuCharacters.OnMainPlayerChanged += playerManager.SetPlayerControl;
                         break;
                     }
                 }
@@ -200,6 +229,7 @@ namespace Burmuruk.Tesis.Control
         {
             if (!menuCharacters) return;
 
+            gameManager.EnableUI(true);
             menuCharacters.ChangeMenu();
         }
 

@@ -1,9 +1,6 @@
-using Burmuruk.Tesis.Control;
 using Burmuruk.Tesis.Saving;
-using Burmuruk.Tesis.Utilities;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 
 public class PersistentObjSpawner : MonoBehaviour
@@ -58,7 +55,7 @@ public class PersistentObjSpawner : MonoBehaviour
     public void RestoreFromJToken(JToken state)
     {
         hasSpawned = (state as JObject)["HasSpawned"].ToObject<bool>();
-        
+
         TrySpawnObjects();
     }
 
@@ -75,5 +72,5 @@ public class PersistentObjSpawner : MonoBehaviour
 #endif
     }
 
-    public void OnAfterDeserialize() { } 
+    public void OnAfterDeserialize() { }
 }
