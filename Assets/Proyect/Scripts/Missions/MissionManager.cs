@@ -22,6 +22,8 @@ namespace Burmuruk.Tesis.Missions
 
         public void AddMission(Mission mission)
         {
+            if (mission == null) return;
+
             missions.Add(mission);
             mission.OnStarted += OnMissionStarted;
 

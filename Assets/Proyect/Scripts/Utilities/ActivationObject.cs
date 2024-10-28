@@ -9,7 +9,20 @@ namespace Burmuruk.Tesis.Utilities
         [SerializeField] protected int _id = 0;
         [SerializeField] bool _enable = false;
 
-        public bool Enabled { get => _enable; protected set => _enable = value; }
+        public bool Enabled
+        {
+            get
+            {
+                if (TemporalSaver.TryLoad(_id, out object args))
+                    _enable = (bool)args;
+
+                return _enable;
+            }
+            set
+            {
+                Enable(value);
+            }
+        }
 
         public int Id
         {
@@ -24,14 +37,19 @@ namespace Burmuruk.Tesis.Utilities
 
         private void Awake()
         {
-            if (TemporalSaver.TryLoad(_id, out object data))
-                Enabled = (bool)data;
+            
         }
 
         public void Enable(bool shouldEnable)
         {
             _enable = true;
             TemporalSaver.Save(Id, true);
+        }
+
+        private void LoadTemporalInfo()
+        {
+            if (TemporalSaver.TryLoad(_id, out object data))
+                _enable = (bool)data;
         }
 
         public JToken CaptureAsJToken(out SavingExecution execution)

@@ -5,11 +5,11 @@ namespace Burmuruk.AI
 {
     public class DebugNode : MonoBehaviour
     {
-        [SerializeField] ScrNode node;
+        [SerializeField] NodeData node;
 
-        public ref ScrNode GetNode() => ref node;
+        public ref NodeData GetNode() => ref node;
 
-        public void SetNode(in ScrNode node)
+        public void SetNode(in NodeData node)
         {
             this.node = node;
         }

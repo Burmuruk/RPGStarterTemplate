@@ -37,8 +37,8 @@ namespace Burmuruk.Tesis.Control
             playerManager = FindObjectOfType<PlayerManager>();
             //playerManager.OnPlayerAdded += SetPathToCharacter;
 
-            Path.Restart();
-            Path.LoadNavMesh();
+            NavSaver.Restart();
+            NavSaver.LoadNavMesh();
             FindObjectOfType<PickupSpawner>().RegisterCurrentItems();
         }
 
@@ -54,16 +54,16 @@ namespace Burmuruk.Tesis.Control
             StartCoroutine(Autosave());
             DontDestroyOnLoad(gameObject);
 
-            Path.Restart();
-            Path.LoadNavMesh();
+            NavSaver.Restart();
+            NavSaver.LoadNavMesh();
             FindAnyObjectByType<LevelManager>().SetPaths();
             UpdatePlayerPosition();
         }
 
         private void OnLevelWasLoaded(int level)
         {
-            Path.Restart();
-            Path.LoadNavMesh();
+            NavSaver.Restart();
+            NavSaver.LoadNavMesh();
             FindAnyObjectByType<LevelManager>().SetPaths();
             UpdatePlayerPosition();
         }
@@ -94,14 +94,14 @@ namespace Burmuruk.Tesis.Control
 
         public void SetPaths()
         {
-            if (Path.NodeList == null) return;
+            if (NavSaver.NodeList == null) return;
 
             //print("Valor encontrado");
             var movers = FindObjectsOfType<Movement.Movement>(true);
 
             foreach (var mover in movers)
             {
-                mover.SetConnections(Path.NodeList);
+                mover.SetConnections(NavSaver.NodeList);
             }
 
             OnNavmeshLoaded?.Invoke();
@@ -109,9 +109,9 @@ namespace Burmuruk.Tesis.Control
         
         public void SetPathToPlayer(Character character)
         {
-            if (Path.NodeList == null) return;
+            if (NavSaver.NodeList == null) return;
 
-            character.mover.SetConnections(Path.NodeList);
+            character.mover.SetConnections(NavSaver.NodeList);
         }
 
         public void UpdatePlayerPosition()

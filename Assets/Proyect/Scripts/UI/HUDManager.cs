@@ -322,7 +322,8 @@ namespace Burmuruk.Tesis.UI
 
         private void ShowMission(params string[] missions)
         {
-            if (missions == null || missions.Length > 0) return;
+            if (missions == null || missions.Length > 0 || (pMissions.maxAmount - pMissions.activeNodes.Count) <= 0) 
+                return;
 
             if (!pMissions.container.activeSelf)
                 pMissions.container.SetActive(true);
@@ -332,7 +333,10 @@ namespace Burmuruk.Tesis.UI
                 var node = pMissions.Get();
 
                 node.label.text = mission;
-                cdMissions.Enqueue(new CoolDownAction(5, ReleaseMission));
+                var coolDown = new CoolDownAction(5, ReleaseMission);
+                cdMissions.Enqueue(coolDown);
+
+                StartCoroutine(coolDown.CoolDown());
             }
         }
 

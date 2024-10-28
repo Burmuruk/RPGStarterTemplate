@@ -362,7 +362,7 @@ namespace Burmuruk.Tesis.Control
 
             var equipper = this.inventory as InventoryEquipDecorator;
 
-            if (equipper != null) return equipmentData;
+            if (equipper == null) return equipmentData;
 
             foreach (var part in Enum.GetValues(typeof(EquipmentType)))
             {

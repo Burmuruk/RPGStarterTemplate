@@ -34,6 +34,7 @@ namespace Burmuruk.AI
         [SerializeField] GameObject x1;
         [SerializeField] GameObject x2;
         [SerializeField] bool canCreateMesh = false;
+        [SerializeField] bool addDynamicObjs = true;
         [SerializeField] bool showMeshZone = false;
         [SerializeField] bool phisicNodes = false;
         [SerializeField] int layer;
@@ -140,6 +141,9 @@ namespace Burmuruk.AI
             Destroy_Nodes();
             meshState = pState.running;
             Create_PathMesh();
+
+            if (addDynamicObjs)
+                DisableDynamicObjects();
         }
 
         public void CalculateNodesConnections()
@@ -424,7 +428,7 @@ namespace Burmuruk.AI
 
                     Ray detectionRay = new Ray(curPosA, Vector3.down);
 
-                    var verticalHits = Detect_Ground(height, detectionRay);
+                    var verticalHits = Detect_Ground(height, detectionRay, out List<Collider> hittedCols);
 
                     if (verticalHits != null)
                     {
@@ -435,8 +439,11 @@ namespace Burmuruk.AI
                         {
                             if (Verify_CapsuleArea(verticalHits[k]))
                             {
-                                ScrNode newNode;
+                                NodeData newNode;
                                 Create_Node(verticalHits[k], out newNode);
+
+                                if (hittedCols[k].gameObject.TryGetComponent(out DynamicNavObject dObj))
+                                    dObj.Nodes.Add(newNode.ID);
 
                                 if (added == true)
                                 {
@@ -488,8 +495,9 @@ namespace Burmuruk.AI
             }
         }
 
-        private List<Vector3> Detect_Ground(float distance, Ray detectionRay)
+        private List<Vector3> Detect_Ground(float distance, Ray detectionRay, out List<Collider> collidersHitted)
         {
+            collidersHitted = null;
             List<Vector3> nodes = new();
             LinkedList<Collider> colliders = new();
             var offsetRay = detectionRay;
@@ -510,6 +518,7 @@ namespace Burmuruk.AI
                         }
 
                         nodes.Add(hit.point);
+                        (collidersHitted ??= new()).Add(hit.collider);
                     }
                 }
                 else break;
@@ -535,9 +544,9 @@ namespace Burmuruk.AI
             return false;
         }
 
-        private void Create_Node(in Vector3 position, out ScrNode node)
+        private void Create_Node(in Vector3 position, out NodeData node)
         {
-            node = new ScrNode(nodeCount++, position);
+            node = new NodeData(nodeCount++, position);
 
             if (!phisicNodes) return;
 
@@ -545,7 +554,7 @@ namespace Burmuruk.AI
             newNode.transform.position = position;
             newNode.transform.name = "Node " + node.ID.ToString();
             var nodeCs = newNode.GetComponent<DebugNode>();
-            nodeCs.SetNode(node);
+            nodeCs.SetNode(in node);
         }
 
         private void Draw_MeshZone()
@@ -588,6 +597,21 @@ namespace Burmuruk.AI
                         if (!hitted1 && !hitted2)
                             Debug.DrawLine(cur.Position + new Vector3(0, 1.5f, 0), (nodes[j].Position) + new Vector3(0, 1.5f, 0), Color.red);
                     }
+                }
+            }
+        }
+
+        private void DisableDynamicObjects()
+        {
+            DynamicNavObject[] dynamicNavObjects = FindObjectsOfType<DynamicNavObject>();
+
+            foreach (var dynamicNavObject in dynamicNavObjects)
+            {
+                if (!dynamicNavObject.IsEnable) continue;
+
+                foreach (var node in dynamicNavObject.Nodes)
+                {
+                    //node.Enable(false);
                 }
             }
         }
@@ -650,8 +674,8 @@ namespace Burmuruk.AI
 
             //myList.managedReferenceValue = nodeList;
             print(length);
-            Path.SaveExtraData(pRadious, nodDistance, MaxAngle);
-            Path.SaveList(connections, length);
+            NavSaver.SaveExtraData(pRadious, nodDistance, MaxAngle);
+            NavSaver.SaveList(connections, length);
         }
 
         public void LoadList()

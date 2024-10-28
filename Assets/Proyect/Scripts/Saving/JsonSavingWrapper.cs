@@ -41,8 +41,8 @@ namespace Burmuruk.Tesis.Saving
 
             saver.onSceneLoaded += () =>
             {
-                Movement.PathFindig.Path.Restart();
-                Movement.PathFindig.Path.LoadNavMesh();
+                Movement.PathFindig.NavSaver.Restart();
+                Movement.PathFindig.NavSaver.LoadNavMesh();
                 TemporalSaver.RemoveAllData();
 
                 if (_lastBuildIdx == 0)

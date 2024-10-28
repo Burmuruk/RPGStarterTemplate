@@ -2,18 +2,15 @@
 using Burmuruk.WorldG.Patrol;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace Burmuruk.Tesis.Movement.PathFindig
 {
-    public static class Path
+    public static class NavSaver
     {
         static bool saved;
         static float radious;
@@ -78,7 +75,7 @@ namespace Burmuruk.Tesis.Movement.PathFindig
                 foreach (var item in text)
                 {
                     byte[] bytes = Encoding.UTF8.GetBytes(item);
-                    stream.Write(bytes, 0, item.Length); 
+                    stream.Write(bytes, 0, item.Length);
                 }
             }
         }
@@ -97,9 +94,9 @@ namespace Burmuruk.Tesis.Movement.PathFindig
 
         public static void SaveExtraData(float radious, float distance, float maxAngle)
         {
-            Path.distance = distance;
-            Path.maxAngle = maxAngle;
-            Path.radious = radious;
+            NavSaver.distance = distance;
+            NavSaver.maxAngle = maxAngle;
+            NavSaver.radious = radious;
         }
 
         private static void SetNodeList(IPathNode[][][] nodes)
@@ -116,7 +113,7 @@ namespace Burmuruk.Tesis.Movement.PathFindig
             working = true;
             SynchronizationContext context = SynchronizationContext.Current;
             SetNodeList(GenerateNodesArray());
-            
+
             Loaded = true;
             working = false;
             //Task<IPathNode[][][]> loadDataTask = Task.Run(() => GenerateNodesArray());
@@ -133,8 +130,8 @@ namespace Burmuruk.Tesis.Movement.PathFindig
 
         private static IPathNode[][][] GenerateNodesArray()
         {
-            addedNodes = new ();
-            nodesWaiting = new ();
+            addedNodes = new();
+            nodesWaiting = new();
 
             LinkedList<char[]> text = LoadFromFile();
             GetNodesFromText(text, out IPathNode[][][] nodes);
@@ -304,8 +301,8 @@ namespace Burmuruk.Tesis.Movement.PathFindig
                     byte[] bytes = new byte[50];
                     totalRedaded = stream.Read(bytes, 0, bytes.Length);
                     text.AddLast(Encoding.UTF8.GetChars(bytes));
-                    
-                } while(totalRedaded > 0);
+
+                } while (totalRedaded > 0);
             }
 
             return text;

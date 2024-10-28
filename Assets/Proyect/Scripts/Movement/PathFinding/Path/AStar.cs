@@ -125,7 +125,7 @@ namespace Burmuruk.AI.PathFinding
                         if (!data.ContainsKey(conection.node))
                             Start(conection.node, ref lists);
 
-                        if (data[conection.node].state == NodeState.Checked) continue;
+                        if (data[conection.node].state == NodeState.Checked || !conection.node.IsEnabled) continue;
 
                         var next = conection.node;
                         Update_Previous(ref next, cur, ref data);

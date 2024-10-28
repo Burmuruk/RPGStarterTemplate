@@ -78,6 +78,8 @@ namespace Burmuruk.WorldG.Patrol
         public Action OnStart { get; set; }
         public PatrolController PatrolController { get => patrol; set => patrol = value; }
 
+        public bool IsEnabled { get; private set; } = true;
+
         #region Unity methods
         private void Awake()
         {
@@ -141,6 +143,11 @@ namespace Burmuruk.WorldG.Patrol
 
             copyData = new CopyData(true, this);
             isSelected = true;
+        }
+
+        public void Enable(bool shouldEnable = true)
+        {
+            IsEnabled = shouldEnable;
         }
     }
 }

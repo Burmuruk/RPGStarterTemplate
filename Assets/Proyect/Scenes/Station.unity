@@ -1672,6 +1672,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   progress: {fileID: 11400000, guid: b60103440744fcf4ba2253c9457f652f, type: 2}
   inventory: {fileID: 0}
+  m_enemies: []
 --- !u!4 &637961057
 Transform:
   m_ObjectHideFlags: 0
@@ -1952,7 +1953,7 @@ PrefabInstance:
         type: 3}
       propertyPath: patrolController
       value: 
-      objectReference: {fileID: 1036899386}
+      objectReference: {fileID: 0}
     - target: {fileID: 8472945710097603360, guid: 79e9655a46d78f9428dc961285d1d810,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -2277,7 +2278,7 @@ MonoBehaviour:
   findOnStart: 1
   shouldDraw: 1
   cyclicType: 0
-  nodesCount: 2
+  nodesCount: 0
   lineColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   initialized: 1
 --- !u!114 &1036899386
@@ -4071,6 +4072,11 @@ PrefabInstance:
         type: 3}
       propertyPath: _id
       value: 33160
+      objectReference: {fileID: 0}
+    - target: {fileID: 2781127788951281518, guid: de45e208c98761840b7537fc8677675b,
+        type: 3}
+      propertyPath: _enable
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2781127788951281518, guid: de45e208c98761840b7537fc8677675b,
         type: 3}
