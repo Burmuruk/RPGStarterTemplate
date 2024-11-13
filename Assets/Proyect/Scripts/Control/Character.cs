@@ -14,17 +14,19 @@ namespace Burmuruk.Tesis.Control
     public class Character : MonoBehaviour, IJsonSaveable, ISelectable
     {
         #region Variables
-        [Header("References")]
+        [Header("References"), Space()]
         [SerializeField] protected Transform farPercept;
         [SerializeField] protected Transform closePercept;
         [SerializeField] protected Material[] shaders;
-        [Space(), Header("Status"), Space()]
+        
+        [Space(), Header("Perception"), Space()]
         [SerializeField] protected bool hasFarPerception;
         [SerializeField] protected bool hasClosePerception;
         [SerializeField] CharacterType characterType;
-
-        [Space(), Header("Settings")]
         [SerializeField] protected string enemyTag;
+
+        [Space(), Header("Status"), Space()]
+        [SerializeField] public BasicStats stats;
         //[SerializeField] protected float farRadious;
         //[SerializeField] protected float closeRadious;
 
@@ -33,7 +35,6 @@ namespace Burmuruk.Tesis.Control
         [HideInInspector] public Fighter fighter;
         [HideInInspector] public ActionScheduler actionScheduler = new();
         [HideInInspector] protected IInventory inventory;
-        [SerializeField] public BasicStats stats;
 
         protected Collider[] eyesPerceibed, earsPerceibed;
         protected bool isTargetFar = false;

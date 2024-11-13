@@ -513,6 +513,21 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -62
       objectReference: {fileID: 0}
+    - target: {fileID: 3060379294390392907, guid: 1dcb0cf7172e3a544878ce85eaf538e6,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3060379294390392907, guid: 1dcb0cf7172e3a544878ce85eaf538e6,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3060379294390392907, guid: 1dcb0cf7172e3a544878ce85eaf538e6,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3351618778035578996, guid: 1dcb0cf7172e3a544878ce85eaf538e6,
         type: 3}
       propertyPath: m_AnchorMax.y
@@ -563,6 +578,41 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -62
       objectReference: {fileID: 0}
+    - target: {fileID: 3761655060786639766, guid: 1dcb0cf7172e3a544878ce85eaf538e6,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3761655060786639766, guid: 1dcb0cf7172e3a544878ce85eaf538e6,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 7742635968989040147}
+    - target: {fileID: 3761655060786639766, guid: 1dcb0cf7172e3a544878ce85eaf538e6,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: ShowSavingOptions
+      objectReference: {fileID: 0}
+    - target: {fileID: 3761655060786639766, guid: 1dcb0cf7172e3a544878ce85eaf538e6,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Burmuruk.Tesis.Control.LevelManager, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 3915745207289967451, guid: 1dcb0cf7172e3a544878ce85eaf538e6,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 7742635968989040147}
+    - target: {fileID: 3915745207289967451, guid: 1dcb0cf7172e3a544878ce85eaf538e6,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: GoToMainMenu
+      objectReference: {fileID: 0}
+    - target: {fileID: 3915745207289967451, guid: 1dcb0cf7172e3a544878ce85eaf538e6,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Burmuruk.Tesis.Control.LevelManager, Assembly-CSharp
+      objectReference: {fileID: 0}
     - target: {fileID: 3943658809574552637, guid: 1dcb0cf7172e3a544878ce85eaf538e6,
         type: 3}
       propertyPath: m_text
@@ -577,6 +627,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4673464629250965009, guid: 1dcb0cf7172e3a544878ce85eaf538e6,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5727514257515930360, guid: 1dcb0cf7172e3a544878ce85eaf538e6,
         type: 3}
@@ -628,6 +683,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6105292512742785949, guid: 1dcb0cf7172e3a544878ce85eaf538e6,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 7742635968989040147}
+    - target: {fileID: 6105292512742785949, guid: 1dcb0cf7172e3a544878ce85eaf538e6,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: ExitGame
+      objectReference: {fileID: 0}
+    - target: {fileID: 6105292512742785949, guid: 1dcb0cf7172e3a544878ce85eaf538e6,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Burmuruk.Tesis.Control.LevelManager, Assembly-CSharp
+      objectReference: {fileID: 0}
     - target: {fileID: 6293762284262953587, guid: 1dcb0cf7172e3a544878ce85eaf538e6,
         type: 3}
       propertyPath: m_SizeDelta.x
@@ -662,6 +732,21 @@ PrefabInstance:
         type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -62
+      objectReference: {fileID: 0}
+    - target: {fileID: 8145989607027794117, guid: 1dcb0cf7172e3a544878ce85eaf538e6,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 7742635968989040147}
+    - target: {fileID: 8145989607027794117, guid: 1dcb0cf7172e3a544878ce85eaf538e6,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: Pause
+      objectReference: {fileID: 0}
+    - target: {fileID: 8145989607027794117, guid: 1dcb0cf7172e3a544878ce85eaf538e6,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Burmuruk.Tesis.Control.LevelManager, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 8148788640092565028, guid: 1dcb0cf7172e3a544878ce85eaf538e6,
         type: 3}

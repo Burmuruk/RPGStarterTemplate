@@ -8,6 +8,7 @@ namespace Burmuruk.Tesis.Control.AI
 {
     public class AIEHordeDistance : AIEnemyController
     {
+        [Space(), Header("Horde Settings"), Space()]
         [SerializeField] GameObject horde;
         [SerializeField] float coolDownHorde;
         [SerializeField] float hordeInvokeTime;

@@ -38,6 +38,7 @@ namespace Burmuruk.Tesis.Saving
         {
             var saver = GetComponent<JsonSavingSystem>();
             OnLoading += (_) => { FindObjectOfType<GameManager>()?.SetState(GameManager.State.Loading); };
+            OnLoading += (_) => FindObjectOfType<LevelManager>()?.Resume();
 
             saver.onSceneLoaded += () =>
             {

@@ -188,6 +188,11 @@ namespace Burmuruk.Tesis.Control
             menuCharacters.SwitchExtraData();
         }
 
+        public void ShowSavingOptions()
+        {
+            FindObjectOfType<SavingUI>().ShowSlots();
+        }
+
         public void Pause()
         {
             if (gameManager.GameState == GameManager.State.Pause)
@@ -205,6 +210,18 @@ namespace Burmuruk.Tesis.Control
                     pauseMenu.gameObject.SetActive(true);
                     Time.timeScale = 0;
                 }
+            }
+        }
+
+        public void Resume()
+        {
+                if (gameManager.Continue())
+                {
+                    pauseMenu.gameObject.SetActive(false);
+                    Time.timeScale = 1;
+                }
+            if (gameManager.GameState == GameManager.State.Pause)
+            {
             }
         }
 

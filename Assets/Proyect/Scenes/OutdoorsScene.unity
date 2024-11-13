@@ -2885,7 +2885,7 @@ GameObject:
   - component: {fileID: 517795589}
   - component: {fileID: 517795594}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: Cinamatic
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4466,6 +4466,7 @@ MonoBehaviour:
   x1: {fileID: 1251575587}
   x2: {fileID: 445758076}
   canCreateMesh: 0
+  addDynamicObjs: 1
   showMeshZone: 0
   phisicNodes: 0
   layer: 9
