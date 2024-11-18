@@ -13,8 +13,7 @@ namespace Burmuruk.Tesis.Utilities
         {
             get
             {
-                if (TemporalSaver.TryLoad(_id, out object args))
-                    _enable = (bool)args;
+                LoadTemporalInfo();
 
                 return _enable;
             }
@@ -35,11 +34,6 @@ namespace Burmuruk.Tesis.Utilities
             }
         }
 
-        private void Awake()
-        {
-            
-        }
-
         public void Enable(bool shouldEnable)
         {
             _enable = true;
@@ -57,7 +51,7 @@ namespace Burmuruk.Tesis.Utilities
             execution = SavingExecution.Admin;
             JObject state = new JObject();
 
-            state["HasSpawned"] = _enable;
+            state["Enabled"] = _enable;
 
             return state;
         }

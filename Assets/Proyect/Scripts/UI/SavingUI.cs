@@ -83,10 +83,17 @@ public class SavingUI : MonoBehaviour
         }
     }
 
-    public void ShowSlots()
+    public void ToggleSlots()
     {
-        EnableCurrentSlots(savingWrapper.FindAvailableSlots(out var sprites), sprites);
-        slotsContainer.SetActive(!slotsContainer.activeSelf);
+        ShowSlots(!slotsContainer.activeSelf);
+    }
+
+    public void ShowSlots(bool shouldShow)
+    {
+        if (shouldShow)
+            EnableCurrentSlots(savingWrapper.FindAvailableSlots(out var sprites), sprites);
+
+        slotsContainer.SetActive(shouldShow);
     }
 
     public void LoadSlot(int slot)
@@ -101,7 +108,7 @@ public class SavingUI : MonoBehaviour
         {
             savingWrapper.DeleteSlot(slot);
             EnterDeletingMode();
-            ShowSlots();
+            ToggleSlots();
         }
     }
 

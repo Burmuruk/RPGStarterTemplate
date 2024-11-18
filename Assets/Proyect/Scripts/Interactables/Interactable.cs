@@ -1,6 +1,7 @@
 ﻿using Burmuruk.Tesis.Control;
 using Burmuruk.Tesis.Control.AI;
 using Burmuruk.Tesis.Saving;
+using Burmuruk.Tesis.Utilities;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 using UnityEngine.Events;
@@ -11,7 +12,11 @@ namespace Burmuruk.Tesis.Interaction
     {
         [SerializeField] bool isPersistent;
         [SerializeField] bool triggerOnCollition = false;
+        [SerializeField] GameObject itemToDisable;
+        [SerializeField] bool shouldDisable;
         private bool disabled;
+
+        DisableInTime<GameObject> disabler;
 
         public UnityEvent OnInteract;
 
@@ -72,6 +77,12 @@ namespace Burmuruk.Tesis.Interaction
         private void SetDisabled(bool value)
         {
             disabled = value;
+        }
+
+        public void DisableByTime(float time)
+        {
+            disabler ??= new(time, itemToDisable);
+            disabler.EnableInTime(shouldDisable);
         }
     }
 }

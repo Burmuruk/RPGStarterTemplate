@@ -35,8 +35,6 @@ namespace Burmuruk.Tesis.Control
         {
             get
             {
-                
-
                 return players;
             }
         }
@@ -66,6 +64,19 @@ namespace Burmuruk.Tesis.Control
             }
         }
         public (Formation value, object args) CurFormation { get => curFormation; }
+        public GameObject PlayersParent
+        {
+            get
+            {
+                if (playersParent == null)
+                {
+                    playersParent = new GameObject("Players");
+                    DontDestroyOnLoad(playersParent);
+                }
+
+                return playersParent;
+            }
+        }
 
         private void Awake()
         {
@@ -130,12 +141,6 @@ namespace Burmuruk.Tesis.Control
 
         public AIGuildMember CreatePlayer()
         {
-            if (playersParent == null)
-            {
-                playersParent = new GameObject("Players");
-                DontDestroyOnLoad(playersParent);
-            }
-
             Vector3 position = default;
             foreach (var spawner in FindObjectsOfType<PlayerSpawner>())
             {
@@ -145,7 +150,7 @@ namespace Burmuruk.Tesis.Control
                 }
             }
 
-            var instance = Instantiate(PlayerPrefab, position, Quaternion.identity, playersParent.transform);
+            var instance = Instantiate(PlayerPrefab, position, Quaternion.identity, PlayersParent.transform);
 
             var player = instance.GetComponent<AIGuildMember>();
             instance.GetComponent<JsonSaveableEntity>().SetUniqueIdentifier();
@@ -255,8 +260,6 @@ namespace Burmuruk.Tesis.Control
             players.Add(member);
             OnPlayerAdded?.Invoke(member);
 
-            
-
             for (int i = 0; i < players.Count; i++)
             {
                 if (players[i] == mainPlayer)
@@ -268,7 +271,6 @@ namespace Burmuruk.Tesis.Control
 
             if (m_CurPlayer.HasValue)
                 member.SetMainPlayer(CurPlayer);
-            //member.SetMainPlayer(CurPlayer);
         }
 
         public void RemoveMember(AIGuildMember member)

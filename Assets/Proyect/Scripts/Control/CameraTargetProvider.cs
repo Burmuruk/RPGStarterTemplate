@@ -8,6 +8,7 @@ namespace Burmuruk.Tesis.Control
         //[Header("Referenes")]
         PlayerManager playerManager;
         new CinemachineVirtualCamera camera;
+        CinemachineVirtualCamera lastCamera;
 
         private void Awake()
         {
@@ -19,6 +20,19 @@ namespace Burmuruk.Tesis.Control
         void SetTarget()
         {
             camera.Follow = playerManager.CurPlayer.transform;
+        }
+
+        public void DisableCurrentCamera()
+        {
+            lastCamera = camera;
+            camera.gameObject.SetActive(false);
+        }
+
+        public void EnableLastCamera()
+        {
+            if (lastCamera == null) return;
+
+            lastCamera.gameObject.SetActive(true);
         }
     }
 }

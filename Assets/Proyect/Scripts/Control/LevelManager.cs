@@ -11,6 +11,7 @@ using UnityEditor.Media;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
+using static Cinemachine.DocumentationSortingAttribute;
 
 namespace Burmuruk.Tesis.Control
 {
@@ -25,6 +26,8 @@ namespace Burmuruk.Tesis.Control
         UIMenuCharacters menuCharacters;
         PlayerManager playerManager;
 
+        List<GameObject> itemsToDestroy = new();
+
         private int slotIdx = 1;
         private bool initialized = false;
 
@@ -34,7 +37,6 @@ namespace Burmuruk.Tesis.Control
         private void Awake()
         {
             savingWrapper = FindObjectOfType<JsonSavingWrapper>();
-            playerManager = FindObjectOfType<PlayerManager>();
             //playerManager.OnPlayerAdded += SetPathToCharacter;
 
             NavSaver.Restart();
@@ -44,12 +46,19 @@ namespace Burmuruk.Tesis.Control
 
         void Start()
         {
+            playerManager = FindObjectOfType<PlayerManager>();
+            AddItemToDestroy(playerManager.PlayersParent);
+            AddItemToDestroy(FindObjectOfType<SavingUI>().gameObject);
+
             gameManager = GetComponent<GameManager>();
             SceneManager.sceneLoaded += VerifyScene;
             SceneManager.sceneUnloaded += RestoreScene;
 
             gameManager.onStateChange += UpdateGameState;
-            OnNavmeshLoaded += gameManager.NotifyLevelLoaded;
+            OnNavmeshLoaded += () => { 
+                gameManager.NotifyLevelLoaded();
+                Resume();
+            };
 
             StartCoroutine(Autosave());
             DontDestroyOnLoad(gameObject);
@@ -125,10 +134,18 @@ namespace Burmuruk.Tesis.Control
             }
         }
 
+        public void AddItemToDestroy(GameObject item)
+        {
+            itemsToDestroy.Add(item);
+        }
+
         public void GoToMainMenu()
         {
+            itemsToDestroy.ForEach(obj => Destroy(obj));
+
             //SaveGame(slotIdx);
             gameManager.GoToMainMenu();
+            Destroy(gameObject);
         }
 
         public void ExitGame()
@@ -188,9 +205,14 @@ namespace Burmuruk.Tesis.Control
             menuCharacters.SwitchExtraData();
         }
 
-        public void ShowSavingOptions()
+        public void ToggleSavingOptions()
         {
-            FindObjectOfType<SavingUI>().ShowSlots();
+            FindObjectOfType<SavingUI>().ToggleSlots();
+        }
+
+        public void HideSavingOptions()
+        {
+            FindObjectOfType<SavingUI>().ShowSlots(false);
         }
 
         public void Pause()
@@ -201,6 +223,7 @@ namespace Burmuruk.Tesis.Control
                 {
                     pauseMenu.gameObject.SetActive(false);
                     Time.timeScale = 1;
+                    HideSavingOptions();
                 }
             }
             else if (gameManager.GameState == GameManager.State.Playing)
@@ -215,11 +238,21 @@ namespace Burmuruk.Tesis.Control
 
         public void Resume()
         {
-                if (gameManager.Continue())
-                {
-                    pauseMenu.gameObject.SetActive(false);
-                    Time.timeScale = 1;
-                }
+            if (gameManager.Continue())
+            {
+                pauseMenu.gameObject.SetActive(false);
+                Time.timeScale = 1;
+
+                HideSavingOptions();
+            }
+            else if (pauseMenu.gameObject.activeSelf)
+            {
+                pauseMenu.gameObject.SetActive(false);
+                Time.timeScale = 1;
+
+                HideSavingOptions();
+            }
+
             if (gameManager.GameState == GameManager.State.Pause)
             {
             }

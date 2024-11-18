@@ -72,8 +72,8 @@ namespace Burmuruk.Tesis.Control
 
         public void GoToMainMenu()
         {
-            SceneManager.LoadScene(0);
             Time.timeScale = 1;
+            SceneManager.LoadScene(0);
         }
 
         public bool Continue()

@@ -77,6 +77,9 @@ namespace Burmuruk.Tesis.Interaction
 
             DestroyLastItems();
 
+            GameObject parent = new GameObject("Pickups");
+            parent.transform.position = Vector3.zero;
+
             while (state.ContainsKey(i.ToString()))
             {
                 if (state[i.ToString()]["Picked"].ToObject<bool>())
@@ -96,7 +99,7 @@ namespace Burmuruk.Tesis.Interaction
                 };
 
                 var item = list.Get(curItemState["Id"].ToObject<int>());
-                Pickup inst = Instantiate(item.Pickup, itemData.position, itemData.rotation, transform);
+                Pickup inst = Instantiate(item.Pickup, itemData.position, itemData.rotation, parent.transform);
 
                 itemData.pickup = inst;
                 items[inst.gameObject] = itemData;
