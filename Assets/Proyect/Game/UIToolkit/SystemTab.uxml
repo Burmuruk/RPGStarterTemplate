@@ -1,0 +1,33 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Proyect/Game/UIToolkit/BasicSS.uss?fileID=7433441132597879392&amp;guid=2693b02dba201b24e87668e3aaaa0fc1&amp;type=3#BasicSS" />
+    <ui:VisualElement style="flex-grow: 1;">
+        <ui:VisualElement name="tabHeaderContainer" class="TabsContainer" style="flex-grow: 1; flex-direction: row;">
+            <ui:Button text="Navigation" parse-escape-sequences="true" display-tooltip-when-elided="true" name="btnNavigation" class="Tabs" />
+            <ui:Button text="Interactables" parse-escape-sequences="true" display-tooltip-when-elided="true" name="btnInteractions" class="Tabs" />
+            <ui:Button text="Missions" parse-escape-sequences="true" display-tooltip-when-elided="true" name="btnMissions" class="Tabs" />
+            <ui:Button text="Saving" parse-escape-sequences="true" display-tooltip-when-elided="true" name="btnSaving" class="Tabs" />
+        </ui:VisualElement>
+        <ui:VisualElement name="navContainer" class="InfoContainer" style="flex-grow: 1;">
+            <ui:VisualElement style="flex-grow: 1;">
+                <ui:ScrollView name="navInfoContainer" />
+            </ui:VisualElement>
+            <ui:VisualElement name="navButtonsContainer" style="flex-grow: 1; flex-direction: row; justify-content: center; align-items: center; max-height: 35px; margin-top: 5px;">
+                <ui:Button text="Save" parse-escape-sequences="true" display-tooltip-when-elided="true" class="MidButton" />
+                <ui:Button text="Delete" parse-escape-sequences="true" display-tooltip-when-elided="true" class="MidButton" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="missionsContainer" class="InfoContainer" style="flex-grow: 1;" />
+        <ui:VisualElement name="savingContainer" class="InfoContainer" style="flex-grow: 1;">
+            <ui:VisualElement class="InfoContainer" style="flex-grow: 50; min-height: 200px;">
+                <ui:ScrollView name="savingInfoCont" style="padding-top: 5px; padding-right: 5px; padding-bottom: 5px; padding-left: 5px;" />
+            </ui:VisualElement>
+            <ui:VisualElement style="flex-grow: 1; max-height: 100px; margin-top: 5px; min-height: 90px;">
+                <ui:Label text="Note: This saving system just works for elements with persistent data between game sesions. For persistent elements just betweens scenes use the component &quot;Persistent saver&quot;.&#10;" parse-escape-sequences="true" display-tooltip-when-elided="true" style="white-space: normal; border-left-color: rgb(203, 161, 26); border-right-color: rgb(203, 161, 26); border-top-color: rgb(203, 161, 26); border-bottom-color: rgb(203, 161, 26); border-top-width: 2px; border-right-width: 2px; border-bottom-width: 2px; border-left-width: 2px; border-top-left-radius: 9px; border-top-right-radius: 9px; border-bottom-right-radius: 9px; border-bottom-left-radius: 9px; text-overflow: clip; padding-left: 4px;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="interactionContainer" class="InfoContainer" style="flex-grow: 1;" />
+        <ui:VisualElement name="notifications" class="Notification">
+            <ui:Label tabindex="-1" text="Notification" parse-escape-sequences="true" display-tooltip-when-elided="true" name="lblNotifications" class="NotificationTxt" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -18,7 +18,7 @@ namespace Burmuruk.AI
         deleting
     }
 
-    public class NodesList : MonoBehaviour
+    public class NodesList : ScriptableObject
     {
         #region Variables
         [Header("Nodes Settings")]
@@ -101,27 +101,7 @@ namespace Burmuruk.AI
                 Debug.LogError("All start nodes are not settled.");
                 return;
             }
-
-            //if (canCreateMesh)
-            //    Create_PathMesh();
-            //CalculateConnections();
         }
-
-        //private void FixedUpdate()
-        //{
-        //    if (meshState == pState.None && connectionsState == pState.None && memoryFreed == pState.None)
-        //    {
-        //        Calculate_PathMesh();
-        //    }
-        //    else if (meshState == pState.finished && connectionsState == pState.None && memoryFreed == pState.None)
-        //    {
-        //        CalculateNodesConnections();
-        //    }
-        //    else if (meshState == pState.finished && connectionsState == pState.finished && memoryFreed == pState.None)
-        //    {
-        //        SaveList();
-        //    }
-        //}
 
         private void OnDrawGizmos()
         {
@@ -160,19 +140,19 @@ namespace Burmuruk.AI
             if (AreProcessRunning || AreProcessDeleting || meshState != pState.finished) return;
 
             meshState = pState.deleting;
-            var nodes = transform.GetComponentsInChildren<DebugNode>();
-            nodeCount = 0;
-            this.nodes.Clear();
+//            var nodes = transform.GetComponentsInChildren<DebugNode>();
+//            nodeCount = 0;
+//            this.nodes.Clear();
 
-            foreach (DebugNode node in nodes)
-            {
-#if UNITY_EDITOR
-                DestroyImmediate(node.gameObject);
-                continue;
-#endif
+//            foreach (DebugNode node in nodes)
+//            {
+//#if UNITY_EDITOR
+//                DestroyImmediate(node.gameObject);
+//                continue;
+//#endif
 
-                Destroy(node.gameObject);
-            }
+//                Destroy(node.gameObject);
+//            }
 
             CanCreateMesh = true;
             meshState = pState.None;
@@ -182,11 +162,11 @@ namespace Burmuruk.AI
         {
             if (AreProcessRunning || AreProcessDeleting || connectionsState != pState.finished) return;
 
-            connectionsState = pState.deleting;
-            var nodes = transform.GetComponentsInChildren<IPathNode>();
+            //connectionsState = pState.deleting;
+            //var nodes = transform.GetComponentsInChildren<IPathNode>();
 
-            foreach (var node in nodes)
-                node.ClearConnections();
+            //foreach (var node in nodes)
+            //    node.ClearConnections();
 
             connectionsState = pState.None;
         }
@@ -550,11 +530,11 @@ namespace Burmuruk.AI
 
             if (!phisicNodes) return;
 
-            var newNode = Instantiate(debugNode, transform);
-            newNode.transform.position = position;
-            newNode.transform.name = "Node " + node.ID.ToString();
-            var nodeCs = newNode.GetComponent<DebugNode>();
-            nodeCs.SetNode(in node);
+            //var newNode = Instantiate(debugNode, transform);
+            //newNode.transform.position = position;
+            //newNode.transform.name = "Node " + node.ID.ToString();
+            //var nodeCs = newNode.GetComponent<DebugNode>();
+            //nodeCs.SetNode(in node);
         }
 
         private void Draw_MeshZone()
@@ -581,39 +561,39 @@ namespace Burmuruk.AI
 
         private void Draw_Mesh()
         {
-            var nodes = transform.GetComponentsInChildren<IPathNode>();
+            //var nodes = transform.GetComponentsInChildren<IPathNode>();
 
-            for (int i = 0; i < nodes.Length; i++)
-            {
-                var cur = nodes[i];
+            //for (int i = 0; i < nodes.Length; i++)
+            //{
+            //    var cur = nodes[i];
 
-                for (int j = i + 1; j < nodes.Length; j++)
-                {
-                    if (Get_Magnitud(cur, nodes[j]) is var m && m <= nodDistance)
-                    {
-                        bool hitted1 = Detect_OjbstaclesBetween(cur, nodes[j], out _);
-                        bool hitted2 = Detect_OjbstaclesBetween(nodes[j], cur, out _);
+            //    for (int j = i + 1; j < nodes.Length; j++)
+            //    {
+            //        if (Get_Magnitud(cur, nodes[j]) is var m && m <= nodDistance)
+            //        {
+            //            bool hitted1 = Detect_OjbstaclesBetween(cur, nodes[j], out _);
+            //            bool hitted2 = Detect_OjbstaclesBetween(nodes[j], cur, out _);
 
-                        if (!hitted1 && !hitted2)
-                            Debug.DrawLine(cur.Position + new Vector3(0, 1.5f, 0), (nodes[j].Position) + new Vector3(0, 1.5f, 0), Color.red);
-                    }
-                }
-            }
+            //            if (!hitted1 && !hitted2)
+            //                Debug.DrawLine(cur.Position + new Vector3(0, 1.5f, 0), (nodes[j].Position) + new Vector3(0, 1.5f, 0), Color.red);
+            //        }
+            //    }
+            //}
         }
 
         private void DisableDynamicObjects()
         {
-            DynamicNavObject[] dynamicNavObjects = FindObjectsOfType<DynamicNavObject>();
+            //DynamicNavObject[] dynamicNavObjects = FindObjectsOfType<DynamicNavObject>();
 
-            foreach (var dynamicNavObject in dynamicNavObjects)
-            {
-                if (!dynamicNavObject.IsEnable) continue;
+            //foreach (var dynamicNavObject in dynamicNavObjects)
+            //{
+            //    if (!dynamicNavObject.IsEnable) continue;
 
-                foreach (var node in dynamicNavObject.Nodes)
-                {
-                    //node.Enable(false);
-                }
-            }
+            //    foreach (var node in dynamicNavObject.Nodes)
+            //    {
+            //        //node.Enable(false);
+            //    }
+            //}
         }
         #endregion
 
@@ -673,7 +653,6 @@ namespace Burmuruk.AI
             //nodeList.SetTarget(pRadious, nodDistance, MaxAngle);
 
             //myList.managedReferenceValue = nodeList;
-            print(length);
             NavSaver.SaveExtraData(pRadious, nodDistance, MaxAngle);
             NavSaver.SaveList(connections, length);
         }

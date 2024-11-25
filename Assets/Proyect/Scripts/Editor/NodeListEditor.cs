@@ -56,7 +56,7 @@ namespace Burmuruk.AI
                     {
                         nodeList.Destroy_Nodes();
                     }
-                } 
+                }
             }
 
             if (nodeList.connectionsState == pState.finished && nodeList.meshState == pState.finished)

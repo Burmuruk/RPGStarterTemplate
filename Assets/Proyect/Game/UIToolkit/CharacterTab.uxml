@@ -1,0 +1,26 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Proyect/Game/UIToolkit/BasicSS.uss?fileID=7433441132597879392&amp;guid=2693b02dba201b24e87668e3aaaa0fc1&amp;type=3#BasicSS" />
+    <Style src="project://database/Assets/Proyect/Game/UIToolkit/TagSystem.uss?fileID=7433441132597879392&amp;guid=200e951062ff83b43af80ebe6829b030&amp;type=3#TagSystem" />
+    <ui:VisualElement name="Tabs" class="TabsContainer" style="flex-grow: 1;">
+        <ui:Button text="Class" parse-escape-sequences="true" display-tooltip-when-elided="true" class="Tabs" />
+        <ui:Button text="Character" parse-escape-sequences="true" display-tooltip-when-elided="true" class="Tabs" />
+        <ui:Button text="Components" parse-escape-sequences="true" display-tooltip-when-elided="true" class="Tabs" />
+        <ui:Button text="Dialogues" parse-escape-sequences="true" display-tooltip-when-elided="true" class="Tabs" />
+    </ui:VisualElement>
+    <ui:VisualElement name="Info" class="InfoContainer" style="flex-grow: 1;">
+        <ui:VisualElement style="flex-grow: 1; max-height: 100px;">
+            <ui:TextField picking-mode="Ignore" label="Text Field" value="filler text" name="TextField" />
+            <ui:VisualElement class="Tag">
+                <ui:Button text="Button" parse-escape-sequences="true" display-tooltip-when-elided="true" />
+                <ui:Toggle label="Save" style="flex-direction: row-reverse;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="ClassTab" style="flex-grow: 1; display: flex;" />
+        <ui:VisualElement name="CharacterTab" style="flex-grow: 1; display: none;" />
+        <ui:VisualElement name="ComponentsTab" style="flex-grow: 1; display: none;" />
+        <ui:VisualElement name="DialoguesTab" style="flex-grow: 1; display: none;" />
+    </ui:VisualElement>
+    <ui:VisualElement name="Notification" class="Notification" style="flex-grow: 1;">
+        <ui:Label tabindex="-1" text="Label" parse-escape-sequences="true" display-tooltip-when-elided="true" />
+    </ui:VisualElement>
+</ui:UXML>
