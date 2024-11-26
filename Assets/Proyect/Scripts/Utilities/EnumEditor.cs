@@ -18,12 +18,9 @@ namespace Burmuruk.Tesis.Utilities
             var lines = File.ReadAllLines(filePath);
 
             bool containsEnum = false;
-            bool enumStarted = false;
-            bool endOfEnum = false;
             bool elementAdded = false;
-            string lastLine = "";
 
-            if (!RewriteFile(enumName, value, filePath, lines, ref containsEnum, ref enumStarted, ref endOfEnum, ref elementAdded, lastLine))
+            if (!RewriteFile())
                 return false;
 
             if (containsEnum && elementAdded)
@@ -34,8 +31,12 @@ namespace Burmuruk.Tesis.Utilities
 
             return containsEnum && elementAdded;
 
-            bool RewriteFile(string enumName, string value, string filePath, string[] lines, ref bool containsEnum, ref bool enumStarted, ref bool endOfEnum, ref bool elementAdded, string lastLine)
+            bool RewriteFile()
             {
+                bool enumStarted = false;
+                bool endOfEnum = false;
+                string lastLine = "";
+
                 using (var writer = new StreamWriter(filePath))
                 {
                     foreach (var line in lines)
@@ -62,6 +63,67 @@ namespace Burmuruk.Tesis.Utilities
 
                         writer.WriteLine(line);
                         lastLine = line;
+
+                        if (line.Contains($"enum {enumName}"))
+                            containsEnum = true;
+                    }
+                }
+
+                return true;
+            }
+        }
+
+        public bool Modify(string enumName, string[] values, string filePath)
+        {
+            if (Application.isPlaying) return false;
+
+            if (HasSpecialCharacter(enumName) || values.Any(chr => HasSpecialCharacter(chr)))
+                return false;
+
+            var lines = File.ReadAllLines(filePath);
+
+            bool containsEnum = false;
+            bool elementAdded = false;
+
+            if (!RewriteFile())
+                return false;
+
+            if (containsEnum && elementAdded)
+            {
+                AssetDatabase.Refresh();
+                RecompileScripts();
+            }
+
+            return containsEnum && elementAdded;
+
+            bool RewriteFile()
+            {
+                bool inValues = false;
+
+                using (var writer = new StreamWriter(filePath))
+                {
+                    int i = 0;
+
+                    foreach (var line in lines)
+                    {
+                        if (line.Contains("{"))
+                        {
+                            if (line.Contains("}") || line.Contains(",")) return false;
+
+                            inValues = true;
+                        }
+                        else if (line.Contains("}"))
+                        {
+                            inValues = false;
+                        }
+                        else if (inValues)
+                        {
+                            writer.WriteLine(values[i] + ",");
+                            ++i;
+                            continue;
+                        }
+
+                        writer.WriteLine(line);
 
                         if (line.Contains($"enum {enumName}"))
                             containsEnum = true;

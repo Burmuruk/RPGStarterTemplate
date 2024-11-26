@@ -13,6 +13,10 @@ public class BaseLevelEditor : EditorWindow
     protected Dictionary<string, VisualElement> infoContainers = new();
 
     Button selectedButton;
+    protected const string acceptButtonName = "AceptButton";
+    protected const string cancelButtonName = "CancelButton";
+
+    protected bool changesInTab = false;
 
     protected virtual void GetTabButtons() { }
     protected virtual void GetInfoContainers() { }
@@ -36,7 +40,7 @@ public class BaseLevelEditor : EditorWindow
                     //SelectButton(tab);
                 }
             }
-            else
+            else if (!button.Value.ClassListContains("Disable"))
             {
                 button.Value.AddToClassList("Disable");
             }
@@ -45,12 +49,37 @@ public class BaseLevelEditor : EditorWindow
 
     protected void ChangeTab(VisualElement visualElement)
     {
-        foreach (var button in infoContainers)
+        foreach (var container in infoContainers)
         {
-            button.Value.AddToClassList("Disable");
+            if (!container.Value.ClassListContains("Disable"))
+            {
+                container.Value.AddToClassList("Disable"); 
+            }
         }
 
-        visualElement.RemoveFromClassList("Disable");
+        if (visualElement.ClassListContains("Disable"))
+            visualElement.RemoveFromClassList("Disable");
+    }
+
+    protected void SelectTabBtn(string tabButtonName)
+    {
+        foreach (var button in tabButtons)
+        {
+            if (button.Key == tabButtonName)
+            {
+                if (!button.Value.ClassListContains("Selected"))
+                {
+                    button.Value.AddToClassList("Selected");
+                } 
+            }
+            else
+            {
+                if (button.Value.ClassListContains("Selected"))
+                {
+                    button.Value.RemoveFromClassList("Selected");
+                }
+            }
+        }
     }
 
     private void SelectButton(string button, bool shouldSelect = true)
@@ -82,4 +111,10 @@ public class BaseLevelEditor : EditorWindow
         if (!pNotification.ClassListContains("Disable"))
             pNotification.AddToClassList("Disable");
     }
+
+    protected Button GetAceptButton(VisualElement container) =>
+        container.Q<Button>(acceptButtonName);
+
+    protected Button GetCancelButton(VisualElement container) =>
+        container.Q<Button>(cancelButtonName);
 }

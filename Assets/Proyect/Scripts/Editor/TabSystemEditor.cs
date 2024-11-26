@@ -1,17 +1,13 @@
-using UnityEditor;
-using UnityEngine;
-using UnityEngine.UIElements;
 using Burmuruk.AI;
-using UnityEditor.UIElements;
-using NUnit.Framework.Interfaces;
-using UnityEngine.SceneManagement;
-using System;
-using System.Collections;
 using Burmuruk.Tesis.Saving;
 using System.IO;
-using Unity.Collections.LowLevel.Unsafe;
+using UnityEditor;
+using UnityEditor.UIElements;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UIElements;
 
-public class TabSystemEditor : BaseLevelEditor
+public partial class TabSystemEditor : BaseLevelEditor
 {
     const string btnNavName = "btnNavigation";
     const string btnInteractionName = "btnInteractions";
@@ -46,6 +42,8 @@ public class TabSystemEditor : BaseLevelEditor
         GetInfoContainers();
         GetNotificationSection();
 
+        InitializeSaving();
+
         Show_NavMesh();
     }
 
@@ -75,8 +73,27 @@ public class TabSystemEditor : BaseLevelEditor
 
         tabButtons.Add(btnSavingName, container.Q<Button>(btnSavingName));
         tabButtons[btnSavingName].clicked += Show_Saving;
-    }   
+    }
 
+    private void Show_Missions()
+    {
+        if (changesInTab) ;
+            //Display warning
+
+        DisableNotification();
+        ChangeTab(btnMissionName);
+    }
+
+    private void Show_Interactions()
+    {
+        if (changesInTab) ;
+        //Display warning
+
+        DisableNotification();
+        ChangeTab(btnInteractionName);
+    }
+
+    #region Navigation
     private void Show_NavMesh()
     {
         if (CheckNavFileStatus())
@@ -85,51 +102,18 @@ public class TabSystemEditor : BaseLevelEditor
             Notify("The Navigation map wasn't found.", Color.red);
 
         ChangeTab(infoContainers[infoNavName]);
+        SelectTabBtn(btnNavName);
         VisualElement navInfo = container.Q<VisualElement>("navInfoContainer");
 
         if (navInfo.childCount == 0)
         {
             var nodesInsta = ScriptableObject.CreateInstance<NodesList>();
             var nodesEditor = NodeListEditor.CreateEditor(nodesInsta, typeof(NodeListEditor));
-            //NodeListEditor.CreateEditor();
-            //var visual = nodeListEditor.CreateInspectorGUI();
-            //var inst = new InspectorElement(nodeListEditor);
-            
-            navInfo.Add(new InspectorElement(nodesEditor)); 
+
+            navInfo.Add(new InspectorElement(nodesEditor));
         }
     }
 
-    private void Show_Missions()
-    {
-        DisableNotification();
-        ChangeTab(btnMissionName);
-    }
-
-    private void Show_Saving()
-    {
-        DisableNotification();
-        ChangeTab(infoSavingName);
-
-        var infoContainer = container.Q<VisualElement>("savingInfoCont");
-        infoContainer.Clear();
-
-        for (int i = 0; i < Enum.GetValues(typeof(SavingExecution)).Length; i++)
-        {
-            var textField = new Label(((SavingExecution)i).ToString());
-            
-            infoContainer.Add(textField);
-        }
-
-        infoContainer.Add(new TextField());
-    }
-
-    private void Show_Interactions()
-    {
-        DisableNotification();
-        ChangeTab(btnInteractionName);
-    }
-
-    #region Navigation
     bool CheckNavFileStatus()
     {
         int sceneIdx = SceneManager.GetActiveScene().buildIndex;
