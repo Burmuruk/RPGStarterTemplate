@@ -73,12 +73,21 @@ namespace Burmuruk.Tesis.Utilities
             }
         }
 
-        public bool Modify(string enumName, string[] values, string filePath)
+        public bool Modify(string enumName, string[] values, string filePath, out string error)
         {
-            if (Application.isPlaying) return false;
+            error = "";
+
+            if (Application.isPlaying) 
+            { 
+                error = "Can't continue when running application."; 
+                return false; 
+            }
 
             if (HasSpecialCharacter(enumName) || values.Any(chr => HasSpecialCharacter(chr)))
+            {
+                error = "Special characteres are not allowed.";
                 return false;
+            }
 
             var lines = File.ReadAllLines(filePath);
 

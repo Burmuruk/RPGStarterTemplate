@@ -7,121 +7,124 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
-public partial class TabSystemEditor : BaseLevelEditor
+namespace Burmuruk.Tesis.Editor
 {
-    const string btnNavName = "btnNavigation";
-    const string btnInteractionName = "btnInteractions";
-    const string btnMissionName = "btnMissions";
-    const string btnSavingName = "btnSaving";
-
-    const string infoNavName = "navContainer";
-    const string infoInteractionName = "interactionContainer";
-    const string infoMissionsName = "missionsContainer";
-    const string infoSavingName = "savingContainer";
-
-    const string defaultSaveFile = "miGuardado-";
-
-    [MenuItem("LevelEditor/System")]
-    public static void ShowWindow()
+    public partial class TabSystemEditor : BaseLevelEditor
     {
-        TabSystemEditor window = GetWindow<TabSystemEditor>();
-        window.titleContent = new GUIContent("Main Window");
-        window.minSize = new Vector2(400, 300);
-    }
+        const string btnNavName = "btnNavigation";
+        const string btnInteractionName = "btnInteractions";
+        const string btnMissionName = "btnMissions";
+        const string btnSavingName = "btnSaving";
 
-    public void CreateGUI()
-    {
-        container = rootVisualElement;
-        VisualTreeAsset visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/SystemTab.uxml");
-        container.Add(visualTree.Instantiate());
+        const string infoNavName = "navContainer";
+        const string infoInteractionName = "interactionContainer";
+        const string infoMissionsName = "missionsContainer";
+        const string infoSavingName = "savingContainer";
 
-        StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/BasicSS.uss");
-        container.styleSheets.Add(styleSheet);
+        const string defaultSaveFile = "miGuardado-";
 
-        GetTabButtons();
-        GetInfoContainers();
-        GetNotificationSection();
-
-        InitializeSaving();
-
-        Show_NavMesh();
-    }
-
-    protected override void GetInfoContainers()
-    {
-        infoContainers.Add(infoNavName, container.Q<VisualElement>(infoNavName));
-        infoContainers.Add(infoInteractionName, container.Q<VisualElement>(infoInteractionName));
-        infoContainers.Add(infoMissionsName, container.Q<VisualElement>(infoMissionsName));
-        infoContainers.Add(infoSavingName, container.Q<VisualElement>(infoSavingName));
-
-        foreach (var container in infoContainers.Values)
+        [MenuItem("LevelEditor/System")]
+        public static void ShowWindow()
         {
-            container.AddToClassList("Disable");
+            TabSystemEditor window = GetWindow<TabSystemEditor>();
+            window.titleContent = new GUIContent("Main Window");
+            window.minSize = new Vector2(400, 300);
         }
-    }
 
-    protected override void GetTabButtons()
-    {
-        tabButtons.Add(btnNavName, container.Q<Button>(btnNavName));
-        tabButtons[btnNavName].clicked += Show_NavMesh;
+        public void CreateGUI()
+        {
+            container = rootVisualElement;
+            VisualTreeAsset visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/SystemTab.uxml");
+            container.Add(visualTree.Instantiate());
 
-        tabButtons.Add(btnInteractionName, container.Q<Button>(btnInteractionName));
-        tabButtons[btnInteractionName].clicked += Show_Interactions;
+            StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/BasicSS.uss");
+            container.styleSheets.Add(styleSheet);
 
-        tabButtons.Add(btnMissionName, container.Q<Button>(btnMissionName));
-        tabButtons[btnMissionName].clicked += Show_Missions;
+            GetTabButtons();
+            GetInfoContainers();
+            GetNotificationSection();
 
-        tabButtons.Add(btnSavingName, container.Q<Button>(btnSavingName));
-        tabButtons[btnSavingName].clicked += Show_Saving;
-    }
+            InitializeSaving();
 
-    private void Show_Missions()
-    {
-        if (changesInTab) ;
+            Show_NavMesh();
+        }
+
+        protected override void GetInfoContainers()
+        {
+            infoContainers.Add(infoNavName, container.Q<VisualElement>(infoNavName));
+            infoContainers.Add(infoInteractionName, container.Q<VisualElement>(infoInteractionName));
+            infoContainers.Add(infoMissionsName, container.Q<VisualElement>(infoMissionsName));
+            infoContainers.Add(infoSavingName, container.Q<VisualElement>(infoSavingName));
+
+            foreach (var container in infoContainers.Values)
+            {
+                container.AddToClassList("Disable");
+            }
+        }
+
+        protected override void GetTabButtons()
+        {
+            tabButtons.Add(btnNavName, container.Q<Button>(btnNavName));
+            tabButtons[btnNavName].clicked += Show_NavMesh;
+
+            tabButtons.Add(btnInteractionName, container.Q<Button>(btnInteractionName));
+            tabButtons[btnInteractionName].clicked += Show_Interactions;
+
+            tabButtons.Add(btnMissionName, container.Q<Button>(btnMissionName));
+            tabButtons[btnMissionName].clicked += Show_Missions;
+
+            tabButtons.Add(btnSavingName, container.Q<Button>(btnSavingName));
+            tabButtons[btnSavingName].clicked += Show_Saving;
+        }
+
+        private void Show_Missions()
+        {
+            if (changesInTab) ;
             //Display warning
 
-        DisableNotification();
-        ChangeTab(btnMissionName);
-    }
-
-    private void Show_Interactions()
-    {
-        if (changesInTab) ;
-        //Display warning
-
-        DisableNotification();
-        ChangeTab(btnInteractionName);
-    }
-
-    #region Navigation
-    private void Show_NavMesh()
-    {
-        if (CheckNavFileStatus())
-            Notify("Navigation map found.", Color.green);
-        else
-            Notify("The Navigation map wasn't found.", Color.red);
-
-        ChangeTab(infoContainers[infoNavName]);
-        SelectTabBtn(btnNavName);
-        VisualElement navInfo = container.Q<VisualElement>("navInfoContainer");
-
-        if (navInfo.childCount == 0)
-        {
-            var nodesInsta = ScriptableObject.CreateInstance<NodesList>();
-            var nodesEditor = NodeListEditor.CreateEditor(nodesInsta, typeof(NodeListEditor));
-
-            navInfo.Add(new InspectorElement(nodesEditor));
+            DisableNotification();
+            ChangeTab(btnMissionName);
         }
-    }
 
-    bool CheckNavFileStatus()
-    {
-        int sceneIdx = SceneManager.GetActiveScene().buildIndex;
+        private void Show_Interactions()
+        {
+            if (changesInTab) ;
+            //Display warning
 
-        JsonWriter jsonWriter = new();
-        var path = jsonWriter.GetPathFromSaveFile("Saving" + sceneIdx);
+            DisableNotification();
+            ChangeTab(btnInteractionName);
+        }
 
-        return File.Exists(path);
-    }
-    #endregion
+        #region Navigation
+        private void Show_NavMesh()
+        {
+            if (CheckNavFileStatus())
+                Notify("Navigation map found.", BorderColour.Approved);
+            else
+                Notify("The Navigation map wasn't found.", BorderColour.Warning);
+
+            ChangeTab(infoContainers[infoNavName]);
+            SelectTabBtn(btnNavName);
+            VisualElement navInfo = container.Q<VisualElement>("navInfoContainer");
+
+            if (navInfo.childCount == 0)
+            {
+                var nodesInsta = ScriptableObject.CreateInstance<NodesList>();
+                var nodesEditor = NodeListEditor.CreateEditor(nodesInsta, typeof(NodeListEditor));
+
+                navInfo.Add(new InspectorElement(nodesEditor));
+            }
+        }
+
+        bool CheckNavFileStatus()
+        {
+            int sceneIdx = SceneManager.GetActiveScene().buildIndex;
+
+            JsonWriter jsonWriter = new();
+            var path = jsonWriter.GetPathFromSaveFile("Saving" + sceneIdx);
+
+            return File.Exists(path);
+        }
+        #endregion
+    } 
 }

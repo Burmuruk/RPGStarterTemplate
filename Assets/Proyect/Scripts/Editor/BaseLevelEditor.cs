@@ -1,8 +1,9 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static BaseLevelEditor;
 
 public class BaseLevelEditor : EditorWindow
 {
@@ -17,6 +18,16 @@ public class BaseLevelEditor : EditorWindow
     protected const string cancelButtonName = "CancelButton";
 
     protected bool changesInTab = false;
+    protected BorderColour borderColor = BorderColour.None;
+    
+    public enum BorderColour
+    {
+        None,
+        Approved,
+        Warning,
+        HighlightBorder,
+    }
+
 
     protected virtual void GetTabButtons() { }
     protected virtual void GetInfoContainers() { }
@@ -53,7 +64,7 @@ public class BaseLevelEditor : EditorWindow
         {
             if (!container.Value.ClassListContains("Disable"))
             {
-                container.Value.AddToClassList("Disable"); 
+                container.Value.AddToClassList("Disable");
             }
         }
 
@@ -70,7 +81,7 @@ public class BaseLevelEditor : EditorWindow
                 if (!button.Value.ClassListContains("Selected"))
                 {
                     button.Value.AddToClassList("Selected");
-                } 
+                }
             }
             else
             {
@@ -89,7 +100,7 @@ public class BaseLevelEditor : EditorWindow
 
         if (shouldSelect)
         {
-            tabButtons[button].AddToClassList("Selected"); 
+            tabButtons[button].AddToClassList("Selected");
         }
         else if (tabButtons[button].ClassListContains("Selected"))
         {
@@ -99,11 +110,34 @@ public class BaseLevelEditor : EditorWindow
         selectedButton = tabButtons[button];
     }
 
-    protected void Notify(string message, Color color)
+    protected void Notify(string message, BorderColour colour)
     {
+        string colourText = colour.ToString();
         pNotification.RemoveFromClassList("Disable");
+        RomveTags(colourText);
+
+        if (!pNotification.ClassListContains(colourText))
+            pNotification.AddToClassList(colourText);
+
         pNotification.SetEnabled(true);
         lblNotification.text = message;
+
+        void RomveTags(string colourText)
+        {
+            int count = Enum.GetValues(typeof(BorderColour)).Length;
+
+            for (int i = 0; i < count; i++)
+            {
+                if ((BorderColour)i == colour)
+                {
+                    continue;
+                }
+                else if (pNotification.ClassListContains(colourText))
+                {
+                    pNotification.RemoveFromClassList(colourText);
+                }
+            }
+        }
     }
 
     protected void DisableNotification()
@@ -117,4 +151,44 @@ public class BaseLevelEditor : EditorWindow
 
     protected Button GetCancelButton(VisualElement container) =>
         container.Q<Button>(cancelButtonName);
+
+    protected void Highlight(VisualElement textField, bool shouldHighlight, BorderColour colour = BorderColour.HighlightBorder)
+    {
+        string colourText = colour.ToString();
+        RemoveStyleClass(textField, colourText);
+
+        if (shouldHighlight)
+        {
+            if (!textField.ClassListContains(colourText))
+            {
+                textField.AddToClassList(colourText);
+            }
+        }
+        else
+        {
+            if (textField.ClassListContains(colourText))
+            {
+                textField.RemoveFromClassList(colourText);
+            }
+        }
+
+        void RemoveStyleClass(VisualElement textField, string colourText)
+        {
+            int count = Enum.GetValues(typeof(BorderColour)).Length;
+
+            for (int i = 0; i < count; i++)
+            {
+                string colour = ((BorderColour)i).ToString();
+
+                if (colour == colourText)
+                {
+                    continue;
+                }
+                else if (textField.ClassListContains(colour))
+                {
+                    textField.RemoveFromClassList(colour);
+                } 
+            }
+        }
+    }
 }
