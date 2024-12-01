@@ -13,14 +13,4 @@ MonoBehaviour:
   m_Name: CharacterTag
   m_EditorClassIdentifier: 
   characters: []
-  ItemTypes:
-  - Saveable
-  - Hability
-  - Equipable
-  - Consumable
-  bodyParts:
-  - Body
-  - Head
-  - RightHand
-  - Chest
-  - Legs
+  defaultElements: 03000000020000000b000000090000000a0000000600000004000000

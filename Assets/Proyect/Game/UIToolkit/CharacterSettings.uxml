@@ -1,0 +1,20 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Proyect/Game/UIToolkit/BasicSS.uss?fileID=7433441132597879392&amp;guid=2693b02dba201b24e87668e3aaaa0fc1&amp;type=3#BasicSS" />
+    <Style src="project://database/Assets/Proyect/Game/UIToolkit/LineTags.uss?fileID=7433441132597879392&amp;guid=1db9e95078017b3489041439420a4a43&amp;type=3#LineTags" />
+    <ui:VisualElement style="flex-grow: 1;">
+        <ui:VisualElement name="VisualElement" class="LineElements" style="flex-grow: 1; max-height: 25px; min-height: 25px; padding-left: 5px;">
+            <ui:Label tabindex="-1" text="Components" parse-escape-sequences="true" display-tooltip-when-elided="true" style="font-size: 12px; min-width: 80px; -unity-text-align: middle-left; -unity-font-style: bold;" />
+        </ui:VisualElement>
+        <ui:VisualElement name="infoComponents" class="FieldColour BaseBorder" style="flex-grow: 1; min-height: 150px; max-height: 200px; flex-shrink: 0;">
+            <ui:VisualElement class="LineElements" style="flex-grow: 1;">
+                <ui:Label tabindex="-1" text="Component" parse-escape-sequences="true" display-tooltip-when-elided="true" class="ElementTag" style="padding-bottom: 0; padding-top: 1px; max-height: 20px; margin-top: 2px;" />
+                <ui:Toggle class="LineExtraButton" style="-unity-background-image-tint-color: rgb(99, 98, 98); background-color: rgb(81, 81, 81); justify-content: center; align-items: center; padding-left: 5px;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="infoStats" />
+        <ui:VisualElement class="LineElements" style="flex-grow: 1; max-height: 25px; min-height: 25px;">
+            <ui:Label tabindex="-1" text="Type" parse-escape-sequences="true" display-tooltip-when-elided="true" style="font-size: 12px; min-width: 80px; -unity-text-align: middle-left;" />
+            <ui:EnumField type="UnityEngine.TextAlignment, UnityEngine.TextRenderingModule" value="Center" style="font-size: 12px;" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

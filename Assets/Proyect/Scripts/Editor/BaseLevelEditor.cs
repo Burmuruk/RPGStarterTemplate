@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -12,6 +13,7 @@ public class BaseLevelEditor : EditorWindow
     VisualElement pNotification;
     protected Dictionary<string, Button> tabButtons = new();
     protected Dictionary<string, VisualElement> infoContainers = new();
+    protected string curTab = "";
 
     Button selectedButton;
     protected const string acceptButtonName = "AceptButton";
@@ -41,6 +43,12 @@ public class BaseLevelEditor : EditorWindow
 
     protected void ChangeTab(string tab)
     {
+        if (string.IsNullOrEmpty(tab))
+        {
+            CloseCurrentTab();
+            return;
+        }
+
         foreach (var button in infoContainers)
         {
             if (button.Key == tab)
@@ -48,6 +56,7 @@ public class BaseLevelEditor : EditorWindow
                 if (button.Value.ClassListContains("Disable"))
                 {
                     button.Value.RemoveFromClassList("Disable");
+                    curTab = tab;
                     //SelectButton(tab);
                 }
             }
@@ -60,6 +69,12 @@ public class BaseLevelEditor : EditorWindow
 
     protected void ChangeTab(VisualElement visualElement)
     {
+        if (visualElement == null)
+        {
+            CloseCurrentTab();
+            return;
+        }
+
         foreach (var container in infoContainers)
         {
             if (!container.Value.ClassListContains("Disable"))
@@ -70,6 +85,30 @@ public class BaseLevelEditor : EditorWindow
 
         if (visualElement.ClassListContains("Disable"))
             visualElement.RemoveFromClassList("Disable");
+    }
+
+    protected void CloseCurrentTab()
+    {
+        foreach (var container in infoContainers.Values)
+            EnableContainer(container, false);
+
+        curTab = "";
+        return;
+    }
+
+    protected void EnableContainer(VisualElement container, bool shouldEnable)
+    {
+        if (shouldEnable)
+        {
+            if (container.ClassListContains("Disable"))
+            {
+                container.RemoveFromClassList("Disable");
+            }
+        }
+        else if (!container.ClassListContains("Disable"))
+        {
+            container.AddToClassList("Disable");
+        }
     }
 
     protected void SelectTabBtn(string tabButtonName)
@@ -190,5 +229,10 @@ public class BaseLevelEditor : EditorWindow
                 } 
             }
         }
+    }
+
+    protected bool IsHighlighted(VisualElement element)
+    {
+        return element.ClassListContains(BorderColour.HighlightBorder.ToString());
     }
 }

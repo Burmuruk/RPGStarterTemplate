@@ -8,32 +8,51 @@ namespace Burmuruk.Tesis.Editor
     public class CharacterTag : ScriptableObject
     {
         public List<CharacterProfile> characters = new();
+        public List<ElementType> defaultElements = new()
+        {
+            ElementType.Character,
+            ElementType.Item,
+            ElementType.Consumable,
+            ElementType.Weapon,
+            ElementType.Armor,
+            ElementType.State,
+            ElementType.Buff,
+        };
         public Dictionary<ElementType, List<string>> elements = new()
         {
-            { ElementType.Component, new() 
+            { 
+                ElementType.Character, new() 
                 { 
-                    "Movement",
-                    "Health",
-                    "Fighter",
-                    "Inventory",
-                    "Equipment",
+                    "Mage",
+                    "Tank",
+                    "Healer",
+                    "Midget",
+                    "Assasin",
                 } 
             },
-        };
-        public string[] ItemTypes = new[]
-        {
-            "Saveable",
-            "Hability",
-            "Equipable",
-            "Consumable",
-        };
-        public List<string> bodyParts = new()
-        {
-            "Body",
-            "Head",
-            "RightHand",
-            "Chest",
-            "Legs",
+            {
+                ElementType.Item, new()
+                {
+                    "Potion",
+                    "Cake",
+                }
+            },
+            {
+                ElementType.Weapon, new()
+                {
+                    "Hammer",
+                    "Sword",
+                    "GreatSword",
+                    "Dagger",
+                }
+            },
+            {
+                ElementType.State, new()
+                {
+                    "Madness",
+                    "Sleep",
+                }
+            },
         };
 
         [Serializable]
@@ -53,6 +72,9 @@ namespace Burmuruk.Tesis.Editor
         Mod,
         State,
         Hability,
+        Creation,
+        Weapon,
+        Armor,
+        Consumable,
     }
-
 }
