@@ -35,6 +35,8 @@ namespace Burmuruk.Tesis.Editor
         ScrollView infoRight;
         VisualElement infoSetup;
 
+        ElementType currentSettingTag = ElementType.None;
+
         (ElementType type, string text) lastLeftSearch = default;
         (ElementType type, string text) lastRightSearch = default;
         ElementType currentFilter = ElementType.None;
@@ -407,7 +409,6 @@ namespace Burmuruk.Tesis.Editor
                         } 
                     }
 
-                    EnableContainer(Left_Elements[i].element, false);
                     continue;
                 }
 
@@ -454,6 +455,7 @@ namespace Burmuruk.Tesis.Editor
 
                     if (FindValues(text, (ElementType)i, out List<int> found))
                     {
+                        Debug.Log("Found in None");
                         idxFound ??= new();
                         found.ForEach(value => idxFound.Add(((ElementType)i, value)));
                     }
@@ -461,12 +463,14 @@ namespace Burmuruk.Tesis.Editor
             }
             else if (FindValues(text, searchType, out List<int> found))
             {
+                Debug.Log("found int filter");
                 idxFound ??= new();
                 found.ForEach(value => idxFound.Add((searchType, value)));
             }
 
-            if (idxFound != null)
+            if (idxFound != null && idxFound.Count > 0)
             {
+                Debug.Log("somenting found");
                 EnableCharacterElements(out List<(int, ElementType, int)> idxs, idxFound);
                 UpdateElementsData(idxs);
 
@@ -474,6 +478,7 @@ namespace Burmuruk.Tesis.Editor
             }
             else
             {
+                Debug.Log("no items found");
                 DisableElements();
                 lastLeftSearch = (ElementType.None, "");
             }
@@ -501,6 +506,8 @@ namespace Burmuruk.Tesis.Editor
         {
             foreach (var element in Left_Elements)
             {
+                if (element.pinned) continue;
+
                 if (element.element.ClassListContains("Disable"))
                     return;
 
@@ -559,11 +566,18 @@ namespace Burmuruk.Tesis.Editor
                     values.Add((type, i));
                 }
             }
-            else return;
+            else 
+            {
+                DisableElements();
+                return;
+            }
 
-            EnableCharacterElements(out List<(int, ElementType, int)> idxs, values);
-
-            UpdateElementsData(idxs);
+            if (values.Count > 0) {
+                EnableCharacterElements(out List<(int, ElementType, int)> idxs, values);
+                UpdateElementsData(idxs);
+            }
+            else
+                DisableElements();
         }
 
         #region Events
@@ -616,6 +630,7 @@ namespace Burmuruk.Tesis.Editor
                 Highlight(btnsRight_Tag[idx], false);
                 EnableContainer(infoSetup, false);
                 CloseCurrentTab();
+                currentSettingTag = ElementType.None;
                 return;
             }
 
@@ -641,6 +656,7 @@ namespace Burmuruk.Tesis.Editor
             infoSetup.Q<Label>("txtState").text = "Creando";
             btnsRight_Tag.ForEach(t => Highlight(t, false));
             Highlight(btnsRight_Tag[idx], true);
+            currentSettingTag = type;
         }
 
         private void PinElement(int elementIdx)

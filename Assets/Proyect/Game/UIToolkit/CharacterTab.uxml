@@ -7,7 +7,7 @@
         <ui:Button text="Components" parse-escape-sequences="true" display-tooltip-when-elided="true" name="btnComponent" class="Tabs" />
         <ui:Button text="Dialogues" parse-escape-sequences="true" display-tooltip-when-elided="true" name="btnDialogue" class="Tabs" />
     </ui:VisualElement>
-    <ui:VisualElement name="infoMainContainer" class="InfoContainer" />
+    <ui:VisualElement name="infoMainContainer" class="InfoContainer" style="max-height: 0.5%; min-height: 500px; flex-grow: 1;" />
     <ui:VisualElement name="notifications" class="Notification" style="flex-grow: 1;">
         <ui:Label tabindex="-1" text="Label" parse-escape-sequences="true" display-tooltip-when-elided="true" name="lblNotifications" class="NotificationTxt" />
     </ui:VisualElement>

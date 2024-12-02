@@ -96,21 +96,49 @@ namespace Burmuruk.Tesis.Editor
             [SerializeField] BasicStats stats;
         }
 
-        private void Create_CharacterTab()
-        {
+        private void Create_CharacterTab() {
             componentsContainer = infoContainers[infoCharacterName].Q<VisualElement>(ComponentsContainerName);
             ddfAddComponent = infoContainers[infoCharacterName].Q<DropdownField>(ddfAddComponentName);
             statsContainer = infoContainers[infoCharacterName].Q<VisualElement>(statsContainerName);
             efCharacterType = infoContainers[infoCharacterName].Q<EnumField>(efCharacterTypeName);
+            btnSettingCancel = infoSetup.Q<Button>(btnSettingCancelName);
+            btnSettingCancel.clicked += OnCancel_BtnSetting;
 
             ddfAddComponent.RegisterValueChangedCallback(AddComponent);
-            //ddfAddComponent.set
-            ddfAddComponent.SetValueWithoutNotify("None");
             efCharacterType.RegisterValueChangedCallback(SetCharacterType);
             characterData = new CharacterData();
+            Populate_AddComponents();
+            Populate_EFCharacterType();
 
             var instance = ScriptableObject.CreateInstance<StatsVisualizer>();
             statsContainer.Add(new InspectorElement(instance));
+        }
+
+        private void OnCancel_BtnSetting() 
+        {
+            switch (currentSettingTag) 
+            {
+                case ElementType.Character:
+                    DiscardChanges();
+                    break;
+                default: break;
+            }
+        }
+
+        private void Populate_EFCharacterType() 
+        {
+            efCharacterType.Init(CharacterType.None);
+        }
+
+        private void Populate_AddComponents() 
+            {
+            ddfAddComponent.choices.Clear();
+
+            foreach (var type in Enum.GetValues(typeof(ComponentType))) {
+                ddfAddComponent.choices.Add(type.ToString());
+            }
+
+            ddfAddComponent.SetValueWithoutNotify("None");
         }
 
         private void SetCharacterType(ChangeEvent<Enum> evt)
@@ -160,6 +188,7 @@ namespace Burmuruk.Tesis.Editor
         private void DiscardChanges()
         {
 
+            efCharacterType.SetValueWithoutNotify(CharacterType.None);
         }
 
         struct CharacterData

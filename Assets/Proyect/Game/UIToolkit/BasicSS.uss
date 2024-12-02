@@ -37,7 +37,7 @@
     padding-right: 3px;
     padding-bottom: 3px;
     padding-left: 3px;
-    min-height: 600px;
+    min-height: 150px;
     flex-wrap: nowrap;
     flex-grow: 100;
     flex-shrink: 0;
