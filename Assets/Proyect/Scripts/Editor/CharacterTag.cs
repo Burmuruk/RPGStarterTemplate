@@ -77,4 +77,17 @@ namespace Burmuruk.Tesis.Editor
         Armor,
         Consumable,
     }
+
+    public enum ComponentType
+    {
+        None,
+        Health,
+        Fighter,
+        Mover,
+        Inventory,
+        Equipment,
+        Flying,
+        Dialogue,
+        Patrolling,
+    }
 }

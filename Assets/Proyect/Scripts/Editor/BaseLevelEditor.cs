@@ -235,4 +235,14 @@ public class BaseLevelEditor : EditorWindow
     {
         return element.ClassListContains(BorderColour.HighlightBorder.ToString());
     }
+
+    protected void SaveChanges()
+    {
+
+    }
+
+    protected void LoadChanges()
+    {
+
+    }
 }

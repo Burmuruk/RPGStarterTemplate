@@ -4,14 +4,19 @@
         <ui:VisualElement name="stateContainer" style="flex-grow: 1; max-height: 28px; align-items: center; padding-bottom: 8px;">
             <ui:Label tabindex="-1" text="Creando" parse-escape-sequences="true" display-tooltip-when-elided="true" name="txtState" style="min-width: 70px; font-size: 14px; -unity-text-align: middle-left; margin-left: 10px; max-width: 70px; color: rgb(207, 162, 17); -unity-font-style: bold;" />
         </ui:VisualElement>
-        <ui:VisualElement style="flex-grow: 1; max-height: 30px; flex-direction: row; margin-bottom: 10px;">
-            <ui:Label tabindex="-1" text="Name" parse-escape-sequences="true" display-tooltip-when-elided="true" style="min-width: 70px; font-size: 12px; -unity-text-align: middle-left; margin-left: 10px; max-width: 70px;" />
-            <ui:TextField picking-mode="Ignore" name="txtSearch" style="flex-grow: 100;" />
+        <ui:VisualElement name="VisualElement" style="flex-grow: 1; max-height: 50px; flex-direction: column; margin-bottom: 10px;">
+            <ui:VisualElement style="flex-grow: 1; max-height: 30px; flex-direction: row;">
+                <ui:Label tabindex="-1" text="Name" parse-escape-sequences="true" display-tooltip-when-elided="true" style="min-width: 70px; font-size: 12px; -unity-text-align: middle-left; margin-left: 10px; max-width: 70px;" />
+                <ui:TextField picking-mode="Ignore" name="txtSearch" style="flex-grow: 100;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="ColourContainer" style="flex-grow: 1; max-height: 30px; flex-direction: row;">
+                <ui:Label tabindex="-1" text="Colour&#10;" parse-escape-sequences="true" display-tooltip-when-elided="true" style="min-width: 70px; font-size: 12px; margin-left: 10px; max-width: 70px; padding-top: 0;" />
+            </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="infoContainer" style="flex-grow: 1;" />
         <ui:VisualElement name="btnContainer" class="LineContainer" style="flex-grow: 1; max-height: 40px; margin-top: 10px; justify-content: center; padding-top: 10px;">
-            <ui:Button text="Create" parse-escape-sequences="true" display-tooltip-when-elided="true" class="MidButton" />
-            <ui:Button text="Cancel" parse-escape-sequences="true" display-tooltip-when-elided="true" class="MidButton" />
+            <ui:Button text="Create" parse-escape-sequences="true" display-tooltip-when-elided="true" name="btnSettingAccept" class="MidButton" />
+            <ui:Button text="Cancel" parse-escape-sequences="true" display-tooltip-when-elided="true" name="btnSettingCancel" class="MidButton" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

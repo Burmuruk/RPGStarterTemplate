@@ -9,7 +9,7 @@ namespace Burmuruk.Tesis.Stats
     public struct BasicStats
     {
         [Header("Status")]
-        [SerializeField] bool initialized;
+        bool initialized;
         [Space(), Header("Basic stats")]
         [SerializeField] public float speed;
         [SerializeField] int damage;

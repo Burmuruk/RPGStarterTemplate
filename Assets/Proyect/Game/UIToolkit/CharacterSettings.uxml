@@ -7,14 +7,18 @@
         </ui:VisualElement>
         <ui:VisualElement name="infoComponents" class="FieldColour BaseBorder" style="flex-grow: 1; min-height: 150px; max-height: 200px; flex-shrink: 0;">
             <ui:VisualElement class="LineElements" style="flex-grow: 1;">
-                <ui:Label tabindex="-1" text="Component" parse-escape-sequences="true" display-tooltip-when-elided="true" class="ElementTag" style="padding-bottom: 0; padding-top: 1px; max-height: 20px; margin-top: 2px;" />
-                <ui:Toggle class="LineExtraButton" style="-unity-background-image-tint-color: rgb(99, 98, 98); background-color: rgb(81, 81, 81); justify-content: center; align-items: center; padding-left: 5px;" />
+                <ui:Label tabindex="-1" text="Name     /     Save     /     Remove" parse-escape-sequences="true" display-tooltip-when-elided="true" style="padding-bottom: 0; padding-top: 1px; max-height: 20px; margin-top: 2px; color: rgb(204, 204, 204); -unity-font-style: normal; font-size: 12px; align-self: center;" />
+            </ui:VisualElement>
+            <ui:ScrollView name="componentsConatiner" style="flex-grow: 1;" />
+            <ui:VisualElement class="LineElements" style="flex-grow: 1;">
+                <ui:Label tabindex="-1" text="Add component" parse-escape-sequences="true" display-tooltip-when-elided="true" style="padding-bottom: 0; padding-top: 1px; max-height: 20px; margin-top: 2px; font-size: 12px; color: rgb(192, 192, 192);" />
+                <ui:DropdownField index="-1" choices="System.Collections.Generic.List`1[System.String]" name="ddfAddComponent" style="flex-grow: 0.8; font-size: 12px;" />
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="infoStats" />
         <ui:VisualElement class="LineElements" style="flex-grow: 1; max-height: 25px; min-height: 25px;">
             <ui:Label tabindex="-1" text="Type" parse-escape-sequences="true" display-tooltip-when-elided="true" style="font-size: 12px; min-width: 80px; -unity-text-align: middle-left;" />
-            <ui:EnumField type="UnityEngine.TextAlignment, UnityEngine.TextRenderingModule" value="Center" style="font-size: 12px;" />
+            <ui:EnumField type="UnityEngine.TextAlignment, UnityEngine.TextRenderingModule" value="Center" name="ddfCharaterType" style="font-size: 12px;" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
