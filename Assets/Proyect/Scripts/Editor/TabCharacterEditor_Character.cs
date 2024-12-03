@@ -1,18 +1,13 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEditor;
-using UnityEngine.UIElements;
 using Burmuruk.Tesis.Stats;
-using System.ComponentModel;
 using System;
-using static UnityEditor.Rendering.FilterWindow;
+using System.Collections.Generic;
+using UnityEditor;
 using UnityEditor.UIElements;
+using UnityEngine;
+using UnityEngine.UIElements;
 
-namespace Burmuruk.Tesis.Editor
-{
-	public partial class TabCharacterEditor : BaseLevelEditor
-	{
+namespace Burmuruk.Tesis.Editor {
+    public partial class TabCharacterEditor : BaseLevelEditor {
         const string txtCreationName = "txtName";
         const string creationColorName = "cfSettingColour";
         TextField txtNameCreation;
@@ -35,20 +30,16 @@ namespace Burmuruk.Tesis.Editor
         const string btnSettingAcceptName = "btnSettingAccept";
         const string btnSettingCancelName = "btnSettingCancel";
 
-        struct ElementComponent
-        {
+        struct ElementComponent {
             public VisualElement element;
             public int index;
             Label _label;
             Toggle _toggle;
             Button _button;
 
-            public Label Label
-            {
-                get
-                {
-                    if (_label == null)
-                    {
+            public Label Label {
+                get {
+                    if (_label == null) {
                         _label = element.Q<Label>();
                     }
 
@@ -56,12 +47,9 @@ namespace Burmuruk.Tesis.Editor
                 }
             }
 
-            public Toggle Toggle
-            {
-                get
-                {
-                    if (_toggle == null)
-                    {
+            public Toggle Toggle {
+                get {
+                    if (_toggle == null) {
                         _toggle = element.Q<Toggle>();
                     }
 
@@ -69,12 +57,9 @@ namespace Burmuruk.Tesis.Editor
                 }
             }
 
-            public Button Button
-            {
-                get
-                {
-                    if (_button == null)
-                    {
+            public Button Button {
+                get {
+                    if (_button == null) {
                         _button = element.Q<Button>();
                     }
 
@@ -82,8 +67,7 @@ namespace Burmuruk.Tesis.Editor
                 }
             }
 
-            public ElementComponent(VisualElement element)
-            {
+            public ElementComponent(VisualElement element) {
                 this.element = element;
                 index = 0;
                 _label = null;
@@ -92,8 +76,7 @@ namespace Burmuruk.Tesis.Editor
             }
         }
 
-        public class StatsVisualizer : ScriptableObject
-        {
+        public class StatsVisualizer : ScriptableObject {
             [SerializeField] BasicStats stats;
         }
 
@@ -117,10 +100,8 @@ namespace Burmuruk.Tesis.Editor
             statsContainer.Add(new InspectorElement(instance));
         }
 
-        private void OnCancel_BtnSetting() 
-        {
-            switch (currentSettingTag) 
-            {
+        private void OnCancel_BtnSetting() {
+            switch (currentSettingTag) {
                 case ElementType.Character:
                     Discard_CharacterChanges();
                     break;
@@ -128,10 +109,8 @@ namespace Burmuruk.Tesis.Editor
             }
         }
 
-        private void OnAccept_BtnAccept()
-        {
-            switch (currentSettingTag)
-            {
+        private void OnAccept_BtnAccept() {
+            switch (currentSettingTag) {
                 case ElementType.Character:
                     SaveChanges_Character();
                     break;
@@ -139,28 +118,28 @@ namespace Burmuruk.Tesis.Editor
             }
         }
 
-        private void Populate_EFCharacterType() 
-        {
+        private void Populate_EFCharacterType() {
             efCharacterType.Init(CharacterType.None);
         }
 
         private void Populate_AddComponents() 
-            {
+        {
             ddfAddComponent.choices.Clear();
 
-            foreach (var type in Enum.GetValues(typeof(ComponentType))) {
+            foreach (var type in Enum.GetValues(typeof(ComponentType))) 
+            {
                 ddfAddComponent.choices.Add(type.ToString());
             }
 
             ddfAddComponent.SetValueWithoutNotify("None");
         }
 
-        private void SetCharacterType(ChangeEvent<Enum> evt)
+        private void SetCharacterType(ChangeEvent<Enum> evt) 
         {
             characterData.characterType = (CharacterType)evt.newValue;
         }
 
-        private void AddComponent(ChangeEvent<string> evt)
+        private void AddComponent(ChangeEvent<string> evt) 
         {
             if (Check_HasCharacterComponent(evt.newValue)) return;
 
@@ -169,10 +148,8 @@ namespace Burmuruk.Tesis.Editor
             ddfAddComponent.SetValueWithoutNotify("None");
         }
 
-        private bool Check_HasCharacterComponent(string value)
-        {
-            for (int i = 0; i < components.Count; i++)
-            {
+        private bool Check_HasCharacterComponent(string value) {
+            for (int i = 0; i < components.Count; i++) {
                 if (!components[i].element.ClassListContains("Disable") && components[i].Label.text.Contains(value))
                     return true;
             }
@@ -180,28 +157,39 @@ namespace Burmuruk.Tesis.Editor
             return false;
         }
 
-        private void Add_CharacterComponent(string value)
+        private void Add_CharacterComponent(string value) 
         {
             int componentIdx = -1;
-            //Debug.Log("adding component");
-            for (int i = 0; i < components.Count; i++)
+
+            for (int i = 0; i < components.Count; i++) 
             {
-                if (components[i].element.ClassListContains("Disable"))
+                if (components[i].element.ClassListContains("Disable")) 
                 {
                     componentIdx = i;
-                    //Debug.Log("component foud");
                     EnableContainer(components[i].element, true);
                     break;
                 }
             }
-            //Debug.Log("component for");
+            
             if (componentIdx == -1) CreateNewComponent(value, out componentIdx);
-            //Debug.Log("about to add component to visual element");
+            
             componentsContainer.Add(components[componentIdx].element);
-            characterData.components.Add()
+
+            int idx = 0;
+            foreach (var type in Enum.GetNames(typeof(ComponentType)))
+            {
+                if (type == components[componentIdx].Label.text)
+                {
+                    characterData.components ??= new();
+                    characterData.components.Add((ComponentType)idx);
+                    break;
+                }
+
+                ++idx;
+            }
         }
 
-        private ElementComponent CreateNewComponent(string value, out int idx)
+        private ElementComponent CreateNewComponent(string value, out int idx) 
         {
             VisualTreeAsset element = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/ElementComponent.uxml");
             var component = new ElementComponent(element.Instantiate());
@@ -218,22 +206,21 @@ namespace Burmuruk.Tesis.Editor
         private void Disable_CharacterComponents() =>
             components.ForEach(c => EnableContainer(c.element, false));
 
-        private void RemoveComponent(int idx)
+        private void RemoveComponent(int idx) 
         {
             EnableContainer(components[idx].element, false);
         }
 
-        private void SaveChanges_Character()
+        private void SaveChanges_Character() 
         {
-            
             if (string.IsNullOrEmpty(txtNameCreation.value)) return;
-            
+
             int idx = 0;
-            foreach (var creationType in charactersLists.elements.Keys)
+            foreach (var creationType in charactersLists.elements.Keys) 
             {
-                foreach (var elementName in charactersLists.elements[creationType])
+                foreach (var elementName in charactersLists.elements[creationType]) 
                 {
-                    if (elementName == txtNameCreation.value)
+                    if (elementName == txtNameCreation.value) 
                     {
                         Notify("There's already an element with the same name.", BorderColour.Warning);
                         Debug.Log("Save canceled");
@@ -259,9 +246,9 @@ namespace Burmuruk.Tesis.Editor
             SearchAllElements();
         }
 
-        private void LoadChanges_Character(string elementName)
+        private void LoadChanges_Character(string elementName) 
         {
-            if (!charactersLists.creations[ElementType.Character].ContainsKey(elementName))
+            if (!charactersLists.creations[ElementType.Character].ContainsKey(elementName)) 
             {
                 Debug.Log("No existe el elemento deseado");
                 return;
@@ -280,17 +267,18 @@ namespace Burmuruk.Tesis.Editor
             ddfAddComponent.SetValueWithoutNotify("None");
         }
 
-        private void Discard_CharacterChanges()
+        private void Discard_CharacterChanges() 
         {
             txtNameCreation.value = "";
             CFCreationColor.value = Color.black;
-            components.ForEach (c => EnableContainer(c.element, false));
+            components.ForEach(c => EnableContainer(c.element, false));
             ddfAddComponent.SetValueWithoutNotify("None");
             efCharacterType.SetValueWithoutNotify(CharacterType.None);
 
             var instance = ScriptableObject.CreateInstance<StatsVisualizer>();
             statsContainer.Clear();
             statsContainer.Add(new InspectorElement(instance));
+            characterData = new();
         }
-    } 
+    }
 }

@@ -245,4 +245,11 @@ public class BaseLevelEditor : EditorWindow
     {
 
     }
+
+    protected bool IsNameWrittenCorrectly(string name) 
+    {
+        
+
+        return true;
+    }
 }
