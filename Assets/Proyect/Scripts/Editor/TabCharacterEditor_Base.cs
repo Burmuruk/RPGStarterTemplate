@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -131,20 +132,6 @@ namespace Burmuruk.Tesis.Editor
             container.Q<VisualElement>("Tabs").AddToClassList("Disable");
         }
 
-        private void Show_Dialogue()
-        {
-            throw new NotImplementedException();
-        }
-
-        private void Show_Components()
-        {
-            throw new NotImplementedException();
-        }
-        private void Show_Class()
-        {
-
-        }
-
         protected override void GetInfoContainers()
         {
             infoMainContainer = container.Q<VisualElement>(infoMainContainerName);
@@ -220,6 +207,9 @@ namespace Burmuruk.Tesis.Editor
             infoRight = rightPanel.Q<ScrollView>("elementsContainer");
 
             infoSetup = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/Proyect/Game/UIToolkit/{infoSetupName}.uxml").Instantiate();
+            txtNameCreation = infoSetup.Q<TextField>(txtCreationName);
+            CFCreationColor = infoSetup.Q<ColorField>(creationColorName);
+
             EnableContainer(infoSetup, false);
             infoRight.Add(infoSetup);
 
@@ -308,6 +298,7 @@ namespace Burmuruk.Tesis.Editor
                     ChangeTab(infoItemSettingsName);
                     break;
                 case ElementType.Character:
+                    LoadChanges_Character(Left_Elements[idx].Button.text);
                     ChangeTab(infoCharacterName);
                     break;
                 case ElementType.Buff:
@@ -332,7 +323,6 @@ namespace Burmuruk.Tesis.Editor
                     return;
             }
 
-            Debug.Log("Changed");
             EnableContainer(infoSetup, true);
             infoSetup.Q<Label>("txtState").text = "Editando";
         }

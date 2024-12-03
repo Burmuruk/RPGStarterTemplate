@@ -8,6 +8,7 @@ namespace Burmuruk.Tesis.Editor
     public class CharacterTag : ScriptableObject
     {
         public List<CharacterProfile> characters = new();
+        public Dictionary<ElementType, Dictionary<string, object>> creations = new();
         public List<ElementType> defaultElements = new()
         {
             ElementType.Character,

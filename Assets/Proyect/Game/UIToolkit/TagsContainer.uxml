@@ -17,6 +17,6 @@
                 <ui:Button text="Button" parse-escape-sequences="true" display-tooltip-when-elided="true" name="Button" class="FilterTag" />
             </ui:VisualElement>
         </ui:VisualElement>
-        <ui:ScrollView name="elementsContainer" vertical-scroller-visibility="Auto" style="flex-grow: 1; flex-shrink: 0; max-height: 50%;" />
+        <ui:ScrollView name="elementsContainer" vertical-scroller-visibility="Auto" style="flex-grow: 1; flex-shrink: 0; max-height: 99%;" />
     </ui:VisualElement>
 </ui:UXML>
