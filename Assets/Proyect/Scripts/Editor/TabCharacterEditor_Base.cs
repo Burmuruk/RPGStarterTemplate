@@ -489,7 +489,7 @@ namespace Burmuruk.Tesis.Editor
                 {
                     Left_Elements[i].Button.text = GetName(0);
                     EnableContainer(Left_Elements[i].element, true);
-                    Highlight(Left_Elements[i].element, true, GetElementColour(namesList[0].type));
+                    //Highlight(Left_Elements[i].element, true, GetElementColour(namesList[0].type));
 
                     (enabledButtonsIdx ??= new()).Add((i, namesList[0].type, namesList[0].idx));
                     enabled = true;

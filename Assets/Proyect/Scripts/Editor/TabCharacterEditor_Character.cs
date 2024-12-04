@@ -22,6 +22,9 @@ namespace Burmuruk.Tesis.Editor
         const string ddfAddComponentName = "ddfAddComponent";
         const string statsContainerName = "infoStats";
         const string efCharacterTypeName = "ddfCharaterType";
+        const string btnGoBackSettings = "btnGoBack";
+        const string infoExtreSettingName = "infoContainer";
+        VisualElement infoExtreSetting;
         VisualElement componentsContainer;
         DropdownField ddfAddComponent;
         VisualElement statsContainer;
