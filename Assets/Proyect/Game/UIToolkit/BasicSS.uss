@@ -162,10 +162,10 @@
 }
 
 .Approved {
-    border-left-color: rgba(33, 101, 60, 0);
-    border-right-color: rgba(33, 101, 60, 0);
-    border-top-color: rgba(33, 101, 60, 0);
-    border-bottom-color: rgba(33, 101, 60, 0);
+    border-left-color: rgb(33, 101, 60);
+    border-right-color: rgb(33, 101, 60);
+    border-top-color: rgb(33, 101, 60);
+    border-bottom-color: rgb(33, 101, 60);
     border-top-width: 2px;
     border-right-width: 2px;
     border-bottom-width: 2px;

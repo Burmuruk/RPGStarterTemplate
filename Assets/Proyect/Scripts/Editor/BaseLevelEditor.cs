@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using UnityEditor;
 using UnityEngine;
@@ -28,6 +29,13 @@ public class BaseLevelEditor : EditorWindow
         Approved,
         Warning,
         HighlightBorder,
+        StateBorder,
+        BuffBorder,
+        CharacterBorder,
+        ArmorBorder,
+        WeaponBorder,
+        ConsumableBorder,
+        ItemBorder,
     }
 
 
@@ -246,10 +254,35 @@ public class BaseLevelEditor : EditorWindow
 
     }
 
-    protected bool IsNameWrittenCorrectly(string name) 
+    protected bool IsNameWrittenCorrectly(string name)
     {
-        
+        if (HasSpecialCharacter(name) ||
+            HasInvalidNumberInName(name))
+            return false;
 
         return true;
+    }
+
+    protected bool HasSpecialCharacter(string value)
+    {
+        return value.Any(chr => !char.IsLetterOrDigit(chr));
+    }
+
+    protected bool HasInvalidNumberInName(string name)
+    {
+        if (Int32.TryParse(name, out _))
+            return true;
+
+        bool startsWithNumber = false;
+
+        foreach (var item in name)
+        {
+            if (char.IsDigit(item) && !startsWithNumber)
+                return true;
+            else
+                return false;
+        }
+
+        return false;
     }
 }

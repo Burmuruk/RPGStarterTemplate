@@ -194,10 +194,5 @@ namespace Burmuruk.Tesis.Editor
                 }
             }
         }
-
-        private bool HasSpecialCharacter(string value)
-        {
-            return value.Any(chr => !char.IsLetterOrDigit(chr));
-        }
     } 
 }

@@ -27,7 +27,7 @@ namespace Burmuruk.Tesis.Editor
         public static void ShowWindow()
         {
             TabSystemEditor window = GetWindow<TabSystemEditor>();
-            window.titleContent = new GUIContent("Main Window");
+            window.titleContent = new GUIContent("System settings");
             window.minSize = new Vector2(400, 300);
         }
 
@@ -52,8 +52,8 @@ namespace Burmuruk.Tesis.Editor
         protected override void GetInfoContainers()
         {
             infoContainers.Add(infoNavName, container.Q<VisualElement>(infoNavName));
-            infoContainers.Add(infoInteractionName, container.Q<VisualElement>(infoInteractionName));
-            infoContainers.Add(infoMissionsName, container.Q<VisualElement>(infoMissionsName));
+            //infoContainers.Add(infoInteractionName, container.Q<VisualElement>(infoInteractionName));
+            //infoContainers.Add(infoMissionsName, container.Q<VisualElement>(infoMissionsName));
             infoContainers.Add(infoSavingName, container.Q<VisualElement>(infoSavingName));
 
             foreach (var container in infoContainers.Values)

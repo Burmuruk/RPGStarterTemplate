@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -21,15 +20,15 @@ namespace Burmuruk.Tesis.Editor
         };
         public Dictionary<ElementType, List<string>> elements = new()
         {
-            { 
-                ElementType.Character, new() 
-                { 
+            {
+                ElementType.Character, new()
+                {
                     "Mage",
                     "Tank",
                     "Healer",
                     "Midget",
                     "Assasin",
-                } 
+                }
             },
             {
                 ElementType.Item, new()
