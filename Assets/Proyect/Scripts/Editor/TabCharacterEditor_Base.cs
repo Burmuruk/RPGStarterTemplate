@@ -17,6 +17,12 @@ namespace Burmuruk.Tesis.Editor
         const string infoItemSettingsName = "ItemSettings";
         const string infoWeaponSettingsName = "WeaponSettings";
         const string infoBuffSettingsName = "BuffSettings";
+        const string infoConsumableSettingsName = "ConsumableSettings";
+        const string infoArmorSettingsName = "ArmorSettings";
+        const string infoHealthSettingsName = "HealthSettings";
+        const string infoEquipmentSettingsName = "EquipmentSettings";
+        const string infoInventorySettingsName = "InventorySettings";
+        const string infoGeneralSettinsCharacterName = "GeneralSettingsCharacter";
 
         const string infoDialoguesName = "infoDialoguesContainer";
         const string infoSetupName = "InfoBase";
@@ -132,6 +138,9 @@ namespace Burmuruk.Tesis.Editor
             CreateTagsContainer();
             GetInfoContainers();
             CreateSettingTabs();
+
+            SearchAllElements();
+            ChangeTab(infoGeneralSettinsCharacterName);
         }
 
         private void CreateSettingTabs()
@@ -140,6 +149,12 @@ namespace Burmuruk.Tesis.Editor
             Create_WeaponSettings();
             Create_ItemTab();
             Create_BuffSettings();
+            Create_HealthSettings();
+            Create_EquipmentSettings();
+            Create_ConsumableSettings();
+            Create_ArmorSettings();
+            Create_InventorySettings();
+            Create_GeneralCharacterSettings();
         }
 
         protected override void GetTabButtons()
@@ -157,12 +172,17 @@ namespace Burmuruk.Tesis.Editor
                 infoItemSettingsName,
                 infoWeaponSettingsName,
                 infoBuffSettingsName,
+                infoArmorSettingsName,
+                infoConsumableSettingsName,
+                infoHealthSettingsName,
+                infoEquipmentSettingsName,
+                infoGeneralSettinsCharacterName,
+                infoInventorySettingsName,
             });
 
             void AddContainer(string[] names)
             {
-                foreach (var containerName in names)
-                {
+                foreach (var containerName in names)                {
                     VisualElement newContainer = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/Proyect/Game/UIToolkit/{containerName}.uxml").Instantiate();
 
                     infoContainers.Add(containerName, newContainer);
@@ -189,8 +209,6 @@ namespace Burmuruk.Tesis.Editor
 
             CreateTags(leftPanel, rightPanel);
             Add_SearchElements(infoLeft, 16);
-
-            SearchAllElements();
         }
         private void SetSearchBars()
         {
@@ -248,8 +266,8 @@ namespace Burmuruk.Tesis.Editor
             }
             else
             {
-                Highlight(txtNameCreation, true, BorderColour.Warning);
-                Notify("The name is not allowed.", BorderColour.Warning);
+                Highlight(txtNameCreation, true, BorderColour.Error);
+                Notify("The name is not allowed.", BorderColour.Error);
             }
         }
 
@@ -293,6 +311,8 @@ namespace Burmuruk.Tesis.Editor
                             b.element.clicked += () => OnClicked_TagComponents(j, element);
                         }
                     }
+                    else
+                        EnableContainer(b.element, false);
 
                     ++i;
                 });
@@ -364,8 +384,8 @@ namespace Burmuruk.Tesis.Editor
                 case ElementType.Mod:
                     break;
 
-                case ElementType.State:
-                    break;
+                //case ElementType.State:
+                //    break;
 
                 case ElementType.Hability:
                     break;
@@ -378,9 +398,11 @@ namespace Burmuruk.Tesis.Editor
                     break;
 
                 case ElementType.Armor:
+                    ChangeTab(infoArmorSettingsName);
                     break;
 
                 case ElementType.Consumable:
+                    ChangeTab(infoConsumableSettingsName);
                     break;
 
                 default:
@@ -418,7 +440,7 @@ namespace Burmuruk.Tesis.Editor
 
             if (charactersLists == null)
             {
-                Notify("No labels found.", BorderColour.Warning);
+                Notify("No labels found.", BorderColour.Error);
 
                 charactersLists = ScriptableObject.CreateInstance<CharacterTag>();
                 AssetDatabase.CreateAsset(charactersLists, "Assets/Proyect/Game/ScriptableObjects/Tool/CharacterTag.asset");
@@ -489,7 +511,14 @@ namespace Burmuruk.Tesis.Editor
                 {
                     Left_Elements[i].Button.text = GetName(0);
                     EnableContainer(Left_Elements[i].element, true);
-                    //Highlight(Left_Elements[i].element, true, GetElementColour(namesList[0].type));
+
+                    if (tglShowElementColour.value)
+                        Highlight(Left_Elements[i].element, true, GetElementColour(namesList[0].type));
+
+                    if (tglShowCustomColour.value)
+                    {
+                        //Show custom colour in element
+                    }
 
                     (enabledButtonsIdx ??= new()).Add((i, namesList[0].type, namesList[0].idx));
                     enabled = true;
@@ -723,6 +752,12 @@ namespace Burmuruk.Tesis.Editor
                 case ElementType.Buff:
                     ChangeTab(infoBuffSettingsName);
                     break;
+                case ElementType.Consumable:
+                    ChangeTab(infoConsumableSettingsName);
+                    break;
+                case ElementType.Armor:
+                    ChangeTab(infoArmorSettingsName);
+                    break;
 
                 default: return;
             }
@@ -813,24 +848,11 @@ namespace Burmuruk.Tesis.Editor
             Highlight(Left_Elements[target].Pin, true);
         }
 
-        private void RemoveElement(VisualElement element)
-        {
-            string text = element.Q<Button>("txtElement").text;
-
-            //foreach (string value in charactersLists.elements.Values)
-            //{
-            //    if (value == text)
-            //    {
-
-            //    }
-            //}
-        }
-
         private BorderColour GetElementColour(ElementType type) =>
             type switch
             {
                 ElementType.Character => BorderColour.CharacterBorder,
-                ElementType.State => BorderColour.StateBorder,
+                //ElementType.State => BorderColour.StateBorder,
                 ElementType.Buff => BorderColour.BuffBorder,
                 ElementType.Armor => BorderColour.ArmorBorder,
                 ElementType.Weapon => BorderColour.WeaponBorder,

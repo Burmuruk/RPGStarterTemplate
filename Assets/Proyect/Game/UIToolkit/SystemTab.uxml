@@ -28,8 +28,8 @@
                 </ui:VisualElement>
             </ui:ScrollView>
             <ui:VisualElement name="SavingButtons" class="LineContainer" style="margin-bottom: 6px; margin-top: 18px; justify-content: center; margin-right: 0; margin-left: 0; min-height: auto; max-height: 50px; align-self: center; align-items: center; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0;">
-                <ui:Button text="Acept" parse-escape-sequences="true" display-tooltip-when-elided="true" name="AceptButton" class="MidButton" />
-                <ui:Button text="Cancel" parse-escape-sequences="true" display-tooltip-when-elided="true" name="CancelButton" class="MidButton" />
+                <ui:Button text="Acept" parse-escape-sequences="true" display-tooltip-when-elided="true" name="AceptButton" class="MidButton ClickableBtn" />
+                <ui:Button text="Cancel" parse-escape-sequences="true" display-tooltip-when-elided="true" name="CancelButton" class="MidButton ClickableBtn" />
             </ui:VisualElement>
             <ui:VisualElement style="flex-grow: 0; max-height: 100px; margin-top: 20px; min-height: 90px;">
                 <ui:Label text="Note: This saving system just works for elements with persistent data between game sesions. For persistent elements just betweens scenes use the component &quot;Persistent saver&quot;.&#10;" parse-escape-sequences="true" display-tooltip-when-elided="true" class="HighlightBorder" style="white-space: normal; text-overflow: clip; padding-left: 4px;" />

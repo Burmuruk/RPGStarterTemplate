@@ -1,3 +1,4 @@
+using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
 using System.Collections;
 using System.Collections.Generic;
@@ -9,8 +10,25 @@ namespace Burmuruk.Tesis.Editor
     {
         public string characterName;
         public Color color;
-        public List<ComponentType> components;
         public BasicStats stats;
         public CharacterType characterType;
+        public Dictionary<ComponentType, object> components;
+    }
+
+    struct Health
+    {
+        public int HP;
+    }
+
+    struct Inventory
+    {
+        public List<int> Ids;
+    }
+
+    struct Equipment
+    {
+        public Inventory inventory;
+        public Dictionary<int, bool> equipment;
+        public Dictionary<EquipmentType, GameObject> bodyParts;
     }
 }

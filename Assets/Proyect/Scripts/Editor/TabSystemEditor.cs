@@ -101,7 +101,7 @@ namespace Burmuruk.Tesis.Editor
             if (CheckNavFileStatus())
                 Notify("Navigation map found.", BorderColour.Approved);
             else
-                Notify("The Navigation map wasn't found.", BorderColour.Warning);
+                Notify("The Navigation map wasn't found.", BorderColour.Error);
 
             ChangeTab(infoContainers[infoNavName]);
             SelectTabBtn(btnNavName);

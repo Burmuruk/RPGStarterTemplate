@@ -105,9 +105,9 @@ namespace Burmuruk.Tesis.Editor
                 }
                 else if (HasSpecialCharacter(savingTxtFields[i].value))
                 {
-                    Highlight(savingTxtFields[i], false, BorderColour.Warning);
+                    Highlight(savingTxtFields[i], false, BorderColour.Error);
                     hasErrors = true;
-                    Notify("Special characteres are not allowed.", BorderColour.Warning);
+                    Notify("Special characteres are not allowed.", BorderColour.Error);
                 }
                 else
                 {
@@ -166,11 +166,11 @@ namespace Burmuruk.Tesis.Editor
             }
             else if (!string.IsNullOrEmpty(error))
             {
-                Notify(error, BorderColour.Warning);
+                Notify(error, BorderColour.Error);
             }
             else
             {
-                Notify("Error ocurred when trying to apply changes.", BorderColour.Warning);
+                Notify("Error ocurred when trying to apply changes.", BorderColour.Error);
             }
         }
 

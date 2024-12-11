@@ -1,4 +1,5 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
+    <ui:Template name="TypeAdder" src="project://database/Assets/Proyect/Game/UIToolkit/TypeAdder.uxml?fileID=9197481963319205126&amp;guid=3faecc087fcc4f34b874fda6335d50fc&amp;type=3#TypeAdder" />
     <Style src="project://database/Assets/Proyect/Game/UIToolkit/BasicSS.uss?fileID=7433441132597879392&amp;guid=2693b02dba201b24e87668e3aaaa0fc1&amp;type=3#BasicSS" />
     <Style src="project://database/Assets/Proyect/Game/UIToolkit/LineTags.uss?fileID=7433441132597879392&amp;guid=1db9e95078017b3489041439420a4a43&amp;type=3#LineTags" />
     <ui:VisualElement style="flex-grow: 1;">
@@ -16,9 +17,8 @@
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="infoStats" />
-        <ui:VisualElement class="LineElements" style="flex-grow: 1; max-height: 25px; min-height: 25px;">
-            <ui:Label tabindex="-1" text="Type" parse-escape-sequences="true" display-tooltip-when-elided="true" style="font-size: 12px; min-width: 80px; -unity-text-align: middle-left;" />
-            <ui:EnumField type="UnityEngine.TextAlignment, UnityEngine.TextRenderingModule" value="Center" name="ddfCharaterType" style="font-size: 12px;" />
+        <ui:VisualElement style="flex-grow: 1; max-height: 55px; min-height: 25px;">
+            <ui:Instance template="TypeAdder" name="TypeAdder" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

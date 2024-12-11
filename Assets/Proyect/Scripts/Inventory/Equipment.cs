@@ -8,11 +8,13 @@ namespace Burmuruk.Tesis.Inventory
     [Serializable]
     public struct Equipment
     {
-        [SerializeField] GameObject Body;
+        [SerializeField] GameObject body;
         [SerializeField] SpawnPointData[] spawnPoints;
         Dictionary<int, (Transform spawnPoint, GameObject item, List<EquipeableItem> equipables)> _parts;
 
         public event Action<int> OnEquipmentChanged;
+
+        public GameObject Body { set => body = value; }
 
         public EquipeableItem this[int part]
         {
@@ -36,7 +38,7 @@ namespace Burmuruk.Tesis.Inventory
         {
             _parts = new Dictionary<int, (Transform spawnPoint, GameObject item, List<EquipeableItem> equipeables)>()
             {
-                { 0, (null, Body, null) }
+                { 0, (null, body, null) }
             };
         }
 

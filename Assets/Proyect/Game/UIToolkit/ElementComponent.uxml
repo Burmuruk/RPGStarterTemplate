@@ -2,8 +2,10 @@
     <Style src="project://database/Assets/Proyect/Game/UIToolkit/BasicSS.uss?fileID=7433441132597879392&amp;guid=2693b02dba201b24e87668e3aaaa0fc1&amp;type=3#BasicSS" />
     <Style src="project://database/Assets/Proyect/Game/UIToolkit/LineTags.uss?fileID=7433441132597879392&amp;guid=1db9e95078017b3489041439420a4a43&amp;type=3#LineTags" />
     <ui:VisualElement class="LineElements" style="flex-grow: 1;">
-        <ui:Label tabindex="-1" text="Component" parse-escape-sequences="true" display-tooltip-when-elided="true" class="ElementTag" style="padding-bottom: 0; padding-top: 1px; max-height: 20px; margin-top: 2px;" />
+        <ui:Button text="Button" parse-escape-sequences="true" display-tooltip-when-elided="true" name="btnEditComponent" class="ElementTag" style="-unity-text-align: middle-left;" />
         <ui:Toggle class="LineExtraButton" style="-unity-background-image-tint-color: rgb(99, 98, 98); background-color: rgb(81, 81, 81); justify-content: center; align-items: center; padding-left: 5px;" />
-        <ui:Button text="X" parse-escape-sequences="true" display-tooltip-when-elided="true" class="LineExtraButton" style="-unity-font-style: bold;" />
+        <ui:EnumField type="UnityEngine.TextAlignment, UnityEngine.TextRenderingModule" value="Center" class="Disable" style="max-width: 120px; margin-right: 0; margin-left: 0;" />
+        <ui:IntegerField value="42" name="txtAmount" class="Disable" style="margin-right: 0; margin-left: 0; min-width: 120px;" />
+        <ui:Button text="X" parse-escape-sequences="true" display-tooltip-when-elided="true" name="btnRemove" class="LineExtraButton" style="-unity-font-style: bold;" />
     </ui:VisualElement>
 </ui:UXML>

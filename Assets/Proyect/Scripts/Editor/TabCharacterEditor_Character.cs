@@ -1,6 +1,9 @@
 using Burmuruk.Tesis.Stats;
+using Burmuruk.Tesis.Utilities;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -21,14 +24,14 @@ namespace Burmuruk.Tesis.Editor
         const string settingColourContainer = "ColourContainer";
         const string ddfAddComponentName = "ddfAddComponent";
         const string statsContainerName = "infoStats";
-        const string efCharacterTypeName = "ddfCharaterType";
         const string btnGoBackSettings = "btnGoBack";
         const string infoExtreSettingName = "infoContainer";
-        VisualElement infoExtreSetting;
+
+        VisualElement infoExtraSetting;
         VisualElement componentsContainer;
         DropdownField ddfAddComponent;
         VisualElement statsContainer;
-        EnumField efCharacterType;
+        EnumModifier emCharacterType;
         List<ElementComponent> components = new();
         CharacterData characterData;
 
@@ -48,20 +51,21 @@ namespace Burmuruk.Tesis.Editor
         {
             public VisualElement element;
             public int index;
-            Label _label;
+            public ComponentType type;
+            Button _btnEditComponent;
             Toggle _toggle;
-            Button _button;
+            Button _btnRemove;
 
-            public Label Label
+            public Button BtnEditComponent
             {
                 get
                 {
-                    if (_label == null)
+                    if (_btnEditComponent == null)
                     {
-                        _label = element.Q<Label>();
+                        _btnEditComponent = element.Q<Button>("btnEditComponent");
                     }
 
-                    return _label;
+                    return _btnEditComponent;
                 }
             }
 
@@ -78,16 +82,16 @@ namespace Burmuruk.Tesis.Editor
                 }
             }
 
-            public Button Button
+            public Button BtnRemove
             {
                 get
                 {
-                    if (_button == null)
+                    if (_btnRemove == null)
                     {
-                        _button = element.Q<Button>();
+                        _btnRemove = element.Q<Button>("btnRemove");
                     }
 
-                    return _button;
+                    return _btnRemove;
                 }
             }
 
@@ -95,9 +99,31 @@ namespace Burmuruk.Tesis.Editor
             {
                 this.element = element;
                 index = 0;
-                _label = null;
+                _btnEditComponent = null;
                 _toggle = null;
-                _button = null;
+                _btnRemove = null;
+                type = ComponentType.None;
+            }
+        }
+
+        struct EnumModifier
+        {
+            public const string ContainerName = "EnumModifier";
+            public VisualElement Container { get; private set; }
+            public Button BtnAddValue { get; private set; }
+            public EnumField EnumField { get; private set; }
+            public TextField TxtNewValue { get; private set; }
+            public VisualElement EnumContainer { get; private set; }
+            public VisualElement NewValueContainer { get; private set; }
+
+            public EnumModifier(VisualElement container)
+            {
+                this.Container = container;
+                BtnAddValue = container.Q<Button>();
+                EnumField = container.Q<EnumField>();
+                TxtNewValue = container.Q<TextField>();
+                EnumContainer = container.Q<VisualElement>("EnumLine");
+                NewValueContainer = container.Q<VisualElement>("NewElementLine");
             }
         }
 
@@ -111,20 +137,64 @@ namespace Burmuruk.Tesis.Editor
             componentsContainer = infoContainers[infoCharacterName].Q<VisualElement>(ComponentsContainerName);
             ddfAddComponent = infoContainers[infoCharacterName].Q<DropdownField>(ddfAddComponentName);
             statsContainer = infoContainers[infoCharacterName].Q<VisualElement>(statsContainerName);
-            efCharacterType = infoContainers[infoCharacterName].Q<EnumField>(efCharacterTypeName);
+
+            emCharacterType = new EnumModifier(infoContainers[infoCharacterName].Q<VisualElement>(EnumModifier.ContainerName));
+            emCharacterType.BtnAddValue.clicked += () => Toggle_EnumAddingState(emCharacterType);
+            emCharacterType.EnumField.RegisterValueChangedCallback(SetCharacterType);
+
             btnSettingCancel = infoSetup.Q<Button>(btnSettingCancelName);
             btnSettingAccept = infoSetup.Q<Button>(btnSettingAcceptName);
             btnSettingCancel.clicked += OnCancel_BtnSetting;
             btnSettingAccept.clicked += OnAccept_BtnAccept;
+            emCharacterType.TxtNewValue.RegisterCallback<KeyUpEvent>(OnKeyUp_TxtCharacterType);
+            EnableContainer(emCharacterType.NewValueContainer, false);
 
             ddfAddComponent.RegisterValueChangedCallback(AddComponent);
-            efCharacterType.RegisterValueChangedCallback(SetCharacterType);
             characterData = new CharacterData();
             Populate_AddComponents();
             Populate_EFCharacterType();
 
             var instance = ScriptableObject.CreateInstance<StatsVisualizer>();
             statsContainer.Add(new InspectorElement(instance));
+        }
+
+        private void OnKeyUp_TxtCharacterType(KeyUpEvent evt)
+        {
+            if (evt.keyCode == KeyCode.Return)
+            {
+                if (!IsNameWrittenCorrectly(emCharacterType.TxtNewValue.value))
+                    return;
+                
+                if (!Add_EnumValue("CharacterType")) return;
+                
+                EnableContainer(emCharacterType.NewValueContainer, true);
+                Toggle_EnumAddingState(emCharacterType);
+                emCharacterType.EnumField.SetValueWithoutNotify(CharacterType.None);
+            }
+        }
+
+        private bool Add_EnumValue(string EnumName)
+        {
+            EnumEditor enumEditor = new();
+            string error = "";
+            //enumEditor.Modify(EnumName, new string[] { emCharacterType.TxtNewValue.value }, "Path", out string error);
+
+            if (!string.IsNullOrEmpty(error))
+            {
+                Notify(error, BorderColour.Error);
+                return false;
+            }
+
+            Notify("Value added", BorderColour.Approved);
+            return true;
+        }
+
+        private void Toggle_EnumAddingState(EnumModifier modifier)
+        {
+            bool shouldAddValue = modifier.BtnAddValue.text == "+";
+            modifier.BtnAddValue.text = shouldAddValue ? "-" : "+";
+            modifier.EnumField.SetEnabled(!shouldAddValue);
+            EnableContainer(modifier.NewValueContainer, shouldAddValue);
         }
 
         private void OnCancel_BtnSetting()
@@ -191,13 +261,17 @@ namespace Burmuruk.Tesis.Editor
                     }
                     break;
 
+                case ElementType.Item:
+
+                    break;
+
                 default: break;
             }
         }
 
         private void Populate_EFCharacterType()
         {
-            efCharacterType.Init(CharacterType.None);
+            emCharacterType.EnumField.Init(CharacterType.None);
         }
 
         private void Populate_AddComponents()
@@ -221,7 +295,7 @@ namespace Burmuruk.Tesis.Editor
         {
             if (Check_HasCharacterComponent(evt.newValue)) return;
 
-            Add_CharacterComponent(evt.newValue);
+            Add_CharacterComponent(evt.newValue, Enum.Parse<ComponentType>(evt.newValue));
 
             ddfAddComponent.SetValueWithoutNotify("None");
         }
@@ -230,14 +304,14 @@ namespace Burmuruk.Tesis.Editor
         {
             for (int i = 0; i < components.Count; i++)
             {
-                if (!components[i].element.ClassListContains("Disable") && components[i].Label.text.Contains(value))
+                if (!components[i].element.ClassListContains("Disable") && components[i].BtnEditComponent.text.Contains(value))
                     return true;
             }
 
             return false;
         }
 
-        private void Add_CharacterComponent(string value)
+        private void Add_CharacterComponent(string value, ComponentType type)
         {
             int componentIdx = -1;
 
@@ -251,36 +325,97 @@ namespace Burmuruk.Tesis.Editor
                 }
             }
 
-            if (componentIdx == -1) CreateNewComponent(value, out componentIdx);
+            if (componentIdx == -1)
+                CreateNewComponent(value, out componentIdx);
 
-            componentsContainer.Add(components[componentIdx].element);
+            var componentData = components[componentIdx];
+            componentData.type = type;
+            components[componentIdx] = componentData;
+            components[componentIdx].BtnEditComponent.text = value;
 
-            int idx = 0;
-            foreach (var type in Enum.GetNames(typeof(ComponentType)))
+            characterData.components ??= new();
+            characterData.components.Add(type, null);
+
+            Setup_ComponentButton(type, componentIdx);
+            if (type == ComponentType.Equipment && !(from comp in components where comp.type == ComponentType.Inventory select comp).Any())
             {
-                if (type == components[componentIdx].Label.text)
-                {
-                    characterData.components ??= new();
-                    characterData.components.Add((ComponentType)idx);
-                    break;
-                }
-
-                ++idx;
+                Add_CharacterComponent(ComponentType.Inventory.ToString(), ComponentType.Inventory);
             }
+        }
+
+        private void Setup_ComponentButton(ComponentType type, int componentIdx)
+        {
+            switch (type)
+            {
+                case ComponentType.Inventory:
+                    goto case ComponentType.Health;
+
+                case ComponentType.Equipment:
+                    goto case ComponentType.Health;
+
+                case ComponentType.Health:
+                    SetClickableButtonColour(componentIdx);
+                    break;
+
+                default:
+                    if (components[componentIdx].BtnEditComponent.ClassListContains("ClickableBtn"))
+                        components[componentIdx].BtnEditComponent.RemoveFromClassList("ClickableBtn");
+                    components[componentIdx].BtnEditComponent.style.backgroundColor = new Color(0.1647059f, 0.1647059f, 0.1647059f);
+                    break;
+            }
+        }
+
+        private void SetClickableButtonColour(int componentIdx)
+        {
+            components[componentIdx].BtnEditComponent.AddToClassList("ClickableBtn");
+            components[componentIdx].BtnEditComponent.style.backgroundColor = new Color(0.4627451f, 0.4627451f, 4627451f);
         }
 
         private ElementComponent CreateNewComponent(string value, out int idx)
         {
             VisualTreeAsset element = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/ElementComponent.uxml");
             var component = new ElementComponent(element.Instantiate());
-            component.Label.text = value;
+            
             idx = components.Count;
             int newIdx = idx;
             component.index = idx;
-            component.Button.clicked += () => RemoveComponent(newIdx);
+
+            component.BtnEditComponent.clicked += () => OpenComponentSettings(newIdx);
+            component.BtnRemove.clicked += () => RemoveComponent(newIdx);
 
             components.Add(component);
+            componentsContainer.Add(components[idx].element);
             return component;
+        }
+
+        private void OpenComponentSettings(int componentIdx)
+        {
+            var type = components[componentIdx].type;
+            
+            string tabName = type switch
+            {
+                ComponentType.Equipment => infoEquipmentSettingsName,
+                ComponentType.Health => infoHealthSettingsName,
+                ComponentType.Inventory => infoInventorySettingsName,
+                _ => null
+            };
+
+            if (tabName == null) return;
+
+            switch (type) 
+            { 
+                case ComponentType.Equipment:
+                    curElementList = mclEquipmentElements;
+                    Load_InventoryItemsInEquipment();
+                    break;
+                case ComponentType.Inventory:
+                    curElementList = mclInventoryElements;
+                    break;
+
+                default: break;
+            }
+
+            ChangeTab(tabName);
         }
 
         private void Disable_CharacterComponents() =>
@@ -288,6 +423,13 @@ namespace Burmuruk.Tesis.Editor
 
         private void RemoveComponent(int idx)
         {
+            if (components[idx].type == ComponentType.Inventory &&
+                (from comp in components where comp.type == ComponentType.Equipment select comp).Any())
+            {
+                Notify("Equipment requires an Inventory component to store the items", BorderColour.Error);
+                return;
+            }
+
             EnableContainer(components[idx].element, false);
         }
 
@@ -300,7 +442,7 @@ namespace Burmuruk.Tesis.Editor
                 {
                     if (elementName == name)
                     {
-                        Notify("There's already an element with the same name.", BorderColour.Warning);
+                        Notify("There's already an element with the same name.", BorderColour.Error);
                         Debug.Log("Save canceled");
                         return true;
                     }
@@ -319,7 +461,7 @@ namespace Burmuruk.Tesis.Editor
             if (IsTheNameUsed(newName)) return false;
 
             if (string.IsNullOrEmpty(newName)) newName = name;
-            
+
             charactersLists.creations.TryAdd(ElementType.Character, new());
 
             if (charactersLists.creations[ElementType.Character].ContainsKey(name))
@@ -353,17 +495,19 @@ namespace Burmuruk.Tesis.Editor
 
             txtNameCreation.value = data.characterName;
             CFCreationColor.value = data.color;
-            efCharacterType.value = data.characterType;
+            emCharacterType.EnumField.value = data.characterType;
             characterData = data;
-            
+
             Disable_CharacterComponents();
 
             characterData.components = new();
             if (data.components != null)
-                for (int i = 0; i < data.components.Count; i++)
+            {
+                foreach (var key in data.components.Keys)
                 {
-                    Add_CharacterComponent(data.components[i].ToString());
+                    Add_CharacterComponent(key.ToString(), key);
                 }
+            }
 
             ddfAddComponent.SetValueWithoutNotify("None");
         }
@@ -374,7 +518,7 @@ namespace Burmuruk.Tesis.Editor
             CFCreationColor.value = Color.black;
             components.ForEach(c => EnableContainer(c.element, false));
             ddfAddComponent.SetValueWithoutNotify("None");
-            efCharacterType.SetValueWithoutNotify(CharacterType.None);
+            emCharacterType.EnumField.SetValueWithoutNotify(CharacterType.None);
 
             var instance = ScriptableObject.CreateInstance<StatsVisualizer>();
             statsContainer.Clear();

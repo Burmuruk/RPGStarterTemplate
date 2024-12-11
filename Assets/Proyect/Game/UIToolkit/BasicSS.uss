@@ -53,19 +53,6 @@
 .MidButton {
     min-width: 40%;
     max-height: 30px;
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
-    border-bottom-right-radius: 4px;
-    border-bottom-left-radius: 4px;
-    background-color: rgb(118, 118, 118);
-    border-left-color: rgb(109, 109, 109);
-    border-right-color: rgb(109, 109, 109);
-    border-top-color: rgb(109, 109, 109);
-    border-bottom-color: rgb(109, 109, 109);
-    border-top-width: 2px;
-    border-right-width: 2px;
-    border-bottom-width: 2px;
-    border-left-width: 2px;
     min-height: 25px;
 }
 
@@ -168,7 +155,7 @@
     max-height: 15px;
 }
 
-.Warning {
+.Error {
     border-left-color: rgb(155, 38, 38);
     border-right-color: rgb(155, 38, 38);
     border-top-color: rgb(155, 38, 38);
@@ -224,4 +211,52 @@
     padding-right: 2px;
     max-width: 70px;
     min-width: 70px;
+}
+
+.EnumChanger {
+    max-height: 50px;
+}
+
+.EnumChanger Label {
+    min-width: 60px;
+    margin-top: 1px;
+    margin-right: 1px;
+    margin-bottom: 1px;
+    margin-left: 1px;
+    padding-top: 1px;
+    padding-right: 1px;
+    padding-bottom: 1px;
+    padding-left: 1px;
+    font-size: 12px;
+}
+
+.EnumChanger .LineField {
+    min-width: 60px;
+    margin-top: 1px;
+    margin-right: 1px;
+    margin-bottom: 1px;
+    margin-left: 1px;
+    padding-top: 1px;
+    padding-right: 1px;
+    padding-bottom: 1px;
+    padding-left: 1px;
+    flex-grow: 1;
+    flex-shrink: 1;
+    font-size: 12px;
+}
+
+.ClickableBtn {
+    border-left-color: rgb(109, 109, 109);
+    border-right-color: rgb(109, 109, 109);
+    border-top-color: rgb(109, 109, 109);
+    border-bottom-color: rgb(109, 109, 109);
+    background-color: rgb(118, 118, 118);
+    border-top-width: 2px;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+    border-left-width: 2px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 4px;
 }

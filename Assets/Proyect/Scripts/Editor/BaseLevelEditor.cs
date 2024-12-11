@@ -15,6 +15,7 @@ public class BaseLevelEditor : EditorWindow
     protected Dictionary<string, Button> tabButtons = new();
     protected Dictionary<string, VisualElement> infoContainers = new();
     protected string curTab = "";
+    protected string lastTab = "";
 
     Button selectedButton;
     protected const string acceptButtonName = "AceptButton";
@@ -27,7 +28,7 @@ public class BaseLevelEditor : EditorWindow
     {
         None,
         Approved,
-        Warning,
+        Error,
         HighlightBorder,
         StateBorder,
         BuffBorder,
@@ -51,28 +52,22 @@ public class BaseLevelEditor : EditorWindow
 
     protected void ChangeTab(string tab)
     {
+        lastTab = curTab;
+
         if (string.IsNullOrEmpty(tab))
         {
             CloseCurrentTab();
+            curTab = "";
             return;
         }
 
-        foreach (var button in infoContainers)
+        foreach (var curTab in infoContainers.Values)
         {
-            if (button.Key == tab)
-            {
-                if (button.Value.ClassListContains("Disable"))
-                {
-                    button.Value.RemoveFromClassList("Disable");
-                    curTab = tab;
-                    //SelectButton(tab);
-                }
-            }
-            else if (!button.Value.ClassListContains("Disable"))
-            {
-                button.Value.AddToClassList("Disable");
-            }
+            EnableContainer(curTab, false);
         }
+
+        EnableContainer(infoContainers[tab], true);
+        curTab = tab;
     }
 
     protected void ChangeTab(VisualElement visualElement)
@@ -97,10 +92,9 @@ public class BaseLevelEditor : EditorWindow
 
     protected void CloseCurrentTab()
     {
-        foreach (var container in infoContainers.Values)
-            EnableContainer(container, false);
+        if (string.IsNullOrEmpty(curTab)) return;
 
-        curTab = "";
+        EnableContainer(infoContainers[curTab], false);
         return;
     }
 

@@ -16,8 +16,8 @@
         </ui:VisualElement>
         <ui:VisualElement name="infoContainer" style="flex-grow: 1; max-height: 70%;" />
         <ui:VisualElement name="btnContainer" class="LineContainer" style="flex-grow: 1; max-height: 40px; margin-top: 10px; justify-content: center; padding-top: 10px;">
-            <ui:Button text="Create" parse-escape-sequences="true" display-tooltip-when-elided="true" name="btnSettingAccept" class="MidButton" />
-            <ui:Button text="Cancel" parse-escape-sequences="true" display-tooltip-when-elided="true" name="btnSettingCancel" class="MidButton" />
+            <ui:Button text="Create" parse-escape-sequences="true" display-tooltip-when-elided="true" name="btnSettingAccept" class="MidButton ClickableBtn" />
+            <ui:Button text="Cancel" parse-escape-sequences="true" display-tooltip-when-elided="true" name="btnSettingCancel" class="MidButton ClickableBtn" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

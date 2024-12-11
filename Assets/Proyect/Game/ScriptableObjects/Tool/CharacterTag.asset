@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: CharacterTag
   m_EditorClassIdentifier: 
   characters: []
-  defaultElements: 03000000020000000b000000090000000a0000000600000004000000
+  defaultElements: 03000000020000000a000000080000000900000004000000

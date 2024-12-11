@@ -15,7 +15,7 @@ namespace Burmuruk.Tesis.Editor
             ElementType.Consumable,
             ElementType.Weapon,
             ElementType.Armor,
-            ElementType.State,
+            //ElementType.State,
             ElementType.Buff,
         };
         public Dictionary<ElementType, List<string>> elements = new()
@@ -46,13 +46,13 @@ namespace Burmuruk.Tesis.Editor
                     "Dagger",
                 }
             },
-            {
-                ElementType.State, new()
-                {
-                    "Madness",
-                    "Sleep",
-                }
-            },
+            //{
+            //    ElementType.State, new()
+            //    {
+            //        "Madness",
+            //        "Sleep",
+            //    }
+            //},
         };
 
         [Serializable]
@@ -70,7 +70,7 @@ namespace Burmuruk.Tesis.Editor
         Character,
         Buff,
         Mod,
-        State,
+        //State,
         Hability,
         Creation,
         Weapon,
@@ -86,7 +86,7 @@ namespace Burmuruk.Tesis.Editor
         Mover,
         Inventory,
         Equipment,
-        Flying,
+        //Flying,
         Dialogue,
         Patrolling,
     }
