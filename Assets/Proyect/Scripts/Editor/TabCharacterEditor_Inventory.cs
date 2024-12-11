@@ -55,6 +55,8 @@ namespace Burmuruk.Tesis.Editor
                 set => Components[index] = value;
             }
 
+            public List<int> Amounts { get => amounts; }
+
             public MyComponentsList(VisualElement container)
             {
                 amounts = new();
@@ -396,6 +398,38 @@ namespace Burmuruk.Tesis.Editor
         {
             curElementList.ChangeAmount(idx, 0);
             EnableContainer(curElementList.Components[idx].element, false);
+        }
+
+        private Inventory GetInventory(MyComponentsList mcl) 
+        {
+            var inventory = new Inventory();
+            inventory.items = new();
+
+            for (int i = 0; i < mcl.Components.Count; i++) 
+            {
+                inventory.items.TryAdd(mcl[i].Type, mcl.Amounts[i]);
+            }
+
+            return inventory;
+        }
+
+        private Equipment GetEquipment(in Inventory inventory, MyComponentsList mcl)
+        {
+            var equipment = new Equipment(inventory);
+
+            for (int i = 0; i < mcl.Components.Count; i++) 
+            {
+                if (mcl[i].Toggle.value) 
+                {
+                    equipment.equipment.TryAdd(mcl[i].Type, new EquipData() {
+                        type = mcl[i].Type,
+                        place = Enum.Parse<EquipmentType>(mcl[i].EnumField.text),
+                        equipped = true,
+                    });
+                }
+            }
+
+            return equipment;
         }
     }
 }

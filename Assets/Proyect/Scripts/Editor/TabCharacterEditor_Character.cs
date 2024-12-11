@@ -265,6 +265,22 @@ namespace Burmuruk.Tesis.Editor
 
                     break;
 
+                case ElementType.Weapon:
+
+                    break;
+
+                case ElementType.Armor:
+
+                    break;
+
+                case ElementType.Buff:
+
+                    break;
+
+                case ElementType.Consumable:
+
+                    break;
+
                 default: break;
             }
         }
@@ -452,64 +468,6 @@ namespace Burmuruk.Tesis.Editor
             }
 
             return false;
-        }
-
-        private bool SaveChanges_Character(string name, string newName = "")
-        {
-            if (string.IsNullOrEmpty(name)) return false;
-
-            if (IsTheNameUsed(newName)) return false;
-
-            if (string.IsNullOrEmpty(newName)) newName = name;
-
-            charactersLists.creations.TryAdd(ElementType.Character, new());
-
-            if (charactersLists.creations[ElementType.Character].ContainsKey(name))
-            {
-                charactersLists.creations[ElementType.Character].Remove(name);
-                charactersLists.elements[ElementType.Character].Remove(name);
-            }
-
-            characterData.characterName = newName;
-            charactersLists.creations[ElementType.Character].TryAdd(newName, characterData);
-            charactersLists.elements[ElementType.Character].Add(newName);
-
-            //EditorUtility.SetDirty(charactersLists);
-            //AssetDatabase.SaveAssets();
-            //AssetDatabase.Refresh();
-
-            SearchAllElements();
-
-            return true;
-        }
-
-        private void LoadChanges_Character(string elementName)
-        {
-            if (!charactersLists.creations[ElementType.Character].ContainsKey(elementName))
-            {
-                Debug.Log("No existe el elemento deseado");
-                return;
-            }
-
-            CharacterData data = (CharacterData)charactersLists.creations[ElementType.Character][elementName];
-
-            txtNameCreation.value = data.characterName;
-            CFCreationColor.value = data.color;
-            emCharacterType.EnumField.value = data.characterType;
-            characterData = data;
-
-            Disable_CharacterComponents();
-
-            characterData.components = new();
-            if (data.components != null)
-            {
-                foreach (var key in data.components.Keys)
-                {
-                    Add_CharacterComponent(key.ToString(), key);
-                }
-            }
-
-            ddfAddComponent.SetValueWithoutNotify("None");
         }
 
         private void Discard_CharacterChanges()

@@ -22,13 +22,25 @@ namespace Burmuruk.Tesis.Editor
 
     struct Inventory
     {
-        public List<int> Ids;
+        public Dictionary<ElementType, int> items;
     }
 
     struct Equipment
     {
         public Inventory inventory;
-        public Dictionary<int, bool> equipment;
-        public Dictionary<EquipmentType, GameObject> bodyParts;
+        public Dictionary<ElementType, EquipData> equipment;
+
+        public Equipment(Inventory inventory) 
+        {
+            this.inventory = inventory;
+            equipment = new();
+        }
+    }
+
+    struct EquipData 
+    {
+        public ElementType type;
+        public EquipmentType place;
+        public bool equipped;
     }
 }
