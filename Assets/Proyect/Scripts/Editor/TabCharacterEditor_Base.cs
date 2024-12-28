@@ -1,6 +1,10 @@
+using Burmuruk.Tesis.Combat;
+using Burmuruk.Tesis.Inventory;
+using Burmuruk.Tesis.Stats;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -37,9 +41,11 @@ namespace Burmuruk.Tesis.Editor
 
         VisualElement leftPanel;
         VisualElement rightPanel;
-        ScrollView infoLeft;
-        ScrollView infoRight;
+        VisualElement infoLeft;
+        VisualElement infoRight;
         VisualElement infoSetup;
+        VisualElement rootTab;
+        static TabCharacterEditor currentWindow;
 
         (ElementType type, int idx) currentSettingTag = (ElementType.None, -1);
 
@@ -117,17 +123,20 @@ namespace Burmuruk.Tesis.Editor
         {
             TabCharacterEditor window = GetWindow<TabCharacterEditor>();
             window.titleContent = new GUIContent("Character creation");
-            window.minSize = new Vector2(400, 300);
+            window.minSize = new Vector2(400, 400);
+            currentWindow = window;
         }
 
         public void CreateGUI()
         {
             container = rootVisualElement;
-            VisualTreeAsset visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/CharacterTab.uxml");
-            container.Add(visualTree.Instantiate());
+            VisualTreeAsset visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/CharacterEditor/Tabs/CharacterTab.uxml");
+            rootTab = visualTree.Instantiate();
+            container.Add(rootTab);
+            //rootTab.style.height = new StyleLength(StyleKeyword.;
 
-            StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/BasicSS.uss");
-            StyleSheet styleSheet2 = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/TagSystem.uss");
+            StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/BasicSS.uss");
+            StyleSheet styleSheet2 = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/TagSystem.uss");
             container.styleSheets.Add(styleSheet);
             container.styleSheets.Add(styleSheet2);
 
@@ -145,6 +154,7 @@ namespace Burmuruk.Tesis.Editor
 
         private void CreateSettingTabs()
         {
+            Create_BaseSettingsTab();
             Create_CharacterTab();
             Create_WeaponSettings();
             Create_ItemTab();
@@ -159,7 +169,7 @@ namespace Burmuruk.Tesis.Editor
 
         protected override void GetTabButtons()
         {
-            container.Q<VisualElement>("Tabs").AddToClassList("Disable");
+            //container.Q<VisualElement>("Tabs").AddToClassList("Disable");
         }
 
         protected override void GetInfoContainers()
@@ -183,10 +193,10 @@ namespace Burmuruk.Tesis.Editor
             void AddContainer(string[] names)
             {
                 foreach (var containerName in names)                {
-                    VisualElement newContainer = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/Proyect/Game/UIToolkit/{containerName}.uxml").Instantiate();
+                    VisualElement newContainer = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/Proyect/Game/UIToolkit/CharacterEditor/Tabs/{containerName}.uxml").Instantiate();
 
                     infoContainers.Add(containerName, newContainer);
-                    infoSetup.Q<VisualElement>("infoContainer").Add(newContainer);
+                    infoSetup.Q<ScrollView>("infoContainer").Add(newContainer);
                     EnableContainer(newContainer, false);
                 }
             }
@@ -194,9 +204,9 @@ namespace Burmuruk.Tesis.Editor
 
         private void CreateTagsContainer()
         {
-            VisualTreeAsset tagsContainer = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/TagsContainer.uxml");
-            StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/LineTags.uss");
-            StyleSheet styleSheetColour = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/BorderColours.uss");
+            VisualTreeAsset tagsContainer = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/CharacterEditor/TagsContainer.uxml");
+            StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/LineTags.uss");
+            StyleSheet styleSheetColour = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/BorderColours.uss");
 
             container.styleSheets.Add(styleSheet);
             container.styleSheets.Add(styleSheetColour);
@@ -235,10 +245,17 @@ namespace Burmuruk.Tesis.Editor
             splitView.Insert(0, leftPanel);
             splitView.Insert(1, rightPanel);
 
-            infoLeft = leftPanel.Q<ScrollView>("elementsContainer");
-            infoRight = rightPanel.Q<ScrollView>("elementsContainer");
+            splitView.style.flexBasis = 1000;
+            splitView.style.flexGrow = 1;
+            splitView.style.flexShrink = 1;
+            rightPanel.style.flexGrow = 1;
+            rightPanel.style.flexShrink = 1;
+            rightPanel.style.flexBasis = 1000;
 
-            infoSetup = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/Proyect/Game/UIToolkit/{infoSetupName}.uxml").Instantiate();
+            infoLeft = leftPanel.Q<VisualElement>("elementsContainer");
+            infoRight = rightPanel.Q<VisualElement>("elementsContainer");
+
+            infoSetup = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/Proyect/Game/UIToolkit/CharacterEditor/{infoSetupName}.uxml").Instantiate();
             txtNameCreation = infoSetup.Q<TextField>(txtCreationName);
             CFCreationColor = infoSetup.Q<ColorField>(creationColorName);
 
@@ -258,7 +275,7 @@ namespace Burmuruk.Tesis.Editor
 
         private void OnKeyUp_txtNameCreation(KeyUpEvent evt)
         {
-            if (IsNameWrittenCorrectly(txtNameCreation.value))
+            if (regName.IsMatch(txtNameCreation.value))
             {
                 characterData.characterName = txtNameCreation.value;
                 Highlight(txtNameCreation, false);
@@ -319,9 +336,9 @@ namespace Burmuruk.Tesis.Editor
             }
         }
 
-        private void Add_SearchElements(ScrollView container, int amount)
+        private void Add_SearchElements(VisualElement container, int amount)
         {
-            VisualTreeAsset ElementTag = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/ElementTag.uxml");
+            VisualTreeAsset ElementTag = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/CharacterEditor/Elements/ElementTag.uxml");
             Left_Elements = new();
 
             for (int i = 0; i < amount; i++)
@@ -362,14 +379,10 @@ namespace Burmuruk.Tesis.Editor
         {
             switch (Left_Elements[idx].type)
             {
-                case ElementType.None:
-                    break;
-
-                case ElementType.Component:
-                    break;
-
                 case ElementType.Item:
                     ChangeTab(infoItemSettingsName);
+
+                    Load_ElementBaaseData<InventoryItem>(ElementType.Item, components[idx].BtnEditComponent.text);
                     break;
 
                 case ElementType.Character:
@@ -379,6 +392,7 @@ namespace Burmuruk.Tesis.Editor
 
                 case ElementType.Buff:
                     ChangeTab(infoBuffSettingsName);
+                    
                     break;
 
                 case ElementType.Mod:
@@ -387,7 +401,9 @@ namespace Burmuruk.Tesis.Editor
                 //case ElementType.State:
                 //    break;
 
-                case ElementType.Hability:
+                case ElementType.Ability:
+                    var ability = Load_ElementBaaseData<Ability>(ElementType.Ability, components[idx].BtnEditComponent.text);
+                    Load_AbilityData(ability);
                     break;
 
                 case ElementType.Creation:
@@ -395,14 +411,23 @@ namespace Burmuruk.Tesis.Editor
 
                 case ElementType.Weapon:
                     ChangeTab(infoWeaponSettingsName);
+
+                    var weapon = Load_ElementBaaseData<Weapon>(ElementType.Weapon, components[idx].BtnEditComponent.text);
+                    Load_WeaponData(weapon);
                     break;
 
-                case ElementType.Armor:
+                case ElementType.Armour:
                     ChangeTab(infoArmorSettingsName);
+
+                    var armor = Load_ElementBaaseData<ArmourElement>(ElementType.Armour, components[idx].BtnEditComponent.text);
+                    Load_ArmorData(armor);
                     break;
 
                 case ElementType.Consumable:
                     ChangeTab(infoConsumableSettingsName);
+
+                    var consumable = Load_ElementBaaseData<ConsumableItem>(ElementType.Consumable, components[idx].BtnEditComponent.text);
+                    Load_ConsumableData(consumable);
                     break;
 
                 default:
@@ -755,7 +780,7 @@ namespace Burmuruk.Tesis.Editor
                 case ElementType.Consumable:
                     ChangeTab(infoConsumableSettingsName);
                     break;
-                case ElementType.Armor:
+                case ElementType.Armour:
                     ChangeTab(infoArmorSettingsName);
                     break;
 
@@ -854,7 +879,7 @@ namespace Burmuruk.Tesis.Editor
                 ElementType.Character => BorderColour.CharacterBorder,
                 //ElementType.State => BorderColour.StateBorder,
                 ElementType.Buff => BorderColour.BuffBorder,
-                ElementType.Armor => BorderColour.ArmorBorder,
+                ElementType.Armour => BorderColour.ArmorBorder,
                 ElementType.Weapon => BorderColour.WeaponBorder,
                 ElementType.Consumable => BorderColour.ConsumableBorder,
                 ElementType.Item => BorderColour.ItemBorder,

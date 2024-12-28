@@ -14,7 +14,7 @@ namespace Burmuruk.Tesis.Editor
             ElementType.Item,
             ElementType.Consumable,
             ElementType.Weapon,
-            ElementType.Armor,
+            ElementType.Armour,
             //ElementType.State,
             ElementType.Buff,
         };
@@ -71,10 +71,10 @@ namespace Burmuruk.Tesis.Editor
         Buff,
         Mod,
         //State,
-        Hability,
+        Ability,
         Creation,
         Weapon,
-        Armor,
+        Armour,
         Consumable,
     }
 

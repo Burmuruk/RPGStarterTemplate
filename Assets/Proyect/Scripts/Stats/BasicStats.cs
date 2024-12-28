@@ -19,6 +19,7 @@ namespace Burmuruk.Tesis.Stats
         [SerializeField] public float eyesRadious;
         [SerializeField] public float earsRadious;
         [SerializeField] float minDistance;
+        [Space(), Header("Equipment")]
         [SerializeField] List<Slot> m_slots;
 
         [Serializable]

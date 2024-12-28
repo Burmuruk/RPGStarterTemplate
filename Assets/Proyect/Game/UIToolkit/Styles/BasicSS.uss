@@ -1,3 +1,11 @@
+Label {
+    font-size: 12px;
+}
+
+Button {
+    font-size: 12px;
+}
+
 .Tabs {
     max-width: 100px;
     border-top-width: 2px;
@@ -16,6 +24,13 @@
     background-color: rgba(103, 101, 101, 0.99);
     padding-left: 5px;
     padding-right: 2px;
+}
+
+.Title {
+    -unity-font-style: bold;
+    color: rgb(200, 199, 199);
+    -unity-text-align: lower-left;
+    margin-top: 10px;
 }
 
 .InfoContainer {
@@ -37,10 +52,10 @@
     padding-right: 3px;
     padding-bottom: 3px;
     padding-left: 3px;
-    min-height: 150px;
     flex-wrap: nowrap;
-    flex-grow: 100;
-    flex-shrink: 0;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 150px;
 }
 
 .TabsContainer {
@@ -51,9 +66,12 @@
 }
 
 .MidButton {
-    min-width: 40%;
-    max-height: 30px;
-    min-height: 25px;
+    min-width: auto;
+    max-height: none;
+    min-height: auto;
+    flex-shrink: 0;
+    flex-basis: auto;
+    height: 20px;
 }
 
 .LineContainer {
@@ -211,38 +229,6 @@
     padding-right: 2px;
     max-width: 70px;
     min-width: 70px;
-}
-
-.EnumChanger {
-    max-height: 50px;
-}
-
-.EnumChanger Label {
-    min-width: 60px;
-    margin-top: 1px;
-    margin-right: 1px;
-    margin-bottom: 1px;
-    margin-left: 1px;
-    padding-top: 1px;
-    padding-right: 1px;
-    padding-bottom: 1px;
-    padding-left: 1px;
-    font-size: 12px;
-}
-
-.EnumChanger .LineField {
-    min-width: 60px;
-    margin-top: 1px;
-    margin-right: 1px;
-    margin-bottom: 1px;
-    margin-left: 1px;
-    padding-top: 1px;
-    padding-right: 1px;
-    padding-bottom: 1px;
-    padding-left: 1px;
-    flex-grow: 1;
-    flex-shrink: 1;
-    font-size: 12px;
 }
 
 .ClickableBtn {

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using UnityEditor;
 using UnityEngine;
@@ -20,6 +21,7 @@ public class BaseLevelEditor : EditorWindow
     Button selectedButton;
     protected const string acceptButtonName = "AceptButton";
     protected const string cancelButtonName = "CancelButton";
+    protected static Regex regName = new Regex(@"(?m)^[a-zA-Z](?!.*\W)+\w*");
 
     protected bool changesInTab = false;
     protected BorderColour borderColor = BorderColour.None;
@@ -98,7 +100,7 @@ public class BaseLevelEditor : EditorWindow
         return;
     }
 
-    protected void EnableContainer(VisualElement container, bool shouldEnable)
+    public static void EnableContainer(VisualElement container, bool shouldEnable)
     {
         if (shouldEnable)
         {
@@ -236,25 +238,6 @@ public class BaseLevelEditor : EditorWindow
     protected bool IsHighlighted(VisualElement element)
     {
         return element.ClassListContains(BorderColour.HighlightBorder.ToString());
-    }
-
-    protected void SaveChanges()
-    {
-
-    }
-
-    protected void LoadChanges()
-    {
-
-    }
-
-    protected bool IsNameWrittenCorrectly(string name)
-    {
-        if (HasSpecialCharacter(name) ||
-            HasInvalidNumberInName(name))
-            return false;
-
-        return true;
     }
 
     protected bool HasSpecialCharacter(string value)

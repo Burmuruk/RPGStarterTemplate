@@ -1,0 +1,4 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Template name="ItemInfoBase" src="project://database/Assets/Proyect/Game/UIToolkit/CharacterEditor/ItemInfoBase.uxml?fileID=9197481963319205126&amp;guid=dacdd60a09810114da73bac9f6c71cd6&amp;type=3#ItemInfoBase" />
+    <ui:Instance template="ItemInfoBase" name="ItemInfoBase" />
+</ui:UXML>

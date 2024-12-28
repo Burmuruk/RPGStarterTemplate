@@ -1,0 +1,14 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
+    <Style src="project://database/Assets/Proyect/Game/UIToolkit/Styles/BasicSS.uss?fileID=7433441132597879392&amp;guid=2693b02dba201b24e87668e3aaaa0fc1&amp;type=3#BasicSS" />
+    <Style src="project://database/Assets/Proyect/Game/UIToolkit/Styles/LineTags.uss?fileID=7433441132597879392&amp;guid=1db9e95078017b3489041439420a4a43&amp;type=3#LineTags" />
+    <ui:VisualElement name="variablesAdder" style="flex-grow: 0; flex-shrink: 0;">
+        <ui:Label tabindex="-1" text="New basic stats" parse-escape-sequences="true" display-tooltip-when-elided="true" class="Title" />
+        <ui:Button text="Add basic stat" parse-escape-sequences="true" display-tooltip-when-elided="true" name="btnAddBasicStats" class="LineElements" />
+        <ui:Button text="Cancel" parse-escape-sequences="true" display-tooltip-when-elided="true" name="btnCancel" class="LineElements" />
+        <ui:VisualElement class="LineElements" style="flex-grow: 0; flex-direction: row; flex-shrink: 0;">
+            <ui:EnumField type="UnityEngine.TextAlignment, UnityEngine.TextRenderingModule" value="Center" name="EnumField" style="flex-basis: auto; flex-grow: 1; flex-shrink: 1;" />
+            <ui:TextField picking-mode="Ignore" value="Name" name="txtName" style="flex-grow: 1; flex-shrink: 1; flex-basis: 70%;" />
+        </ui:VisualElement>
+        <ui:VisualElement name="newValuesContainer" style="flex-grow: 1;" />
+    </ui:VisualElement>
+</ui:UXML>

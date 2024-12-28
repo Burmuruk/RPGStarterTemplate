@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Burmuruk.Tesis.Inventory
 {
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Armor", order = 1)]
-    public class ArmorElement : EquipeableItem
+    public class ArmourElement : EquipeableItem
     {
         [Header("Equipment")]
         [SerializeField] EquipmentType m_bodyPart;

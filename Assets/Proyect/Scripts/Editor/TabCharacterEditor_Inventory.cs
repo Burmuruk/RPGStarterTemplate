@@ -29,8 +29,8 @@ namespace Burmuruk.Tesis.Editor
             ElementType.Item,
             ElementType.Consumable,
             ElementType.Weapon,
-            ElementType.Armor,
-            ElementType.Hability,
+            ElementType.Armour,
+            ElementType.Ability,
         };
 
         class EquipmentVisualizer : ScriptableObject
@@ -127,7 +127,7 @@ namespace Burmuruk.Tesis.Editor
         {
             btnBackEquipmentSettings = infoContainers[infoEquipmentSettingsName].Q<Button>();
             btnBackEquipmentSettings.clicked += () => ChangeTab(lastTab);
-            emBodyPart = new EnumModifier(infoContainers[infoEquipmentSettingsName].Q<VisualElement>(EnumModifier.ContainerName));
+            emBodyPart = new EnumModifier(infoContainers[infoEquipmentSettingsName].Q<VisualElement>(EnumModifier.ContainerName), Notify);
             emBodyPart.EnumField.Init(EquipmentType.None);
 
             infoBodyPlacement = infoContainers[infoEquipmentSettingsName].Q<VisualElement>("infoBodySplit");
@@ -143,7 +143,7 @@ namespace Burmuruk.Tesis.Editor
             splitView.fixedPaneInitialDimension = 215;
             splitView.AddToClassList("SplitViewStyle");
 
-            var bodVis = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/BodyVisualizer.uxml");
+            var bodVis = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/CharacterEditor/Elements/BodyVisualizer.uxml");
             var leftSide = bodVis.Instantiate();
             var objField = leftSide.Q<ObjectField>();
             var tree = leftSide.Q<TreeView>();
@@ -322,7 +322,7 @@ namespace Burmuruk.Tesis.Editor
         {
             int newIdx = idx = curElementList.Components.Count;
 
-            VisualTreeAsset element = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/ElementComponent.uxml");
+            VisualTreeAsset element = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/CharacterEditor/Elements/ElementComponent.uxml");
             var component = new MyListElement(element.Instantiate(), newIdx);
 
             //component.BtnEditComponent.clicked += () => OpenComponentSettings(newIdx);
@@ -362,7 +362,7 @@ namespace Burmuruk.Tesis.Editor
         private void Setup_EquipmentElementButton(int componentIdx)
         {
             var type = curElementList[componentIdx].Type;
-            if (type == ElementType.Armor || type == ElementType.Weapon || type == ElementType.Hability)
+            if (type == ElementType.Armour || type == ElementType.Weapon || type == ElementType.Ability)
             {
                 curElementList.Components[componentIdx].Toggle.SetEnabled(true);
             }

@@ -1,3 +1,4 @@
+using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
 using Burmuruk.Tesis.Utilities;
 using System;
@@ -106,24 +107,73 @@ namespace Burmuruk.Tesis.Editor
             }
         }
 
-        struct EnumModifier
+        class EnumModifier
         {
             public const string ContainerName = "EnumModifier";
+            private Action<string, BorderColour> notifyCallback;
+
             public VisualElement Container { get; private set; }
             public Button BtnAddValue { get; private set; }
+            public Button BtnEditValue { get; private set; }
             public EnumField EnumField { get; private set; }
             public TextField TxtNewValue { get; private set; }
             public VisualElement EnumContainer { get; private set; }
             public VisualElement NewValueContainer { get; private set; }
 
-            public EnumModifier(VisualElement container)
+            public EnumModifier(VisualElement container, Action<string, BorderColour> notify)
             {
                 this.Container = container;
-                BtnAddValue = container.Q<Button>();
+                notifyCallback = notify;
+                BtnAddValue = container.Q<Button>("btnAddValue");
+                BtnEditValue = container.Q<Button>("btnEditValue");
                 EnumField = container.Q<EnumField>();
                 TxtNewValue = container.Q<TextField>();
                 EnumContainer = container.Q<VisualElement>("EnumLine");
                 NewValueContainer = container.Q<VisualElement>("NewElementLine");
+
+                BtnAddValue.clicked += () => Toggle_EnumAddingState();
+                TxtNewValue.RegisterCallback<KeyUpEvent>(OnKeyUp_TxtCharacterType);
+
+                EnableContainer(NewValueContainer, false);
+            }
+
+            private void OnKeyUp_TxtCharacterType(KeyUpEvent evt)
+            {
+                if (evt.keyCode == KeyCode.Return)
+                {
+                    if (!regName.IsMatch(TxtNewValue.value))
+                        return;
+
+                    if (!Add_EnumValue("CharacterType")) return;
+
+                    EnableContainer(NewValueContainer, true);
+                    Toggle_EnumAddingState();
+                    EnumField.SetValueWithoutNotify(CharacterType.None);
+                }
+            }
+
+            private bool Add_EnumValue(string EnumName)
+            {
+                EnumEditor enumEditor = new();
+                string error = "";
+                //enumEditor.Modify(EnumName, new string[] { emCharacterType.TxtNewValue.value }, "Path", out string error);
+
+                if (!string.IsNullOrEmpty(error))
+                {
+                    notifyCallback(error, BorderColour.Error);
+                    return false;
+                }
+
+                notifyCallback("Value added", BorderColour.Approved);
+                return true;
+            }
+
+            private void Toggle_EnumAddingState()
+            {
+                bool shouldAddValue = BtnAddValue.text == "+";
+                BtnAddValue.text = shouldAddValue ? "-" : "+";
+                EnumField.SetEnabled(!shouldAddValue);
+                EnableContainer(NewValueContainer, shouldAddValue);
             }
         }
 
@@ -132,22 +182,22 @@ namespace Burmuruk.Tesis.Editor
             [SerializeField] BasicStats stats;
         }
 
+        private void Create_BaseSettingsTab()
+        {
+            btnSettingCancel = infoSetup.Q<Button>(btnSettingCancelName);
+            btnSettingAccept = infoSetup.Q<Button>(btnSettingAcceptName);
+            btnSettingCancel.clicked += OnCancel_BtnSetting;
+            btnSettingAccept.clicked += OnAccept_BtnAccept;
+        }
+
         private void Create_CharacterTab()
         {
             componentsContainer = infoContainers[infoCharacterName].Q<VisualElement>(ComponentsContainerName);
             ddfAddComponent = infoContainers[infoCharacterName].Q<DropdownField>(ddfAddComponentName);
             statsContainer = infoContainers[infoCharacterName].Q<VisualElement>(statsContainerName);
 
-            emCharacterType = new EnumModifier(infoContainers[infoCharacterName].Q<VisualElement>(EnumModifier.ContainerName));
-            emCharacterType.BtnAddValue.clicked += () => Toggle_EnumAddingState(emCharacterType);
+            emCharacterType = new EnumModifier(infoContainers[infoCharacterName].Q<VisualElement>(EnumModifier.ContainerName), Notify);
             emCharacterType.EnumField.RegisterValueChangedCallback(SetCharacterType);
-
-            btnSettingCancel = infoSetup.Q<Button>(btnSettingCancelName);
-            btnSettingAccept = infoSetup.Q<Button>(btnSettingAcceptName);
-            btnSettingCancel.clicked += OnCancel_BtnSetting;
-            btnSettingAccept.clicked += OnAccept_BtnAccept;
-            emCharacterType.TxtNewValue.RegisterCallback<KeyUpEvent>(OnKeyUp_TxtCharacterType);
-            EnableContainer(emCharacterType.NewValueContainer, false);
 
             ddfAddComponent.RegisterValueChangedCallback(AddComponent);
             characterData = new CharacterData();
@@ -156,46 +206,12 @@ namespace Burmuruk.Tesis.Editor
 
             var instance = ScriptableObject.CreateInstance<StatsVisualizer>();
             statsContainer.Add(new InspectorElement(instance));
+
+            VisualElement adderUI = infoContainers[infoCharacterName].Q<VisualElement>("VariblesAdder");
+            VariablesAdderUI adder = new(adderUI, statsContainer);
         }
 
-        private void OnKeyUp_TxtCharacterType(KeyUpEvent evt)
-        {
-            if (evt.keyCode == KeyCode.Return)
-            {
-                if (!IsNameWrittenCorrectly(emCharacterType.TxtNewValue.value))
-                    return;
-                
-                if (!Add_EnumValue("CharacterType")) return;
-                
-                EnableContainer(emCharacterType.NewValueContainer, true);
-                Toggle_EnumAddingState(emCharacterType);
-                emCharacterType.EnumField.SetValueWithoutNotify(CharacterType.None);
-            }
-        }
-
-        private bool Add_EnumValue(string EnumName)
-        {
-            EnumEditor enumEditor = new();
-            string error = "";
-            //enumEditor.Modify(EnumName, new string[] { emCharacterType.TxtNewValue.value }, "Path", out string error);
-
-            if (!string.IsNullOrEmpty(error))
-            {
-                Notify(error, BorderColour.Error);
-                return false;
-            }
-
-            Notify("Value added", BorderColour.Approved);
-            return true;
-        }
-
-        private void Toggle_EnumAddingState(EnumModifier modifier)
-        {
-            bool shouldAddValue = modifier.BtnAddValue.text == "+";
-            modifier.BtnAddValue.text = shouldAddValue ? "-" : "+";
-            modifier.EnumField.SetEnabled(!shouldAddValue);
-            EnableContainer(modifier.NewValueContainer, shouldAddValue);
-        }
+        
 
         private void OnCancel_BtnSetting()
         {
@@ -204,6 +220,9 @@ namespace Burmuruk.Tesis.Editor
                 case ElementType.Character:
                     Discard_CharacterChanges();
                     break;
+                case ElementType.Weapon:
+                    break;
+
                 default: break;
             }
         }
@@ -246,6 +265,27 @@ namespace Burmuruk.Tesis.Editor
                     }
                     break;
 
+                case ElementType.Buff:
+                    SaveElement(ElementType.Buff, "", curBuffData.buff, txtNameCreation.text);
+                    break;
+
+                case ElementType.Item:
+                case ElementType.Weapon:
+                case ElementType.Armour:
+                case ElementType.Consumable:
+
+                    string creationName = currentSettingTag.type switch
+                    {
+                        ElementType.Item => curItemData.Name,
+                        ElementType.Weapon => curWeaponData.Name,
+                        ElementType.Armour => curArmorData.Name,
+                        ElementType.Consumable => curConsumableData.Name,
+                        _ => null
+                    };
+
+                    SaveElement(ElementType.Armour, creationName, curArmorData, txtNameCreation.text);
+                    break;
+
                 default: break;
             }
         }
@@ -262,23 +302,24 @@ namespace Burmuruk.Tesis.Editor
                     break;
 
                 case ElementType.Item:
-
-                    break;
-
                 case ElementType.Weapon:
+                case ElementType.Armour:
+                case ElementType.Consumable:
+                    object creationData = currentSettingTag.type switch
+                    {
+                        ElementType.Item => curItemData,
+                        ElementType.Weapon => curWeaponData,
+                        ElementType.Armour => curArmorData,
+                        ElementType.Consumable => curConsumableData,
+                        _ => null
+                    };
 
-                    break;
-
-                case ElementType.Armor:
-
+                    SaveElement(ElementType.Armour, txtNameCreation.text, creationData);
                     break;
 
                 case ElementType.Buff:
-
-                    break;
-
-                case ElementType.Consumable:
-
+                    ref BuffData buffData = ref curBuffData.buff;
+                    SaveElement(ElementType.Buff, txtNameCreation.text, buffData);
                     break;
 
                 default: break;
@@ -389,7 +430,7 @@ namespace Burmuruk.Tesis.Editor
 
         private ElementComponent CreateNewComponent(string value, out int idx)
         {
-            VisualTreeAsset element = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/ElementComponent.uxml");
+            VisualTreeAsset element = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/CharacterEditor/Elements/ElementComponent.uxml");
             var component = new ElementComponent(element.Instantiate());
             
             idx = components.Count;
@@ -483,5 +524,7 @@ namespace Burmuruk.Tesis.Editor
             statsContainer.Add(new InspectorElement(instance));
             characterData = new();
         }
+
+        public static bool VerifyVariableName(string name) => regName.IsMatch(name);
     }
 }
