@@ -2,11 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using UnityEditor;
-using UnityEngine;
 using UnityEngine.UIElements;
-using static BaseLevelEditor;
 
 public class BaseLevelEditor : EditorWindow
 {
@@ -25,7 +22,7 @@ public class BaseLevelEditor : EditorWindow
 
     protected bool changesInTab = false;
     protected BorderColour borderColor = BorderColour.None;
-    
+
     public enum BorderColour
     {
         None,
@@ -230,9 +227,30 @@ public class BaseLevelEditor : EditorWindow
                 else if (textField.ClassListContains(colour))
                 {
                     textField.RemoveFromClassList(colour);
-                } 
+                }
             }
         }
+    }
+
+    protected bool IsHighlighted(VisualElement element, out BorderColour colour)
+    {
+        colour = BorderColour.None;
+
+        foreach (BorderColour value in Enum.GetValues(typeof(BorderColour)))
+        {
+            if (element.ClassListContains(value.ToString()))
+            {
+                colour = value;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected bool IsHighlighted(VisualElement element, BorderColour colour)
+    {
+        return element.ClassListContains(colour.ToString());
     }
 
     protected bool IsHighlighted(VisualElement element)

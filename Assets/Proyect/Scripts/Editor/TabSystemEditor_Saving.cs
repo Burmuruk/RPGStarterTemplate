@@ -1,11 +1,7 @@
-using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Saving;
 using Burmuruk.Tesis.Utilities;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Burmuruk.Tesis.Editor
@@ -57,7 +53,7 @@ namespace Burmuruk.Tesis.Editor
                     {
                         textField.RegisterCallback<KeyUpEvent>(AddEnumSavingStep);
                     }
-                    else 
+                    else
                     {
                         textField.isReadOnly = true;
                         textField.SetEnabled(false);
@@ -159,7 +155,7 @@ namespace Burmuruk.Tesis.Editor
                 Notify("No changes found.", BorderColour.Approved);
                 return;
             }
-            
+
             if (enumEditor.Modify("SavingExecution", newValues.ToArray(), "", out string error))
             {
                 ClearSavingValues();
@@ -196,5 +192,5 @@ namespace Burmuruk.Tesis.Editor
                 }
             }
         }
-    } 
+    }
 }

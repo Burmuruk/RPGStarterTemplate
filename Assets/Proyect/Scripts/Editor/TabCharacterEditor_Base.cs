@@ -4,7 +4,6 @@ using Burmuruk.Tesis.Stats;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -22,7 +21,7 @@ namespace Burmuruk.Tesis.Editor
         const string infoWeaponSettingsName = "WeaponSettings";
         const string infoBuffSettingsName = "BuffSettings";
         const string infoConsumableSettingsName = "ConsumableSettings";
-        const string infoArmorSettingsName = "ArmorSettings";
+        const string infoArmourSettingsName = "ArmorSettings";
         const string infoHealthSettingsName = "HealthSettings";
         const string infoEquipmentSettingsName = "EquipmentSettings";
         const string infoInventorySettingsName = "InventorySettings";
@@ -182,7 +181,7 @@ namespace Burmuruk.Tesis.Editor
                 infoItemSettingsName,
                 infoWeaponSettingsName,
                 infoBuffSettingsName,
-                infoArmorSettingsName,
+                infoArmourSettingsName,
                 infoConsumableSettingsName,
                 infoHealthSettingsName,
                 infoEquipmentSettingsName,
@@ -194,10 +193,12 @@ namespace Burmuruk.Tesis.Editor
 
             void AddContainer(string[] names, VisualElement container, bool shouldAdd = true)
             {
-                foreach (var containerName in names)                {
+                foreach (var containerName in names)
+                {
                     VisualElement newContainer = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/Proyect/Game/UIToolkit/CharacterEditor/Tabs/{containerName}.uxml").Instantiate();
 
                     infoContainers.Add(containerName, newContainer);
+                    tabNames[containerName] = "";
 
                     if (shouldAdd)
                         container.Q<ScrollView>("infoContainer").Add(newContainer);
@@ -279,6 +280,13 @@ namespace Burmuruk.Tesis.Editor
         }
 
         private void OnKeyUp_txtNameCreation(KeyUpEvent evt)
+        {
+            Verify_TxtCreationName();
+
+            tabNames[curTab] = txtNameCreation.value;
+        }
+
+        private void Verify_TxtCreationName()
         {
             if (regName.IsMatch(txtNameCreation.value))
             {
@@ -387,7 +395,7 @@ namespace Burmuruk.Tesis.Editor
                 case ElementType.Item:
                     ChangeTab(infoItemSettingsName);
 
-                    Load_ElementBaaseData<InventoryItem>(ElementType.Item, components[idx].BtnEditComponent.text);
+                    Load_ElementBaseData<InventoryItem>(ElementType.Item, creations[idx].BtnEditComponent.text);
                     break;
 
                 case ElementType.Character:
@@ -397,17 +405,17 @@ namespace Burmuruk.Tesis.Editor
 
                 case ElementType.Buff:
                     ChangeTab(infoBuffSettingsName);
-                    
+
                     break;
 
-                case ElementType.Mod:
-                    break;
+                //case ElementType.Mod:
+                //    break;
 
                 //case ElementType.State:
                 //    break;
 
                 case ElementType.Ability:
-                    var ability = Load_ElementBaaseData<Ability>(ElementType.Ability, components[idx].BtnEditComponent.text);
+                    var ability = Load_ElementBaseData<Ability>(ElementType.Ability, creations[idx].BtnEditComponent.text);
                     Load_AbilityData(ability);
                     break;
 
@@ -417,21 +425,21 @@ namespace Burmuruk.Tesis.Editor
                 case ElementType.Weapon:
                     ChangeTab(infoWeaponSettingsName);
 
-                    var weapon = Load_ElementBaaseData<Weapon>(ElementType.Weapon, components[idx].BtnEditComponent.text);
+                    var weapon = Load_ElementBaseData<Weapon>(ElementType.Weapon, creations[idx].BtnEditComponent.text);
                     Load_WeaponData(weapon);
                     break;
 
                 case ElementType.Armour:
-                    ChangeTab(infoArmorSettingsName);
+                    ChangeTab(infoArmourSettingsName);
 
-                    var armor = Load_ElementBaaseData<ArmourElement>(ElementType.Armour, components[idx].BtnEditComponent.text);
-                    Load_ArmorData(armor);
+                    var armour = Load_ElementBaseData<ArmourElement>(ElementType.Armour, creations[idx].BtnEditComponent.text);
+                    Load_ArmourData(armour);
                     break;
 
                 case ElementType.Consumable:
                     ChangeTab(infoConsumableSettingsName);
 
-                    var consumable = Load_ElementBaaseData<ConsumableItem>(ElementType.Consumable, components[idx].BtnEditComponent.text);
+                    var consumable = Load_ElementBaseData<ConsumableItem>(ElementType.Consumable, creations[idx].BtnEditComponent.text);
                     Load_ConsumableData(consumable);
                     break;
 
@@ -714,6 +722,21 @@ namespace Burmuruk.Tesis.Editor
                 DisableElements();
         }
 
+        protected override void ChangeTab(string tab)
+        {
+            if (IsHighlighted(txtNameCreation, out _))
+            {
+                Highlight(txtNameCreation, false);
+                DisableNotification();
+            }
+
+            base.ChangeTab(tab);
+            txtNameCreation.SetValueWithoutNotify(tabNames[tab]);
+
+            if (!string.IsNullOrEmpty(txtNameCreation.value))
+                Verify_TxtCreationName();
+        }
+
         #region Events
         private void KeyDown_SearchElementCharacter(KeyDownEvent evt)
         {
@@ -763,11 +786,14 @@ namespace Burmuruk.Tesis.Editor
             {
                 Highlight(btnsRight_Tag[idx].element, false);
                 EnableContainer(infoSetup, false);
-                ChangeTab(infoGeneralSettinsCharacterName);
                 //CloseCurrentTab();
+                ChangeTab(infoGeneralSettinsCharacterName);
                 currentSettingTag = (ElementType.None, -1);
                 return;
             }
+
+            //if (settingsState == SettingsState.Editing)
+            //    OnCancel_BtnSetting();
 
             switch (type)
             {
@@ -787,7 +813,7 @@ namespace Burmuruk.Tesis.Editor
                     ChangeTab(infoConsumableSettingsName);
                     break;
                 case ElementType.Armour:
-                    ChangeTab(infoArmorSettingsName);
+                    ChangeTab(infoArmourSettingsName);
                     break;
 
                 default: return;

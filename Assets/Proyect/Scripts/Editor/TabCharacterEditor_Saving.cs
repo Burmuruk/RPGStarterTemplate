@@ -1,7 +1,6 @@
 using Burmuruk.Tesis.Combat;
 using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
-using UnityEditor.Playables;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -40,7 +39,7 @@ namespace Burmuruk.Tesis.Editor
             return true;
         }
 
-        private T Load_ElementBaaseData<T>(ElementType type, string name) where T : InventoryItem
+        private T Load_ElementBaseData<T>(ElementType type, string name) where T : InventoryItem
         {
             T data = (T)charactersLists.creations[type][name];
 
@@ -85,6 +84,7 @@ namespace Burmuruk.Tesis.Editor
             characterData.components[ComponentType.Health] = health;
             characterData.color = CFCreationColor.value;
             characterData.characterType = (CharacterType)emCharacterType.EnumField.value;
+            characterData.stats = basicStats.stats;
 
             return SaveElement(ElementType.Character, name, characterData, newName);
         }
@@ -160,7 +160,7 @@ namespace Burmuruk.Tesis.Editor
 
         private void Load_AbilityData(Ability ability)
         {
-            
+
         }
 
         private void Load_WeaponData(Weapon weapon)
@@ -168,7 +168,7 @@ namespace Burmuruk.Tesis.Editor
             curWeaponData = weapon;
         }
 
-        private void Load_ArmorData(ArmourElement armor)
+        private void Load_ArmourData(ArmourElement armor)
         {
 
         }

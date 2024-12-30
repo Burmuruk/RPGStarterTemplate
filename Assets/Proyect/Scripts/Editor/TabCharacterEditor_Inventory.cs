@@ -103,7 +103,7 @@ namespace Burmuruk.Tesis.Editor
             public Toggle Toggle { get; }
             public IntegerField IFAmount { get; private set; }
             public EnumField EnumField { get; private set; }
-            public ElementType Type { get; set; }
+            public Enum Type { get; set; }
 
             public MyListElement(VisualElement container, int idx)
             {
@@ -114,7 +114,7 @@ namespace Burmuruk.Tesis.Editor
                 Toggle = container.Q<Toggle>();
                 IFAmount = container.Q<IntegerField>("txtAmount");
                 EnumField = container.Q<EnumField>();
-                Type = ElementType.None;
+                Type = default;
 
                 Toggle.AddToClassList("Disable");
             }
@@ -394,6 +394,7 @@ namespace Burmuruk.Tesis.Editor
         {
             curElementList.ChangeAmount(idx, 0);
             EnableContainer(curElementList.Components[idx].element, false);
+            curElementList[idx].element.parent.Remove(curElementList[idx].element);
         }
 
         private Inventory GetInventory(MyComponentsList mcl)
@@ -403,6 +404,9 @@ namespace Burmuruk.Tesis.Editor
 
             for (int i = 0; i < mcl.Components.Count; i++)
             {
+                if (mcl[i].element.ClassListContains("Disable"))
+                    continue;
+
                 inventory.items.TryAdd(mcl[i].Type, mcl.Amounts[i]);
             }
 

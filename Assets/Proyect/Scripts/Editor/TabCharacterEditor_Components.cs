@@ -1,23 +1,20 @@
 using Burmuruk.Tesis.Combat;
 using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Burmuruk.Tesis.Editor
 {
-	public class BuffVisulizer : ScriptableObject
-	{
-		[SerializeField] public BuffData buff;
-	}
+    public class BuffVisulizer : ScriptableObject
+    {
+        [SerializeField] public BuffData buff;
+    }
 
     public partial class TabCharacterEditor : BaseLevelEditor
-	{
+    {
         const string infoHealthName = "HealthSettings";
 
         FloatField ffHealthValue;
@@ -33,9 +30,10 @@ namespace Burmuruk.Tesis.Editor
         ArmourElement curArmorData;
         List<BaseItemSetting> settingsElements = new();
         [SerializeField] List<BuffData> curWeaponsBuffs;
+        Dictionary<string, string> tabNames = new();
 
         private void Create_ItemTab()
-		{
+        {
             //curItemData = ScriptableObject.CreateInstance<InventoryItem>();
             //infoContainers[infoItemSettingsName].Add(new InspectorElement(curItemData));
 
@@ -67,7 +65,7 @@ namespace Burmuruk.Tesis.Editor
         {
             curConsumableData = ScriptableObject.CreateInstance<ConsumableItem>();
             //infoContainers[infoConsumableSettingsName].Add(new InspectorElement(curConsumableData));
-            
+
             var settings = new ConsumableSettings();
             settings.Initialize(infoContainers[infoConsumableSettingsName]);
             settingsElements.Add(settings);
@@ -76,7 +74,7 @@ namespace Burmuruk.Tesis.Editor
         private void Create_ArmourSettings()
         {
             var settings = new ArmourSetting();
-            settings.Initialize(infoContainers[infoArmorSettingsName]);
+            settings.Initialize(infoContainers[infoArmourSettingsName]);
             settingsElements.Add(settings);
         }
 
@@ -86,7 +84,7 @@ namespace Burmuruk.Tesis.Editor
             ffHealthValue.RegisterValueChangedCallback(OnValueChanged_FFHealthValue);
 
             btnBackHealthSettings = infoContainers[infoHealthSettingsName].Q<Button>();
-            
+
             btnBackHealthSettings.clicked += () => ChangeTab(lastTab);
         }
 
@@ -136,5 +134,5 @@ namespace Burmuruk.Tesis.Editor
 
             characterData.components.TryAdd(type, item);
         }
-    } 
+    }
 }

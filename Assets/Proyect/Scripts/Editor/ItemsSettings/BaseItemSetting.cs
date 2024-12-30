@@ -1,4 +1,3 @@
-using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -23,5 +22,5 @@ namespace Burmuruk.Tesis.Editor
             OfSprite.objectType = typeof(Sprite);
             OfPickup.objectType = typeof(GameObject);
         }
-    } 
+    }
 }

@@ -1,6 +1,5 @@
 using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -30,14 +29,14 @@ namespace Burmuruk.Tesis.Editor
         public Inventory inventory;
         public Dictionary<ElementType, EquipData> equipment;
 
-        public Equipment(Inventory inventory) 
+        public Equipment(Inventory inventory)
         {
             this.inventory = inventory;
             equipment = new();
         }
     }
 
-    struct EquipData 
+    struct EquipData
     {
         public ElementType type;
         public EquipmentType place;
