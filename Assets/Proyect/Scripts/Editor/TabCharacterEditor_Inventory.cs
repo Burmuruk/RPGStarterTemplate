@@ -1,18 +1,15 @@
 using Burmuruk.Tesis.Inventory;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
-using static UnityEditor.Rendering.FilterWindow;
 
 namespace Burmuruk.Tesis.Editor
 {
-	public partial class TabCharacterEditor : BaseLevelEditor
-	{
+    public partial class TabCharacterEditor : BaseLevelEditor
+    {
         const string infoEquipmentName = "EquipmentSettings";
         const string infoInventoryName = "InventorySettings";
 
@@ -22,7 +19,7 @@ namespace Burmuruk.Tesis.Editor
         MyComponentsList mclEquipmentElements;
         MyComponentsList curElementList;
         VisualElement infoBodyPlacement;
-        EnumModifier emBodyPart;
+        EnumModifierUI emBodyPart;
         ElementType[] inventoryChoices = new ElementType[]
         {
             ElementType.None,
@@ -127,8 +124,7 @@ namespace Burmuruk.Tesis.Editor
         {
             btnBackEquipmentSettings = infoContainers[infoEquipmentSettingsName].Q<Button>();
             btnBackEquipmentSettings.clicked += () => ChangeTab(lastTab);
-            emBodyPart = new EnumModifier(infoContainers[infoEquipmentSettingsName].Q<VisualElement>(EnumModifier.ContainerName), Notify);
-            emBodyPart.EnumField.Init(EquipmentType.None);
+            emBodyPart = new EnumModifierUI(infoContainers[infoEquipmentSettingsName].Q<VisualElement>(EnumModifierUI.ContainerName), Notify, EquipmentType.None);
 
             infoBodyPlacement = infoContainers[infoEquipmentSettingsName].Q<VisualElement>("infoBodySplit");
             CreateSplitViewEquipment(infoBodyPlacement);
@@ -166,7 +162,7 @@ namespace Burmuruk.Tesis.Editor
             int startIdx = 0;
             tree.Clear();
 
-            List<TreeViewItemData<string>>  subItemData = GetChilds(go.transform, ref startIdx);
+            List<TreeViewItemData<string>> subItemData = GetChilds(go.transform, ref startIdx);
 
             tree.makeItem = () => new Label();
             tree.bindItem = (elem, idx) =>
@@ -203,7 +199,7 @@ namespace Burmuruk.Tesis.Editor
         {
             for (int i = 0; i < curElementList.Components.Count; i++)
             {
-                EnableContainer(curElementList.Components[i].element, false); 
+                EnableContainer(curElementList.Components[i].element, false);
             }
 
             int idx = 0;
@@ -258,7 +254,7 @@ namespace Burmuruk.Tesis.Editor
 
             foreach (var value in charactersLists.elements[type])
             {
-                mcl.ddfElement.choices.Add(value); 
+                mcl.ddfElement.choices.Add(value);
             }
         }
 
@@ -273,7 +269,7 @@ namespace Burmuruk.Tesis.Editor
                 curElementList.IncrementElement(elementIdx.Value);
                 return;
             }
-            
+
             var type = Enum.Parse<ElementType>(curElementList.ddfType.value);
             Add_InventoryElement(name, type);
             //Setup_InventoryElementButton(type, elementIdx.Value);
@@ -337,7 +333,7 @@ namespace Burmuruk.Tesis.Editor
         private void UpdateTxtAmount(int idx, int value)
         {
             if (!curElementList.ChangeAmount(idx, value))
-                Notify ("Negative values are not allowed", BorderColour.Error);
+                Notify("Negative values are not allowed", BorderColour.Error);
         }
 
         private void Setup_InventoryElementButton(ElementType type, int componentIdx)
@@ -374,7 +370,7 @@ namespace Burmuruk.Tesis.Editor
 
             if (!curElementList.Components[componentIdx].Toggle.ClassListContains("Disable"))
                 return;
-                
+
             EnableContainer(curElementList.Components[componentIdx].RemoveButton, false);
             EnableContainer(curElementList.Components[componentIdx].IFAmount, false);
             EnableContainer(curElementList.Components[componentIdx].Toggle, true);
@@ -386,7 +382,7 @@ namespace Burmuruk.Tesis.Editor
 
         private void OnValueChanged_EFEquipment(Enum newValue, int componentIdx)
         {
-            
+
         }
 
         private void OnValueChanged_TglEquipment(bool newValue, int componentIdx)
@@ -400,12 +396,12 @@ namespace Burmuruk.Tesis.Editor
             EnableContainer(curElementList.Components[idx].element, false);
         }
 
-        private Inventory GetInventory(MyComponentsList mcl) 
+        private Inventory GetInventory(MyComponentsList mcl)
         {
             var inventory = new Inventory();
             inventory.items = new();
 
-            for (int i = 0; i < mcl.Components.Count; i++) 
+            for (int i = 0; i < mcl.Components.Count; i++)
             {
                 inventory.items.TryAdd(mcl[i].Type, mcl.Amounts[i]);
             }
@@ -417,11 +413,12 @@ namespace Burmuruk.Tesis.Editor
         {
             var equipment = new Equipment(inventory);
 
-            for (int i = 0; i < mcl.Components.Count; i++) 
+            for (int i = 0; i < mcl.Components.Count; i++)
             {
-                if (mcl[i].Toggle.value) 
+                if (mcl[i].Toggle.value)
                 {
-                    equipment.equipment.TryAdd(mcl[i].Type, new EquipData() {
+                    equipment.equipment.TryAdd(mcl[i].Type, new EquipData()
+                    {
                         type = mcl[i].Type,
                         place = Enum.Parse<EquipmentType>(mcl[i].EnumField.text),
                         equipped = true,

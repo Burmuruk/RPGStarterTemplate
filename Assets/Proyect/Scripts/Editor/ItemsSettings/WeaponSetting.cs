@@ -23,6 +23,8 @@ namespace Burmuruk.Tesis.Editor
             MaxDistance = container.Q<FloatField>("MaxDistance");
             ReloadTime = container.Q<FloatField>("txtReloadTime");
             MaxAmmo = container.Q<IntegerField>("txtMaxAmmo");
+
+            var buffAdder = new BuffAdderUI(container);
         }
     }
 }

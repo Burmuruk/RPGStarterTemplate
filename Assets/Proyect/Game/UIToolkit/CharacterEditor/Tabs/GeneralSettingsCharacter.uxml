@@ -1,6 +1,14 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/Proyect/Game/UIToolkit/BasicSS.uss?fileID=7433441132597879392&amp;guid=2693b02dba201b24e87668e3aaaa0fc1&amp;type=3#BasicSS" />
-    <Style src="project://database/Assets/Proyect/Game/UIToolkit/LineTags.uss?fileID=7433441132597879392&amp;guid=1db9e95078017b3489041439420a4a43&amp;type=3#LineTags" />
-    <ui:Toggle label="Show type colour" name="tglShowTypeColour" class="LineElements" />
-    <ui:Toggle label="Test" name="ShowCustomColours" class="LineElements" />
+    <Style src="project://database/Assets/Proyect/Game/UIToolkit/Styles/BasicSS.uss?fileID=7433441132597879392&amp;guid=2693b02dba201b24e87668e3aaaa0fc1&amp;type=3#BasicSS" />
+    <Style src="project://database/Assets/Proyect/Game/UIToolkit/Styles/LineTags.uss?fileID=7433441132597879392&amp;guid=1db9e95078017b3489041439420a4a43&amp;type=3#LineTags" />
+    <ui:VisualElement style="flex-grow: 1; padding-top: 5px; padding-right: 5px; padding-bottom: 5px; padding-left: 8px;">
+        <ui:VisualElement style="flex-grow: 0; flex-shrink: 0; margin-top: 0; margin-bottom: 20px;">
+            <ui:Label tabindex="-1" text="General settings" parse-escape-sequences="true" display-tooltip-when-elided="true" class="Title" style="-unity-text-align: lower-center; font-size: 14px;" />
+        </ui:VisualElement>
+        <ui:Label tabindex="-1" text="Results" parse-escape-sequences="true" display-tooltip-when-elided="true" class="Title" />
+        <ui:TextField picking-mode="Ignore" label="Destination" value="Assets/" class="LineElements" />
+        <ui:Label tabindex="-1" text="Customization" parse-escape-sequences="true" display-tooltip-when-elided="true" class="Title" />
+        <ui:Toggle label="Show type colour" name="tglShowTypeColour" class="LineElements" />
+        <ui:Toggle label="Test" name="ShowCustomColours" class="LineElements" />
+    </ui:VisualElement>
 </ui:UXML>

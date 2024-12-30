@@ -1,9 +1,6 @@
-using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
-using Burmuruk.Tesis.Utilities;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -32,7 +29,7 @@ namespace Burmuruk.Tesis.Editor
         VisualElement componentsContainer;
         DropdownField ddfAddComponent;
         VisualElement statsContainer;
-        EnumModifier emCharacterType;
+        EnumModifierUI emCharacterType;
         List<ElementComponent> components = new();
         CharacterData characterData;
 
@@ -107,76 +104,6 @@ namespace Burmuruk.Tesis.Editor
             }
         }
 
-        class EnumModifier
-        {
-            public const string ContainerName = "EnumModifier";
-            private Action<string, BorderColour> notifyCallback;
-
-            public VisualElement Container { get; private set; }
-            public Button BtnAddValue { get; private set; }
-            public Button BtnEditValue { get; private set; }
-            public EnumField EnumField { get; private set; }
-            public TextField TxtNewValue { get; private set; }
-            public VisualElement EnumContainer { get; private set; }
-            public VisualElement NewValueContainer { get; private set; }
-
-            public EnumModifier(VisualElement container, Action<string, BorderColour> notify)
-            {
-                this.Container = container;
-                notifyCallback = notify;
-                BtnAddValue = container.Q<Button>("btnAddValue");
-                BtnEditValue = container.Q<Button>("btnEditValue");
-                EnumField = container.Q<EnumField>();
-                TxtNewValue = container.Q<TextField>();
-                EnumContainer = container.Q<VisualElement>("EnumLine");
-                NewValueContainer = container.Q<VisualElement>("NewElementLine");
-
-                BtnAddValue.clicked += () => Toggle_EnumAddingState();
-                TxtNewValue.RegisterCallback<KeyUpEvent>(OnKeyUp_TxtCharacterType);
-
-                EnableContainer(NewValueContainer, false);
-            }
-
-            private void OnKeyUp_TxtCharacterType(KeyUpEvent evt)
-            {
-                if (evt.keyCode == KeyCode.Return)
-                {
-                    if (!regName.IsMatch(TxtNewValue.value))
-                        return;
-
-                    if (!Add_EnumValue("CharacterType")) return;
-
-                    EnableContainer(NewValueContainer, true);
-                    Toggle_EnumAddingState();
-                    EnumField.SetValueWithoutNotify(CharacterType.None);
-                }
-            }
-
-            private bool Add_EnumValue(string EnumName)
-            {
-                EnumEditor enumEditor = new();
-                string error = "";
-                //enumEditor.Modify(EnumName, new string[] { emCharacterType.TxtNewValue.value }, "Path", out string error);
-
-                if (!string.IsNullOrEmpty(error))
-                {
-                    notifyCallback(error, BorderColour.Error);
-                    return false;
-                }
-
-                notifyCallback("Value added", BorderColour.Approved);
-                return true;
-            }
-
-            private void Toggle_EnumAddingState()
-            {
-                bool shouldAddValue = BtnAddValue.text == "+";
-                BtnAddValue.text = shouldAddValue ? "-" : "+";
-                EnumField.SetEnabled(!shouldAddValue);
-                EnableContainer(NewValueContainer, shouldAddValue);
-            }
-        }
-
         public class StatsVisualizer : ScriptableObject
         {
             [SerializeField] BasicStats stats;
@@ -196,7 +123,7 @@ namespace Burmuruk.Tesis.Editor
             ddfAddComponent = infoContainers[infoCharacterName].Q<DropdownField>(ddfAddComponentName);
             statsContainer = infoContainers[infoCharacterName].Q<VisualElement>(statsContainerName);
 
-            emCharacterType = new EnumModifier(infoContainers[infoCharacterName].Q<VisualElement>(EnumModifier.ContainerName), Notify);
+            emCharacterType = new EnumModifierUI(infoContainers[infoCharacterName].Q<VisualElement>(EnumModifierUI.ContainerName), Notify, CharacterType.None);
             emCharacterType.EnumField.RegisterValueChangedCallback(SetCharacterType);
 
             ddfAddComponent.RegisterValueChangedCallback(AddComponent);
@@ -211,7 +138,7 @@ namespace Burmuruk.Tesis.Editor
             VariablesAdderUI adder = new(adderUI, statsContainer);
         }
 
-        
+
 
         private void OnCancel_BtnSetting()
         {
@@ -432,7 +359,7 @@ namespace Burmuruk.Tesis.Editor
         {
             VisualTreeAsset element = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/CharacterEditor/Elements/ElementComponent.uxml");
             var component = new ElementComponent(element.Instantiate());
-            
+
             idx = components.Count;
             int newIdx = idx;
             component.index = idx;
@@ -448,7 +375,7 @@ namespace Burmuruk.Tesis.Editor
         private void OpenComponentSettings(int componentIdx)
         {
             var type = components[componentIdx].type;
-            
+
             string tabName = type switch
             {
                 ComponentType.Equipment => infoEquipmentSettingsName,
@@ -459,8 +386,8 @@ namespace Burmuruk.Tesis.Editor
 
             if (tabName == null) return;
 
-            switch (type) 
-            { 
+            switch (type)
+            {
                 case ComponentType.Equipment:
                     curElementList = mclEquipmentElements;
                     Load_InventoryItemsInEquipment();

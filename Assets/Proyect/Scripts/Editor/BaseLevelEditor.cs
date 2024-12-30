@@ -52,7 +52,7 @@ public class BaseLevelEditor : EditorWindow
         pNotification.AddToClassList("Disable");
     }
 
-    protected void ChangeTab(string tab)
+    protected virtual void ChangeTab(string tab)
     {
         lastTab = curTab;
 
@@ -195,7 +195,7 @@ public class BaseLevelEditor : EditorWindow
     protected Button GetCancelButton(VisualElement container) =>
         container.Q<Button>(cancelButtonName);
 
-    protected void Highlight(VisualElement textField, bool shouldHighlight, BorderColour colour = BorderColour.HighlightBorder)
+    public static void Highlight(VisualElement textField, bool shouldHighlight, BorderColour colour = BorderColour.HighlightBorder)
     {
         string colourText = colour.ToString();
         RemoveStyleClass(textField, colourText);

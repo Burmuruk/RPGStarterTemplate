@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEngine;
@@ -141,6 +142,64 @@ namespace Burmuruk.Tesis.Utilities
 
                 return true;
             }
+        }
+
+        public bool Rename(string filePath, string oldName, string newName, out string error)
+        {
+            error = "";
+
+            if (Application.isPlaying)
+            {
+                error = "Can't continue when running application.";
+                return false;
+            }
+
+            var lines = File.ReadAllLines(filePath);
+            string lowerName = char.ToLower(oldName[0]) + oldName.Substring(1, oldName.Length - 1);
+            string upperName = char.ToUpper(oldName[0]) + oldName.Substring(1, oldName.Length - 1);
+
+            Regex lowRegex = new Regex(lowerName);
+            Regex upperRegex = new Regex(upperName);
+
+            using (var writer = new StreamWriter(filePath))
+            {
+                foreach (var line in lines)
+                {
+                    string newLine = lowRegex.Replace(line, newName);
+                    string newLine2 = upperRegex.Replace(line, newName);
+                }
+            }
+
+            return true;
+        }
+
+        public bool RemoveOption(string filePath, string optionName, out string error)
+        {
+            error = "";
+
+            if (Application.isPlaying)
+            {
+                error = "Can't continue when running application.";
+                return false;
+            }
+
+            var lines = File.ReadAllLines(filePath);
+            string lowerName = char.ToLower(optionName[0]) + optionName.Substring(1, optionName.Length - 1);
+            string upperName = char.ToUpper(optionName[0]) + optionName.Substring(1, optionName.Length - 1);
+
+            Regex lowRegex = new Regex(lowerName);
+            Regex upperRegex = new Regex(upperName);
+
+            using (var writer = new StreamWriter(filePath))
+            {
+                foreach (var line in lines)
+                {
+                    if (lowRegex.IsMatch(line) || upperRegex.IsMatch(line))
+                        continue;
+                } 
+            }
+
+            return true;
         }
 
         private void RecompileScripts()

@@ -7,6 +7,5 @@
         <uie:ObjectField label="Sprite" name="opSprite" class="BasicText" />
         <uie:ObjectField label="Pickup" name="opPickup" class="BasicText" />
         <ui:UnsignedIntegerField label="Capacity" value="0" name="txtCapacity" class="BasicText" />
-        <ui:TextField picking-mode="Ignore" label="Text Field" value="filler text" name="txtId" />
     </ui:VisualElement>
 </ui:UXML>

@@ -1,7 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <ui:Template name="ItemInfoBase" src="project://database/Assets/Proyect/Game/UIToolkit/CharacterEditor/Tabs/ItemInfoBase.uxml?fileID=9197481963319205126&amp;guid=dacdd60a09810114da73bac9f6c71cd6&amp;type=3#ItemInfoBase" />
     <ui:Template name="TypeAdder" src="project://database/Assets/Proyect/Game/UIToolkit/GeneralElements/TypeAdder.uxml?fileID=9197481963319205126&amp;guid=3faecc087fcc4f34b874fda6335d50fc&amp;type=3#TypeAdder" />
-    <ui:Template name="EquipmentSettings" src="project://database/Assets/Proyect/Game/UIToolkit/CharacterEditor/Tabs/EquipmentSettings.uxml?fileID=9197481963319205126&amp;guid=147c431751c47154d8e33a750fc66102&amp;type=3#EquipmentSettings" />
+    <ui:Template name="GenericList" src="project://database/Assets/Proyect/Game/UIToolkit/GeneralElements/GenericList.uxml?fileID=9197481963319205126&amp;guid=a986ab12f2ae54949b267be8d37ce8bc&amp;type=3#GenericList" />
     <Style src="project://database/Assets/Proyect/Game/UIToolkit/Styles/BasicSS.uss?fileID=7433441132597879392&amp;guid=2693b02dba201b24e87668e3aaaa0fc1&amp;type=3#BasicSS" />
     <Style src="project://database/Assets/Proyect/Game/UIToolkit/Styles/LineTags.uss?fileID=7433441132597879392&amp;guid=1db9e95078017b3489041439420a4a43&amp;type=3#LineTags" />
     <Style src="project://database/Assets/Proyect/Game/UIToolkit/Styles/ItemInfoStyle.uss?fileID=7433441132597879392&amp;guid=abef978023d5de849b0b907b5baeef9d&amp;type=3#ItemInfoStyle" />
@@ -20,7 +20,7 @@
         <ui:FloatField label="Reload Time" value="0" name="txtReloadTime" class="BasicSize BasicText" />
         <ui:IntegerField label="Max Ammo" value="0" name="txtMaxAmmo" class="BasicSize BasicText" />
     </ui:VisualElement>
+    <ui:Instance template="GenericList" name="GenericList" />
     <ui:VisualElement name="divBuffs" style="flex-grow: 1;" />
     <ui:VisualElement name="divModifications" style="flex-grow: 1;" />
-    <ui:Instance template="EquipmentSettings" name="EquipmentSettings" />
 </ui:UXML>

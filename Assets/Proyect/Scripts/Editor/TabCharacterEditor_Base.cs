@@ -162,7 +162,7 @@ namespace Burmuruk.Tesis.Editor
             Create_HealthSettings();
             Create_EquipmentSettings();
             Create_ConsumableSettings();
-            Create_ArmorSettings();
+            Create_ArmourSettings();
             Create_InventorySettings();
             Create_GeneralCharacterSettings();
         }
@@ -186,17 +186,22 @@ namespace Burmuruk.Tesis.Editor
                 infoConsumableSettingsName,
                 infoHealthSettingsName,
                 infoEquipmentSettingsName,
-                infoGeneralSettinsCharacterName,
                 infoInventorySettingsName,
-            });
+            }, infoSetup);
 
-            void AddContainer(string[] names)
+            AddContainer(new string[] { infoGeneralSettinsCharacterName }, infoRight, false);
+            infoRight.Add(infoContainers[infoGeneralSettinsCharacterName]);
+
+            void AddContainer(string[] names, VisualElement container, bool shouldAdd = true)
             {
                 foreach (var containerName in names)                {
                     VisualElement newContainer = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/Proyect/Game/UIToolkit/CharacterEditor/Tabs/{containerName}.uxml").Instantiate();
 
                     infoContainers.Add(containerName, newContainer);
-                    infoSetup.Q<ScrollView>("infoContainer").Add(newContainer);
+
+                    if (shouldAdd)
+                        container.Q<ScrollView>("infoContainer").Add(newContainer);
+
                     EnableContainer(newContainer, false);
                 }
             }
@@ -758,7 +763,8 @@ namespace Burmuruk.Tesis.Editor
             {
                 Highlight(btnsRight_Tag[idx].element, false);
                 EnableContainer(infoSetup, false);
-                CloseCurrentTab();
+                ChangeTab(infoGeneralSettinsCharacterName);
+                //CloseCurrentTab();
                 currentSettingTag = (ElementType.None, -1);
                 return;
             }
