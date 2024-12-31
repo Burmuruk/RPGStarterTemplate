@@ -15,9 +15,10 @@ namespace Burmuruk.Tesis.Editor
 
         Button btnBackEquipmentSettings;
         Button btnBackInventorySettings;
-        MyComponentsList mclInventoryElements;
-        MyComponentsList mclEquipmentElements;
-        MyComponentsList curElementList;
+        ComponentsListUI<ElementCreation> mclInventoryElements;
+        ComponentsListUI<ElementCreation> mclEquipmentElements;
+        ComponentsListUI<ElementComponent> characterComponents;
+        ComponentsList<ElementCreation> creations;
         VisualElement infoBodyPlacement;
         EnumModifierUI emBodyPart;
         ElementType[] inventoryChoices = new ElementType[]
@@ -35,101 +36,17 @@ namespace Burmuruk.Tesis.Editor
             [SerializeField] public Tesis.Inventory.Equipment equipment;
         }
 
-        struct MyComponentsList
-        {
-            public const string containerName = "infoComponents";
-            List<int> amounts;
-
-            public VisualElement container;
-            public List<MyListElement> Components { get; private set; }
-            public VisualElement infoContainer;
-            public DropdownField ddfType;
-            public DropdownField ddfElement;
-
-            public MyListElement this[int index]
-            {
-                get => Components[index];
-                set => Components[index] = value;
-            }
-
-            public List<int> Amounts { get => amounts; }
-
-            public MyComponentsList(VisualElement container)
-            {
-                amounts = new();
-                this.container = container;
-                Components = new();
-                infoContainer = container.Q<VisualElement>("componentsConatiner");
-                ddfType = container.Q<DropdownField>("ddfType");
-                ddfElement = container.Q<DropdownField>("ddfElement");
-            }
-
-            public void IncrementElement(int idx, bool shouldIncrement = true, int value = 1)
-            {
-                amounts[idx] += shouldIncrement ? value : -value;
-                Components[idx].IFAmount.value = amounts[idx];
-            }
-
-            public bool ChangeAmount(int idx, int amount)
-            {
-                if (amount < 0)
-                {
-                    Components[idx].IFAmount.value = amounts[idx];
-                    return false;
-                }
-
-                amounts[idx] = amount;
-                Components[idx].IFAmount.value = amount;
-
-                return true;
-            }
-
-            public void AddElement(MyListElement element)
-            {
-                Components.Add(element);
-                element.IFAmount.RemoveFromClassList("Disable");
-                element.IFAmount.value = 1;
-                amounts.Add(1);
-            }
-        }
-
-        struct MyListElement
-        {
-            public int idx;
-
-            public VisualElement element;
-            public Button NameButton { get; private set; }
-            public Button RemoveButton { get; private set; }
-            public Toggle Toggle { get; }
-            public IntegerField IFAmount { get; private set; }
-            public EnumField EnumField { get; private set; }
-            public Enum Type { get; set; }
-
-            public MyListElement(VisualElement container, int idx)
-            {
-                this.idx = idx;
-                element = container;
-                NameButton = container.Q<Button>("btnEditComponent");
-                RemoveButton = container.Q<Button>("btnRemove");
-                Toggle = container.Q<Toggle>();
-                IFAmount = container.Q<IntegerField>("txtAmount");
-                EnumField = container.Q<EnumField>();
-                Type = default;
-
-                Toggle.AddToClassList("Disable");
-            }
-        }
-
         private void Create_EquipmentSettings()
         {
-            btnBackEquipmentSettings = infoContainers[infoEquipmentSettingsName].Q<Button>();
+            btnBackEquipmentSettings = infoContainers[INFO_EQUIPMENT_SETTINGS_NAME].Q<Button>();
             btnBackEquipmentSettings.clicked += () => ChangeTab(lastTab);
-            emBodyPart = new EnumModifierUI(infoContainers[infoEquipmentSettingsName].Q<VisualElement>(EnumModifierUI.ContainerName), Notify, EquipmentType.None);
+            emBodyPart = new EnumModifierUI(infoContainers[INFO_EQUIPMENT_SETTINGS_NAME].Q<VisualElement>(EnumModifierUI.ContainerName), Notify, EquipmentType.None);
 
-            infoBodyPlacement = infoContainers[infoEquipmentSettingsName].Q<VisualElement>("infoBodySplit");
+            infoBodyPlacement = infoContainers[INFO_EQUIPMENT_SETTINGS_NAME].Q<VisualElement>("infoBodySplit");
             CreateSplitViewEquipment(infoBodyPlacement);
 
-            mclEquipmentElements = new(infoContainers[infoEquipmentSettingsName].Q<VisualElement>(MyComponentsList.containerName));
+            var container = infoContainers[INFO_EQUIPMENT_SETTINGS_NAME].Q<VisualElement>(ComponentsList.CONTAINER_NAME);
+            mclEquipmentElements = new (container, Notify);
         }
 
         private void CreateSplitViewEquipment(VisualElement container)
@@ -197,68 +114,53 @@ namespace Burmuruk.Tesis.Editor
 
         private void Load_InventoryItemsInEquipment()
         {
-            for (int i = 0; i < curElementList.Components.Count; i++)
+            for (int i = 0; i < mclEquipmentElements.Components.Count; i++)
             {
-                EnableContainer(curElementList.Components[i].element, false);
+                EnableContainer(mclEquipmentElements.Components[i].element, false);
             }
 
             int idx = 0;
             foreach (var component in mclInventoryElements.Components)
             {
-                Add_InventoryElement(component.NameButton.text, component.Type);
+                mclEquipmentElements.AddElement(component.NameButton.text);
                 Setup_EquipmentElementButton(idx++);
             }
         }
 
         private void Create_InventorySettings()
         {
-            btnBackInventorySettings = infoContainers[infoInventorySettingsName].Q<Button>();
+            btnBackInventorySettings = infoContainers[INFO_INVENTORY_SETTINGS_NAME].Q<Button>();
             btnBackInventorySettings.clicked += () => ChangeTab(lastTab);
 
-            mclInventoryElements = new(infoContainers[infoInventorySettingsName].Q<VisualElement>(MyComponentsList.containerName));
-            mclInventoryElements.ddfType.RegisterValueChangedCallback((evt) => OnValueChanged_EFInventoryType(evt));
-            mclInventoryElements.ddfType.choices.Clear();
-            mclInventoryElements.ddfType.SetValueWithoutNotify("None");
+            var container = infoContainers[INFO_INVENTORY_SETTINGS_NAME].Q<VisualElement>(ComponentsList.CONTAINER_NAME);
+            mclInventoryElements = new(container, Notify);
+            
+            mclInventoryElements.DDFType.RegisterValueChangedCallback((evt) => OnValueChanged_EFInventoryType(evt));
+            mclInventoryElements.DDFType.SetValueWithoutNotify("None");
 
-            mclInventoryElements.ddfElement.RegisterValueChangedCallback((evt) => OnValueChanged_EFInventoryElement(evt.newValue));
-            mclInventoryElements.ddfElement.choices.Clear();
-            mclInventoryElements.ddfElement.SetValueWithoutNotify("None");
-
-            foreach (var item in inventoryChoices)
-            {
-                mclInventoryElements.ddfType.choices.Add(item.ToString());
-            }
+            mclInventoryElements.DDFElement.RegisterValueChangedCallback((evt) => OnValueChanged_DDFInventoryElement(evt.newValue));
+            mclInventoryElements.DDFElement.SetValueWithoutNotify("None");
+            Populate_DDFsInventory();
 
             MultiColumnListView lstInventory = new MultiColumnListView();
         }
 
         private void OnValueChanged_EFInventoryType(ChangeEvent<string> evt)
         {
-            curElementList.ddfElement.choices.Clear();
+            mclInventoryElements.DDFElement.choices.Clear();
             var type = Enum.Parse<ElementType>(evt.newValue);
-            mclInventoryElements.ddfElement.SetValueWithoutNotify("None");
+            mclInventoryElements.DDFElement.SetValueWithoutNotify("None");
 
             if (!charactersLists.elements.ContainsKey(type))
                 return;
 
             foreach (var value in charactersLists.elements[type])
             {
-                curElementList.ddfElement.choices.Add(value);
+                mclInventoryElements.DDFElement.choices.Add(value);
             }
         }
 
-        private void Populate_DDFElements(MyComponentsList mcl, ElementType type)
-        {
-            mcl.ddfElement.Clear();
-
-
-            foreach (var value in charactersLists.elements[type])
-            {
-                mcl.ddfElement.choices.Add(value);
-            }
-        }
-
-        private void OnValueChanged_EFInventoryElement(string name)
+        private void OnValueChanged_DDFInventoryElement(string name)
         {
             if (name == "None") return;
 
@@ -266,118 +168,65 @@ namespace Burmuruk.Tesis.Editor
 
             if (elementIdx.HasValue)
             {
-                curElementList.IncrementElement(elementIdx.Value);
+                mclInventoryElements.IncrementElement(elementIdx.Value);
                 return;
             }
 
-            var type = Enum.Parse<ElementType>(curElementList.ddfType.value);
-            Add_InventoryElement(name, type);
-            //Setup_InventoryElementButton(type, elementIdx.Value);
+            mclInventoryElements.AddElement(name);
+        }
+
+        private void Populate_DDFsInventory()
+        {
+            mclInventoryElements.DDFType.choices.Clear();
+            mclInventoryElements.DDFElement.choices.Clear();
+
+            foreach (var type in inventoryChoices)
+            {
+                mclInventoryElements.DDFType.choices.Add(type.ToString());
+
+                if (!charactersLists.creations.ContainsKey(type))
+                    continue;
+
+                foreach (var creation in charactersLists.creations[type])
+                {
+                    mclInventoryElements.DDFElement.choices.Add(creation.Key);
+                }
+            }
         }
 
         private int? Check_HasInventoryComponent(string name)
         {
-            for (int i = 0; i < curElementList.Components.Count; i++)
+            for (int i = 0; i < mclInventoryElements.Components.Count; i++)
             {
-                if (!curElementList.Components[i].element.ClassListContains("Disable") && curElementList.Components[i].NameButton.text.Contains(name))
+                if (!mclInventoryElements.Components[i].element.ClassListContains("Disable") && mclInventoryElements.Components[i].NameButton.text.Contains(name))
                     return i;
             }
 
             return null;
         }
 
-        private void Add_InventoryElement(string value, ElementType type)
-        {
-            int componentIdx = -1;
-
-            for (int i = 0; i < curElementList.Components.Count; i++)
-            {
-                if (curElementList.Components[i].element.ClassListContains("Disable"))
-                {
-                    componentIdx = i;
-                    EnableContainer(curElementList.Components[i].element, true);
-                    break;
-                }
-            }
-
-            if (componentIdx == -1)
-                CreateNewInventoryComponent(value, out componentIdx);
-
-            var elementData = curElementList.Components[componentIdx];
-            elementData.Type = type;
-            curElementList.Components[componentIdx] = elementData;
-            curElementList.Components[componentIdx].NameButton.text = value;
-
-            //characterData.Components ??= new();
-            //characterData.Components.Add(type, null);
-
-            //Setup_InventoryElementButton(type, componentIdx);
-        }
-
-        private MyListElement CreateNewInventoryComponent(string value, out int idx)
-        {
-            int newIdx = idx = curElementList.Components.Count;
-
-            VisualTreeAsset element = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/CharacterEditor/Elements/ElementComponent.uxml");
-            var component = new MyListElement(element.Instantiate(), newIdx);
-
-            //component.BtnEditComponent.clicked += () => OpenComponentSettings(newIdx);
-            component.RemoveButton.clicked += () => Remove_ListElement(newIdx);
-            component.IFAmount.RegisterValueChangedCallback((evt) => UpdateTxtAmount(newIdx, evt.newValue));
-
-            curElementList.AddElement(component);
-            curElementList.infoContainer.Add(curElementList.Components[idx].element);
-            return component;
-        }
-
-        private void UpdateTxtAmount(int idx, int value)
-        {
-            if (!curElementList.ChangeAmount(idx, value))
-                Notify("Negative values are not allowed", BorderColour.Error);
-        }
-
-        private void Setup_InventoryElementButton(ElementType type, int componentIdx)
-        {
-            //switch (type)
-            //{
-            //    case ElementType.Inventory:
-            //    case ElementType.Equipment:
-            //    case ElementType.Health:
-            //        Components[componentIdx].BtnEditComponent.AddToClassList("ClickableBtn");
-            //        Components[componentIdx].BtnEditComponent.style.backgroundColor = new Color(0.4627451f, 0.4627451f, 4627451f);
-            //        break;
-
-            //    default:
-            //        if (Components[componentIdx].BtnEditComponent.ClassListContains("ClickableBtn"))
-            //            Components[componentIdx].BtnEditComponent.RemoveFromClassList("ClickableBtn");
-            //        Components[componentIdx].BtnEditComponent.style.backgroundColor = new Color(0.1647059f, 0.1647059f, 0.1647059f);
-            //        break;
-            //}
-        }
-
         private void Setup_EquipmentElementButton(int componentIdx)
         {
-            var type = curElementList[componentIdx].Type;
+            var type = (ElementType)mclEquipmentElements[componentIdx].Type;
             if (type == ElementType.Armour || type == ElementType.Weapon || type == ElementType.Ability)
             {
-                curElementList.Components[componentIdx].Toggle.SetEnabled(true);
+                mclEquipmentElements.Components[componentIdx].Toggle.SetEnabled(true);
             }
             else
             {
-                curElementList.Components[componentIdx].Toggle.SetEnabled(false);
+                mclEquipmentElements.Components[componentIdx].Toggle.SetEnabled(false);
             }
 
-
-            if (!curElementList.Components[componentIdx].Toggle.ClassListContains("Disable"))
+            if (!mclEquipmentElements.Components[componentIdx].Toggle.ClassListContains("Disable"))
                 return;
 
-            EnableContainer(curElementList.Components[componentIdx].RemoveButton, false);
-            EnableContainer(curElementList.Components[componentIdx].IFAmount, false);
-            EnableContainer(curElementList.Components[componentIdx].Toggle, true);
+            EnableContainer(mclEquipmentElements.Components[componentIdx].RemoveButton, false);
+            EnableContainer(mclEquipmentElements.Components[componentIdx].IFAmount, false);
+            EnableContainer(mclEquipmentElements.Components[componentIdx].Toggle, true);
 
-            curElementList.Components[componentIdx].Toggle.RegisterValueChangedCallback((evt) => OnValueChanged_TglEquipment(evt.newValue, componentIdx));
-            curElementList.Components[componentIdx].EnumField.Init(EquipmentType.None);
-            curElementList.Components[componentIdx].EnumField.RegisterValueChangedCallback((evt) => OnValueChanged_EFEquipment(evt.newValue, componentIdx));
+            mclEquipmentElements.Components[componentIdx].Toggle.RegisterValueChangedCallback((evt) => OnValueChanged_TglEquipment(evt.newValue, componentIdx));
+            mclEquipmentElements.Components[componentIdx].EnumField.Init(EquipmentType.None);
+            mclEquipmentElements.Components[componentIdx].EnumField.RegisterValueChangedCallback((evt) => OnValueChanged_EFEquipment(evt.newValue, componentIdx));
         }
 
         private void OnValueChanged_EFEquipment(Enum newValue, int componentIdx)
@@ -387,44 +236,39 @@ namespace Burmuruk.Tesis.Editor
 
         private void OnValueChanged_TglEquipment(bool newValue, int componentIdx)
         {
-            EnableContainer(curElementList.Components[componentIdx].EnumField, newValue);
+            EnableContainer(mclEquipmentElements.Components[componentIdx].EnumField, newValue);
         }
 
-        private void Remove_ListElement(int idx)
-        {
-            curElementList.ChangeAmount(idx, 0);
-            EnableContainer(curElementList.Components[idx].element, false);
-            curElementList[idx].element.parent.Remove(curElementList[idx].element);
-        }
-
-        private Inventory GetInventory(MyComponentsList mcl)
+        private Inventory GetInventory()
         {
             var inventory = new Inventory();
             inventory.items = new();
 
-            for (int i = 0; i < mcl.Components.Count; i++)
+            for (int i = 0; i < mclInventoryElements.Components.Count; i++)
             {
-                if (mcl[i].element.ClassListContains("Disable"))
+                if (mclInventoryElements[i].element.ClassListContains("Disable"))
                     continue;
 
-                inventory.items.TryAdd(mcl[i].Type, mcl.Amounts[i]);
+                inventory.items.TryAdd((ElementType)mclInventoryElements[i].Type, mclInventoryElements.Amounts[i]);
             }
 
             return inventory;
         }
 
-        private Equipment GetEquipment(in Inventory inventory, MyComponentsList mcl)
+        private Equipment GetEquipment(in Inventory inventory)
         {
             var equipment = new Equipment(inventory);
 
-            for (int i = 0; i < mcl.Components.Count; i++)
+            for (int i = 0; i < mclEquipmentElements.Components.Count; i++)
             {
-                if (mcl[i].Toggle.value)
+                if (mclEquipmentElements[i].Toggle.value)
                 {
-                    equipment.equipment.TryAdd(mcl[i].Type, new EquipData()
+                    var type = (ElementType)mclEquipmentElements[i].Type;
+
+                    equipment.equipment.TryAdd(type, new EquipData()
                     {
-                        type = mcl[i].Type,
-                        place = Enum.Parse<EquipmentType>(mcl[i].EnumField.text),
+                        type = type,
+                        place = Enum.Parse<EquipmentType>(mclEquipmentElements[i].EnumField.text),
                         equipped = true,
                     });
                 }

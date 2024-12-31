@@ -14,21 +14,21 @@ namespace Burmuruk.Tesis.Editor
     public partial class TabCharacterEditor : BaseLevelEditor
     {
         VisualElement infoMainContainer;
-        const string infoMainContainerName = "infoMainContainer";
-        const string infoClassName = "infoClassContainer";
-        const string infoCharacterName = "CharacterSettings";
-        const string infoItemSettingsName = "ItemSettings";
-        const string infoWeaponSettingsName = "WeaponSettings";
-        const string infoBuffSettingsName = "BuffSettings";
-        const string infoConsumableSettingsName = "ConsumableSettings";
-        const string infoArmourSettingsName = "ArmorSettings";
-        const string infoHealthSettingsName = "HealthSettings";
-        const string infoEquipmentSettingsName = "EquipmentSettings";
-        const string infoInventorySettingsName = "InventorySettings";
-        const string infoGeneralSettinsCharacterName = "GeneralSettingsCharacter";
+        const string INFO_MAIN_CONTAINER_NAME = "infoMainContainer";
+        const string INFO_CLASS_NAME = "infoClassContainer";
+        const string INFO_CHARACTER_NAME = "CharacterSettings";
+        const string INFO_ITEM_SETTINGS_NAE = "ItemSettings";
+        const string INFO_WEAPON_SETTINGS_NAME = "WeaponSettings";
+        const string INFO_BUFF_SETTINGS_NAME = "BuffSettings";
+        const string INFO_CONSUMABLE_SETTINGS_NAME = "ConsumableSettings";
+        const string INFO_ARMOUR_SETTINGS_NAME = "ArmorSettings";
+        const string INFO_HEALTH_SETTINGS_NAME = "HealthSettings";
+        const string INFO_EQUIPMENT_SETTINGS_NAME = "EquipmentSettings";
+        const string INFO_INVENTORY_SETTINGS_NAME = "InventorySettings";
+        const string INFO_GENERAL_SETTINGS_CHARACTER_NAME = "GeneralSettingsCharacter";
 
-        const string infoDialoguesName = "infoDialoguesContainer";
-        const string infoSetupName = "InfoBase";
+        const string INFO_DIALOGUES_NAME = "infoDialoguesContainer";
+        const string INFO_SETUP_NAME = "InfoBase";
 
         CharacterTag charactersLists;
         TextField txtSearch_Right;
@@ -148,7 +148,7 @@ namespace Burmuruk.Tesis.Editor
             CreateSettingTabs();
 
             SearchAllElements();
-            ChangeTab(infoGeneralSettinsCharacterName);
+            ChangeTab(INFO_GENERAL_SETTINGS_CHARACTER_NAME);
         }
 
         private void CreateSettingTabs()
@@ -168,28 +168,28 @@ namespace Burmuruk.Tesis.Editor
 
         protected override void GetTabButtons()
         {
-            //container.Q<VisualElement>("Tabs").AddToClassList("Disable");
+            //Parent.Q<VisualElement>("Tabs").AddToClassList("Disable");
         }
 
         protected override void GetInfoContainers()
         {
-            infoMainContainer = container.Q<VisualElement>(infoMainContainerName);
+            infoMainContainer = container.Q<VisualElement>(INFO_MAIN_CONTAINER_NAME);
 
             AddContainer(new string[]
             {
-                infoCharacterName,
-                infoItemSettingsName,
-                infoWeaponSettingsName,
-                infoBuffSettingsName,
-                infoArmourSettingsName,
-                infoConsumableSettingsName,
-                infoHealthSettingsName,
-                infoEquipmentSettingsName,
-                infoInventorySettingsName,
+                INFO_CHARACTER_NAME,
+                INFO_ITEM_SETTINGS_NAE,
+                INFO_WEAPON_SETTINGS_NAME,
+                INFO_BUFF_SETTINGS_NAME,
+                INFO_ARMOUR_SETTINGS_NAME,
+                INFO_CONSUMABLE_SETTINGS_NAME,
+                INFO_HEALTH_SETTINGS_NAME,
+                INFO_EQUIPMENT_SETTINGS_NAME,
+                INFO_INVENTORY_SETTINGS_NAME,
             }, infoSetup);
 
-            AddContainer(new string[] { infoGeneralSettinsCharacterName }, infoRight, false);
-            infoRight.Add(infoContainers[infoGeneralSettinsCharacterName]);
+            AddContainer(new string[] { INFO_GENERAL_SETTINGS_CHARACTER_NAME }, infoRight, false);
+            infoRight.Add(infoContainers[INFO_GENERAL_SETTINGS_CHARACTER_NAME]);
 
             void AddContainer(string[] names, VisualElement container, bool shouldAdd = true)
             {
@@ -216,7 +216,7 @@ namespace Burmuruk.Tesis.Editor
 
             container.styleSheets.Add(styleSheet);
             container.styleSheets.Add(styleSheetColour);
-            var infoContainer = container.Q<VisualElement>(infoMainContainerName);
+            var infoContainer = container.Q<VisualElement>(INFO_MAIN_CONTAINER_NAME);
 
             TwoPaneSplitView splitView = CreateSplitView(tagsContainer);
             infoContainer.Add(splitView);
@@ -261,9 +261,9 @@ namespace Burmuruk.Tesis.Editor
             infoLeft = leftPanel.Q<VisualElement>("elementsContainer");
             infoRight = rightPanel.Q<VisualElement>("elementsContainer");
 
-            infoSetup = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/Proyect/Game/UIToolkit/CharacterEditor/{infoSetupName}.uxml").Instantiate();
-            txtNameCreation = infoSetup.Q<TextField>(txtCreationName);
-            CFCreationColor = infoSetup.Q<ColorField>(creationColorName);
+            infoSetup = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/Proyect/Game/UIToolkit/CharacterEditor/{INFO_SETUP_NAME}.uxml").Instantiate();
+            txtNameCreation = infoSetup.Q<TextField>(TXT_CREATION_NAME);
+            CFCreationColor = infoSetup.Q<ColorField>(CREATION_COLOUR_NAME);
 
             txtNameCreation.RegisterCallback<KeyUpEvent>(OnKeyUp_txtNameCreation);
             CFCreationColor.RegisterValueChangedCallback(OnValueChanged_CFCreationColour);
@@ -393,18 +393,18 @@ namespace Burmuruk.Tesis.Editor
             switch (Left_Elements[idx].type)
             {
                 case ElementType.Item:
-                    ChangeTab(infoItemSettingsName);
+                    ChangeTab(INFO_ITEM_SETTINGS_NAE);
 
-                    Load_ElementBaseData<InventoryItem>(ElementType.Item, creations[idx].BtnEditComponent.text);
+                    Load_ElementBaseData<InventoryItem>(ElementType.Item, creations[idx].NameButton.text);
                     break;
 
                 case ElementType.Character:
                     LoadChanges_Character(Left_Elements[idx].Button.text);
-                    ChangeTab(infoCharacterName);
+                    ChangeTab(INFO_CHARACTER_NAME);
                     break;
 
                 case ElementType.Buff:
-                    ChangeTab(infoBuffSettingsName);
+                    ChangeTab(INFO_BUFF_SETTINGS_NAME);
 
                     break;
 
@@ -415,7 +415,7 @@ namespace Burmuruk.Tesis.Editor
                 //    break;
 
                 case ElementType.Ability:
-                    var ability = Load_ElementBaseData<Ability>(ElementType.Ability, creations[idx].BtnEditComponent.text);
+                    var ability = Load_ElementBaseData<Ability>(ElementType.Ability, creations[idx].NameButton.text);
                     Load_AbilityData(ability);
                     break;
 
@@ -423,23 +423,23 @@ namespace Burmuruk.Tesis.Editor
                     break;
 
                 case ElementType.Weapon:
-                    ChangeTab(infoWeaponSettingsName);
+                    ChangeTab(INFO_WEAPON_SETTINGS_NAME);
 
-                    var weapon = Load_ElementBaseData<Weapon>(ElementType.Weapon, creations[idx].BtnEditComponent.text);
+                    var weapon = Load_ElementBaseData<Weapon>(ElementType.Weapon, creations[idx].NameButton.text);
                     Load_WeaponData(weapon);
                     break;
 
                 case ElementType.Armour:
-                    ChangeTab(infoArmourSettingsName);
+                    ChangeTab(INFO_ARMOUR_SETTINGS_NAME);
 
-                    var armour = Load_ElementBaseData<ArmourElement>(ElementType.Armour, creations[idx].BtnEditComponent.text);
+                    var armour = Load_ElementBaseData<ArmourElement>(ElementType.Armour, creations[idx].NameButton.text);
                     Load_ArmourData(armour);
                     break;
 
                 case ElementType.Consumable:
-                    ChangeTab(infoConsumableSettingsName);
+                    ChangeTab(INFO_CONSUMABLE_SETTINGS_NAME);
 
-                    var consumable = Load_ElementBaseData<ConsumableItem>(ElementType.Consumable, creations[idx].BtnEditComponent.text);
+                    var consumable = Load_ElementBaseData<ConsumableItem>(ElementType.Consumable, creations[idx].NameButton.text);
                     Load_ConsumableData(consumable);
                     break;
 
@@ -787,7 +787,7 @@ namespace Burmuruk.Tesis.Editor
                 Highlight(btnsRight_Tag[idx].element, false);
                 EnableContainer(infoSetup, false);
                 //CloseCurrentTab();
-                ChangeTab(infoGeneralSettinsCharacterName);
+                ChangeTab(INFO_GENERAL_SETTINGS_CHARACTER_NAME);
                 currentSettingTag = (ElementType.None, -1);
                 return;
             }
@@ -798,22 +798,22 @@ namespace Burmuruk.Tesis.Editor
             switch (type)
             {
                 case ElementType.Character:
-                    ChangeTab(infoCharacterName);
+                    ChangeTab(INFO_CHARACTER_NAME);
                     break;
                 case ElementType.Item:
-                    ChangeTab(infoItemSettingsName);
+                    ChangeTab(INFO_ITEM_SETTINGS_NAE);
                     break;
                 case ElementType.Weapon:
-                    ChangeTab(infoWeaponSettingsName);
+                    ChangeTab(INFO_WEAPON_SETTINGS_NAME);
                     break;
                 case ElementType.Buff:
-                    ChangeTab(infoBuffSettingsName);
+                    ChangeTab(INFO_BUFF_SETTINGS_NAME);
                     break;
                 case ElementType.Consumable:
-                    ChangeTab(infoConsumableSettingsName);
+                    ChangeTab(INFO_CONSUMABLE_SETTINGS_NAME);
                     break;
                 case ElementType.Armour:
-                    ChangeTab(infoArmourSettingsName);
+                    ChangeTab(INFO_ARMOUR_SETTINGS_NAME);
                     break;
 
                 default: return;

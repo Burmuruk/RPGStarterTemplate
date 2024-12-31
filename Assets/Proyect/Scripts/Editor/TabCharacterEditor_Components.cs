@@ -35,22 +35,22 @@ namespace Burmuruk.Tesis.Editor
         private void Create_ItemTab()
         {
             //curItemData = ScriptableObject.CreateInstance<InventoryItem>();
-            //infoContainers[infoItemSettingsName].Add(new InspectorElement(curItemData));
+            //infoContainers[INFO_ITEM_SETTINGS_NAE].Add(new InspectorElement(curItemData));
 
             var settings = new BaseItemSetting();
-            settings.Initialize(infoContainers[infoItemSettingsName]);
+            settings.Initialize(infoContainers[INFO_ITEM_SETTINGS_NAE]);
         }
 
         private void Create_WeaponSettings()
         {
             var settings = new WeaponSetting();
-            settings.Initialize(infoContainers[infoWeaponSettingsName]);
+            settings.Initialize(infoContainers[INFO_WEAPON_SETTINGS_NAME]);
             settingsElements.Add(settings);
 
-            var bodyPart = infoContainers[infoWeaponSettingsName].Q<EnumField>("efBodyPart");
+            var bodyPart = infoContainers[INFO_WEAPON_SETTINGS_NAME].Q<EnumField>("efBodyPart");
             bodyPart.Init(EquipmentType.None);
 
-            var weaponType = infoContainers[infoWeaponSettingsName].Q<VisualElement>("TypeAdderWeapon");
+            var weaponType = infoContainers[INFO_WEAPON_SETTINGS_NAME].Q<VisualElement>("TypeAdderWeapon");
             weaponType.Q<Label>().text = "Weapon type";
             weaponType.Q<EnumField>().Init(WeaponType.None);
         }
@@ -58,42 +58,42 @@ namespace Burmuruk.Tesis.Editor
         private void Create_BuffSettings()
         {
             curBuffData = ScriptableObject.CreateInstance<BuffVisulizer>();
-            infoContainers[infoBuffSettingsName].Add(new InspectorElement(curBuffData));
+            infoContainers[INFO_BUFF_SETTINGS_NAME].Add(new InspectorElement(curBuffData));
         }
 
         private void Create_ConsumableSettings()
         {
             curConsumableData = ScriptableObject.CreateInstance<ConsumableItem>();
-            //infoContainers[infoConsumableSettingsName].Add(new InspectorElement(curConsumableData));
+            //infoContainers[INFO_CONSUMABLE_SETTINGS_NAME].Add(new InspectorElement(curConsumableData));
 
             var settings = new ConsumableSettings();
-            settings.Initialize(infoContainers[infoConsumableSettingsName]);
+            settings.Initialize(infoContainers[INFO_CONSUMABLE_SETTINGS_NAME]);
             settingsElements.Add(settings);
         }
 
         private void Create_ArmourSettings()
         {
             var settings = new ArmourSetting();
-            settings.Initialize(infoContainers[infoArmourSettingsName]);
+            settings.Initialize(infoContainers[INFO_ARMOUR_SETTINGS_NAME]);
             settingsElements.Add(settings);
         }
 
         private void Create_HealthSettings()
         {
-            ffHealthValue = infoContainers[infoHealthSettingsName].Q<FloatField>();
+            ffHealthValue = infoContainers[INFO_HEALTH_SETTINGS_NAME].Q<FloatField>();
             ffHealthValue.RegisterValueChangedCallback(OnValueChanged_FFHealthValue);
 
-            btnBackHealthSettings = infoContainers[infoHealthSettingsName].Q<Button>();
+            btnBackHealthSettings = infoContainers[INFO_HEALTH_SETTINGS_NAME].Q<Button>();
 
             btnBackHealthSettings.clicked += () => ChangeTab(lastTab);
         }
 
         private void Create_GeneralCharacterSettings()
         {
-            tglShowElementColour = infoContainers[infoGeneralSettinsCharacterName].Q<Toggle>();
+            tglShowElementColour = infoContainers[INFO_GENERAL_SETTINGS_CHARACTER_NAME].Q<Toggle>();
             tglShowElementColour.RegisterValueChangedCallback(OnValueChanged_TGLElementColour);
 
-            tglShowCustomColour = infoContainers[infoGeneralSettinsCharacterName].Q<Toggle>();
+            tglShowCustomColour = infoContainers[INFO_GENERAL_SETTINGS_CHARACTER_NAME].Q<Toggle>();
             tglShowCustomColour.RegisterValueChangedCallback(OnValueChanged_TGLCustomColour);
         }
 

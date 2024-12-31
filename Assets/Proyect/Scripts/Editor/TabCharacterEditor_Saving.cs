@@ -77,9 +77,9 @@ namespace Burmuruk.Tesis.Editor
         {
             characterData.components ??= new();
 
-            var inventory = GetInventory(mclInventoryElements);
+            var inventory = GetInventory();
             characterData.components[ComponentType.Inventory] = inventory;
-            characterData.components[ComponentType.Equipment] = GetEquipment(in inventory, mclEquipmentElements);
+            characterData.components[ComponentType.Equipment] = GetEquipment(in inventory);
             var health = infoContainers[infoHealthName].Q<FloatField>().value;
             characterData.components[ComponentType.Health] = health;
             characterData.color = CFCreationColor.value;
@@ -106,14 +106,14 @@ namespace Burmuruk.Tesis.Editor
             LoadInventoryElements(in data);
             infoContainers[infoHealthName].Q<FloatField>().value = (float)data.components[ComponentType.Health];
 
-            Disable_CharacterComponents();
+            characterComponents.RestartValues();
 
             characterData.components = new();
             if (data.components != null)
             {
                 foreach (var key in data.components.Keys)
                 {
-                    Add_CharacterComponent(key.ToString(), key);
+                    characterComponents.AddElement(key.ToString());
                 }
             }
 
@@ -122,40 +122,37 @@ namespace Burmuruk.Tesis.Editor
 
         private void LoadInventoryElements(in CharacterData data)
         {
-            var lastElementList = curElementList;
+            var lastElementList = mclInventoryElements;
             Inventory inventory = default;
-            int i = 0;
+            int i;
 
             if (data.components.ContainsKey(ComponentType.Equipment))
             {
-                curElementList = mclEquipmentElements;
                 var equipment = (Equipment)data.components[ComponentType.Equipment];
                 inventory = equipment.inventory;
 
+                mclEquipmentElements.RestartValues();
                 i = 0;
+
                 foreach (var item in equipment.equipment)
                 {
-                    Add_InventoryElement(item.Key.ToString(), item.Key);
+                    mclEquipmentElements.AddElement(item.Key.ToString());
                     mclEquipmentElements[i].Toggle.value = item.Value.equipped;
                     mclEquipmentElements[i].EnumField.value = item.Value.place;
+                    ++i;
                 }
             }
             else if (!data.components.ContainsKey(ComponentType.Inventory))
             {
-                curElementList = lastElementList;
                 return;
             }
-
-            curElementList = mclInventoryElements;
 
             i = 0;
             foreach (var item in inventory.items)
             {
-                Add_InventoryElement(item.Key.ToString(), item.Key);
+                mclInventoryElements.AddElement(item.Key.ToString());
                 mclInventoryElements.ChangeAmount(i++, item.Value);
             }
-
-            curElementList = lastElementList;
         }
 
         private void Load_AbilityData(Ability ability)
