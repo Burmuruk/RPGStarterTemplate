@@ -1,6 +1,8 @@
 using Burmuruk.Tesis.Combat;
 using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
+using System;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -77,16 +79,60 @@ namespace Burmuruk.Tesis.Editor
         {
             characterData.components ??= new();
 
-            var inventory = GetInventory();
-            characterData.components[ComponentType.Inventory] = inventory;
-            characterData.components[ComponentType.Equipment] = GetEquipment(in inventory);
-            var health = infoContainers[infoHealthName].Q<FloatField>().value;
-            characterData.components[ComponentType.Health] = health;
+            AddCharacterComponents();
             characterData.color = CFCreationColor.value;
             characterData.characterType = (CharacterType)emCharacterType.EnumField.value;
             characterData.stats = basicStats.stats;
 
             return SaveElement(ElementType.Character, name, characterData, newName);
+        }
+
+        private void AddCharacterComponents()
+        {
+            var components = from comp in characterComponents.Components
+                             where !comp.element.ClassListContains("Disable")
+                             select comp;
+
+            foreach (var component in components)
+            {
+                switch ((ComponentType)component.Type)
+                {
+                    case ComponentType.Health:
+                        var health = infoContainers[infoHealthName].Q<FloatField>().value;
+                        characterData.components[ComponentType.Health] = health;
+                        break;
+
+                    case ComponentType.Inventory:
+                        AddInventoryComponent();
+                        break;
+
+                    case ComponentType.Equipment:
+                        AddInventoryComponent();
+
+                        var inventory = (Inventory)characterData.components[ComponentType.Inventory];
+                        characterData.components[ComponentType.Equipment] = GetEquipment(in inventory);
+                        break;
+
+                    case ComponentType.None:
+                        break;
+
+                    case ComponentType.Dialogue:
+                        break;
+
+                    default:
+                        characterData.components[(ComponentType)component.Type] = null;
+                        break;
+                }
+            }
+        }
+
+        private void AddInventoryComponent()
+        {
+            if (characterData.components.ContainsKey(ComponentType.Inventory))
+                return;
+
+            var inventory = GetInventory();
+            characterData.components[ComponentType.Inventory] = inventory;
         }
 
         private void LoadChanges_Character(string elementName)
@@ -102,56 +148,80 @@ namespace Burmuruk.Tesis.Editor
             characterData = data;
             txtNameCreation.value = data.characterName;
             CFCreationColor.value = data.color;
+            LoadCharacterComponents(in data);
             emCharacterType.EnumField.value = data.characterType;
-            LoadInventoryElements(in data);
-            infoContainers[infoHealthName].Q<FloatField>().value = (float)data.components[ComponentType.Health];
 
-            characterComponents.RestartValues();
-
-            characterData.components = new();
-            if (data.components != null)
-            {
-                foreach (var key in data.components.Keys)
-                {
-                    characterComponents.AddElement(key.ToString());
-                }
-            }
-
-            ddfAddComponent.SetValueWithoutNotify("None");
+            characterComponents.DDFElement.value = "None";
         }
 
-        private void LoadInventoryElements(in CharacterData data)
+        private void LoadCharacterComponents(in CharacterData data)
         {
-            var lastElementList = mclInventoryElements;
-            Inventory inventory = default;
-            int i;
+            characterComponents.RestartValues();
 
-            if (data.components.ContainsKey(ComponentType.Equipment))
+            foreach (var component in data.components)
             {
-                var equipment = (Equipment)data.components[ComponentType.Equipment];
-                inventory = equipment.inventory;
-
-                mclEquipmentElements.RestartValues();
-                i = 0;
-
-                foreach (var item in equipment.equipment)
+                switch (component.Key)
                 {
-                    mclEquipmentElements.AddElement(item.Key.ToString());
-                    mclEquipmentElements[i].Toggle.value = item.Value.equipped;
-                    mclEquipmentElements[i].EnumField.value = item.Value.place;
-                    ++i;
-                }
-            }
-            else if (!data.components.ContainsKey(ComponentType.Inventory))
-            {
-                return;
-            }
+                    case ComponentType.None:
+                        continue;
 
-            i = 0;
+                    case ComponentType.Health:
+                        infoContainers[INFO_HEALTH_SETTINGS_NAME].Q<FloatField>().value = (float)component.Value;
+                        break;
+                    
+                    case ComponentType.Inventory:
+                        LoadInventoryItems((Inventory)component.Value);
+                        break;
+                         
+
+                    case ComponentType.Equipment:
+                        var equipment = (Equipment)component.Value;
+                        mclEquipmentElements.RestartValues();
+
+                        foreach (var item in equipment.equipment)
+                        {
+                            Action<ElementCreation> EditData = (e) =>
+                            {
+                                e.Toggle.value = item.Value.equipped;
+                                e.EnumField.value = item.Value.place;
+                            };
+                            mclEquipmentElements.OnElementCreated += (e) => EditData(e);
+                            mclEquipmentElements.OnElementAdded += (e) => EditData(e);
+
+                            mclEquipmentElements.AddElement(item.Key.ToString());
+
+                            mclEquipmentElements.OnElementCreated -= (e) => EditData(e);
+                            mclEquipmentElements.OnElementAdded -= (e) => EditData(e);
+                        }
+                        break;
+
+                    case ComponentType.Dialogue:
+                        break;
+
+                    default:
+                        break;
+                }
+
+                characterComponents.AddElement(component.Key.ToString());
+            }
+        }
+
+        private void LoadInventoryItems(in Inventory inventory)
+        {
+            characterComponents.AddElement(ComponentType.Inventory.ToString());
+            mclInventoryElements.RestartValues();
+
             foreach (var item in inventory.items)
             {
+                int amount = item.Value;
+                Action<ElementCreation> ChangeValue = (e) => mclInventoryElements.ChangeAmount(e._idx, amount);
+                mclInventoryElements.OnElementAdded += ChangeValue;
+                mclInventoryElements.OnElementCreated += ChangeValue;
+
                 mclInventoryElements.AddElement(item.Key.ToString());
-                mclInventoryElements.ChangeAmount(i++, item.Value);
+
+                mclInventoryElements.OnElementAdded -= ChangeValue;
+                mclInventoryElements.OnElementCreated -= ChangeValue;
             }
         }
 

@@ -18,7 +18,7 @@ namespace Burmuruk.Tesis.Editor
         ComponentsListUI<ElementCreation> mclInventoryElements;
         ComponentsListUI<ElementCreation> mclEquipmentElements;
         ComponentsListUI<ElementComponent> characterComponents;
-        ComponentsList<ElementCreation> creations;
+        ComponentsListUI<ElementCreationPinable> creations;
         VisualElement infoBodyPlacement;
         EnumModifierUI emBodyPart;
         ElementType[] inventoryChoices = new ElementType[]

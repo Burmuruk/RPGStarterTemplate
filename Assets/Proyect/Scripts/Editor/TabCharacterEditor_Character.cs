@@ -283,7 +283,7 @@ namespace Burmuruk.Tesis.Editor
             txtNameCreation.value = "";
             CFCreationColor.value = Color.black;
             creations.Components.ForEach(c => EnableContainer(c.element, false));
-            ddfAddComponent.SetValueWithoutNotify("None");
+            //ddfAddComponent.SetValueWithoutNotify("None");
             emCharacterType.EnumField.SetValueWithoutNotify(CharacterType.None);
 
             var instance = ScriptableObject.CreateInstance<StatsVisualizer>();

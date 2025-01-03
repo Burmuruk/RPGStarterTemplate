@@ -25,5 +25,10 @@ namespace Burmuruk.Tesis.Editor
 
             EnumField.Init(ComponentType.None);
         }
+
+        public override void SetType(string value)
+        {
+            Type = Enum.Parse<ComponentType>(value);
+        }
     }
 }

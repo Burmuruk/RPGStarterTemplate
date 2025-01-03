@@ -36,7 +36,6 @@ namespace Burmuruk.Tesis.Editor
         Button btnClearSearch;
         List<TagData> btnsLeft_Tag;
         List<TagData> btnsRight_Tag;
-        List<ElementData> Left_Elements;
 
         VisualElement leftPanel;
         VisualElement rightPanel;
@@ -52,54 +51,6 @@ namespace Burmuruk.Tesis.Editor
         (ElementType type, string text) lastRightSearch = default;
         ElementType currentFilter = ElementType.None;
         ElementType rightSearchType = ElementType.None;
-
-        public struct ElementData
-        {
-            public VisualElement element;
-            public ElementType type;
-            public int? valueIdx;
-            public bool pinned;
-            private Button button;
-            private Button pin;
-
-            public ElementData(VisualElement element)
-            {
-                this.element = element;
-                type = ElementType.None;
-                valueIdx = 0;
-                pinned = false;
-                button = null;
-                pin = null;
-            }
-
-            public Button Button
-            {
-                get
-                {
-                    if (button == null)
-                        button = element.Q<Button>("txtElement");
-
-                    return button;
-                }
-            }
-
-            public Button Pin
-            {
-                get
-                {
-                    if (pin == null)
-                        pin = element.Q<Button>("btnPin");
-
-                    return pin;
-                }
-            }
-
-            public void ResetExtraValues()
-            {
-                button = null;
-                pin = null;
-            }
-        }
 
         public struct TagData
         {
@@ -352,36 +303,50 @@ namespace Burmuruk.Tesis.Editor
         private void Add_SearchElements(VisualElement container, int amount)
         {
             VisualTreeAsset ElementTag = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/CharacterEditor/Elements/ElementTag.uxml");
-            Left_Elements = new();
-
-            for (int i = 0; i < amount; i++)
+            creations = new(container, Notify);
+            creations.bindElementBtn += DisplayElementPanel;
+            creations.OnElementCreated += (ElementCreationPinable element) =>
             {
-                var instance = ElementTag.Instantiate();
-                EnableContainer(instance, false);
+                element.RemoveButton.clicked += () => RemoveCreation(element._idx);
+                element.Pin.clicked += () => PinElement(element._idx);
+            };
+            creations.CreationValidator += delegate { return -1; };
 
-                container.Add(instance);
-                Left_Elements.Add(new ElementData(instance));
-                int idx = i;
-
-                instance.Q<Button>("txtElement").clicked += () =>
-                {
-                    DisplayElementPanel(idx);
-                };
-                instance.Q<Button>("btnPin").clicked += () =>
-                {
-                    PinElement(idx);
-                };
-                instance.Q<Button>("btnDelete").clicked += () =>
-                {
-                    RemoveCreation(idx);
-                };
+            for (int i = 0; i < amount; ++i)
+            {
+                creations.AddElement(i.ToString());
             }
+
+            //for (int i = 0; i < amount; i++)
+            //{
+            //    var instance = ElementTag.Instantiate();
+            //    EnableContainer(instance, false);
+
+            //    container.Add(instance);
+            //    creations.AddElement()
+            //    Left_Elements.Add(new ElementData(instance));
+            //    int idx = i;
+
+            //    //instance.Q<Button>("txtElement").clicked += () =>
+            //    //{
+            //    //    DisplayElementPanel(idx);
+            //    //};
+            //    //instance.Q<Button>("btnPin").clicked += () =>
+            //    //{
+            //    //    PinElement(idx);
+            //    //};
+            //    //instance.Q<Button>("btnDelete").clicked += () =>
+            //    //{
+            //    //    RemoveCreation(idx);
+            //    //};
+            //}
         }
 
         private void RemoveCreation(int idx)
         {
-            var type = Left_Elements[idx].type;
-            var name = Left_Elements[idx].Button.text;
+            var type = (ElementType)creations[idx].Type;
+            var name = creations[idx].NameButton.text;
+
             charactersLists.elements[type].Remove(name);
             charactersLists.creations[type].Remove(name);
             SearchAllElements();
@@ -390,7 +355,9 @@ namespace Burmuruk.Tesis.Editor
 
         private void DisplayElementPanel(int idx)
         {
-            switch (Left_Elements[idx].type)
+            var type = (ElementType)creations[idx].Type;
+
+            switch (type)
             {
                 case ElementType.Item:
                     ChangeTab(INFO_ITEM_SETTINGS_NAE);
@@ -399,7 +366,7 @@ namespace Burmuruk.Tesis.Editor
                     break;
 
                 case ElementType.Character:
-                    LoadChanges_Character(Left_Elements[idx].Button.text);
+                    LoadChanges_Character(creations[idx].NameButton.text);
                     ChangeTab(INFO_CHARACTER_NAME);
                     break;
 
@@ -448,15 +415,15 @@ namespace Burmuruk.Tesis.Editor
             }
 
             btnsRight_Tag.ForEach(t => Highlight(t.element, false));
-            var type = Left_Elements[idx].type.ToString();
+            
 
             int tagIdx = 0;
             foreach (var tag in btnsRight_Tag)
             {
-                if (tag.Text == type)
+                if (tag.Text == type.ToString())
                 {
                     Highlight(tag.element, true);
-                    currentSettingTag = (Left_Elements[idx].type, tagIdx);
+                    currentSettingTag = (type, tagIdx);
                     break;
                 }
 
@@ -467,7 +434,7 @@ namespace Burmuruk.Tesis.Editor
             infoSetup.Q<Label>("txtState").text = "Editing";
             settingsState = SettingsState.Editing;
             btnSettingAccept.text = "Apply";
-            editingElement = (Left_Elements[idx].type, Left_Elements[idx].Button.text, idx);
+            editingElement = (type, creations[idx].NameButton.text, idx);
         }
 
         private void LoadTagsDatabase()
@@ -511,29 +478,29 @@ namespace Burmuruk.Tesis.Editor
             }
         }
 
-        private bool EnableCharacterElements(out List<(int, ElementType, int)> enabledButtonsIdx, params (ElementType type, int idx)[] names)
+        private bool TryEnableCharacterElements(out List<(int, ElementType, int)> enabledButtonsIdx, params (ElementType type, int idx)[] names)
         {
-            return EnableCharacterElements(out enabledButtonsIdx, names.ToList());
+            return TryEnableCharacterElements(out enabledButtonsIdx, names.ToList());
         }
 
-        private bool EnableCharacterElements(out List<(int elementIdx, ElementType type, int valueIdx)> enabledButtonsIdx, List<(ElementType type, int idx)> namesList)
+        private bool TryEnableCharacterElements(out List<(int elementIdx, ElementType type, int valueIdx)> enabledButtonsIdx, List<(ElementType type, int idx)> namesList)
         {
             bool enabled = false;
             enabledButtonsIdx = null;
 
             if (namesList == null || namesList.Count == 0) return false;
 
-            for (int i = 0; i < Left_Elements.Count; i++)
+            for (int i = 0; i < creations.Components.Count; i++)
             {
             nextTurn:
 
-                if (Left_Elements[i].pinned)
+                if (creations.Components[i].pinned)
                 {
                     if (namesList.Count <= 0) continue;
 
                     for (int k = 0; k < namesList.Count; k++)
                     {
-                        if (Left_Elements[i].Button.text.Contains(GetName(k)))
+                        if (creations.Components[i].NameButton.text.Contains(GetName(k)))
                         {
                             enabled = true;
                             namesList.RemoveAt(k);
@@ -547,11 +514,11 @@ namespace Burmuruk.Tesis.Editor
 
                 if (namesList.Count > 0)
                 {
-                    Left_Elements[i].Button.text = GetName(0);
-                    EnableContainer(Left_Elements[i].element, true);
+                    creations.Components[i].NameButton.text = GetName(0);
+                    EnableContainer(creations.Components[i].element, true);
 
                     if (tglShowElementColour.value)
-                        Highlight(Left_Elements[i].element, true, GetElementColour(namesList[0].type));
+                        Highlight(creations.Components[i].element, true, GetElementColour(namesList[0].type));
 
                     if (tglShowCustomColour.value)
                     {
@@ -564,8 +531,8 @@ namespace Burmuruk.Tesis.Editor
                 }
                 else
                 {
-                    Left_Elements[i].Button.text = "";
-                    EnableContainer(Left_Elements[i].element, false);
+                    creations.Components[i].NameButton.text = "";
+                    EnableContainer(creations.Components[i].element, false);
                 }
             }
 
@@ -612,7 +579,7 @@ namespace Burmuruk.Tesis.Editor
             if (idxFound != null && idxFound.Count > 0)
             {
                 Debug.Log("somenting found");
-                EnableCharacterElements(out List<(int, ElementType, int)> idxs, idxFound);
+                TryEnableCharacterElements(out List<(int, ElementType, int)> idxs, idxFound);
                 UpdateElementsData(idxs);
 
                 lastLeftSearch = (searchType, text);
@@ -645,7 +612,7 @@ namespace Burmuruk.Tesis.Editor
 
         private void DisableElements()
         {
-            foreach (var element in Left_Elements)
+            foreach (var element in creations.Components)
             {
                 if (element.pinned) continue;
 
@@ -662,14 +629,11 @@ namespace Burmuruk.Tesis.Editor
 
             for (int i = 0; i < idxs.Count; i++)
             {
-                ElementData newElementData = new()
-                {
-                    element = Left_Elements[idxs[i].elementIdx].element,
-                    type = idxs[i].type,
-                    valueIdx = idxs[i].valueIdx,
-                };
+                var cur = creations[idxs[i].elementIdx];
 
-                Left_Elements[idxs[i].elementIdx] = newElementData;
+                cur.element = creations[idxs[i].elementIdx].element;
+                cur.Type = idxs[i].type;
+                cur._idx = idxs[i].valueIdx;
             }
         }
 
@@ -715,7 +679,7 @@ namespace Burmuruk.Tesis.Editor
 
             if (values.Count > 0)
             {
-                EnableCharacterElements(out List<(int, ElementType, int)> idxs, values);
+                TryEnableCharacterElements(out List<(int, ElementType, int)> idxs, values);
                 UpdateElementsData(idxs);
             }
             else
@@ -831,15 +795,15 @@ namespace Burmuruk.Tesis.Editor
 
         private void PinElement(int elementIdx)
         {
-            if (Left_Elements[elementIdx].pinned)
+            if (creations[elementIdx].pinned)
             {
                 RemovePin(elementIdx);
                 return;
             }
 
-            for (int i = 0; i < Left_Elements.Count; i++)
+            for (int i = 0; i < creations.Components.Count; i++)
             {
-                if (!Left_Elements[i].pinned)
+                if (!creations[i].pinned)
                 {
                     SwapPin(elementIdx, i);
                     break;
@@ -863,9 +827,9 @@ namespace Burmuruk.Tesis.Editor
         {
             bool moved = false;
 
-            for (int i = elementIdx + 1; i < Left_Elements.Count; i++)
+            for (int i = elementIdx + 1; i < creations.Components.Count; i++)
             {
-                if (Left_Elements[i].pinned)
+                if (creations[i].pinned)
                 {
                     SwapPin(i, i - 1);
                     moved = true;
@@ -876,33 +840,33 @@ namespace Burmuruk.Tesis.Editor
 
             if (!moved)
             {
-                var data = Left_Elements[elementIdx];
+                var data = creations[elementIdx];
                 data.pinned = false;
-                Left_Elements[elementIdx] = data;
-                Highlight(Left_Elements[elementIdx].Pin, false);
+                creations[elementIdx] = data;
+                Highlight(creations[elementIdx].Pin, false);
             }
         }
 
         private void SwapPin(int lastTarget, int target)
         {
-            var lastData = Left_Elements[target];
-            lastData.element = Left_Elements[lastTarget].element;
+            var lastData = creations[target];
+            lastData.element = creations[lastTarget].element;
             lastData.pinned = false;
-            var newData = Left_Elements[lastTarget];
-            newData.element = Left_Elements[target].element;
+            var newData = creations[lastTarget];
+            newData.element = creations[target].element;
             newData.pinned = true;
 
-            Left_Elements[lastTarget] = lastData;
-            Left_Elements[lastTarget].ResetExtraValues();
-            Left_Elements[target] = newData;
-            Left_Elements[target].ResetExtraValues();
+            creations[lastTarget] = lastData;
+            //creations[lastTarget].ResetExtraValues();
+            creations[target] = newData;
+            //creations[target].ResetExtraValues();
 
-            var lastText = Left_Elements[lastTarget].Button.text;
-            Left_Elements[lastTarget].Button.text = Left_Elements[target].Button.text;
-            Left_Elements[target].Button.text = lastText;
+            var lastText = creations[lastTarget].NameButton.text;
+            creations[lastTarget].NameButton.text = creations[target].NameButton.text;
+            creations[target].NameButton.text = lastText;
 
-            Highlight(Left_Elements[lastTarget].Pin, false);
-            Highlight(Left_Elements[target].Pin, true);
+            Highlight(creations[lastTarget].Pin, false);
+            Highlight(creations[target].Pin, true);
         }
 
         private BorderColour GetElementColour(ElementType type) =>

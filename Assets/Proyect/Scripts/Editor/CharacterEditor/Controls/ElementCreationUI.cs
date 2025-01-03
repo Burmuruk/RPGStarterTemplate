@@ -37,5 +37,7 @@ namespace Burmuruk.Tesis.Editor
 
             Toggle.AddToClassList("Disable");
         }
+
+        public abstract void SetType(string value);
     }
 }

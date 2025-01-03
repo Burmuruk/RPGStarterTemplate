@@ -18,7 +18,11 @@ namespace Burmuruk.Tesis.Editor
         List<int> _amounts;
         protected Action<string, BorderColour> notifyCallback;
         public Action<int> bindElementBtn = delegate { };
-        
+
+        public Action<T> OnElementCreated = delegate { };
+        public Action<T> OnElementAdded = delegate { };
+        public Func<int> CreationValidator = null;
+
         public VisualElement Parent { get; private set; }
         public VisualElement Container { get; private set; }
         public List<T> Components { get; private set; }
@@ -32,8 +36,14 @@ namespace Burmuruk.Tesis.Editor
 
         public ComponentsList(VisualElement container, Action<string, BorderColour> notifyCallback)
         {
+            StyleSheet styleSheetColour = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/BasicSS.uss");
+            container.styleSheets.Add(styleSheetColour);
             Parent = container;
             Container = container.Q<VisualElement>("componentsConatiner");
+            if (Container ==  null)
+            {
+                Container = container.Q<VisualElement>("elementsContainer");
+            }
 
             _amounts = new();
             Components = new();
@@ -92,17 +102,16 @@ namespace Burmuruk.Tesis.Editor
 
         public void AddElement(string value)
         {
+            if (value == "None") return;
+
             int componentIdx = -1;
 
-            for (int i = 0; i < Components.Count; i++)
+            if (CreationValidator == null)
             {
-                if (Components[i].element.ClassListContains("Disable"))
-                {
-                    componentIdx = i;
-                    EnableContainer(Components[i].element, true);
-                    break;
-                }
+                componentIdx = DefaultCreationValidator(componentIdx);
             }
+            else
+                componentIdx = CreationValidator();
 
             if (componentIdx == -1)
                 CreateNewComponent(value, out componentIdx);
@@ -114,11 +123,38 @@ namespace Burmuruk.Tesis.Editor
                 var compType = (ComponentType)Components[componentIdx].Type;
                 Setup_ComponentButton(compType, componentIdx);
 
-                if (compType == ComponentType.Equipment && !(from comp in Components where ((ComponentType)comp.Type) == ComponentType.Inventory select comp).Any())
+                if (compType == ComponentType.Equipment)
                 {
-                    AddElement(ComponentType.Inventory.ToString());
+                    var comp = Components.FirstOrDefault((e) => (ComponentType)e.Type == ComponentType.Inventory);
+
+                    if (comp != null)
+                    {
+                        if (comp.element.ClassListContains("Disable"))
+                        {
+                            AddElement(ComponentType.Inventory.ToString());
+                        }
+                    }
+                    else
+                        AddElement(ComponentType.Inventory.ToString());
                 }
             }
+
+            OnElementAdded(Components[componentIdx]);
+        }
+
+        private int DefaultCreationValidator(int componentIdx)
+        {
+            for (int i = 0; i < Components.Count; i++)
+            {
+                if (Components[i].element.ClassListContains("Disable"))
+                {
+                    componentIdx = i;
+                    EnableContainer(Components[i].element, true);
+                    break;
+                }
+            }
+
+            return componentIdx;
         }
 
         protected virtual T CreateNewComponent(string value, out int idx)
@@ -126,13 +162,21 @@ namespace Burmuruk.Tesis.Editor
             idx = Components.Count;
 
             VisualTreeAsset element = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/CharacterEditor/Elements/ElementComponent.uxml");
+            StyleSheet basicStyle = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/BasicSS.uss");
             var component = new T();
             component.Initialize(element.Instantiate(), idx);
+            component.SetType(value);
 
             Components.Add(component);
             Container.Add(Components[idx].element);
             Amounts.Add(idx);
+
+            int newIdx = idx;
+            component.NameButton.clicked += () => bindElementBtn(newIdx);
+            component.element.styleSheets.Add(basicStyle);
             StartAmount(component, idx);
+            OnElementCreated(component);
+
             return component;
         }
 
@@ -160,11 +204,21 @@ namespace Burmuruk.Tesis.Editor
 
         protected virtual void RemoveComponent(int idx)
         {
-            if ((ComponentType)Components[idx].Type == ComponentType.Inventory &&
-                (from comp in Components where (ComponentType)comp.Type == ComponentType.Equipment select comp).Any())
+            if (((ComponentType)Components[idx].Type) == ComponentType.Inventory)
             {
-                notifyCallback("Equipment requires an Inventory component to store the items", BorderColour.Error);
-                return;
+                foreach (var component in Components)
+                {
+                    if (!component.element.ClassListContains("Disable"))
+                    {
+                        if ((ComponentType)component.Type == ComponentType.Equipment)
+                        {
+                            notifyCallback("Equipment requires an Inventory component to store the items", BorderColour.Error);
+                            return;
+                        }
+                    }
+                    else
+                        break;
+                }
             }
 
             ChangeAmount(idx, 0);

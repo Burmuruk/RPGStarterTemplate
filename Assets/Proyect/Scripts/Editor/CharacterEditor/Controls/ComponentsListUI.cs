@@ -32,8 +32,6 @@ namespace Burmuruk.Tesis.Editor
             var component = base.CreateNewComponent(value, out idx);
             int newIdx = idx;
 
-            //component.NameButton.clicked += () => OpenComponentSettings(idx);
-            component.NameButton.clicked += () => bindElementBtn(newIdx);
             component.RemoveButton.clicked += () => RemoveComponent(newIdx);
             component.IFAmount.RegisterValueChangedCallback((evt) => UpdateTxtAmount(newIdx, evt.newValue));
 
