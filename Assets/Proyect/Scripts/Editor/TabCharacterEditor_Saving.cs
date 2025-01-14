@@ -10,6 +10,8 @@ namespace Burmuruk.Tesis.Editor
 {
     public partial class TabCharacterEditor : BaseLevelEditor
     {
+        public event Action<ElementType, object> OnCreationAdded;
+
         bool SaveElement(ElementType type, string name, object args, string newName = "")
         {
             if (string.IsNullOrEmpty(newName))
@@ -21,6 +23,7 @@ namespace Burmuruk.Tesis.Editor
             else if (!VerifyName(newName)) return false;
 
             charactersLists.creations.TryAdd(type, new());
+            charactersLists.elements.TryAdd(type, new());
 
             if (charactersLists.creations[type].ContainsKey(name))
             {
@@ -35,6 +38,8 @@ namespace Burmuruk.Tesis.Editor
             //EditorUtility.SetDirty(charactersLists);
             //AssetDatabase.SaveAssets();
             //AssetDatabase.Refresh();
+
+            OnCreationAdded?.Invoke(type, args);
 
             SearchAllElements();
 
@@ -148,6 +153,7 @@ namespace Burmuruk.Tesis.Editor
             characterData = data;
             txtNameCreation.value = data.characterName;
             CFCreationColor.value = data.color;
+            basicStats.stats = characterData.stats;
             LoadCharacterComponents(in data);
             emCharacterType.EnumField.value = data.characterType;
 
@@ -208,7 +214,6 @@ namespace Burmuruk.Tesis.Editor
 
         private void LoadInventoryItems(in Inventory inventory)
         {
-            characterComponents.AddElement(ComponentType.Inventory.ToString());
             mclInventoryElements.RestartValues();
 
             foreach (var item in inventory.items)

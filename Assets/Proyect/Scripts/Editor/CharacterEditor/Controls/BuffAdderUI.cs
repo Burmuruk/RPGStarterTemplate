@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Burmuruk.Tesis.Stats;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -55,7 +56,21 @@ namespace Burmuruk.Tesis.Editor
             }
         }
 
-        public void SetBuffs(List<string> buffTypes) => this.buffTypes = buffTypes;
+        public void SetBuffs(List<string> buffTypes)
+        {
+            this.buffTypes = buffTypes;
+
+            foreach (var buff in buffs)
+            {
+                buff.DDBuff.choices.Clear();
+                buff.DDBuff.choices.Add("None");
+
+                foreach (var type in buffTypes)
+                {
+                    buff.DDBuff.choices.Add(type);
+                }
+            }
+        }
 
         private void SetupFoldOut(VisualElement container)
         {
@@ -96,6 +111,18 @@ namespace Burmuruk.Tesis.Editor
             elementsContainer.Remove(buff.Element);
             buffs.RemoveAt(buffs.Count - 1);
             BuffsCount.SetValueWithoutNotify((uint)buffs.Count);
+        }
+
+        public List<(string, BuffData?)> GetBussData()
+        {
+            var buffsData = new List<(string, BuffData?)>();
+
+            foreach (var buff in buffs)
+            {
+                buffsData.Add(buff.GetInfo());
+            }
+
+            return buffsData;
         }
     }
 }

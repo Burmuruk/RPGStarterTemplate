@@ -1,5 +1,6 @@
 using Burmuruk.Tesis.Stats;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
 using UnityEditor.UIElements;
@@ -63,6 +64,7 @@ namespace Burmuruk.Tesis.Editor
             characterComponents = new ComponentsListUI<ElementComponent>(componentsContainer, Notify);
             characterComponents.bindElementBtn += OpenComponentSettings;
             characterComponents.DDFElement.RegisterValueChangedCallback((e) => characterComponents.AddElement(e.newValue));
+            characterComponents.CreationValidator += ContainsCreation;
 
             statsContainer = infoContainers[INFO_CHARACTER_NAME].Q<VisualElement>(STATS_CONTAINER_NAME);
 
@@ -79,6 +81,32 @@ namespace Burmuruk.Tesis.Editor
 
             VisualElement adderUI = infoContainers[INFO_CHARACTER_NAME].Q<VisualElement>("VariblesAdder");
             VariablesAdderUI adder = new(adderUI, statsContainer);
+        }
+
+        private int? ContainsCreation(IList list, string name)
+        {
+            var components = (List<ElementComponent>)list;
+            int i = 0;
+            int? emptyIdx = -1;
+
+            foreach (var component in components)
+            {
+                if (!component.element.ClassListContains("Disable"))
+                {
+                    if (component.NameButton.text == name)
+                    {
+                        return null;
+                    }
+                }
+                else if (!emptyIdx.HasValue)
+                {
+                    emptyIdx = i;
+                }
+
+                ++i;
+            }
+
+            return emptyIdx;
         }
 
         private void Populate_AddComponents()
@@ -186,25 +214,24 @@ namespace Burmuruk.Tesis.Editor
                     else return false;
                     break;
 
-                case ElementType.Item:
+                case ElementType.Buff:
+                    ref BuffData buffData = ref curBuffData.buff;
+                    SaveElement(ElementType.Buff, txtNameCreation.text, buffData);
+                    break;
+
                 case ElementType.Weapon:
                 case ElementType.Armour:
                 case ElementType.Consumable:
                     object creationData = currentSettingTag.type switch
                     {
                         ElementType.Item => curItemData,
-                        ElementType.Weapon => curWeaponData,
-                        ElementType.Armour => curArmorData,
-                        ElementType.Consumable => curConsumableData,
+                        ElementType.Weapon => settingsElements[ElementType.Weapon].GetInfo(null),
+                        ElementType.Armour => settingsElements[ElementType.Armour].GetInfo(null),
+                        ElementType.Consumable => settingsElements[ElementType.Consumable].GetInfo(null),
                         _ => null
                     };
 
-                    SaveElement(ElementType.Armour, txtNameCreation.text, creationData);
-                    break;
-
-                case ElementType.Buff:
-                    ref BuffData buffData = ref curBuffData.buff;
-                    SaveElement(ElementType.Buff, txtNameCreation.text, buffData);
+                    SaveElement(currentSettingTag.type, txtNameCreation.text, creationData);
                     break;
 
                 default: break;

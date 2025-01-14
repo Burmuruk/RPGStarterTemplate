@@ -8,9 +8,9 @@ namespace Burmuruk.Tesis.Editor
         public FloatField AreaRadious { get; private set; }
 
 
-        public override void Initialize(VisualElement container)
+        public override void Initialize(VisualElement container, TextField name)
         {
-            base.Initialize(container);
+            base.Initialize(container, name);
 
             ConsumptionTime = container.Q<FloatField>("ffConsumptionTime");
             AreaRadious = container.Q<FloatField>("ffAreaRadious");

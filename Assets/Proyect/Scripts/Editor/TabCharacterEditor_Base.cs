@@ -415,7 +415,7 @@ namespace Burmuruk.Tesis.Editor
             }
 
             btnsRight_Tag.ForEach(t => Highlight(t.element, false));
-            
+            txtNameCreation.value = creations[idx].NameButton.text;
 
             int tagIdx = 0;
             foreach (var tag in btnsRight_Tag)

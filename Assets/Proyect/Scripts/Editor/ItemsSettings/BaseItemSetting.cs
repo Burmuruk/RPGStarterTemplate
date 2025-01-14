@@ -12,15 +12,21 @@ namespace Burmuruk.Tesis.Editor
         public ObjectField OfPickup { get; private set; }
         public UnsignedIntegerField UfCapacity { get; private set; }
 
-        public virtual void Initialize(VisualElement container)
+        public virtual void Initialize(VisualElement container, TextField name)
         {
-            TxtName = container.Q<TextField>("txtDescription");
+            TxtName = name;
+            TxtDescription = container.Q<TextField>("txtDescription");
             OfSprite = container.Q<ObjectField>("opSprite");
             OfPickup = container.Q<ObjectField>("opPickup");
             UfCapacity = container.Q<UnsignedIntegerField>("txtCapacity");
 
             OfSprite.objectType = typeof(Sprite);
             OfPickup.objectType = typeof(GameObject);
+        }
+
+        public virtual object GetInfo(object args)
+        {
+            return null;
         }
     }
 }

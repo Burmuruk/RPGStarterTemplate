@@ -28,7 +28,7 @@ namespace Burmuruk.Tesis.Editor
         Weapon curWeaponData;
         ConsumableItem curConsumableData;
         ArmourElement curArmorData;
-        List<BaseItemSetting> settingsElements = new();
+        Dictionary<ElementType, BaseItemSetting> settingsElements = new();
         [SerializeField] List<BuffData> curWeaponsBuffs;
         Dictionary<string, string> tabNames = new();
 
@@ -38,21 +38,34 @@ namespace Burmuruk.Tesis.Editor
             //infoContainers[INFO_ITEM_SETTINGS_NAE].Add(new InspectorElement(curItemData));
 
             var settings = new BaseItemSetting();
-            settings.Initialize(infoContainers[INFO_ITEM_SETTINGS_NAE]);
+            settings.Initialize(infoContainers[INFO_ITEM_SETTINGS_NAE], txtNameCreation);
         }
 
         private void Create_WeaponSettings()
         {
             var settings = new WeaponSetting();
-            settings.Initialize(infoContainers[INFO_WEAPON_SETTINGS_NAME]);
-            settingsElements.Add(settings);
+            settings.Initialize(infoContainers[INFO_WEAPON_SETTINGS_NAME], txtNameCreation);
+            settingsElements.Add(ElementType.Weapon, settings);
 
-            var bodyPart = infoContainers[INFO_WEAPON_SETTINGS_NAME].Q<EnumField>("efBodyPart");
-            bodyPart.Init(EquipmentType.None);
+            OnCreationAdded += (type, item) =>
+            {
+                if (type == ElementType.Buff)
+                {
+                    UpdateBuffEnumTypes(settings.BuffAdder);
+                }
+            };
+        }
 
-            var weaponType = infoContainers[INFO_WEAPON_SETTINGS_NAME].Q<VisualElement>("TypeAdderWeapon");
-            weaponType.Q<Label>().text = "Weapon type";
-            weaponType.Q<EnumField>().Init(WeaponType.None);
+        private void UpdateBuffEnumTypes(BuffAdderUI adder)
+        {
+            var values = new List<string>();
+
+            foreach (var creation in charactersLists.creations[ElementType.Buff])
+            {
+                values.Add(creation.Key);
+            }
+
+            adder.SetBuffs(values);
         }
 
         private void Create_BuffSettings()
@@ -67,15 +80,15 @@ namespace Burmuruk.Tesis.Editor
             //infoContainers[INFO_CONSUMABLE_SETTINGS_NAME].Add(new InspectorElement(curConsumableData));
 
             var settings = new ConsumableSettings();
-            settings.Initialize(infoContainers[INFO_CONSUMABLE_SETTINGS_NAME]);
-            settingsElements.Add(settings);
+            settings.Initialize(infoContainers[INFO_CONSUMABLE_SETTINGS_NAME], txtNameCreation);
+            settingsElements.Add(ElementType.Consumable, settings);
         }
 
         private void Create_ArmourSettings()
         {
             var settings = new ArmourSetting();
-            settings.Initialize(infoContainers[INFO_ARMOUR_SETTINGS_NAME]);
-            settingsElements.Add(settings);
+            settings.Initialize(infoContainers[INFO_ARMOUR_SETTINGS_NAME], txtNameCreation);
+            settingsElements.Add(ElementType.Armour, settings);
         }
 
         private void Create_HealthSettings()

@@ -25,6 +25,7 @@ namespace Burmuruk.Tesis.Editor
         }
 
         public VisualElement Container { get; private set; }
+        public Label Name { get; private set; }
         public Button BtnAddValue { get; private set; }
         public Button BtnRemoveValue { get; private set; }
         public Button BtnEditValue { get; private set; }
@@ -53,6 +54,7 @@ namespace Burmuruk.Tesis.Editor
             EnumField = container.Q<EnumField>();
             TxtNewValue = container.Q<TextField>();
             EnumContainer = container.Q<VisualElement>("EnumLine");
+            Name = EnumContainer.Q<Label>("lblName");
             NewValueContainer = container.Q<VisualElement>("NewElementLine");
             enumType = type;
 

@@ -69,6 +69,17 @@ namespace Burmuruk.Tesis.Inventory
             throw new NotImplementedException();
         }
 
+        public virtual void Populate(string name, string description, ItemType type, 
+            Sprite sprite, Pickup pickup, int capacity, object args)
+        {
+            m_name = name;
+            m_description = description;
+            _type = type;
+            m_sprite = sprite;
+            this.pickup = pickup;
+            m_capacity = capacity;
+        }
+
         public void OnAfterDeserialize()
         {
 

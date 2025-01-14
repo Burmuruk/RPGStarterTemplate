@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -21,7 +22,7 @@ namespace Burmuruk.Tesis.Editor
 
         public Action<T> OnElementCreated = delegate { };
         public Action<T> OnElementAdded = delegate { };
-        public Func<int> CreationValidator = null;
+        public Func<IList, string, int?> CreationValidator = null;
 
         public VisualElement Parent { get; private set; }
         public VisualElement Container { get; private set; }
@@ -104,46 +105,54 @@ namespace Burmuruk.Tesis.Editor
         {
             if (value == "None") return;
 
-            int componentIdx = -1;
+            int? componentIdx = null;
 
             if (CreationValidator == null)
             {
-                componentIdx = DefaultCreationValidator(componentIdx);
+                componentIdx = DefaultCreationValidator();
             }
             else
-                componentIdx = CreationValidator();
+            {
+                componentIdx = CreationValidator(Components, value);
+            }
 
             if (componentIdx == -1)
-                CreateNewComponent(value, out componentIdx);
-
-            Components[componentIdx].NameButton.text = value;
-
-            if (Components[componentIdx] is ElementComponent)
             {
-                var compType = (ComponentType)Components[componentIdx].Type;
-                Setup_ComponentButton(compType, componentIdx);
+                int newIdx = 0;
+                CreateNewComponent(value, out newIdx);
+                componentIdx = newIdx;
+            }
+            else if (!componentIdx.HasValue)
+                return;
+
+            Components[componentIdx.Value].NameButton.text = value;
+
+            if (Components[componentIdx.Value] is ElementComponent)
+            {
+                var compType = (ComponentType)Components[componentIdx.Value].Type;
+                Setup_ComponentButton(compType, componentIdx.Value);
 
                 if (compType == ComponentType.Equipment)
                 {
-                    var comp = Components.FirstOrDefault((e) => (ComponentType)e.Type == ComponentType.Inventory);
+                    var comps = (from c in Components 
+                                where (ComponentType)c.Type == ComponentType.Inventory && !c.element.ClassListContains("Disable")
+                                select c).ToArray();
 
-                    if (comp != null)
+                    if (comps == null || comps.Length == 0)
                     {
-                        if (comp.element.ClassListContains("Disable"))
-                        {
-                            AddElement(ComponentType.Inventory.ToString());
-                        }
-                    }
-                    else
+                        Debug.Log("no inv");
                         AddElement(ComponentType.Inventory.ToString());
+                    }
                 }
             }
 
-            OnElementAdded(Components[componentIdx]);
+            OnElementAdded(Components[componentIdx.Value]);
         }
 
-        private int DefaultCreationValidator(int componentIdx)
+        private int? DefaultCreationValidator()
         {
+            int? componentIdx = -1;
+
             for (int i = 0; i < Components.Count; i++)
             {
                 if (Components[i].element.ClassListContains("Disable"))

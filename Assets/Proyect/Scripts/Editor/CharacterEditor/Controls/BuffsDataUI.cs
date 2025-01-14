@@ -1,3 +1,4 @@
+using Burmuruk.Tesis.Stats;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine.UIElements;
@@ -52,6 +53,26 @@ namespace Burmuruk.Tesis.Editor
             (values ??= new()).Insert(0, "Custom");
 
             DDBuff.choices = values;
+        }
+
+        public (string, BuffData?) GetInfo()
+        {
+            if (DDBuff.value == "Custom")
+            {
+                BuffData buff = new BuffData()
+                {
+                    value = Value.value,
+                    duration = Duration.value,
+                    rate = Rate.value,
+                    percentage = Percentage.value,
+                    affectAll = AffectAll.value,
+                    probability = Probability.value,
+                };
+
+                return ("Custom", buff);
+            }
+
+            return (DDBuff.value, null);
         }
     }
 }
