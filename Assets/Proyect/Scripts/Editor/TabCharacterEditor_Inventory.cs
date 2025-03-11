@@ -189,7 +189,7 @@ namespace Burmuruk.Tesis.Editor
 
                 foreach (var creation in charactersLists.creations[type])
                 {
-                    mclInventoryElements.DDFElement.choices.Add(creation.Key);
+                    mclInventoryElements.DDFElement.choices.Add(creation.Value.Name);
                 }
             }
         }

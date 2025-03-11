@@ -43,5 +43,15 @@ namespace Burmuruk.Tesis.Inventory
         {
             return m_bodyPart;
         }
+
+        public void Populate(EquipmentType type)
+        {
+            m_bodyPart = type;
+        }
+
+        public void Copy(ArmourElement original)
+        {
+            m_bodyPart = original.m_bodyPart;
+        }
     }
 }

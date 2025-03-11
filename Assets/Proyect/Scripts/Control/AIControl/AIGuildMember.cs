@@ -442,7 +442,7 @@ namespace Burmuruk.Tesis.Control.AI
                 buffState["Value"] = buffNode.Value.buff.value;
                 buffState["Rate"] = buffNode.Value.buff.rate;
                 buffState["Percentage"] = buffNode.Value.buff.percentage;
-                buffState["AffectAll"] = buffNode.Value.buff.affectAll;
+                //buffState["AffectAll"] = buffNode.Value.buff.affectAll;
                 buffState["Stat"] = (int)buffNode.Value.buff.stat;
 
                 characterState[i++] = buffState;
@@ -468,7 +468,7 @@ namespace Burmuruk.Tesis.Control.AI
                     value = curToken["Value"].ToObject<float>(),
                     rate = curToken["Rate"].ToObject<float>(),
                     percentage = curToken["Percentage"].ToObject<bool>(),
-                    affectAll = curToken["AffectAll"].ToObject<bool>(),
+                    //affectAll = curToken["AffectAll"].ToObject<bool>(),
                     stat = curToken["Stat"].ToObject<ModifiableStat>(),
                 };
                 int damage = (int)buffData.value;

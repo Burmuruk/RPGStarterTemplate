@@ -5,11 +5,13 @@ using UnityEngine.UIElements;
 
 namespace Burmuruk.Tesis.Editor
 {
-    public class BuffAdderUI
+    public class BuffAdderUI : IClearable
     {
         List<BuffsDataUI> buffs = new();
         VisualElement elementsContainer;
         List<string> buffTypes;
+
+        public const string INVALIDNAME = "Custom";
 
         public Foldout BuffsList { get; private set; }
         public UnsignedIntegerField BuffsCount { get; private set; }
@@ -106,6 +108,8 @@ namespace Burmuruk.Tesis.Editor
 
         private void RemoveBuff()
         {
+            if (buffs.Count == 0) return;
+
             var buff = buffs[buffs.Count - 1];
 
             elementsContainer.Remove(buff.Element);
@@ -113,16 +117,77 @@ namespace Burmuruk.Tesis.Editor
             BuffsCount.SetValueWithoutNotify((uint)buffs.Count);
         }
 
-        public List<(string, BuffData?)> GetBussData()
+        public void UpdateData(List<(string name, BuffData? buff)> buffDatas)
         {
-            var buffsData = new List<(string, BuffData?)>();
+            int max = Mathf.Min(buffs.Count, buffDatas.Count);
+
+            int i = 0;
+            for (; i < max; i++)
+            {
+                if (!TryGetBuffName(buffDatas[i].name, out string curName))
+                    continue;
+
+                buffs[i].UpdateData(curName, buffDatas[i].buff);
+            }
+
+            if (buffDatas.Count > buffs.Count)
+            {
+                for (int j = i; j < buffDatas.Count; j++)
+                {
+                    if (!TryGetBuffName(buffDatas[j].name, out string curName)) 
+                        continue;
+
+                    AddBuff();
+                    buffs[buffs.Count - 1].UpdateData(curName, buffDatas[j].buff);
+                }
+            }
+            else if (buffDatas.Count < buffs.Count)
+            {
+                for (int j = i; j < buffs.Count; j++)
+                {
+                    RemoveBuff();
+                }
+            }
+        }
+
+        private bool TryGetBuffName(string name, out string newName)
+        {
+            newName = name switch
+            {
+                null => null,
+                "" => INVALIDNAME,
+                _ => name
+            };
+
+            return newName is not null;
+        }
+
+        public List<NamedBuff> GetBuffsData()
+        {
+            var buffsData = new List<NamedBuff>();
 
             foreach (var buff in buffs)
             {
-                buffsData.Add(buff.GetInfo());
+                var data = buff.GetInfo();
+
+                if (string.IsNullOrEmpty(data.Name))
+                {
+                    buffsData.Add(default);
+                    continue;
+                }
+
+                buffsData.Add(data);
             }
 
             return buffsData;
+        }
+
+        public virtual void Clear()
+        {
+            elementsContainer.Clear();
+            buffs.Clear();
+            BuffsCount.value = 0;
+            buffTypes?.Clear();
         }
     }
 }

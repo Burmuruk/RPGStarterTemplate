@@ -2,7 +2,7 @@ using Burmuruk.Tesis.Stats;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Configuration;
+using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -129,6 +129,21 @@ namespace Burmuruk.Tesis.Editor
                     Discard_CharacterChanges();
                     break;
                 case ElementType.Weapon:
+                case ElementType.Consumable:
+                case ElementType.Item:
+                case ElementType.Armour:
+
+                    if (settingsState != SettingsState.Editing)
+                        txtNameCreation.value = "";
+
+                    CFCreationColor.value = Color.black;
+
+                    (settingsElements[currentSettingTag.type] as IClearable).Clear();
+                    break;
+
+                case ElementType.Buff:
+                    curBuffData.buff = default;
+                    EditorUtility.SetDirty(curBuffData);
                     break;
 
                 default: break;
@@ -155,9 +170,10 @@ namespace Burmuruk.Tesis.Editor
                     break;
             }
 
+            OnCancel_BtnSetting();
+
             settingsState = SettingsState.None;
             EnableContainer(infoSetup, false);
-            Discard_CharacterChanges();
             Highlight(btnsRight_Tag[currentSettingTag.idx].element, false);
             currentSettingTag = (ElementType.None, -1);
             editingElement = (ElementType.None, "", -1);
@@ -194,44 +210,6 @@ namespace Burmuruk.Tesis.Editor
                     };
 
                     SaveElement(ElementType.Armour, creationName, curArmorData, txtNameCreation.text);
-                    break;
-
-                default: break;
-            }
-
-            return true;
-        }
-
-        private bool Create_Settings()
-        {
-            switch (currentSettingTag.type)
-            {
-                case ElementType.Character:
-                    if (SaveChanges_Character(txtNameCreation.value))
-                    {
-                        Notify("Character created.", BorderColour.Approved);
-                    }
-                    else return false;
-                    break;
-
-                case ElementType.Buff:
-                    ref BuffData buffData = ref curBuffData.buff;
-                    SaveElement(ElementType.Buff, txtNameCreation.text, buffData);
-                    break;
-
-                case ElementType.Weapon:
-                case ElementType.Armour:
-                case ElementType.Consumable:
-                    object creationData = currentSettingTag.type switch
-                    {
-                        ElementType.Item => curItemData,
-                        ElementType.Weapon => settingsElements[ElementType.Weapon].GetInfo(null),
-                        ElementType.Armour => settingsElements[ElementType.Armour].GetInfo(null),
-                        ElementType.Consumable => settingsElements[ElementType.Consumable].GetInfo(null),
-                        _ => null
-                    };
-
-                    SaveElement(currentSettingTag.type, txtNameCreation.text, creationData);
                     break;
 
                 default: break;

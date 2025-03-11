@@ -2,7 +2,9 @@ using Burmuruk.Tesis.Combat;
 using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -11,6 +13,81 @@ namespace Burmuruk.Tesis.Editor
     public partial class TabCharacterEditor : BaseLevelEditor
     {
         public event Action<ElementType, object> OnCreationAdded;
+
+        #region Saving
+        private bool Create_Settings()
+        {
+            switch (currentSettingTag.type)
+            {
+                case ElementType.Character:
+                    if (SaveChanges_Character(txtNameCreation.value))
+                    {
+                        Notify("Character created.", BorderColour.Approved);
+                    }
+                    else return false;
+                    break;
+
+                case ElementType.Buff:
+                    ref BuffData buffData = ref curBuffData.buff;
+                    SaveElement(ElementType.Buff, txtNameCreation.text, buffData);
+                    break;
+
+                case ElementType.Item:
+                case ElementType.Weapon:
+                case ElementType.Armour:
+                case ElementType.Consumable:
+                    object creationData = currentSettingTag.type switch
+                    {
+                        ElementType.Item => settingsElements[ElementType.Item].GetInfo(null).item,
+                        ElementType.Weapon => GetBuffsIds(ElementType.Weapon),
+                        ElementType.Armour => settingsElements[ElementType.Armour].GetInfo(null).item,
+                        ElementType.Consumable => GetBuffsIds(ElementType.Consumable),
+                        _ => null
+                    };
+
+                    SaveElement(currentSettingTag.type, txtNameCreation.text, creationData);
+                    break;
+
+                default: break;
+            }
+
+            return true;
+        }
+
+        private (InventoryItem, BuffsNamesDataArgs) GetBuffsIds(ElementType type)
+        {
+            (var item, var args) = settingsElements[type].GetInfo(GetCreatedEnums(ElementType.Buff));
+            var buffsNamesArgs = (BuffsNamesDataArgs)args;
+            List<string> ids = new();
+
+            foreach (var name in buffsNamesArgs.BuffsNames)
+            {
+                if (name == BuffAdderUI.INVALIDNAME)
+                {
+                    ids.Add("");
+                }
+                else if (charactersLists.GetCreation(base.name, ElementType.Buff, out string id))
+                {
+                    ids.Add(id);
+                }
+            }
+
+            return (item, new BuffsNamesDataArgs(ids));
+        }
+
+        private CreatedBuffsDataArgs GetCreatedEnums(ElementType type)
+        {
+            var creations = new List<CreationData>();
+
+            if (!charactersLists.creations.ContainsKey(type)) return new(null);
+
+            foreach (var creation in charactersLists.creations[type])
+            {
+                creations.Add(creation.Value);
+            }
+
+            return new CreatedBuffsDataArgs(creations.ToArray());
+        }
 
         bool SaveElement(ElementType type, string name, object args, string newName = "")
         {
@@ -25,14 +102,14 @@ namespace Burmuruk.Tesis.Editor
             charactersLists.creations.TryAdd(type, new());
             charactersLists.elements.TryAdd(type, new());
 
-            if (charactersLists.creations[type].ContainsKey(name))
+            if (charactersLists.GetCreation(name, type, out string id))
             {
-                charactersLists.creations[type].Remove(name);
+                charactersLists.creations[type].Remove(id);
                 charactersLists.elements[type].Remove(name);
             }
 
             characterData.characterName = newName;
-            charactersLists.creations[type].TryAdd(newName, args);
+            charactersLists.creations[type].TryAdd(Guid.NewGuid().ToString(), new CreationData(newName, args));
             charactersLists.elements[type].Add(newName);
 
             //EditorUtility.SetDirty(charactersLists);
@@ -48,11 +125,10 @@ namespace Burmuruk.Tesis.Editor
 
         private T Load_ElementBaseData<T>(ElementType type, string name) where T : InventoryItem
         {
-            T data = (T)charactersLists.creations[type][name];
+            if (!charactersLists.GetCreation(name, type, out string id))
+                return null;
 
-            txtNameCreation.value = data.name;
-            CFCreationColor.value = Color.black;
-
+            T data = (T)charactersLists.creations[type][id].data;
 
             return data;
         }
@@ -138,17 +214,76 @@ namespace Burmuruk.Tesis.Editor
 
             var inventory = GetInventory();
             characterData.components[ComponentType.Inventory] = inventory;
+        } 
+        #endregion
+
+        #region Loading
+        private void Load_CreationData(int idx, ElementType type)
+        {
+            string id = "";
+
+            switch (type)
+            {
+                case ElementType.Character:
+                    LoadChanges_Character(creations[idx].NameButton.text);
+                    ChangeTab(INFO_CHARACTER_NAME);
+                    break;
+
+                case ElementType.Armour:
+                case ElementType.Item:
+                    ChangeTab(type switch
+                    {
+                        ElementType.Item => INFO_ITEM_SETTINGS_NAE,
+                        _ => INFO_ARMOUR_SETTINGS_NAME,
+                    });
+
+                    var item = Load_ElementBaseData<InventoryItem>(type, creations[idx].NameButton.text);
+
+                    if (item is null) break;
+
+                    settingsElements[type].UpdateInfo(item, null);
+                    break;
+
+                case ElementType.Buff:
+                    ChangeTab(INFO_BUFF_SETTINGS_NAME);
+
+                    Load_BuffData(idx);
+                    break;
+
+                case ElementType.Ability:
+                    var ability = Load_ElementBaseData<Ability>(ElementType.Ability, creations[idx].NameButton.text);
+
+                    if (ability is null) break;
+
+                    Load_AbilityData(ability);
+                    break;
+
+                case ElementType.Weapon:
+                    ChangeTab(INFO_WEAPON_SETTINGS_NAME);
+
+                    Load_WeaponData(creations[idx].NameButton.text);
+                    break;
+
+                case ElementType.Consumable:
+                    ChangeTab(INFO_CONSUMABLE_SETTINGS_NAME);
+
+                    Load_ConsumableData(creations[idx].NameButton.text);
+                    break;
+
+                default:
+                    return;
+            }
         }
 
         private void LoadChanges_Character(string elementName)
         {
-            if (!charactersLists.creations[ElementType.Character].ContainsKey(elementName))
+            if (!charactersLists.GetCreation(elementName, ElementType.Character, out string id))
             {
                 Debug.Log("No existe el elemento deseado");
                 return;
             }
 
-            CharacterData data = (CharacterData)charactersLists.creations[ElementType.Character][elementName];
+            CharacterData data = (CharacterData)charactersLists.creations[ElementType.Character][id].data;
 
             characterData = data;
             txtNameCreation.value = data.characterName;
@@ -174,11 +309,11 @@ namespace Burmuruk.Tesis.Editor
                     case ComponentType.Health:
                         infoContainers[INFO_HEALTH_SETTINGS_NAME].Q<FloatField>().value = (float)component.Value;
                         break;
-                    
+
                     case ComponentType.Inventory:
                         LoadInventoryItems((Inventory)component.Value);
                         break;
-                         
+
 
                     case ComponentType.Equipment:
                         var equipment = (Equipment)component.Value;
@@ -230,14 +365,36 @@ namespace Burmuruk.Tesis.Editor
             }
         }
 
+        private void Load_BuffData(in int idx)
+        {
+            const ElementType type = ElementType.Buff;
+            Load_ElementBaseData<InventoryItem>(ElementType.Buff, creations[idx].NameButton.text);
+
+            if (!charactersLists.GetCreation(creations[idx].NameButton.text, type, out string id))
+                return;
+
+            var bufo = (BuffData)charactersLists.creations[type][id].data;
+
+            curBuffData.buff = bufo;
+            EditorUtility.SetDirty(curBuffData);
+        }
+
         private void Load_AbilityData(Ability ability)
         {
 
         }
 
-        private void Load_WeaponData(Weapon weapon)
+        private void Load_WeaponData(string weaponName)
         {
-            curWeaponData = weapon;
+            //CFCreationColor.value = Color.black;
+            const ElementType type = ElementType.Weapon;
+
+            if (!charactersLists.GetCreation(weaponName, type, out string id))
+                return;
+
+            (var item, var buffsArgs) = ((InventoryItem, BuffsNamesDataArgs))charactersLists.creations[type][id].data;
+
+            SetBuffsNames(item, buffsArgs, type);
         }
 
         private void Load_ArmourData(ArmourElement armor)
@@ -245,14 +402,46 @@ namespace Burmuruk.Tesis.Editor
 
         }
 
-        private void Load_ConsumableData(ConsumableItem consumable)
+        private void Load_ConsumableData(string consumableName)
         {
+            const ElementType type = ElementType.Consumable;
 
+            if (!charactersLists.GetCreation(consumableName, type, out string id))
+                return;
+
+            (var item, var buffsArgs) = ((InventoryItem, BuffsNamesDataArgs))charactersLists.creations[type][id].data;
+
+            SetBuffsNames(item, buffsArgs, type);
         }
 
-        private void Load_BuffData()
+        private void SetBuffsNames(InventoryItem item, BuffsNamesDataArgs buffsArgs, in ElementType type)
         {
-
+            var buffsNames = GetBuffsIdsNames(buffsArgs.BuffsNames, type);
+            var buffsNamesArgs = new BuffsNamesDataArgs(buffsNames);
+            settingsElements[type].UpdateInfo(item, buffsNamesArgs);
         }
+
+        private List<string> GetBuffsIdsNames(List<string> ids, ElementType type)
+        {
+            var list = new List<string>();
+
+            foreach (var id in ids)
+            {
+                if (id is not null)
+                {
+                    if (id == "")
+                    {
+                        list.Add(null);
+                    }
+                    else if (charactersLists.creations[type].ContainsKey(id))
+                    {
+                        list.Add(charactersLists.creations[type][id].Name);
+                    }
+                }
+            }
+
+            return list;
+        } 
+        #endregion
     }
 }

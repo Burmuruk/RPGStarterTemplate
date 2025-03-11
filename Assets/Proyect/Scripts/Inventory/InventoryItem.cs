@@ -1,7 +1,10 @@
-﻿using System;
+﻿using Burmuruk.WorldG.Patrol;
+using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using static UnityEditor.Experimental.GraphView.Port;
 
 namespace Burmuruk.Tesis.Inventory
 {
@@ -69,8 +72,8 @@ namespace Burmuruk.Tesis.Inventory
             throw new NotImplementedException();
         }
 
-        public virtual void Populate(string name, string description, ItemType type, 
-            Sprite sprite, Pickup pickup, int capacity, object args)
+        public void Populate(string name, string description, ItemType type, 
+            Sprite sprite, Pickup pickup, int capacity)
         {
             m_name = name;
             m_description = description;
@@ -78,6 +81,16 @@ namespace Burmuruk.Tesis.Inventory
             m_sprite = sprite;
             this.pickup = pickup;
             m_capacity = capacity;
+        }
+
+        public void Copy(InventoryItem original)
+        {
+            m_name = original.name;
+            m_description = original.Description;
+            _type = original.Type;
+            m_sprite = original.Sprite;
+            this.pickup = original.pickup;
+            m_capacity = original.Capacity;
         }
 
         public void OnAfterDeserialize()

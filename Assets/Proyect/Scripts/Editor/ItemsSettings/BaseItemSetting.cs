@@ -1,10 +1,11 @@
+using Burmuruk.Tesis.Inventory;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Burmuruk.Tesis.Editor
 {
-    public class BaseItemSetting : UnityEditor.Editor
+    public class BaseItemSetting : UnityEditor.Editor, IClearable
     {
         public TextField TxtName { get; private set; }
         public TextField TxtDescription { get; private set; }
@@ -21,12 +22,54 @@ namespace Burmuruk.Tesis.Editor
             UfCapacity = container.Q<UnsignedIntegerField>("txtCapacity");
 
             OfSprite.objectType = typeof(Sprite);
-            OfPickup.objectType = typeof(GameObject);
+            OfPickup.objectType = typeof(Pickup);
         }
 
-        public virtual object GetInfo(object args)
+        public virtual void UpdateInfo(InventoryItem data, ItemDataArgs args)
         {
-            return null;
+            TxtName.value = data.name;
+            TxtDescription.value = data.Description;
+            OfSprite.value = data.Sprite;
+            OfPickup.value = data.Pickup;
+            UfCapacity.value = (uint)data.Capacity;
+        }
+
+        public virtual (InventoryItem item, ItemDataArgs args) GetInfo(ItemDataArgs args)
+        {
+            var data = new InventoryItem();
+
+            data.Populate(
+                TxtName.text, 
+                TxtDescription.text,
+                ItemType.None,
+                (Sprite)OfSprite.value,
+                (Pickup)OfPickup.value,
+                unchecked((int)UfCapacity.value)
+                );
+
+            return (data, null);
+        }
+
+        public virtual void Clear()
+        {
+            TxtName.value = "";
+            TxtDescription.value = "";
+            OfSprite.value = null;
+            OfPickup.value = null;
+            UfCapacity.value = 0;
+        }
+    }
+
+    public interface IClearable
+    {
+        public abstract void Clear();
+    }
+
+    public record ItemDataArgs
+    {
+        public ItemDataArgs()
+        {
+
         }
     }
 }

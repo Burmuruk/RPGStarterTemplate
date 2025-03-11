@@ -348,7 +348,8 @@ namespace Burmuruk.Tesis.Editor
             var name = creations[idx].NameButton.text;
 
             charactersLists.elements[type].Remove(name);
-            charactersLists.creations[type].Remove(name);
+            charactersLists.GetCreation(name, type, out string id);
+            charactersLists.creations[type].Remove(id);
             SearchAllElements();
             Notify("Element deleted.", BorderColour.Approved);
         }
@@ -356,66 +357,11 @@ namespace Burmuruk.Tesis.Editor
         private void DisplayElementPanel(int idx)
         {
             var type = (ElementType)creations[idx].Type;
-
-            switch (type)
-            {
-                case ElementType.Item:
-                    ChangeTab(INFO_ITEM_SETTINGS_NAE);
-
-                    Load_ElementBaseData<InventoryItem>(ElementType.Item, creations[idx].NameButton.text);
-                    break;
-
-                case ElementType.Character:
-                    LoadChanges_Character(creations[idx].NameButton.text);
-                    ChangeTab(INFO_CHARACTER_NAME);
-                    break;
-
-                case ElementType.Buff:
-                    ChangeTab(INFO_BUFF_SETTINGS_NAME);
-
-                    break;
-
-                //case ElementType.Mod:
-                //    break;
-
-                //case ElementType.State:
-                //    break;
-
-                case ElementType.Ability:
-                    var ability = Load_ElementBaseData<Ability>(ElementType.Ability, creations[idx].NameButton.text);
-                    Load_AbilityData(ability);
-                    break;
-
-                case ElementType.Creation:
-                    break;
-
-                case ElementType.Weapon:
-                    ChangeTab(INFO_WEAPON_SETTINGS_NAME);
-
-                    var weapon = Load_ElementBaseData<Weapon>(ElementType.Weapon, creations[idx].NameButton.text);
-                    Load_WeaponData(weapon);
-                    break;
-
-                case ElementType.Armour:
-                    ChangeTab(INFO_ARMOUR_SETTINGS_NAME);
-
-                    var armour = Load_ElementBaseData<ArmourElement>(ElementType.Armour, creations[idx].NameButton.text);
-                    Load_ArmourData(armour);
-                    break;
-
-                case ElementType.Consumable:
-                    ChangeTab(INFO_CONSUMABLE_SETTINGS_NAME);
-
-                    var consumable = Load_ElementBaseData<ConsumableItem>(ElementType.Consumable, creations[idx].NameButton.text);
-                    Load_ConsumableData(consumable);
-                    break;
-
-                default:
-                    return;
-            }
+            Load_CreationData(idx, type);
 
             btnsRight_Tag.ForEach(t => Highlight(t.element, false));
             txtNameCreation.value = creations[idx].NameButton.text;
+            CFCreationColor.value = Color.black;
 
             int tagIdx = 0;
             foreach (var tag in btnsRight_Tag)

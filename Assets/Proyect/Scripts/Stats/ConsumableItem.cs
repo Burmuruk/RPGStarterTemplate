@@ -16,6 +16,8 @@ namespace Burmuruk.Tesis.Stats
 
         //public int Value { get => value; }
         public float ConsumptionTime { get => consumptionTime; }
+        public float AreaRadious { get => areaRadious; }
+        public BuffData[] Buffs { get => buffs; }
 
         public override object GetEquipLocation()
         {
@@ -28,6 +30,12 @@ namespace Burmuruk.Tesis.Stats
                 return buffs[0].stat;
 
             return ConsumableType.None;
+        }
+
+        public void Populate(BuffData[] buffs, float consumptionTime, float areaRadious)
+        {
+             (this.buffs, this.consumptionTime, this.areaRadious) =
+             (buffs, consumptionTime, areaRadious);
         }
 
         public virtual void Use(Character character, object args, Action callback)

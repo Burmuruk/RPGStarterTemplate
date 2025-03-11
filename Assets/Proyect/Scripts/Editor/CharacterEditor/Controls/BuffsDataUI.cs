@@ -15,7 +15,6 @@ namespace Burmuruk.Tesis.Editor
         public FloatField Duration { get; private set; }
         public FloatField Rate { get; private set; }
         public Toggle Percentage { get; private set; }
-        public Toggle AffectAll { get; private set; }
         public FloatField Probability { get; private set; }
 
         public BuffsDataUI()
@@ -33,18 +32,22 @@ namespace Burmuruk.Tesis.Editor
             Duration = Element.Q<FloatField>("ffDuration");
             Rate = Element.Q<FloatField>("ffRate");
             Percentage = Element.Q<Toggle>("tglPercentage");
-            AffectAll = Element.Q<Toggle>("tglAffectAll");
             Probability = Element.Q<FloatField>("ffProbability");
 
             DDBuff.choices.Clear();
             DDBuff.SetValueWithoutNotify("None");
             DDBuff.RegisterValueChangedCallback(OnValueChanged_BuffType);
+            
         }
 
         private void OnValueChanged_BuffType(ChangeEvent<string> evt)
         {
             bool shouldEnable = string.IsNullOrEmpty(evt.newValue) || evt.newValue == "Custom";
+            EnableDataContainer(shouldEnable);
+        }
 
+        private void EnableDataContainer(bool shouldEnable)
+        {
             TabCharacterEditor.EnableContainer(dataContainer, shouldEnable);
         }
 
@@ -55,7 +58,7 @@ namespace Burmuruk.Tesis.Editor
             DDBuff.choices = values;
         }
 
-        public (string, BuffData?) GetInfo()
+        public NamedBuff GetInfo()
         {
             if (DDBuff.value == "Custom")
             {
@@ -65,14 +68,54 @@ namespace Burmuruk.Tesis.Editor
                     duration = Duration.value,
                     rate = Rate.value,
                     percentage = Percentage.value,
-                    affectAll = AffectAll.value,
                     probability = Probability.value,
                 };
 
-                return ("Custom", buff);
+                return new("Custom", buff);
+            }
+            else if (DDBuff.value == "None")
+                return default;
+
+            return new (DDBuff.value, null);
+        }
+
+        public void UpdateData(string name, BuffData? data)
+        {
+            if(data.HasValue)
+            {
+                Value.value = data.Value.value;
+                Duration.value = data.Value.duration;
+                Rate.value = data.Value.rate;
+                Percentage.value = data.Value.percentage;
+                Probability.value = data.Value.probability;
+            }
+            else
+            {
+                ClearValues();
+                EnableDataContainer(false);
             }
 
-            return (DDBuff.value, null);
+            DDBuff.value = name;
+        }
+
+        public void UpdateData(float value, float duration, float rate, bool percentage, float probability)
+        {
+            Value.value = value;
+            Duration.value = duration;
+            Rate.value = rate;
+            Percentage.value = percentage;
+            Probability.value = probability;
+        }
+
+        public void ClearValues()
+        {
+            DDBuff.SetValueWithoutNotify("None");
+
+            Value.value = 0;
+            Duration.value = 0;
+            Rate.value = 0;
+            Percentage.value = false;
+            Probability.value = 0;
         }
     }
 }

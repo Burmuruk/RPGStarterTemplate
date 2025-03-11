@@ -80,15 +80,11 @@ namespace Burmuruk.Tesis.Combat
             ModsList.RemoveModification(character, ModifiableStat.MinDistance, m_minDistance);
         }
 
-        public override void Populate(string name, string description, ItemType type, 
-            Sprite sprite, Pickup pickup, int capacity, object args)
+        public void Populate(EquipmentType bodyPart, int damage, float rateDamage, float minDistance, float maxDistance,
+                float reloadTime, int maxAmmo, BuffData[] data)
         {
-            base.Populate(name, description, type, sprite, pickup, capacity, args);
-
-            var values = ((int damage, float rateDamage, float minDistance, float maxDistance,
-                float reloadTime, int maxAmmo, BuffData[] data))args;
-
-            (m_damage, m_rateDamage, m_minDistance, m_maxDistance, reloadTime, maxAmmo, m_buffsData) = values;
+            (m_bodyPart, m_damage, m_rateDamage, m_minDistance, m_maxDistance, this.reloadTime, this.maxAmmo, m_buffsData) = 
+                (bodyPart, damage, rateDamage, minDistance, maxDistance, reloadTime, maxAmmo, data);
         }
 
         private void EquipMod()

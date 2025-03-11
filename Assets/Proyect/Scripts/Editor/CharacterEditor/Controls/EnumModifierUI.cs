@@ -7,7 +7,7 @@ using static BaseLevelEditor;
 
 namespace Burmuruk.Tesis.Editor
 {
-    public class EnumModifierUI
+    public class EnumModifierUI: IClearable
     {
         public const string ContainerName = "EnumModifier";
         private Action<string, BorderColour> notifyCallback;
@@ -188,6 +188,13 @@ namespace Burmuruk.Tesis.Editor
             if (button == null) return;
 
             Highlight(button, shouldHighlight);
+        }
+
+        public virtual void Clear()
+        {
+            state = State.None;
+            ShowElements(false);
+            HighlightButton(false);
         }
     }
 }

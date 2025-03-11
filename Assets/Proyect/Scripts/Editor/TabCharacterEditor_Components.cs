@@ -31,14 +31,13 @@ namespace Burmuruk.Tesis.Editor
         Dictionary<ElementType, BaseItemSetting> settingsElements = new();
         [SerializeField] List<BuffData> curWeaponsBuffs;
         Dictionary<string, string> tabNames = new();
+        EnumScheduler enumScheduler = new EnumScheduler();
 
         private void Create_ItemTab()
         {
-            //curItemData = ScriptableObject.CreateInstance<InventoryItem>();
-            //infoContainers[INFO_ITEM_SETTINGS_NAE].Add(new InspectorElement(curItemData));
-
             var settings = new BaseItemSetting();
             settings.Initialize(infoContainers[INFO_ITEM_SETTINGS_NAE], txtNameCreation);
+            settingsElements.Add(ElementType.Item, settings);
         }
 
         private void Create_WeaponSettings()
@@ -62,7 +61,7 @@ namespace Burmuruk.Tesis.Editor
 
             foreach (var creation in charactersLists.creations[ElementType.Buff])
             {
-                values.Add(creation.Key);
+                values.Add(creation.Value.Name);
             }
 
             adder.SetBuffs(values);
@@ -76,7 +75,7 @@ namespace Burmuruk.Tesis.Editor
 
         private void Create_ConsumableSettings()
         {
-            curConsumableData = ScriptableObject.CreateInstance<ConsumableItem>();
+            //curConsumableData = ScriptableObject.CreateInstance<ConsumableItem>();
             //infoContainers[INFO_CONSUMABLE_SETTINGS_NAME].Add(new InspectorElement(curConsumableData));
 
             var settings = new ConsumableSettings();
