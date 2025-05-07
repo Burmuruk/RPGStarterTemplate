@@ -18,7 +18,7 @@ namespace Burmuruk.Tesis.Inventory
         [SerializeField] Sprite m_sprite;
         [SerializeField] Pickup pickup;
         [SerializeField] int m_capacity;
-        [SerializeField] private int _id = 0;
+        [SerializeField] private int _id;
 
         private static List<int> m_itemsIds;
 

@@ -2,12 +2,14 @@ using Burmuruk.Tesis.Stats;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine.UIElements;
+using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
 
-namespace Burmuruk.Tesis.Editor
+namespace Burmuruk.Tesis.Editor.Controls
 {
     public class BuffsDataUI
     {
         VisualElement dataContainer;
+        private string buffId;
 
         public VisualElement Element { get; private set; }
         public DropdownField DDBuff { get; private set; }
@@ -37,7 +39,6 @@ namespace Burmuruk.Tesis.Editor
             DDBuff.choices.Clear();
             DDBuff.SetValueWithoutNotify("None");
             DDBuff.RegisterValueChangedCallback(OnValueChanged_BuffType);
-            
         }
 
         private void OnValueChanged_BuffType(ChangeEvent<string> evt)
@@ -48,14 +49,13 @@ namespace Burmuruk.Tesis.Editor
 
         private void EnableDataContainer(bool shouldEnable)
         {
-            TabCharacterEditor.EnableContainer(dataContainer, shouldEnable);
+            EnableContainer(dataContainer, shouldEnable);
         }
 
-        public void SetValues(List<string> values)
+        public void SetValues(Dictionary<string, string> newNames)
         {
-            (values ??= new()).Insert(0, "Custom");
-
-            DDBuff.choices = values;
+            DDBuff.choices.Add("Custom");
+            DDBuff.choices.AddRange(newNames.Keys);
         }
 
         public NamedBuff GetInfo()
@@ -71,17 +71,17 @@ namespace Burmuruk.Tesis.Editor
                     probability = Probability.value,
                 };
 
-                return new("Custom", buff);
+                return new("", buff);
             }
             else if (DDBuff.value == "None")
                 return default;
 
-            return new (DDBuff.value, null);
+            return new(DDBuff.value, null);
         }
 
         public void UpdateData(string name, BuffData? data)
         {
-            if(data.HasValue)
+            if (data.HasValue)
             {
                 Value.value = data.Value.value;
                 Duration.value = data.Value.duration;

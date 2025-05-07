@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine.UIElements;
 
-namespace Burmuruk.Tesis.Editor
+namespace Burmuruk.Tesis.Editor.Controls
 {
     public class ComponentsListUI<T> : ComponentsList<T> where T : ElementCreationUI, new()
     {
         public DropdownField DDFType { get; private set; }
         public DropdownField DDFElement { get; private set; }
 
-        public ComponentsListUI(VisualElement container, Action<string, BaseLevelEditor.BorderColour> notifyCallback) : base(container, notifyCallback)
+        public ComponentsListUI(VisualElement container) : base(container)
         {
             DDFType = container.Q<DropdownField>("ddfType");
             DDFElement = container.Q<DropdownField>("ddfElement");
@@ -43,7 +43,7 @@ namespace Burmuruk.Tesis.Editor
         {
             if (newValue < 0)
             {
-                notifyCallback("Negative values are not allowed", BaseLevelEditor.BorderColour.Error);
+                notifyCallback("Negative values are not allowed", BorderColour.Error);
                 return;
             }
 
@@ -57,6 +57,14 @@ namespace Burmuruk.Tesis.Editor
             {
                 ChangeAmount(idx, amount);
             }
+        }
+
+        public override void Clear()
+        {
+            base.Clear();
+
+            DDFType.SetValueWithoutNotify("None");
+            DDFElement.SetValueWithoutNotify("None");
         }
     }
 }

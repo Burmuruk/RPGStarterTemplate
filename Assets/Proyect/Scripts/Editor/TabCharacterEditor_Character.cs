@@ -1,11 +1,13 @@
+using Burmuruk.Tesis.Editor.Controls;
+using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
 
 namespace Burmuruk.Tesis.Editor
 {
@@ -13,7 +15,6 @@ namespace Burmuruk.Tesis.Editor
     {
         const string TXT_CREATION_NAME = "txtName";
         const string CREATION_COLOUR_NAME = "cfSettingColour";
-        TextField txtNameCreation;
         ColorField CFCreationColor;
         Button btnSettingAccept;
         Button btnSettingCancel;
@@ -21,17 +22,12 @@ namespace Burmuruk.Tesis.Editor
         const string COMPONENTS_CONTAINER_NAME = "componentsConatiner";
         const string SETTINGS_COLOUR_CONTAINER = "ColourContainer";
         const string DDF_ADD_COMPONENT_NAME = "ddfElement";
-        const string STATS_CONTAINER_NAME = "infoStats";
         const string BTN_GO_BACK_SETTINGS = "btnGoBack";
         const string INFO_EXTRA_SETTINGS_NAME = "infoContainer";
 
         VisualElement infoExtraSetting;
         VisualElement componentsContainer;
         DropdownField ddfAddComponent;
-        VisualElement statsContainer;
-        EnumModifierUI emCharacterType;
-        CharacterData characterData;
-        StatsVisualizer basicStats = null;
 
         const string BTN_SETTINGS_ACCEPT_NAME = "btnSettingAccept";
         const string BTN_SETTINGS_CANCEL_NAME = "btnSettingCancel";
@@ -60,94 +56,43 @@ namespace Burmuruk.Tesis.Editor
 
         private void Create_CharacterTab()
         {
-            var componentsContainer = infoContainers[INFO_CHARACTER_NAME].Q<VisualElement>("infoComponents");
-            characterComponents = new ComponentsListUI<ElementComponent>(componentsContainer, Notify);
-            characterComponents.bindElementBtn += OpenComponentSettings;
-            characterComponents.DDFElement.RegisterValueChangedCallback((e) => characterComponents.AddElement(e.newValue));
-            characterComponents.CreationValidator += ContainsCreation;
+            CharacterSettings characterSettings = new CharacterSettings();
+            characterSettings.Initialize(infoContainers[INFO_CHARACTER_NAME], nameSettings);
 
-            statsContainer = infoContainers[INFO_CHARACTER_NAME].Q<VisualElement>(STATS_CONTAINER_NAME);
-
-            emCharacterType = new EnumModifierUI(infoContainers[INFO_CHARACTER_NAME].Q<VisualElement>(EnumModifierUI.ContainerName), Notify, CharacterType.None);
-            emCharacterType.EnumField.RegisterValueChangedCallback(SetCharacterType);
-
-            characterData = new CharacterData();
-            Populate_AddComponents();
-            Populate_EFCharacterType();
-
-            var instance = ScriptableObject.CreateInstance<StatsVisualizer>();
-            statsContainer.Add(new InspectorElement(instance));
-            basicStats = instance;
-
-            VisualElement adderUI = infoContainers[INFO_CHARACTER_NAME].Q<VisualElement>("VariblesAdder");
-            VariablesAdderUI adder = new(adderUI, statsContainer);
-        }
-
-        private int? ContainsCreation(IList list, string name)
-        {
-            var components = (List<ElementComponent>)list;
-            int i = 0;
-            int? emptyIdx = -1;
-
-            foreach (var component in components)
-            {
-                if (!component.element.ClassListContains("Disable"))
-                {
-                    if (component.NameButton.text == name)
-                    {
-                        return null;
-                    }
-                }
-                else if (!emptyIdx.HasValue)
-                {
-                    emptyIdx = i;
-                }
-
-                ++i;
-            }
-
-            return emptyIdx;
-        }
-
-        private void Populate_AddComponents()
-        {
-            characterComponents.DDFElement.choices.Clear();
-
-            foreach (var type in Enum.GetValues(typeof(ComponentType)))
-            {
-                characterComponents.DDFElement.choices.Add(type.ToString());
-            }
-
-            characterComponents.DDFElement.SetValueWithoutNotify("None");
+            settingsElements.Add(ElementType.Character, characterSettings);
         }
 
         private void OnCancel_BtnSetting()
         {
-            switch (currentSettingTag.type)
-            {
-                case ElementType.Character:
-                    Discard_CharacterChanges();
-                    break;
-                case ElementType.Weapon:
-                case ElementType.Consumable:
-                case ElementType.Item:
-                case ElementType.Armour:
+            ElementType type = currentSettingTag.type;
+            ((IChangesObserver)settingsElements[type]).Remove_Changes();
 
-                    if (settingsState != SettingsState.Editing)
-                        txtNameCreation.value = "";
+            //switch (currentSettingTag.type)
+            //{
+            //    case ElementType.Character:
+            //        settingsElements[ElementType.Character].DiscardChanges();
+            //        break;
+            //    case ElementType.Weapon:
+            //    case ElementType.Consumable:
+            //    case ElementType.Item:
+            //    case ElementType.Armour:
 
-                    CFCreationColor.value = Color.black;
+            //        if (settingsState != SettingsState.Editing)
+            //            nameSettings.TxtName.value = "";
 
-                    (settingsElements[currentSettingTag.type] as IClearable).Clear();
-                    break;
+            //        CFCreationColor.value = Color.black;
 
-                case ElementType.Buff:
-                    curBuffData.buff = default;
-                    EditorUtility.SetDirty(curBuffData);
-                    break;
+            //        (settingsElements[currentSettingTag.type] as IClearable).Clear();
+            //        break;
 
-                default: break;
-            }
+            //    case ElementType.Buff:
+            //        CurBuffData.data.creationId = null;
+            //        CurBuffData.visualizer.buff = default;
+            //        EditorUtility.SetDirty(CurBuffData.visualizer);
+            //        break;
+
+            //    default: break;
+            //}
         }
 
         private void OnAccept_BtnAccept()
@@ -158,12 +103,13 @@ namespace Burmuruk.Tesis.Editor
                     break;
 
                 case SettingsState.Creating:
-                    if (!Create_Settings())
+                    if (!Save_Creation())
                         return;
                     break;
 
                 case SettingsState.Editing:
-                    Edit_Settings();
+                    if (!Edit_Creation())
+                        return;
                     break;
 
                 default:
@@ -177,55 +123,86 @@ namespace Burmuruk.Tesis.Editor
             Highlight(btnsRight_Tag[currentSettingTag.idx].element, false);
             currentSettingTag = (ElementType.None, -1);
             editingElement = (ElementType.None, "", -1);
+
+            SearchAllElements();
         }
 
-        private bool Edit_Settings()
+        private bool Edit_Creation()
         {
-            switch (currentSettingTag.type)
+            ElementType type = currentSettingTag.type;
+            string result = settingsElements[type].Save();
+
+            if (result != null)
             {
-                case ElementType.Character:
-                    if (SaveChanges_Character(editingElement.name, txtNameCreation.value))
-                    {
-                        Notify("Changes applied.", BorderColour.Approved);
-                    }
-                    else return false;
-                    break;
-
-                case ElementType.Buff:
-                    SaveElement(ElementType.Buff, "", curBuffData.buff, txtNameCreation.text);
-                    break;
-
-                case ElementType.Item:
-                case ElementType.Weapon:
-                case ElementType.Armour:
-                case ElementType.Consumable:
-
-                    string creationName = currentSettingTag.type switch
-                    {
-                        ElementType.Item => curItemData.Name,
-                        ElementType.Weapon => curWeaponData.Name,
-                        ElementType.Armour => curArmorData.Name,
-                        ElementType.Consumable => curConsumableData.Name,
-                        _ => null
-                    };
-
-                    SaveElement(ElementType.Armour, creationName, curArmorData, txtNameCreation.text);
-                    break;
-
-                default: break;
+                Notify(result, BorderColour.Error);
+                return false;
             }
 
+            Notify("Changes saved", BorderColour.Approved);
             return true;
-        }
 
-        private void Populate_EFCharacterType()
-        {
-            emCharacterType.EnumField.Init(CharacterType.None);
-        }
+            //switch (type)
+            //{
+            //    case ElementType.Character:
+            //        result = SaveChanges_Character(editingElement.name, curData.creationId, txtNameCreation.value);
+            //        break;
 
-        private void SetCharacterType(ChangeEvent<Enum> evt)
-        {
-            characterData.characterType = (CharacterType)evt.newValue;
+            //    case ElementType.Buff:
+
+            //        var visualizer = curData.data as BuffVisulizer;
+
+            //        //if (!settingsElements[currentSettingTag.type].CheckChanges(visualizer.buff, out List<VisualElement> changes))
+            //        //    return false;
+
+            //        var buff = charactersLists.creations[ElementType.Buff][curData.creationId];
+
+            //        result = Save_CreationData(ElementType.Buff, buff.Name, ref curData.creationId, visualizer.buff, txtNameCreation.text);
+            //        break;
+
+            //    case ElementType.Item:
+            //    case ElementType.Armour:
+
+            //        var creationData = (InventoryItem)editingData[type].data;
+
+            //        if (!settingsElements[currentSettingTag.type].CheckChanges(creationData, null, out List<VisualElement> changes, out modType))
+            //            return false;
+
+            //        result = Save_Creation();
+            //        break;
+
+            //    case ElementType.Weapon:
+            //    case ElementType.Consumable:
+
+            //        (var item, var args) = ((InventoryItem, BuffsNamesDataArgs))editingData[type].data;
+
+            //        if (!settingsElements[currentSettingTag.type].CheckChanges(item, args, out List<VisualElement> bChanges, out modType))
+            //            return false;
+
+            //        newData = type switch
+            //        {
+            //            ElementType.Item => settingsElements[ElementType.Item].GetInfo(null).item,
+            //            ElementType.Weapon => GetBuffsIds(ElementType.Weapon),
+            //            ElementType.Armour => settingsElements[ElementType.Armour].GetInfo(null).item,
+            //            ElementType.Consumable => GetBuffsIds(ElementType.Consumable),
+            //            _ => null
+            //        };
+
+            //        result = Save_CreationData(type, curData.name, ref curData.creationId, newData, curData.name);
+
+            //        break;
+
+            //    default: break;
+            //}
+
+            //if (result)
+            //{
+            //    OnCreationModified?.Invoke(modType, type, curData.creationId, new CreationData(curData.name, newData));
+            //    Notify("Element edited.", BorderColour.Approved);
+            //}
+            //else
+            //    return false;
+
+            //return true;
         }
 
         private void SetClickableButtonColour(int componentIdx)
@@ -233,71 +210,5 @@ namespace Burmuruk.Tesis.Editor
             creations[componentIdx].NameButton.AddToClassList("ClickableBtn");
             creations[componentIdx].NameButton.style.backgroundColor = new Color(0.4627451f, 0.4627451f, 4627451f);
         }
-
-        private void OpenComponentSettings(int componentIdx)
-        {
-            var type = (ComponentType)characterComponents[componentIdx].Type;
-
-            string tabName = type switch
-            {
-                ComponentType.Equipment => INFO_EQUIPMENT_SETTINGS_NAME,
-                ComponentType.Health => INFO_HEALTH_SETTINGS_NAME,
-                ComponentType.Inventory => INFO_INVENTORY_SETTINGS_NAME,
-                _ => null
-            };
-
-            if (tabName == null) return;
-
-            switch (type)
-            {
-                case ComponentType.Equipment:
-                    Load_InventoryItemsInEquipment();
-                    break;
-                case ComponentType.Inventory:
-                    break;
-
-                default: break;
-            }
-
-            ChangeTab(tabName);
-        }
-
-        private bool IsTheNameUsed(string name)
-        {
-            int idx = 0;
-            foreach (var creationType in charactersLists.elements.Keys)
-            {
-                foreach (var elementName in charactersLists.elements[creationType])
-                {
-                    if (elementName == name)
-                    {
-                        Notify("There's already an element with the same name.", BorderColour.Error);
-                        Debug.Log("Save canceled");
-                        return true;
-                    }
-
-                    ++idx;
-                }
-            }
-
-            return false;
-        }
-
-        private void Discard_CharacterChanges()
-        {
-            txtNameCreation.value = "";
-            CFCreationColor.value = Color.black;
-            creations.Components.ForEach(c => EnableContainer(c.element, false));
-            //ddfAddComponent.SetValueWithoutNotify("None");
-            emCharacterType.EnumField.SetValueWithoutNotify(CharacterType.None);
-
-            var instance = ScriptableObject.CreateInstance<StatsVisualizer>();
-            statsContainer.Clear();
-            statsContainer.Add(new InspectorElement(instance));
-            basicStats = instance;
-            characterData = new();
-        }
-
-        public static bool VerifyVariableName(string name) => regName.IsMatch(name);
     }
 }

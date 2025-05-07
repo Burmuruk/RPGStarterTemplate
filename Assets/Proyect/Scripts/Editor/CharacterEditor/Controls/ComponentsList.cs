@@ -5,20 +5,20 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using static BaseLevelEditor;
+using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
 
-namespace Burmuruk.Tesis.Editor
+namespace Burmuruk.Tesis.Editor.Controls
 {
     public class ComponentsList
     {
         public const string CONTAINER_NAME = "infoComponents";
     }
 
-    public class ComponentsList<T> : ComponentsList where T : ElementCreationUI, new()
+    public class ComponentsList<T> : ComponentsList, IClearable where T : ElementCreationUI, new()
     {
         List<int> _amounts;
         protected Action<string, BorderColour> notifyCallback;
-        public Action<int> bindElementBtn = delegate { };
+        public Action<int> OnElementClicked = delegate { };
 
         public Action<T> OnElementCreated = delegate { };
         public Action<T> OnElementAdded = delegate { };
@@ -35,7 +35,7 @@ namespace Burmuruk.Tesis.Editor
             set => Components[index] = value;
         }
 
-        public ComponentsList(VisualElement container, Action<string, BorderColour> notifyCallback)
+        public ComponentsList(VisualElement container)
         {
             StyleSheet styleSheetColour = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/BasicSS.uss");
             container.styleSheets.Add(styleSheetColour);
@@ -48,8 +48,6 @@ namespace Burmuruk.Tesis.Editor
 
             _amounts = new();
             Components = new();
-            this.notifyCallback = notifyCallback;
-
         }
 
         public void IncrementElement(int idx, bool shouldIncrement = true, int value = 1)
@@ -181,7 +179,7 @@ namespace Burmuruk.Tesis.Editor
             Amounts.Add(idx);
 
             int newIdx = idx;
-            component.NameButton.clicked += () => bindElementBtn(newIdx);
+            component.NameButton.clicked += () => OnElementClicked(newIdx);
             component.element.styleSheets.Add(basicStyle);
             StartAmount(component, idx);
             OnElementCreated(component);
@@ -232,6 +230,15 @@ namespace Burmuruk.Tesis.Editor
 
             ChangeAmount(idx, 0);
             EnableContainer(Components[idx].element, false);
+        }
+
+        public virtual void Clear()
+        {
+            for (int i = 0; i < Components.Count; i++)
+            {
+                EnableContainer(Components[i].element, false);
+                ChangeAmount(i, 0);
+            }
         }
     }
 }

@@ -3,15 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Burmuruk.Tesis.Editor
+namespace Burmuruk.Tesis.Editor.Controls
 {
-    public class BuffAdderUI : IClearable
+    public class BuffAdderUI : IClearable, IUIListContainer<BaseCreationInfo>, IChangesObserver
     {
-        List<BuffsDataUI> buffs = new();
-        VisualElement elementsContainer;
-        List<string> buffTypes;
-
         public const string INVALIDNAME = "Custom";
+
+        private List<NamedBuff?> _changes = new();
+        private List<BuffsDataUI> buffs = new();
+        private VisualElement elementsContainer;
+        private Dictionary<string, string> buffNames;
 
         public Foldout BuffsList { get; private set; }
         public UnsignedIntegerField BuffsCount { get; private set; }
@@ -27,6 +28,99 @@ namespace Burmuruk.Tesis.Editor
 
             SetupFoldOut(container);
             BuffsCount.RegisterCallback<KeyUpEvent>(OnValueChanged_BuffsCount);
+            CreationScheduler.Add(ModificationType.Rename, ElementType.Buff, this);
+            CreationScheduler.Add(ModificationType.Add, ElementType.Buff, this);
+            CreationScheduler.Add(ModificationType.Remove, ElementType.Buff, this);
+            buffNames = CreationScheduler.GetNames(ElementType.Buff);
+        }
+
+        //public void AddData(in CreationData data)
+        //{
+        //    foreach (var buff in buffs)
+        //    {
+        //        buffNames.TryGetValue(buff.DDBuff.value, out string selectedId);
+        //        buff.DDBuff.choices.Clear();
+
+        //        buff.DDBuff.choices.Add("None");
+        //        buff.DDBuff.choices.AddRange(newBuffsNames.Keys);
+
+        //        foreach (var newName in newBuffsNames)
+        //        {
+        //            if (newName.Value == selectedId)
+        //            {
+        //                buff.DDBuff.value = newName.Key;
+        //                goto nextTurn;
+        //            }
+        //        }
+
+        //        buff.DDBuff.value = "None";
+
+        //    nextTurn:
+        //        ;
+        //    }
+
+        //    this.buffNames = newBuffsNames;
+        //}
+
+        public virtual void AddData(in BaseCreationInfo newValue)
+        {
+            foreach (var buff in buffs)
+            {
+                buff.DDBuff.choices.Add(newValue.Name);
+            }
+
+            buffNames.TryAdd(newValue.Name, newValue.Id);
+        }
+
+        public virtual void RemoveData(in BaseCreationInfo newValue)
+        {
+            foreach (var buff in buffs)
+            {
+                buffNames.TryGetValue(buff.DDBuff.value, out string selectedId);
+
+                if (selectedId == newValue.Id)
+                {
+                    buff.DDBuff.value = "None";
+                }
+
+                buff.DDBuff.choices.Remove(newValue.Name);
+            }
+
+            buffNames.Remove(newValue.Name);
+        }
+
+        public virtual void RenameCreation(in BaseCreationInfo newValue)
+        {
+            int? idx = null;
+            string name = null;
+            int i = 1;
+            Dictionary<string, string> newNames = new();
+
+            foreach (var buffData in buffNames)
+            {
+                if (buffData.Value == newValue.Id)
+                {
+                    idx = i;
+                    name = buffData.Key;
+                    newNames.Add(name, buffData.Value);
+                }
+                else
+                    newNames.Add(buffData.Key, buffData.Value);
+
+                ++i;
+            }
+
+            foreach (var buff in buffs)
+            {
+                buff.DDBuff.choices[idx.Value] = newValue.Name;
+
+                if (buff.DDBuff.value == name)
+                {
+                    buff.DDBuff.value = newValue.Name;
+                }
+            }
+
+            buffNames = newNames;
         }
 
         private void OnValueChanged_BuffsCount(KeyUpEvent evt)
@@ -58,22 +152,6 @@ namespace Burmuruk.Tesis.Editor
             }
         }
 
-        public void SetBuffs(List<string> buffTypes)
-        {
-            this.buffTypes = buffTypes;
-
-            foreach (var buff in buffs)
-            {
-                buff.DDBuff.choices.Clear();
-                buff.DDBuff.choices.Add("None");
-
-                foreach (var type in buffTypes)
-                {
-                    buff.DDBuff.choices.Add(type);
-                }
-            }
-        }
-
         private void SetupFoldOut(VisualElement container)
         {
             BuffsList.text = "Buffs";
@@ -97,7 +175,7 @@ namespace Burmuruk.Tesis.Editor
         private VisualElement AddBuff()
         {
             var buff = new BuffsDataUI();
-            buff.SetValues(buffTypes);
+            buff.SetValues(buffNames);
 
             buffs.Add(buff);
             elementsContainer.Add(buff.Element);
@@ -117,31 +195,34 @@ namespace Burmuruk.Tesis.Editor
             BuffsCount.SetValueWithoutNotify((uint)buffs.Count);
         }
 
-        public void UpdateData(List<(string name, BuffData? buff)> buffDatas)
+        public void UpdateData(List<(string id, BuffData? buff)> buffsData)
         {
-            int max = Mathf.Min(buffs.Count, buffDatas.Count);
-
+            int max = Mathf.Min(buffs.Count, buffsData.Count);
+            _changes.Clear();
             int i = 0;
+
             for (; i < max; i++)
             {
-                if (!TryGetBuffName(buffDatas[i].name, out string curName))
+                if (!TryGetBuffName(buffsData[i].id, out string curName))
                     continue;
 
-                buffs[i].UpdateData(curName, buffDatas[i].buff);
+                buffs[i].UpdateData(curName, buffsData[i].buff);
+                _changes.Add(new(curName, buffsData[i].buff));
             }
 
-            if (buffDatas.Count > buffs.Count)
+            if (buffsData.Count > buffs.Count)
             {
-                for (int j = i; j < buffDatas.Count; j++)
+                for (int j = i; j < buffsData.Count; j++)
                 {
-                    if (!TryGetBuffName(buffDatas[j].name, out string curName)) 
+                    if (!TryGetBuffName(buffsData[j].id, out string curName))
                         continue;
 
                     AddBuff();
-                    buffs[buffs.Count - 1].UpdateData(curName, buffDatas[j].buff);
+                    buffs[buffs.Count - 1].UpdateData(curName, buffsData[j].buff);
+                    _changes.Add(new(curName, buffsData[i].buff));
                 }
             }
-            else if (buffDatas.Count < buffs.Count)
+            else if (buffsData.Count < buffs.Count)
             {
                 for (int j = i; j < buffs.Count; j++)
                 {
@@ -150,16 +231,27 @@ namespace Burmuruk.Tesis.Editor
             }
         }
 
-        private bool TryGetBuffName(string name, out string newName)
+        private bool TryGetBuffName(string id, out string newName)
         {
-            newName = name switch
+            newName = id switch
             {
                 null => null,
                 "" => INVALIDNAME,
-                _ => name
+                _ => GetNameById(id),
             };
 
             return newName is not null;
+        }
+
+        private string GetNameById(string id)
+        {
+            foreach (var value in buffNames)
+            {
+                if (value.Value == id)
+                    return value.Key;
+            }
+
+            return null;
         }
 
         public List<NamedBuff> GetBuffsData()
@@ -168,13 +260,15 @@ namespace Burmuruk.Tesis.Editor
 
             foreach (var buff in buffs)
             {
-                var data = buff.GetInfo();
+                NamedBuff data = buff.GetInfo();
 
-                if (string.IsNullOrEmpty(data.Name))
+                if (data.Name == null)
                 {
-                    buffsData.Add(default);
                     continue;
                 }
+
+                if (data.Name != "")
+                    data.Name = buffNames[data.Name];
 
                 buffsData.Add(data);
             }
@@ -187,7 +281,33 @@ namespace Burmuruk.Tesis.Editor
             elementsContainer.Clear();
             buffs.Clear();
             BuffsCount.value = 0;
-            buffTypes?.Clear();
+        }
+
+        public bool Check_Changes()
+        {
+            var namedBuffs = GetBuffsData();
+
+            if (_changes.Count != namedBuffs.Count)
+                return true;
+
+            for (int i = 0; i < _changes.Count; i++)
+            {
+                if (_changes[i].Value.Name != namedBuffs[i].Name)
+                    return true;
+
+                if (namedBuffs[i].Name == INVALIDNAME)
+                {
+                    if (_changes[i].Value.Data != namedBuffs[i].Data)
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        public void Remove_Changes()
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

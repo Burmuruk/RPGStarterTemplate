@@ -3,16 +3,14 @@ using Burmuruk.Tesis.Utilities;
 using System;
 using UnityEngine;
 using UnityEngine.UIElements;
-using static BaseLevelEditor;
+using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
 
-namespace Burmuruk.Tesis.Editor
+namespace Burmuruk.Tesis.Editor.Controls
 {
-    public class EnumModifierUI: IClearable
+    public class EnumModifierUI<T> : IClearable where T : Enum
     {
         public const string ContainerName = "EnumModifier";
-        private Action<string, BorderColour> notifyCallback;
         EnumEditor enumEditor = new();
-        Enum enumType;
         string path = null;
         State state = State.None;
 
@@ -44,10 +42,9 @@ namespace Burmuruk.Tesis.Editor
             }
         }
 
-        public EnumModifierUI(VisualElement container, Action<string, BorderColour> notify, Enum type)
+        public EnumModifierUI(VisualElement container)
         {
             this.Container = container;
-            notifyCallback = notify;
             BtnEditValue = container.Q<Button>("btnEditValue");
             BtnRemoveValue = container.Q<Button>("btnRemoveValue");
             BtnAddValue = container.Q<Button>("btnAddValue");
@@ -56,12 +53,11 @@ namespace Burmuruk.Tesis.Editor
             EnumContainer = container.Q<VisualElement>("EnumLine");
             Name = EnumContainer.Q<Label>("lblName");
             NewValueContainer = container.Q<VisualElement>("NewElementLine");
-            enumType = type;
 
             BtnEditValue.clicked += OnClick_EditValue;
             BtnRemoveValue.clicked += OnClick_RemoveValue;
             BtnAddValue.clicked += () => OnClick_AddButton();
-            EnumField.Init(type);
+            EnumField.Init(default(T));
             TxtNewValue.RegisterCallback<KeyUpEvent>(OnKeyUp_TxtCharacterType);
 
             //path
@@ -69,6 +65,8 @@ namespace Burmuruk.Tesis.Editor
 
             EnableContainer(NewValueContainer, false);
         }
+
+        public T Value => (T)EnumField.value;
 
         private void OnClick_EditValue()
         {
@@ -98,7 +96,7 @@ namespace Burmuruk.Tesis.Editor
 
             if (!enumEditor.RemoveOption(path, EnumField.text, out string error))
             {
-                notifyCallback(error, BorderColour.Error); 
+                Notify(error, BorderColour.Error); 
                 return;
             }
 
@@ -140,7 +138,7 @@ namespace Burmuruk.Tesis.Editor
                     case State.Editing:
                         if (!enumEditor.Rename(path, EnumField.text, TxtNewValue.text, out string error))
                         {
-                            notifyCallback(error, BorderColour.Error);
+                            Notify(error, BorderColour.Error);
                             return;
                         }
                         break;
@@ -162,17 +160,19 @@ namespace Burmuruk.Tesis.Editor
 
             if (!string.IsNullOrEmpty(error))
             {
-                notifyCallback(error, BorderColour.Error);
+                Notify(error, BorderColour.Error);
                 return false;
             }
 
-            notifyCallback("Value added", BorderColour.Approved);
+            Notify("Value added", BorderColour.Approved);
             return true;
         }
 
         private void ShowElements(bool shouldShow = true)
         {
             EnumField.SetEnabled(!shouldShow);
+            BtnAddValue.SetEnabled(!shouldShow);
+            BtnRemoveValue.SetEnabled(!shouldShow);
             EnableContainer(NewValueContainer, shouldShow);
         }
 
@@ -195,6 +195,11 @@ namespace Burmuruk.Tesis.Editor
             state = State.None;
             ShowElements(false);
             HighlightButton(false);
+        }
+
+        public void OnDataChanged(in string[] newValues)
+        {
+            
         }
     }
 }

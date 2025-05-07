@@ -19,12 +19,12 @@ namespace Burmuruk.Tesis.Editor
         public int HP;
     }
 
-    struct Inventory
+    public struct Inventory
     {
         public Dictionary<ElementType, int> items;
     }
 
-    struct Equipment
+    public struct Equipment
     {
         public Inventory inventory;
         public Dictionary<ElementType, EquipData> equipment;
@@ -36,7 +36,7 @@ namespace Burmuruk.Tesis.Editor
         }
     }
 
-    struct EquipData
+    public struct EquipData
     {
         public ElementType type;
         public EquipmentType place;

@@ -18,42 +18,6 @@ namespace Burmuruk.Tesis.Editor
             //ElementType.State,
             ElementType.Buff,
         };
-        public Dictionary<ElementType, List<string>> elements = new()
-        {
-            {
-                ElementType.Character, new()
-                {
-                    "Mage",
-                    "Tank",
-                    "Healer",
-                    "Midget",
-                    "Assasin",
-                }
-            },
-            {
-                ElementType.Item, new()
-                {
-                    "Potion",
-                    "Cake",
-                }
-            },
-            {
-                ElementType.Weapon, new()
-                {
-                    "Hammer",
-                    "Sword",
-                    "GreatSword",
-                    "Dagger",
-                }
-            },
-            //{
-            //    ElementType.State, new()
-            //    {
-            //        "Madness",
-            //        "Sleep",
-            //    }
-            //},
-        };
 
         [Serializable]
         public struct CharacterProfile

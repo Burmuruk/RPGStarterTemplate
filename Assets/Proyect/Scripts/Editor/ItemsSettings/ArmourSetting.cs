@@ -1,17 +1,20 @@
 using Burmuruk.Tesis.Inventory;
 using UnityEngine.UIElements;
+using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
 
-namespace Burmuruk.Tesis.Editor
+namespace Burmuruk.Tesis.Editor.Controls
 {
     public class ArmourSetting : BaseItemSetting
     {
-        public EnumModifierUI EquipmentPlace { get; private set; }
+        private int _changes;
 
-        public override void Initialize(VisualElement container, TextField name)
+        public EnumModifierUI<EquipmentType> EquipmentPlace { get; private set; }
+
+        public override void Initialize(VisualElement container, NameSettings nameControl)
         {
-            base.Initialize(container, name);
+            base.Initialize(container, nameControl);
 
-            EquipmentPlace = new EnumModifierUI(container, null, EquipmentType.None);
+            EquipmentPlace = new EnumModifierUI<EquipmentType>(container);
         }
 
         public override void UpdateInfo(InventoryItem data, ItemDataArgs args)
@@ -28,6 +31,22 @@ namespace Burmuruk.Tesis.Editor
             armour.Populate((EquipmentType)EquipmentPlace.EnumField.value);
 
             return (armour, null);
+        }
+
+        public override bool Check_Changes()
+        {
+            bool haveChanges = false;
+
+            if (!_nameControl.Check_Changes())
+                haveChanges = true;
+
+            if (_changes != (int)EquipmentPlace.Value)
+            {
+                haveChanges = true;
+                Highlight(EquipmentPlace.EnumField, true);
+            }
+
+            return haveChanges;
         }
     }
 

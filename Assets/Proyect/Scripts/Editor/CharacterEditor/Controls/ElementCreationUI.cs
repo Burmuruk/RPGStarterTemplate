@@ -5,9 +5,10 @@ namespace Burmuruk.Tesis.Editor
 {
     public abstract class ElementCreationUI
     {
-        public int _idx;
-
+        public int idx;
         public VisualElement element;
+
+        public string Id { get; set; }
         public Button NameButton { get; private set; }
         public Button RemoveButton { get; private set; }
         public Toggle Toggle { get; private set; }
@@ -27,7 +28,7 @@ namespace Burmuruk.Tesis.Editor
 
         public virtual void Initialize(VisualElement container, int idx)
         {
-            this._idx = idx;
+            this.idx = idx;
             element = container;
             NameButton = container.Q<Button>("btnEditComponent");
             RemoveButton = container.Q<Button>("btnRemove");

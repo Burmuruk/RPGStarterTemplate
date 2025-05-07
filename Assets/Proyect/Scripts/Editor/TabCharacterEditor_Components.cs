@@ -1,76 +1,80 @@
-using Burmuruk.Tesis.Combat;
-using Burmuruk.Tesis.Inventory;
+using Burmuruk.Tesis.Editor.Controls;
 using Burmuruk.Tesis.Stats;
 using System.Collections.Generic;
-using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Burmuruk.Tesis.Editor
 {
-    public class BuffVisulizer : ScriptableObject
-    {
-        [SerializeField] public BuffData buff;
-    }
-
     public partial class TabCharacterEditor : BaseLevelEditor
     {
         const string infoHealthName = "HealthSettings";
-
+        NameSettings nameSettings;
         FloatField ffHealthValue;
         Button btnBackHealthSettings;
 
         Toggle tglShowElementColour;
         Toggle tglShowCustomColour;
 
-        InventoryItem curItemData;
-        BuffVisulizer curBuffData;
-        Weapon curWeaponData;
-        ConsumableItem curConsumableData;
-        ArmourElement curArmorData;
         Dictionary<ElementType, BaseItemSetting> settingsElements = new();
         [SerializeField] List<BuffData> curWeaponsBuffs;
         Dictionary<string, string> tabNames = new();
-        EnumScheduler enumScheduler = new EnumScheduler();
+
+        private void Setup_Coponents()
+        {
+            nameSettings = new NameSettings("");
+
+            CreationScheduler.creationsNames = GetCreationNames;
+            OnCreationModified += (modification, type, id, data) =>
+            {
+                var info = new BaseCreationInfo(id, data.Name, data);
+                CreationScheduler.ChangeData(modification, type, id, info);
+            };
+        }
+
+        private Dictionary<string, string> GetCreationNames(ElementType type)
+        {
+            Dictionary<string, string> names = new();
+
+            foreach (var name in SavingSystem.Data.creations[type])
+            {
+                names.Add(name.Key, name.Value.Name);
+            }
+
+            return names;
+        }
 
         private void Create_ItemTab()
         {
             var settings = new BaseItemSetting();
-            settings.Initialize(infoContainers[INFO_ITEM_SETTINGS_NAE], txtNameCreation);
+            settings.Initialize(infoContainers[INFO_ITEM_SETTINGS_NAME], nameSettings);
             settingsElements.Add(ElementType.Item, settings);
         }
 
         private void Create_WeaponSettings()
         {
             var settings = new WeaponSetting();
-            settings.Initialize(infoContainers[INFO_WEAPON_SETTINGS_NAME], txtNameCreation);
+            settings.Initialize(infoContainers[INFO_WEAPON_SETTINGS_NAME], nameSettings);
             settingsElements.Add(ElementType.Weapon, settings);
 
-            OnCreationAdded += (type, item) =>
-            {
-                if (type == ElementType.Buff)
-                {
-                    UpdateBuffEnumTypes(settings.BuffAdder);
-                }
-            };
-        }
-
-        private void UpdateBuffEnumTypes(BuffAdderUI adder)
-        {
-            var values = new List<string>();
-
-            foreach (var creation in charactersLists.creations[ElementType.Buff])
-            {
-                values.Add(creation.Value.Name);
-            }
-
-            adder.SetBuffs(values);
+            //OnCreationAdded += (type, item) =>
+            //{
+            //    if (type == ElementType.Buff)
+            //    {
+            //        UpdateBuffEnumTypes(settings.BuffAdder);
+            //    }
+            //};
         }
 
         private void Create_BuffSettings()
         {
-            curBuffData = ScriptableObject.CreateInstance<BuffVisulizer>();
-            infoContainers[INFO_BUFF_SETTINGS_NAME].Add(new InspectorElement(curBuffData));
+            BuffSettings buffSettings = new BuffSettings();
+            buffSettings.Initialize(container, nameSettings);
+
+            //editingData[ElementType.Buff].data = ScriptableObject.CreateInstance<BuffVisulizer>();
+            //var curBuff = editingData[ElementType.Buff].data as BuffVisulizer;
+
+            //infoContainers[INFO_BUFF_SETTINGS_NAME].Add(new InspectorElement(curBuff));
         }
 
         private void Create_ConsumableSettings()
@@ -79,25 +83,16 @@ namespace Burmuruk.Tesis.Editor
             //infoContainers[INFO_CONSUMABLE_SETTINGS_NAME].Add(new InspectorElement(curConsumableData));
 
             var settings = new ConsumableSettings();
-            settings.Initialize(infoContainers[INFO_CONSUMABLE_SETTINGS_NAME], txtNameCreation);
+            settings.Initialize(infoContainers[INFO_CONSUMABLE_SETTINGS_NAME], nameSettings);
+
             settingsElements.Add(ElementType.Consumable, settings);
         }
 
         private void Create_ArmourSettings()
         {
             var settings = new ArmourSetting();
-            settings.Initialize(infoContainers[INFO_ARMOUR_SETTINGS_NAME], txtNameCreation);
+            settings.Initialize(infoContainers[INFO_ARMOUR_SETTINGS_NAME], nameSettings);
             settingsElements.Add(ElementType.Armour, settings);
-        }
-
-        private void Create_HealthSettings()
-        {
-            ffHealthValue = infoContainers[INFO_HEALTH_SETTINGS_NAME].Q<FloatField>();
-            ffHealthValue.RegisterValueChangedCallback(OnValueChanged_FFHealthValue);
-
-            btnBackHealthSettings = infoContainers[INFO_HEALTH_SETTINGS_NAME].Q<Button>();
-
-            btnBackHealthSettings.clicked += () => ChangeTab(lastTab);
         }
 
         private void Create_GeneralCharacterSettings()
@@ -124,27 +119,6 @@ namespace Burmuruk.Tesis.Editor
             toggle.value = !toggle.value;
 
             SearchAllElements();
-        }
-
-        private void OnValueChanged_FFHealthValue(ChangeEvent<float> evt)
-        {
-            AddComponentData(ComponentType.Health);
-        }
-
-        private void AddComponentData(ComponentType type)
-        {
-            object item = null;
-
-            item = type switch
-            {
-                ComponentType.Health => new Health()
-                {
-                    HP = (int)ffHealthValue.value
-                },
-                _ => null
-            };
-
-            characterData.components.TryAdd(type, item);
         }
     }
 }

@@ -5,6 +5,7 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static Burmuruk.Tesis.Utilities.VariablesAdder;
+using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
 
 namespace Burmuruk.Tesis.Editor
 {
@@ -44,7 +45,7 @@ namespace Burmuruk.Tesis.Editor
 
         public void AddVariable()
         {
-            if (!TabCharacterEditor.VerifyVariableName(TxtName.value)) return;
+            if (!VerifyVariableName(TxtName.value)) return;
 
             //Path.GetDirectoryName(typeof(vari).Assembly.Location);
 
@@ -130,9 +131,9 @@ namespace Burmuruk.Tesis.Editor
 
         private void ShowElements(bool shouldShow = true)
         {
-            BaseLevelEditor.EnableContainer(EFType, shouldShow);
-            BaseLevelEditor.EnableContainer(TxtName, shouldShow);
-            BaseLevelEditor.EnableContainer(ButtonCancel, shouldShow);
+            EnableContainer(EFType, shouldShow);
+            EnableContainer(TxtName, shouldShow);
+            EnableContainer(ButtonCancel, shouldShow);
         }
     }
 }

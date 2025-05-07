@@ -1,447 +1,226 @@
-using Burmuruk.Tesis.Combat;
 using Burmuruk.Tesis.Inventory;
-using Burmuruk.Tesis.Stats;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using UnityEditor;
-using UnityEngine;
-using UnityEngine.UIElements;
+using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
 
 namespace Burmuruk.Tesis.Editor
 {
     public partial class TabCharacterEditor : BaseLevelEditor
     {
-        public event Action<ElementType, object> OnCreationAdded;
+        public event Action<ModificationType, ElementType, string, CreationData> OnCreationModified;
 
         #region Saving
-        private bool Create_Settings()
+        private bool Save_Creation()
         {
-            switch (currentSettingTag.type)
+            var type = currentSettingTag.type;
+            string errorMessage = settingsElements[type].Save();
+
+            if (!string.IsNullOrEmpty(errorMessage))
             {
-                case ElementType.Character:
-                    if (SaveChanges_Character(txtNameCreation.value))
-                    {
-                        Notify("Character created.", BorderColour.Approved);
-                    }
-                    else return false;
-                    break;
-
-                case ElementType.Buff:
-                    ref BuffData buffData = ref curBuffData.buff;
-                    SaveElement(ElementType.Buff, txtNameCreation.text, buffData);
-                    break;
-
-                case ElementType.Item:
-                case ElementType.Weapon:
-                case ElementType.Armour:
-                case ElementType.Consumable:
-                    object creationData = currentSettingTag.type switch
-                    {
-                        ElementType.Item => settingsElements[ElementType.Item].GetInfo(null).item,
-                        ElementType.Weapon => GetBuffsIds(ElementType.Weapon),
-                        ElementType.Armour => settingsElements[ElementType.Armour].GetInfo(null).item,
-                        ElementType.Consumable => GetBuffsIds(ElementType.Consumable),
-                        _ => null
-                    };
-
-                    SaveElement(currentSettingTag.type, txtNameCreation.text, creationData);
-                    break;
-
-                default: break;
+                Notify("Error al guardar", BorderColour.Error);
+                return false;
             }
+
+            Notify("Elemento guardado", BorderColour.Approved);
+            
+            //switch (type)
+            //{
+            //    case ElementType.Character:
+            //        result = SaveChanges_Character(creationName, id, creationName);
+            //        break;
+
+            //    case ElementType.Buff:
+
+            //        newData = CurBuffData.visualizer.buff;
+            //        result = Save_CreationData(ElementType.Buff, creationName, ref id, newData);
+            //        break;
+
+            //    case ElementType.Item:
+            //    case ElementType.Weapon:
+            //    case ElementType.Armour:
+            //    case ElementType.Consumable:
+            //        newData = type switch
+            //        {
+            //            ElementType.Item => settingsElements[ElementType.Item].GetInfo(null).item,
+            //            ElementType.Weapon => GetBuffsIds(ElementType.Weapon),
+            //            ElementType.Armour => settingsElements[ElementType.Armour].GetInfo(null).item,
+            //            ElementType.Consumable => GetBuffsIds(ElementType.Consumable),
+            //            _ => null
+            //        };
+
+            //        settingsElements[type].Save();
+
+            //        result = Save_CreationData(type, creationName, ref id, newData);
+            //        break;
+
+            //    default: return false;
+            //}
+
+            //if (result)
+            //{
+            //    OnCreationModified?.Invoke(ModificationType.Add, type, id, new CreationData(creationName, newData));
+            //    Notify("Succsessfully created.", BorderColour.Approved);
+            //}
+            //else
+            //{
+            //    return false;
+            //}
 
             return true;
         }
 
-        private (InventoryItem, BuffsNamesDataArgs) GetBuffsIds(ElementType type)
+        private T Load_ElementBaseData<T>(ElementType type, string id) where T : InventoryItem
         {
-            (var item, var args) = settingsElements[type].GetInfo(GetCreatedEnums(ElementType.Buff));
-            var buffsNamesArgs = (BuffsNamesDataArgs)args;
-            List<string> ids = new();
-
-            foreach (var name in buffsNamesArgs.BuffsNames)
-            {
-                if (name == BuffAdderUI.INVALIDNAME)
-                {
-                    ids.Add("");
-                }
-                else if (charactersLists.GetCreation(base.name, ElementType.Buff, out string id))
-                {
-                    ids.Add(id);
-                }
-            }
-
-            return (item, new BuffsNamesDataArgs(ids));
-        }
-
-        private CreatedBuffsDataArgs GetCreatedEnums(ElementType type)
-        {
-            var creations = new List<CreationData>();
-
-            if (!charactersLists.creations.ContainsKey(type)) return new(null);
-
-            foreach (var creation in charactersLists.creations[type])
-            {
-                creations.Add(creation.Value);
-            }
-
-            return new CreatedBuffsDataArgs(creations.ToArray());
-        }
-
-        bool SaveElement(ElementType type, string name, object args, string newName = "")
-        {
-            if (string.IsNullOrEmpty(newName))
-            {
-                if (!VerifyName(name)) return false;
-
-                newName = name;
-            }
-            else if (!VerifyName(newName)) return false;
-
-            charactersLists.creations.TryAdd(type, new());
-            charactersLists.elements.TryAdd(type, new());
-
-            if (charactersLists.GetCreation(name, type, out string id))
-            {
-                charactersLists.creations[type].Remove(id);
-                charactersLists.elements[type].Remove(name);
-            }
-
-            characterData.characterName = newName;
-            charactersLists.creations[type].TryAdd(Guid.NewGuid().ToString(), new CreationData(newName, args));
-            charactersLists.elements[type].Add(newName);
-
-            //EditorUtility.SetDirty(charactersLists);
-            //AssetDatabase.SaveAssets();
-            //AssetDatabase.Refresh();
-
-            OnCreationAdded?.Invoke(type, args);
-
-            SearchAllElements();
-
-            return true;
-        }
-
-        private T Load_ElementBaseData<T>(ElementType type, string name) where T : InventoryItem
-        {
-            if (!charactersLists.GetCreation(name, type, out string id))
+            if (!charactersLists.creations[type].TryGetValue(id, out CreationData creationData))
                 return null;
 
-            T data = (T)charactersLists.creations[type][id].data;
+            T data = (T)creationData.data;
 
             return data;
         }
 
-        bool VerifyName(string name)
-        {
-            if (string.IsNullOrEmpty(name))
-            {
-                Notify("Name can't be empty.", BorderColour.Error);
-                return false;
-            }
+        //private bool SaveChanges_Character(string name, string id, string newName = "")
+        //{
+        //    characterData.components ??= new();
 
-            if (IsTheNameUsed(name))
-            {
-                Notify("The name it's already been used.", BorderColour.Error);
-                return false;
-            }
+        //    AddCharacterComponents();
+        //    characterData.color = CFCreationColor.value;
+        //    characterData.characterType = (CharacterType)emCharacterType.EnumField.value;
+        //    characterData.stats = basicStats.stats;
 
-            if (!VerifyVariableName(name))
-            {
-                Notify("Invalid name", BorderColour.Error);
-                return false;
-            }
+        //    return Save_CreationData(ElementType.Character, name, ref id, characterData, newName);
+        //}
 
-            return true;
-        }
+        //private void AddCharacterComponents()
+        //{
+        //    var components = from comp in characterComponents.Components
+        //                     where !comp.element.ClassListContains("Disable")
+        //                     select comp;
 
-        private bool SaveChanges_Character(string name, string newName = "")
-        {
-            characterData.components ??= new();
+        //    foreach (var component in components)
+        //    {
+        //        switch ((ComponentType)component.Type)
+        //        {
+        //            case ComponentType.Health:
+        //                var health = infoContainers[infoHealthName].Q<FloatField>().value;
+        //                characterData.components[ComponentType.Health] = health;
+        //                break;
 
-            AddCharacterComponents();
-            characterData.color = CFCreationColor.value;
-            characterData.characterType = (CharacterType)emCharacterType.EnumField.value;
-            characterData.stats = basicStats.stats;
+        //            case ComponentType.Inventory:
+        //                AddInventoryComponent();
+        //                break;
 
-            return SaveElement(ElementType.Character, name, characterData, newName);
-        }
+        //            case ComponentType.Equipment:
+        //                AddInventoryComponent();
 
-        private void AddCharacterComponents()
-        {
-            var components = from comp in characterComponents.Components
-                             where !comp.element.ClassListContains("Disable")
-                             select comp;
+        //                var inventory = (Inventory)characterData.components[ComponentType.Inventory];
+        //                characterData.components[ComponentType.Equipment] = GetEquipment(in inventory);
+        //                break;
 
-            foreach (var component in components)
-            {
-                switch ((ComponentType)component.Type)
-                {
-                    case ComponentType.Health:
-                        var health = infoContainers[infoHealthName].Q<FloatField>().value;
-                        characterData.components[ComponentType.Health] = health;
-                        break;
+        //            case ComponentType.None:
+        //                break;
 
-                    case ComponentType.Inventory:
-                        AddInventoryComponent();
-                        break;
+        //            case ComponentType.Dialogue:
+        //                break;
 
-                    case ComponentType.Equipment:
-                        AddInventoryComponent();
+        //            default:
+        //                characterData.components[(ComponentType)component.Type] = null;
+        //                break;
+        //        }
+        //    }
+        //}
 
-                        var inventory = (Inventory)characterData.components[ComponentType.Inventory];
-                        characterData.components[ComponentType.Equipment] = GetEquipment(in inventory);
-                        break;
+        //private void AddInventoryComponent()
+        //{
+        //    if (characterData.components.ContainsKey(ComponentType.Inventory))
+        //        return;
 
-                    case ComponentType.None:
-                        break;
-
-                    case ComponentType.Dialogue:
-                        break;
-
-                    default:
-                        characterData.components[(ComponentType)component.Type] = null;
-                        break;
-                }
-            }
-        }
-
-        private void AddInventoryComponent()
-        {
-            if (characterData.components.ContainsKey(ComponentType.Inventory))
-                return;
-
-            var inventory = GetInventory();
-            characterData.components[ComponentType.Inventory] = inventory;
-        } 
+        //    var inventory = GetInventory();
+        //    characterData.components[ComponentType.Inventory] = inventory;
+        //} 
         #endregion
 
         #region Loading
-        private void Load_CreationData(int idx, ElementType type)
+        private void Load_CreationData(ElementCreationPinable element, ElementType type)
         {
-            string id = "";
-
-            switch (type)
+            ChangeTab(type switch
             {
-                case ElementType.Character:
-                    LoadChanges_Character(creations[idx].NameButton.text);
-                    ChangeTab(INFO_CHARACTER_NAME);
-                    break;
+                ElementType.Character => INFO_CHARACTER_NAME,
+                ElementType.Armour => INFO_ARMOUR_SETTINGS_NAME,
+                ElementType.Buff => INFO_BUFF_SETTINGS_NAME,
+                ElementType.Weapon => INFO_WEAPON_SETTINGS_NAME,
+                ElementType.Consumable => INFO_CONSUMABLE_SETTINGS_NAME,
+                _ => INFO_ITEM_SETTINGS_NAME,
+            });
 
-                case ElementType.Armour:
-                case ElementType.Item:
-                    ChangeTab(type switch
-                    {
-                        ElementType.Item => INFO_ITEM_SETTINGS_NAE,
-                        _ => INFO_ARMOUR_SETTINGS_NAME,
-                    });
+            settingsElements[type].Load(type, element.Id);
 
-                    var item = Load_ElementBaseData<InventoryItem>(type, creations[idx].NameButton.text);
+            //switch (type)
+            //{
+            //    case ElementType.Character:
+            //        LoadChanges_Character(element.Id);
+            //        ChangeTab(INFO_CHARACTER_NAME);
+            //        break;
 
-                    if (item is null) break;
+            //    case ElementType.Armour:
+            //    case ElementType.Item:
+            //        ChangeTab(type switch
+            //        {
+            //            ElementType.Item => INFO_ITEM_SETTINGS_NAME,
+            //            _ => INFO_ARMOUR_SETTINGS_NAME,
+            //        });
 
-                    settingsElements[type].UpdateInfo(item, null);
-                    break;
+            //        var item = Load_ElementBaseData<InventoryItem>(type, element.Id);
 
-                case ElementType.Buff:
-                    ChangeTab(INFO_BUFF_SETTINGS_NAME);
+            //        if (item is null) break;
 
-                    Load_BuffData(idx);
-                    break;
+            //        settingsElements[type].UpdateInfo(item, null);
+            //        break;
 
-                case ElementType.Ability:
-                    var ability = Load_ElementBaseData<Ability>(ElementType.Ability, creations[idx].NameButton.text);
+            //    case ElementType.Buff:
+            //        ChangeTab(INFO_BUFF_SETTINGS_NAME);
 
-                    if (ability is null) break;
+            //        Load_BuffData(element.Id);
+            //        break;
 
-                    Load_AbilityData(ability);
-                    break;
+            //    case ElementType.Ability:
+            //        var ability = Load_ElementBaseData<Ability>(ElementType.Ability, element.Id);
 
-                case ElementType.Weapon:
-                    ChangeTab(INFO_WEAPON_SETTINGS_NAME);
+            //        if (ability is null) break;
 
-                    Load_WeaponData(creations[idx].NameButton.text);
-                    break;
+            //        Load_AbilityData(ability);
+            //        break;
 
-                case ElementType.Consumable:
-                    ChangeTab(INFO_CONSUMABLE_SETTINGS_NAME);
+            //    case ElementType.Weapon:
+            //        ChangeTab(INFO_WEAPON_SETTINGS_NAME);
 
-                    Load_ConsumableData(creations[idx].NameButton.text);
-                    break;
+            //        Load_WeaponData(element.Id);
+            //        break;
 
-                default:
-                    return;
-            }
+            //    case ElementType.Consumable:
+            //        ChangeTab(INFO_CONSUMABLE_SETTINGS_NAME);
+
+            //        Load_ConsumableData(element.Id);
+            //        break;
+
+            //    default:
+            //        return;
+            //}
+
+            //settingsElements[type].Load();
         }
 
-        private void LoadChanges_Character(string elementName)
-        {
-            if (!charactersLists.GetCreation(elementName, ElementType.Character, out string id))
-            {
-                Debug.Log("No existe el elemento deseado");
-                return;
-            }
 
-            CharacterData data = (CharacterData)charactersLists.creations[ElementType.Character][id].data;
-
-            characterData = data;
-            txtNameCreation.value = data.characterName;
-            CFCreationColor.value = data.color;
-            basicStats.stats = characterData.stats;
-            LoadCharacterComponents(in data);
-            emCharacterType.EnumField.value = data.characterType;
-
-            characterComponents.DDFElement.value = "None";
-        }
-
-        private void LoadCharacterComponents(in CharacterData data)
-        {
-            characterComponents.RestartValues();
-
-            foreach (var component in data.components)
-            {
-                switch (component.Key)
-                {
-                    case ComponentType.None:
-                        continue;
-
-                    case ComponentType.Health:
-                        infoContainers[INFO_HEALTH_SETTINGS_NAME].Q<FloatField>().value = (float)component.Value;
-                        break;
-
-                    case ComponentType.Inventory:
-                        LoadInventoryItems((Inventory)component.Value);
-                        break;
-
-
-                    case ComponentType.Equipment:
-                        var equipment = (Equipment)component.Value;
-                        mclEquipmentElements.RestartValues();
-
-                        foreach (var item in equipment.equipment)
-                        {
-                            Action<ElementCreation> EditData = (e) =>
-                            {
-                                e.Toggle.value = item.Value.equipped;
-                                e.EnumField.value = item.Value.place;
-                            };
-                            mclEquipmentElements.OnElementCreated += (e) => EditData(e);
-                            mclEquipmentElements.OnElementAdded += (e) => EditData(e);
-
-                            mclEquipmentElements.AddElement(item.Key.ToString());
-
-                            mclEquipmentElements.OnElementCreated -= (e) => EditData(e);
-                            mclEquipmentElements.OnElementAdded -= (e) => EditData(e);
-                        }
-                        break;
-
-                    case ComponentType.Dialogue:
-                        break;
-
-                    default:
-                        break;
-                }
-
-                characterComponents.AddElement(component.Key.ToString());
-            }
-        }
-
-        private void LoadInventoryItems(in Inventory inventory)
-        {
-            mclInventoryElements.RestartValues();
-
-            foreach (var item in inventory.items)
-            {
-                int amount = item.Value;
-                Action<ElementCreation> ChangeValue = (e) => mclInventoryElements.ChangeAmount(e._idx, amount);
-                mclInventoryElements.OnElementAdded += ChangeValue;
-                mclInventoryElements.OnElementCreated += ChangeValue;
-
-                mclInventoryElements.AddElement(item.Key.ToString());
-
-                mclInventoryElements.OnElementAdded -= ChangeValue;
-                mclInventoryElements.OnElementCreated -= ChangeValue;
-            }
-        }
-
-        private void Load_BuffData(in int idx)
-        {
-            const ElementType type = ElementType.Buff;
-            Load_ElementBaseData<InventoryItem>(ElementType.Buff, creations[idx].NameButton.text);
-
-            if (!charactersLists.GetCreation(creations[idx].NameButton.text, type, out string id))
-                return;
-
-            var bufo = (BuffData)charactersLists.creations[type][id].data;
-
-            curBuffData.buff = bufo;
-            EditorUtility.SetDirty(curBuffData);
-        }
-
-        private void Load_AbilityData(Ability ability)
-        {
-
-        }
-
-        private void Load_WeaponData(string weaponName)
-        {
-            //CFCreationColor.value = Color.black;
-            const ElementType type = ElementType.Weapon;
-
-            if (!charactersLists.GetCreation(weaponName, type, out string id))
-                return;
-
-            (var item, var buffsArgs) = ((InventoryItem, BuffsNamesDataArgs))charactersLists.creations[type][id].data;
-
-            SetBuffsNames(item, buffsArgs, type);
-        }
-
-        private void Load_ArmourData(ArmourElement armor)
-        {
-
-        }
-
-        private void Load_ConsumableData(string consumableName)
-        {
-            const ElementType type = ElementType.Consumable;
-
-            if (!charactersLists.GetCreation(consumableName, type, out string id))
-                return;
-
-            (var item, var buffsArgs) = ((InventoryItem, BuffsNamesDataArgs))charactersLists.creations[type][id].data;
-
-            SetBuffsNames(item, buffsArgs, type);
-        }
-
-        private void SetBuffsNames(InventoryItem item, BuffsNamesDataArgs buffsArgs, in ElementType type)
-        {
-            var buffsNames = GetBuffsIdsNames(buffsArgs.BuffsNames, type);
-            var buffsNamesArgs = new BuffsNamesDataArgs(buffsNames);
-            settingsElements[type].UpdateInfo(item, buffsNamesArgs);
-        }
-
-        private List<string> GetBuffsIdsNames(List<string> ids, ElementType type)
-        {
-            var list = new List<string>();
-
-            foreach (var id in ids)
-            {
-                if (id is not null)
-                {
-                    if (id == "")
-                    {
-                        list.Add(null);
-                    }
-                    else if (charactersLists.creations[type].ContainsKey(id))
-                    {
-                        list.Add(charactersLists.creations[type][id].Name);
-                    }
-                }
-            }
-
-            return list;
-        } 
         #endregion
+    }
+
+    [Flags]
+    public enum ModificationType
+    {
+        None,
+        Add,
+        Remove,
+        EditData,
+        Rename,
+        ColourReasigment
     }
 }

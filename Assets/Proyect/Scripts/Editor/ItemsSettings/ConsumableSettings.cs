@@ -1,27 +1,27 @@
 using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 using UnityEngine.UIElements;
+using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
 
-namespace Burmuruk.Tesis.Editor
+namespace Burmuruk.Tesis.Editor.Controls
 {
-    public class ConsumableSettings : BaseItemSetting
+    public class ConsumableSettings : ItemBuffReader
     {
-        public BuffAdderUI BuffAdder { get; private set; }
+        ConsumableItem _changes;
+
         public FloatField ConsumptionTime { get; private set; }
         public FloatField AreaRadious { get; private set; }
 
-
-        public override void Initialize(VisualElement container, TextField name)
+        public override void Initialize(VisualElement container, NameSettings name)
         {
             base.Initialize(container, name);
 
             BuffAdder = new BuffAdderUI(container);
             ConsumptionTime = container.Q<FloatField>("ffConsumptionTime");
             AreaRadious = container.Q<FloatField>("ffAreaRadious");
+            _changes = new ConsumableItem();
         }
 
         public override void UpdateInfo(InventoryItem data, ItemDataArgs args)
@@ -35,49 +35,15 @@ namespace Burmuruk.Tesis.Editor
             ConsumptionTime.value = consumable.ConsumptionTime;
             AreaRadious.value = consumable.AreaRadious;
 
-            UpdateBuffs(consumable, buffArgs);
-        }
-
-        private void UpdateBuffs(ConsumableItem consumable, BuffsNamesDataArgs buffArgs)
-        {
-            if (buffArgs == null) return;
-
-            List<(string, BuffData?)> buffsData = new();
-            int i = 0;
-            int consumableIdx = 0;
-
-            foreach (var name in buffArgs.BuffsNames)
-            {
-                if (name is null || name == BuffAdderUI.INVALIDNAME)
-                {
-                    buffsData.Add((BuffAdderUI.INVALIDNAME, consumable.Buffs[consumableIdx++]));
-                    //continue;
-                    //buffsData.Add((null, null));
-                }
-                else
-                {
-                    buffsData.Add((name, null));
-                }
-
-                ++i;
-            }
-
-            BuffAdder.UpdateData(buffsData);
+            UpdateBuffs(consumable.Buffs, buffArgs);
         }
 
         public override (InventoryItem item, ItemDataArgs args) GetInfo(ItemDataArgs args)
         {
-            var buffArgs = args as CreatedBuffsDataArgs;
-
-            if (buffArgs == null) return default;
-
             ConsumableItem newItem = new();
-            newItem.Copy(base.GetInfo(null).Item1);
+            newItem.Copy(base.GetInfo(null).item);
 
-            List<NamedBuff> curBuffs = (from buff in BuffAdder.GetBuffsData()
-                                        where !string.IsNullOrEmpty(buff.Name)
-                                        select buff).ToList();
-            var buffs = SelectCustomBuffs(curBuffs);
+            (var buffs, var buffsNames) = GetBuffsInfo();
 
             newItem.Populate(
                 buffs.ToArray(),
@@ -85,7 +51,7 @@ namespace Burmuruk.Tesis.Editor
                 AreaRadious.value
                 );
 
-            return (newItem, new BuffsNamesDataArgs((from n in curBuffs select n.Name).ToList()));
+            return (newItem, buffsNames);
         }
 
         public override void Clear()
@@ -96,35 +62,51 @@ namespace Burmuruk.Tesis.Editor
             AreaRadious.value = 0;
         }
 
-        private List<BuffData> SelectCustomBuffs(List<NamedBuff> localBuffs)
+        #region Saving
+        public override bool Check_Changes()
         {
-            List<BuffData> buffsData = new();
+            bool haveChanges = false;
+            //throw new InvalidNameExeption();
 
-            foreach (NamedBuff curLocalBuff in localBuffs)
+            if (_nameControl.Check_Changes())
             {
-                //if (curLocalBuff.Name != BuffAdderUI.INVALIDNAME)
-                //{
-                //    if (registeredBuffs != null)
-                //    {
-                //        foreach (var registeredBuff in registeredBuffs)
-                //        {
-                //            if (registeredBuff.Name == curLocalBuff.Name)
-                //            {
-                //                buffsData.Add(default);
-                //                break;
-                //            }
-                //        }
-                //    }
-
-                //    continue;
-                //}
-
-                if (curLocalBuff.Name == BuffAdderUI.INVALIDNAME)
-                    buffsData.Add(curLocalBuff.Data.Value);
+                haveChanges = true;
+            }
+            
+            if (BuffAdder.Check_Changes())
+            {
+                hasUnsavedChanges = true;
             }
 
-            return buffsData;
+            if (ConsumptionTime.value != _changes.ConsumptionTime)
+            {
+                Highlight(ConsumptionTime, true, BorderColour.HighlightBorder);
+                haveChanges = true;
+            }
+            if (AreaRadious.value != _changes.AreaRadious)
+            {
+                Highlight(AreaRadious, true, BorderColour.HighlightBorder);
+                haveChanges = true;
+            }
+
+            return haveChanges;
         }
+
+        public override string Save()
+        {
+            if (!Check_Changes()) return null;
+
+            var data = GetBuffsIds(ElementType.Buff);
+            CreationData creationData = new CreationData(TxtName.text, data);
+
+            return SavingSystem.SaveCreation(ElementType.Buff, in _id, in creationData);
+        }
+
+        public override CreationData Load(ElementType type, string id)
+        {
+            return SavingSystem.Load(type, id).Value;
+        }
+        #endregion
     }
 
     public record BuffsNamesDataArgs : ItemDataArgs
@@ -132,6 +114,16 @@ namespace Burmuruk.Tesis.Editor
         public List<string> BuffsNames { get; private set; }
 
         public BuffsNamesDataArgs(List<string> buffs)
+        {
+            BuffsNames = buffs;
+        }
+    }
+
+    public record BuffsIdsDataArgs : ItemDataArgs
+    {
+        public List<(string name, string id)> BuffsNames { get; private set; }
+
+        public BuffsIdsDataArgs(List<(string, string)> buffs)
         {
             BuffsNames = buffs;
         }
@@ -149,10 +141,10 @@ namespace Burmuruk.Tesis.Editor
 
     public struct NamedBuff
     {
-        public string Name { get; private set; }
+        public string Name { get; set; }
         public BuffData? Data { get; private set; }
 
-        public NamedBuff (string name, BuffData? data)
+        public NamedBuff(string name, BuffData? data)
         {
             Name = name;
             Data = data;

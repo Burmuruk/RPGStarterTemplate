@@ -4,14 +4,15 @@ using Burmuruk.Tesis.Stats;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.Mathematics;
-using UnityEngine;
 using UnityEngine.UIElements;
+using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
 
-namespace Burmuruk.Tesis.Editor
+namespace Burmuruk.Tesis.Editor.Controls
 {
-    public class WeaponSetting : BaseItemSetting, IEnumContainer
+    public class WeaponSetting : ItemBuffReader
     {
+        private Weapon _changesWeapon;
+
         public EnumField Placement { get; private set; }
         public UnsignedIntegerField Damage { get; private set; }
         public FloatField RateDamage { get; private set; }
@@ -21,10 +22,9 @@ namespace Burmuruk.Tesis.Editor
         public IntegerField MaxAmmo { get; private set; }
 
         public EnumField EFBodyPart { get; private set; }
-        public EnumModifierUI EMWeaponType { get; private set; }
-        public BuffAdderUI BuffAdder { get; private set; }
-
-        public override void Initialize(VisualElement container, TextField name)
+        public EnumModifierUI<WeaponType> EMWeaponType { get; private set; }
+        
+        public override void Initialize(VisualElement container, NameSettings name)
         {
             base.Initialize(container, name);
 
@@ -43,7 +43,7 @@ namespace Burmuruk.Tesis.Editor
             Placement.Init(EquipmentType.None);
 
             var typeAdder = container.Q<VisualElement>("TypeAdderWeapon");
-            EMWeaponType = new EnumModifierUI(typeAdder, null, WeaponType.None);
+            EMWeaponType = new EnumModifierUI<WeaponType>(typeAdder);
             EMWeaponType.Name.text = "Weapon type";
             //var weaponType = container.Q<VisualElement>("TypeAdderWeapon");
             //weaponType.Q<Label>().text = "Weapon type";
@@ -52,16 +52,12 @@ namespace Burmuruk.Tesis.Editor
             BuffAdder = new BuffAdderUI(container);
         }
 
-        public void SetBuffs(List<string> buffTypes)
-        {
-            BuffAdder.SetBuffs(buffTypes);
-        }
-
         public override void UpdateInfo(InventoryItem data, ItemDataArgs args)
         {
             base.UpdateInfo(data, args);
 
             var weapon = data as Weapon;
+            var buffArgs = args as BuffsNamesDataArgs;
 
             if (weapon == null) return;
 
@@ -73,7 +69,7 @@ namespace Burmuruk.Tesis.Editor
             ReloadTime.value = weapon.ReloadTime;
             MaxAmmo.value = weapon.MaxAmmo;
 
-            UpdateBuffs(weapon, args as BuffsNamesDataArgs);
+            UpdateBuffs(weapon.BuffsData, buffArgs);
         }
 
         public override (InventoryItem item, ItemDataArgs args) GetInfo(ItemDataArgs args)
@@ -85,10 +81,7 @@ namespace Burmuruk.Tesis.Editor
             Weapon weapon = new Weapon();
             weapon.Copy(base.GetInfo(args).item);
 
-            var curBuffs = (from buff in BuffAdder.GetBuffsData()
-                            where !string.IsNullOrEmpty(buff.Name)
-                            select buff).ToList();
-            var buffs = RemoveRegisteredBuffs(curBuffs);
+            (var buffs, var buffsNames) = GetBuffsInfo();
 
             weapon.Populate(
                 (EquipmentType)Placement.value,
@@ -101,7 +94,7 @@ namespace Burmuruk.Tesis.Editor
                 buffs.ToArray()
                 );
 
-            return (weapon, new BuffsNamesDataArgs((from n in curBuffs select n.Name).ToList()));
+            return (weapon, buffsNames);
         }
 
         public override void Clear()
@@ -119,71 +112,72 @@ namespace Burmuruk.Tesis.Editor
             BuffAdder.Clear();
         }
 
-        private void UpdateBuffs(Weapon weapon, BuffsNamesDataArgs buffArgs)
+        public override bool Check_Changes()
         {
-            if (buffArgs == null) return;
+            bool hasChanges = false;
 
-            List<(string, BuffData?)> buffsData = new();
-            int i = 0;
-            int consumableIdx = 0;
-
-            foreach (var name in buffArgs.BuffsNames)
+            if (_nameControl.Check_Changes())
             {
-                if (name is null || name == BuffAdderUI.INVALIDNAME)
-                {
-                    buffsData.Add((BuffAdderUI.INVALIDNAME, weapon.BuffsData[consumableIdx++]));
-                }
-                else
-                {
-                    buffsData.Add((name, null));
-                }
-
-                ++i;
+                hasChanges = true;
             }
 
-            BuffAdder.UpdateData(buffsData);
-        }
-
-        private List<BuffData> RemoveRegisteredBuffs(List<NamedBuff> localBuffs)
-        {
-            List<BuffData> buffsData = new();
-
-            foreach (NamedBuff curLocalBuff in localBuffs)
+            if (_changesWeapon.BodyPart != (EquipmentType)Placement.value)
             {
-                //if (curLocalBuff.Name != BuffAdderUI.INVALIDNAME)
-                //{
-                //    if (registeredBuffs != null)
-                //    {
-                //        foreach (var registeredBuff in registeredBuffs)
-                //        {
-                //            if (registeredBuff.Name == curLocalBuff.Name)
-                //            {
-                //                buffsData.Add(default);
-                //                break;
-                //            }
-                //        }
-                //    }
-
-                //    continue;
-                //}
-
-                if (curLocalBuff.Name == BuffAdderUI.INVALIDNAME)
-                    buffsData.Add(curLocalBuff.Data.Value);
+                hasChanges = true;
+                Highlight(Placement, true);
+            }
+            if (_changesWeapon.Damage != Damage.value)
+            {
+                hasChanges = true;
+                Highlight(Damage, true);
+            }
+            if (_changesWeapon.DamageRate != RateDamage.value)
+            {
+                hasChanges = true;
+                Highlight(RateDamage, true);
+            }
+            if (_changesWeapon.MinDistance != MinDistance.value)
+            {
+                hasChanges = true;
+                Highlight(MinDistance, true);
+            }
+            if (_changesWeapon.MaxDistance != MaxDistance.value)
+            {
+                hasChanges = true;
+                Highlight(MaxDistance, true);
+            }
+            if (_changesWeapon.ReloadTime != ReloadTime.value)
+            {
+                hasChanges = true;
+                Highlight(ReloadTime, true);
+            }
+            if (_changesWeapon.MaxAmmo != MaxAmmo.value)
+            {
+                hasChanges = true;
+                Highlight(MaxAmmo, true);
+            }
+            if (_changesWeapon.ReloadTime != ReloadTime.value)
+            {
+                hasChanges = true;
+                Highlight(ReloadTime, true);
+            }
+            if (_changesWeapon.MaxAmmo != MaxAmmo.value)
+            {
+                hasChanges = true;
+                Highlight(MaxAmmo, true);
+            }
+            //if (_changesWeapon.BodyPart != (EquipmentType)EFBodyPart.value)
+            //{
+            //    hasChanges = true;
+            //    Highlight(EFBodyPart, true);
+            //}
+            if ((WeaponType)_changesWeapon.GetSubType() != (WeaponType)Damage.value)
+            {
+                hasChanges = true;
+                Highlight(EMWeaponType.Name, true);
             }
 
-            return buffsData;
-        }
-
-        public void OnDataChanged(Enum value, in string[] newValues)
-        {
-            if (value is WeaponType)
-            {
-
-            }
-            else if (value is EquipmentType)
-            {
-
-            }
+            return hasChanges;
         }
     }
 }

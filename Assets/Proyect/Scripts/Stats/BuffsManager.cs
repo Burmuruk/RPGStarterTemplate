@@ -12,6 +12,7 @@ namespace Burmuruk.Tesis.Stats
         const int timersCount = 30;
         private Queue<CoolDownAction> timers = new();
         private Dictionary<CoolDownAction, (Character character, Coroutine coroutine, BuffData buff)> runningTimers = new();
+        private Dictionary<string, BuffData> buffsCreated;
 
         public static BuffsManager Instance { get; private set; }
 

@@ -8,6 +8,7 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
 
 namespace Burmuruk.Tesis.Editor
 {
@@ -17,16 +18,13 @@ namespace Burmuruk.Tesis.Editor
         const string INFO_MAIN_CONTAINER_NAME = "infoMainContainer";
         const string INFO_CLASS_NAME = "infoClassContainer";
         const string INFO_CHARACTER_NAME = "CharacterSettings";
-        const string INFO_ITEM_SETTINGS_NAE = "ItemSettings";
+        const string INFO_ITEM_SETTINGS_NAME = "ItemSettings";
         const string INFO_WEAPON_SETTINGS_NAME = "WeaponSettings";
         const string INFO_BUFF_SETTINGS_NAME = "BuffSettings";
         const string INFO_CONSUMABLE_SETTINGS_NAME = "ConsumableSettings";
         const string INFO_ARMOUR_SETTINGS_NAME = "ArmorSettings";
-        const string INFO_HEALTH_SETTINGS_NAME = "HealthSettings";
-        const string INFO_EQUIPMENT_SETTINGS_NAME = "EquipmentSettings";
-        const string INFO_INVENTORY_SETTINGS_NAME = "InventorySettings";
+        
         const string INFO_GENERAL_SETTINGS_CHARACTER_NAME = "GeneralSettingsCharacter";
-
         const string INFO_DIALOGUES_NAME = "infoDialoguesContainer";
         const string INFO_SETUP_NAME = "InfoBase";
 
@@ -104,16 +102,15 @@ namespace Burmuruk.Tesis.Editor
 
         private void CreateSettingTabs()
         {
+            Setup_Coponents();
             Create_BaseSettingsTab();
             Create_CharacterTab();
             Create_WeaponSettings();
             Create_ItemTab();
             Create_BuffSettings();
-            Create_HealthSettings();
-            Create_EquipmentSettings();
+            //Create_HealthSettings();
             Create_ConsumableSettings();
             Create_ArmourSettings();
-            Create_InventorySettings();
             Create_GeneralCharacterSettings();
         }
 
@@ -125,18 +122,16 @@ namespace Burmuruk.Tesis.Editor
         protected override void GetInfoContainers()
         {
             infoMainContainer = container.Q<VisualElement>(INFO_MAIN_CONTAINER_NAME);
+            infoContainers = new();
 
             AddContainer(new string[]
             {
                 INFO_CHARACTER_NAME,
-                INFO_ITEM_SETTINGS_NAE,
+                INFO_ITEM_SETTINGS_NAME,
                 INFO_WEAPON_SETTINGS_NAME,
                 INFO_BUFF_SETTINGS_NAME,
                 INFO_ARMOUR_SETTINGS_NAME,
                 INFO_CONSUMABLE_SETTINGS_NAME,
-                INFO_HEALTH_SETTINGS_NAME,
-                INFO_EQUIPMENT_SETTINGS_NAME,
-                INFO_INVENTORY_SETTINGS_NAME,
             }, infoSetup);
 
             AddContainer(new string[] { INFO_GENERAL_SETTINGS_CHARACTER_NAME }, infoRight, false);
@@ -150,7 +145,7 @@ namespace Burmuruk.Tesis.Editor
 
                     infoContainers.Add(containerName, newContainer);
                     tabNames[containerName] = "";
-
+                    
                     if (shouldAdd)
                         container.Q<ScrollView>("infoContainer").Add(newContainer);
 
@@ -177,6 +172,7 @@ namespace Burmuruk.Tesis.Editor
             CreateTags(leftPanel, rightPanel);
             Add_SearchElements(infoLeft, 16);
         }
+
         private void SetSearchBars()
         {
             btnClearSearch = leftPanel.Q<Button>("btnClearSearch");
@@ -227,27 +223,27 @@ namespace Burmuruk.Tesis.Editor
 
         private void OnValueChanged_CFCreationColour(ChangeEvent<Color> evt)
         {
-            characterData.color = evt.newValue;
+            //characterData.color = evt.newValue;
+            //((CharacterData)editingData[ElementType.Character].data).color = evt.newValue;
         }
 
         private void OnKeyUp_txtNameCreation(KeyUpEvent evt)
         {
             Verify_TxtCreationName();
 
-            tabNames[curTab] = txtNameCreation.value;
+            tabNames[curTab] = nameSettings.TxtName.value;
         }
 
         private void Verify_TxtCreationName()
         {
-            if (regName.IsMatch(txtNameCreation.value))
+            if (regName.IsMatch(nameSettings.TxtName.value))
             {
-                characterData.characterName = txtNameCreation.value;
-                Highlight(txtNameCreation, false);
+                Highlight(nameSettings.TxtName, false);
                 DisableNotification();
             }
             else
             {
-                Highlight(txtNameCreation, true, BorderColour.Error);
+                Highlight(nameSettings.TxtName, true, BorderColour.Error);
                 Notify("The name is not allowed.", BorderColour.Error);
             }
         }
@@ -303,12 +299,16 @@ namespace Burmuruk.Tesis.Editor
         private void Add_SearchElements(VisualElement container, int amount)
         {
             VisualTreeAsset ElementTag = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/CharacterEditor/Elements/ElementTag.uxml");
-            creations = new(container, Notify);
-            creations.bindElementBtn += DisplayElementPanel;
+            creations = new(container);
+            creations.OnElementClicked += DisplayElementPanel;
             creations.OnElementCreated += (ElementCreationPinable element) =>
             {
-                element.RemoveButton.clicked += () => RemoveCreation(element._idx);
-                element.Pin.clicked += () => PinElement(element._idx);
+                element.RemoveButton.clicked += () =>
+                {
+                    RemoveCreation(element.idx);
+                    SearchAllElements();
+                };
+                element.Pin.clicked += () => PinElement(element.idx);
             };
             creations.CreationValidator += delegate { return -1; };
 
@@ -342,22 +342,25 @@ namespace Burmuruk.Tesis.Editor
             //}
         }
 
-        private void RemoveCreation(int idx)
+        private void RemoveCreation(int elementIdx)
         {
-            var type = (ElementType)creations[idx].Type;
-            var name = creations[idx].NameButton.text;
+            var type = (ElementType)creations[elementIdx].Type;
+            string id = creations[elementIdx].Id;
+            var data = charactersLists.creations[type][id];
 
-            charactersLists.elements[type].Remove(name);
-            charactersLists.GetCreation(name, type, out string id);
             charactersLists.creations[type].Remove(id);
-            SearchAllElements();
+            OnCreationModified?.Invoke(ModificationType.Remove, type, id, data);
+            
             Notify("Element deleted.", BorderColour.Approved);
         }
 
         private void DisplayElementPanel(int idx)
         {
-            var type = (ElementType)creations[idx].Type;
-            Load_CreationData(idx, type);
+            ElementCreationPinable element = creations[idx];
+            var type = (ElementType)element.Type;
+            var id = element.Id;
+
+            Load_CreationData(element, type);
 
             btnsRight_Tag.ForEach(t => Highlight(t.element, false));
             txtNameCreation.value = creations[idx].NameButton.text;
@@ -385,23 +388,24 @@ namespace Burmuruk.Tesis.Editor
 
         private void LoadTagsDatabase()
         {
-            charactersLists = (AssetDatabase.FindAssets(typeof(CharacterTag).ToString(), new[] { "Assets/Proyect/Game/ScriptableObjects/Tool/CharacterTag.asset" })
-                .Select(guid => AssetDatabase.LoadAssetAtPath<CharacterTag>(AssetDatabase.GUIDToAssetPath(guid)))
-                .ToList()).FirstOrDefault();
+            SavingSystem.Initialize();
+            //charactersLists = (AssetDatabase.FindAssets(typeof(CharacterTag).ToString(), new[] { "Assets/Proyect/Game/ScriptableObjects/Tool/CharacterTag.asset" })
+            //    .Select(guid => AssetDatabase.LoadAssetAtPath<CharacterTag>(AssetDatabase.GUIDToAssetPath(guid)))
+            //    .ToList()).FirstOrDefault();
 
-            if (charactersLists == null)
-            {
-                Notify("No labels found.", BorderColour.Error);
+            //if (charactersLists == null)
+            //{
+            //    Notify("No labels found.", BorderColour.Error);
 
-                charactersLists = ScriptableObject.CreateInstance<CharacterTag>();
-                AssetDatabase.CreateAsset(charactersLists, "Assets/Proyect/Game/ScriptableObjects/Tool/CharacterTag.asset");
-                AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh();
-            }
-            else
-            {
-                Notify("Labels found.", BorderColour.Approved);
-            }
+            //    charactersLists = ScriptableObject.CreateInstance<CharacterTag>();
+            //    AssetDatabase.CreateAsset(charactersLists, "Assets/Proyect/Game/ScriptableObjects/Tool/CharacterTag.asset");
+            //    AssetDatabase.SaveAssets();
+            //    AssetDatabase.Refresh();
+            //}
+            //else
+            //{
+            //    Notify("Labels found.", BorderColour.Approved);
+            //}
         }
 
         private void SearchFilterCharacter(KeyDownEvent evt)
@@ -424,22 +428,17 @@ namespace Burmuruk.Tesis.Editor
             }
         }
 
-        private bool TryEnableCharacterElements(out List<(int, ElementType, int)> enabledButtonsIdx, params (ElementType type, int idx)[] names)
-        {
-            return TryEnableCharacterElements(out enabledButtonsIdx, names.ToList());
-        }
-
-        private bool TryEnableCharacterElements(out List<(int elementIdx, ElementType type, int valueIdx)> enabledButtonsIdx, List<(ElementType type, int idx)> namesList)
+        private bool TryEnableCharacterElements(out List<(int elementIdx, ElementType type, string creationId)> enabledButtonsIdx, List<(ElementType type, List<string> id)> namesList)
         {
             bool enabled = false;
             enabledButtonsIdx = null;
+            int typeIdx = 0;
 
             if (namesList == null || namesList.Count == 0) return false;
 
             for (int i = 0; i < creations.Components.Count; i++)
             {
             nextTurn:
-
                 if (creations.Components[i].pinned)
                 {
                     if (namesList.Count <= 0) continue;
@@ -450,6 +449,7 @@ namespace Burmuruk.Tesis.Editor
                         {
                             enabled = true;
                             namesList.RemoveAt(k);
+                            RemoveName(k);
                             ++i;
                             goto nextTurn;
                         }
@@ -468,12 +468,12 @@ namespace Burmuruk.Tesis.Editor
 
                     if (tglShowCustomColour.value)
                     {
-                        //Show custom colour in element
+                        //Show custom colour on element
                     }
 
-                    (enabledButtonsIdx ??= new()).Add((i, namesList[0].type, namesList[0].idx));
+                    (enabledButtonsIdx ??= new()).Add((i, namesList[typeIdx].type, namesList[typeIdx].id[0]));
                     enabled = true;
-                    namesList.RemoveAt(0);
+                    RemoveName(0);
                 }
                 else
                 {
@@ -486,9 +486,23 @@ namespace Burmuruk.Tesis.Editor
 
             string GetName(int idx)
             {
-                return charactersLists.elements[namesList[idx].type][namesList[idx].idx];
+                return namesList[typeIdx].id[idx];
+            }
+
+            void RemoveName(int idx)
+            {
+                namesList[typeIdx].id.RemoveAt(idx);
+
+                if (namesList[typeIdx].id.Count <= 0)
+                {
+                    namesList.RemoveAt(typeIdx);
+                }
             }
         }
+        //string GetName(int idx)
+        //{
+        //    return charactersLists.creations[namesList[idx].type][namesList[idx].idx];
+        //}
 
         private void SearchElementTag(string text, ElementType searchType)
         {
@@ -496,7 +510,7 @@ namespace Burmuruk.Tesis.Editor
 
             if (currentFilter != ElementType.None) searchType = currentFilter;
 
-            List<(ElementType type, int idx)> idxFound = null;
+            List<(ElementType, List<string>)> idsFound = null;
 
             if (searchType == ElementType.None)
             {
@@ -504,28 +518,29 @@ namespace Burmuruk.Tesis.Editor
 
                 for (int i = 0; i < count; i++)
                 {
-                    if (!charactersLists.elements.ContainsKey((ElementType)i))
+                    if (!charactersLists.creations.ContainsKey((ElementType)i))
                         continue;
 
-                    if (FindValues(text, (ElementType)i, out List<int> found))
+                    if (FindValues(text, (ElementType)i, out List<string> found))
                     {
-                        Debug.Log("Found in None");
-                        idxFound ??= new();
-                        found.ForEach(value => idxFound.Add(((ElementType)i, value)));
+                        Debug.Log("Found without filter");
+                        idsFound ??= new();
+
+                        idsFound.Add(((ElementType)i, found));
                     }
                 }
             }
-            else if (FindValues(text, searchType, out List<int> found))
+            else if (FindValues(text, searchType, out List<string> found))
             {
                 Debug.Log("found int filter");
-                idxFound ??= new();
-                found.ForEach(value => idxFound.Add((searchType, value)));
+                idsFound ??= new();
+                idsFound.Add((searchType, found));
             }
 
-            if (idxFound != null && idxFound.Count > 0)
+            if (idsFound != null && idsFound.Count > 0)
             {
                 Debug.Log("somenting found");
-                TryEnableCharacterElements(out List<(int, ElementType, int)> idxs, idxFound);
+                TryEnableCharacterElements(out List<(int, ElementType, string)> idxs, idsFound);
                 UpdateElementsData(idxs);
 
                 lastLeftSearch = (searchType, text);
@@ -537,22 +552,13 @@ namespace Burmuruk.Tesis.Editor
                 lastLeftSearch = (ElementType.None, "");
             }
 
-            bool FindValues(string text, ElementType type, out List<int> valuesIdx)
+            bool FindValues(string text, ElementType type, out List<string> valuesIds)
             {
-                valuesIdx = new List<int>();
-                int i = 0;
+                valuesIds = (from c in charactersLists.creations[type]
+                             where c.Value.Name.ToLower().Contains(text.ToLower())
+                             select c.Key).ToList();
 
-                foreach (var element in charactersLists.elements[type])
-                {
-                    if (element.ToLower().Contains(text.ToLower()))
-                    {
-                        valuesIdx.Add(i);
-                    }
-
-                    ++i;
-                }
-
-                return valuesIdx.Count > 0;
+                return valuesIds.Count > 0;
             }
         }
 
@@ -569,17 +575,19 @@ namespace Burmuruk.Tesis.Editor
             }
         }
 
-        void UpdateElementsData(List<(int elementIdx, ElementType type, int valueIdx)> idxs)
+        void UpdateElementsData(List<(int elementIdx, ElementType type, string creationId)> idxs)
         {
             if (idxs == null) return;
 
-            for (int i = 0; i < idxs.Count; i++)
+            foreach (var element in idxs)
             {
-                var cur = creations[idxs[i].elementIdx];
+                var cur = creations[element.elementIdx];
 
-                cur.element = creations[idxs[i].elementIdx].element;
-                cur.Type = idxs[i].type;
-                cur._idx = idxs[i].valueIdx;
+                cur.element = creations[element.elementIdx].element;
+                cur.Type = element.type;
+                cur.idx = element.elementIdx;
+                cur.Id = element.creationId;
+                cur.NameButton.text = charactersLists.creations[element.type][element.creationId].Name;
             }
         }
 
@@ -595,27 +603,24 @@ namespace Burmuruk.Tesis.Editor
 
             lastLeftSearch = (ElementType.None, "");
             txtSearch_Left.value = "";
-            List<(ElementType type, int idx)> values = new();
+            List<(ElementType type, List<string> id)> values = new();
 
             if (type == ElementType.None)
             {
-                int i = 0;
-                foreach (var elementData in charactersLists.elements)
+                foreach (var elementData in charactersLists.creations)
                 {
-                    for (int j = 0; j < elementData.Value.Count; j++)
-                    {
-                        values.Add((elementData.Key, j));
-                    }
+                    var ids = charactersLists.creations[elementData.Key].Select(creation => creation.Key).ToList();
 
-                    ++i;
+                    if (ids != null && ids.Count > 0)
+                        values.Add((elementData.Key, ids));
                 }
             }
-            else if (charactersLists.elements.ContainsKey(type))
+            else if (charactersLists.creations.ContainsKey(type))
             {
-                for (int i = 0; i < charactersLists.elements[type].Count; i++)
-                {
-                    values.Add((type, i));
-                }
+                var ids = charactersLists.creations[type].Select(creation => creation.Key).ToList();
+
+                if (ids != null && ids.Count > 0)
+                    values.Add((type, ids));
             }
             else
             {
@@ -625,7 +630,7 @@ namespace Burmuruk.Tesis.Editor
 
             if (values.Count > 0)
             {
-                TryEnableCharacterElements(out List<(int, ElementType, int)> idxs, values);
+                TryEnableCharacterElements(out List<(int, ElementType, string)> idxs, values);
                 UpdateElementsData(idxs);
             }
             else
@@ -634,16 +639,16 @@ namespace Burmuruk.Tesis.Editor
 
         protected override void ChangeTab(string tab)
         {
-            if (IsHighlighted(txtNameCreation, out _))
+            if (IsHighlighted(nameSettings.TxtName, out _))
             {
-                Highlight(txtNameCreation, false);
+                Highlight(nameSettings.TxtName, false);
                 DisableNotification();
             }
 
             base.ChangeTab(tab);
-            txtNameCreation.SetValueWithoutNotify(tabNames[tab]);
+            nameSettings.TxtName.SetValueWithoutNotify(tabNames[tab]);
 
-            if (!string.IsNullOrEmpty(txtNameCreation.value))
+            if (!string.IsNullOrEmpty(nameSettings.TxtName.value))
                 Verify_TxtCreationName();
         }
 
@@ -711,7 +716,7 @@ namespace Burmuruk.Tesis.Editor
                     ChangeTab(INFO_CHARACTER_NAME);
                     break;
                 case ElementType.Item:
-                    ChangeTab(INFO_ITEM_SETTINGS_NAE);
+                    ChangeTab(INFO_ITEM_SETTINGS_NAME);
                     break;
                 case ElementType.Weapon:
                     ChangeTab(INFO_WEAPON_SETTINGS_NAME);
@@ -795,6 +800,7 @@ namespace Burmuruk.Tesis.Editor
 
         private void SwapPin(int lastTarget, int target)
         {
+            //SavingSystem.Data.creations
             var lastData = creations[target];
             lastData.element = creations[lastTarget].element;
             lastData.pinned = false;

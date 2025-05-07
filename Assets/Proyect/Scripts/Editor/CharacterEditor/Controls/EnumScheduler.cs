@@ -1,53 +1,117 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using static Burmuruk.Tesis.Editor.TabCharacterEditor;
 
 namespace Burmuruk.Tesis.Editor
 {
-    internal class EnumScheduler
+    internal static class EnumScheduler
     {
-        private static UIListScheduler<Enum> scheduler;
+        private static UIListScheduler<Enum, EnumModificationData> scheduler;
 
-        public static void Add(Enum key, IEnumContainer container, Action callback)
+        public static void Add(ModificationType modificationType, Enum key, IUIListContainer<EnumModificationData> container)
         {
-            scheduler.AddContainer(key, container, callback);
+            scheduler ??= new();
+            scheduler.AddContainer(modificationType, key, container);
         }
 
-        public static void ChangeData(Enum key, in string[] names)
+        public static void ChangeData(ModificationType modificationType, Enum key)
         {
-            scheduler.ChangeData(key, names);
+            scheduler.ChangeData(modificationType, key, default);
         }
     }
 
-    internal class UIListScheduler<T>
+    internal static class CreationScheduler
     {
-        IDictionary<T, List<(IEnumContainer container, Action callback)>> modifiers;
+        public static Func<ElementType, Dictionary<string, string>> creationsNames;
+        private static UIListScheduler<ElementType, BaseCreationInfo> scheduler;
 
-        public void AddContainer(T key, IEnumContainer container, Action callback)
+        public static void Add(ModificationType modificationType, ElementType key, IUIListContainer<BaseCreationInfo> container)
         {
-            if (!modifiers.ContainsKey(key))
-                modifiers.Add(key, new List<(IEnumContainer, Action)>());
+            scheduler ??= new();
+            scheduler.AddContainer(modificationType, key, container);
+        }
 
-            if (!(from m in modifiers[key]
-                  where m.container == container
-                  select m).Any())
+        public static void ChangeData(ModificationType modificationType, ElementType key, string id, BaseCreationInfo data)
+        {
+            var names = GetNames(key);
+
+            scheduler.ChangeData(modificationType, key, in data);
+        }
+
+        public static Dictionary<string, string> GetNames(ElementType type)
+        {
+            return creationsNames(type);
+        }
+    }
+
+    internal class UIListScheduler<T,U> where U : struct
+    {
+        Dictionary<ModificationType, Dictionary<T, List<IUIListContainer<U>>>> modifiers = new()
+        {
+            { ModificationType.Add, new() },
+            { ModificationType.Remove, new() },
+            { ModificationType.EditData, new() },
+            { ModificationType.Rename, new() },
+        };
+
+        public void AddContainer(ModificationType modificationType, T key, IUIListContainer<U> container)
+        {
+            if (!modifiers[modificationType].ContainsKey(key))
+                modifiers[modificationType].Add(key, new List<IUIListContainer<U>>());
+
+            if (!(from c in modifiers[modificationType][key]
+                  where c == container
+                  select c).Any())
             {
-                modifiers[key].Add((container, callback));
+                modifiers[modificationType][key].Add(container);
             }
         }
 
-        public void ChangeData(T key, in string[] names)
+        public void ChangeData(ModificationType modificationType, T key, in U data)
         {
-            if (modifiers.ContainsKey(key))
+            if (!modifiers[modificationType].ContainsKey(key))
+                return;
+
+            if ((modificationType & ModificationType.Add) != 0)
             {
-                modifiers[key].ForEach(m => m.callback?.Invoke());
+                foreach (var modifier in modifiers[modificationType][key])
+                {
+                    modifier.AddData(in data);
+                }
+            }
+            if ((modificationType & ModificationType.Remove) != 0)
+            {
+                foreach (var modifier in modifiers[modificationType][key])
+                {
+                    modifier.RemoveData(in data);
+                }
+            }
+            if ((modificationType & ModificationType.EditData) != 0)
+            {
+                foreach (var modifier in modifiers[modificationType][key])
+                {
+                    modifier.EditData(in data);
+                }
+            }
+            if ((modificationType & ModificationType.Rename) != 0)
+            {
+                foreach (var modifier in modifiers[modificationType][key])
+                {
+                    modifier.RenameCreation(in data);
+                }
             }
         }
     }
 
-    internal interface IEnumContainer
+    internal interface IUIListContainer<U> where U : struct
     {
-        public void OnDataChanged(Enum value, in string[] newValues);
+        public virtual void AddData(in U newValue) { }
 
+        public virtual void RenameCreation(in U newValue) { }
+
+        public virtual void RemoveData(in U newValue) { }
+
+        public virtual void EditData(in U newValue) { }
     }
 }
