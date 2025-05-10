@@ -1,9 +1,5 @@
 using Burmuruk.Tesis.Editor.Controls;
-using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
-using System;
-using System.Collections.Generic;
-using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -13,8 +9,6 @@ namespace Burmuruk.Tesis.Editor
 {
     public partial class TabCharacterEditor : BaseLevelEditor
     {
-        const string TXT_CREATION_NAME = "txtName";
-        const string CREATION_COLOUR_NAME = "cfSettingColour";
         ColorField CFCreationColor;
         Button btnSettingAccept;
         Button btnSettingCancel;
@@ -59,13 +53,13 @@ namespace Burmuruk.Tesis.Editor
             CharacterSettings characterSettings = new CharacterSettings();
             characterSettings.Initialize(infoContainers[INFO_CHARACTER_NAME], nameSettings);
 
-            settingsElements.Add(ElementType.Character, characterSettings);
+            CreationControls.Add(ElementType.Character, characterSettings);
         }
 
         private void OnCancel_BtnSetting()
         {
             ElementType type = currentSettingTag.type;
-            ((IChangesObserver)settingsElements[type]).Remove_Changes();
+            ((IChangesObserver)CreationControls[type]).Remove_Changes();
 
             //switch (currentSettingTag.type)
             //{
@@ -130,7 +124,7 @@ namespace Burmuruk.Tesis.Editor
         private bool Edit_Creation()
         {
             ElementType type = currentSettingTag.type;
-            string result = settingsElements[type].Save();
+            string result = CreationControls[type].Save();
 
             if (result != null)
             {

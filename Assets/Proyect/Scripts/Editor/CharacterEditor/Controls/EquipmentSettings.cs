@@ -1,4 +1,5 @@
-﻿using Burmuruk.Tesis.Inventory;
+﻿using Burmuruk.Tesis.Editor.Utilities;
+using Burmuruk.Tesis.Inventory;
 using System;
 using System.Collections.Generic;
 using UnityEditor;
@@ -9,16 +10,17 @@ using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
 
 namespace Burmuruk.Tesis.Editor.Controls
 {
-    public class EquipmentSettings : BaseItemSetting, ISubWindow
+    public class EquipmentSettings : SubWindow
     {
+        const string INFO_EQUIPMENT_SETTINGS_NAME = "EquipmentSettings";
+        Equipment _Changes = default;
+
         class EquipmentVisualizer : ScriptableObject
         {
             [SerializeField] public Tesis.Inventory.Equipment equipment;
         }
 
-        public event Action GoBack;
-
-        public Button BTNBackEquipmentSettings {  get; private set; }
+        public Button BTNBackEquipmentSettings { get; private set; }
         public ComponentsListUI<ElementCreation> MClEquipmentElements { get; private set; }
         public EnumModifierUI<EquipmentType> EMBodyPart { get; private set; }
         public VisualElement InfoBodyPlacement { get; private set; }
@@ -27,6 +29,8 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             base.Initialize(container, name);
 
+            var control = UtilitiesUI.CreateDefaultTab(INFO_EQUIPMENT_SETTINGS_NAME);
+            _container.hierarchy.Add(control);
             BTNBackEquipmentSettings = container.Q<Button>();
             BTNBackEquipmentSettings.clicked += () => GoBack?.Invoke();
 
@@ -173,11 +177,42 @@ namespace Burmuruk.Tesis.Editor.Controls
             return equipment;
         }
 
+        public void LoadEquipment(in Equipment equipment)
+        {
+            MClEquipmentElements.RestartValues();
+
+            foreach (var item in equipment.equipment)
+            {
+                Action<ElementCreation> EditData = (e) =>
+                {
+                    e.Toggle.value = item.Value.equipped;
+                    e.EnumField.value = item.Value.place;
+                };
+                MClEquipmentElements.OnElementCreated += (e) => EditData(e);
+                MClEquipmentElements.OnElementAdded += (e) => EditData(e);
+
+                MClEquipmentElements.AddElement(item.Key.ToString());
+
+                MClEquipmentElements.OnElementCreated -= (e) => EditData(e);
+                MClEquipmentElements.OnElementAdded -= (e) => EditData(e);
+            }
+        }
+
         public override void Clear()
         {
-            base.Clear();
-
             EMBodyPart.Clear();
+        }
+
+        public override ModificationType Check_Changes()
+        {
+
+
+            return ModificationType.None;
+        }
+
+        public override void Remove_Changes()
+        {
+            LoadEquipment(_Changes);
         }
     }
 }

@@ -33,20 +33,18 @@ namespace Burmuruk.Tesis.Editor.Controls
             return (armour, null);
         }
 
-        public override bool Check_Changes()
+        public override ModificationType Check_Changes()
         {
-            bool haveChanges = false;
-
-            if (!_nameControl.Check_Changes())
-                haveChanges = true;
+            if ((_nameControl.Check_Changes() & ModificationType.None) == 0)
+                CurModificationType = ModificationType.Rename;
 
             if (_changes != (int)EquipmentPlace.Value)
             {
-                haveChanges = true;
+                CurModificationType = ModificationType.EditData;
                 Highlight(EquipmentPlace.EnumField, true);
             }
 
-            return haveChanges;
+            return CurModificationType;
         }
     }
 

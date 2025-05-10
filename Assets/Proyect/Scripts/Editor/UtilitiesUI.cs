@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text.RegularExpressions;
+using UnityEditor;
 using UnityEngine.UIElements;
 using static Codice.Client.BaseCommands.Import.Commit;
 
@@ -154,6 +155,17 @@ namespace Burmuruk.Tesis.Editor.Utilities
             //{
 
             //}
+        }
+
+        public static VisualElement CreateDefaultTab(string fileName)
+        {
+            VisualElement newContainer = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/Proyect/Game/UIToolkit/CharacterEditor/Tabs/{fileName}.uxml").Instantiate();
+            StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/LineTags.uss");
+            StyleSheet styleSheetColour = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/BorderColours.uss");
+            newContainer.styleSheets.Add(styleSheet);
+            newContainer.styleSheets.Add(styleSheetColour);
+
+            return newContainer;
         }
     }
 }

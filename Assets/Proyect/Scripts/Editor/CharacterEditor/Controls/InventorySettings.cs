@@ -1,10 +1,14 @@
-﻿using System;
+﻿using Burmuruk.Tesis.Editor.Utilities;
+using System;
 using UnityEngine.UIElements;
 
 namespace Burmuruk.Tesis.Editor.Controls
 {
-    public class InventorySettings : BaseItemSetting, ISubWindow
+    public class InventorySettings : SubWindow
     {
+        const string INFO_INVENTORY_SETTINGS_NAME = "InventorySettings";
+        Inventory _changes = default;
+
         ElementType[] inventoryChoices = new ElementType[]
         {
             ElementType.None,
@@ -15,7 +19,6 @@ namespace Burmuruk.Tesis.Editor.Controls
             ElementType.Ability,
         };
 
-        public event Action GoBack;
         public event Action<ComponentType> OnElementClicked;
 
         public Button btnBackInventorySettings { get; private set; }
@@ -25,9 +28,10 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             base.Initialize(container, name);
 
+            var control = UtilitiesUI.CreateDefaultTab(INFO_INVENTORY_SETTINGS_NAME);
+            _container.Add(control);
             btnBackInventorySettings = container.Q<Button>();
             btnBackInventorySettings.clicked += () => GoBack?.Invoke();
-
             container.Q<VisualElement>(ComponentsList.CONTAINER_NAME);
             MClInventoryElements = new ComponentsListUI<ElementCreation>(container);
             MClInventoryElements.DDFType.RegisterValueChangedCallback((evt) => OnValueChanged_EFInventoryType(evt));
@@ -119,10 +123,51 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             return inventory;
         }
-    }
 
-    public interface ISubWindow
-    {
-        public event Action GoBack;
+        public void LoadInventoryItems(in Inventory inventory)
+        {
+            var elements = MClInventoryElements;
+            elements.RestartValues();
+            var newInventory = inventory;
+
+            foreach (var item in inventory.items)
+            {
+                int amount = item.Value;
+                Action<ElementCreation> ChangeValue = (e) => elements.ChangeAmount(e.idx, amount);
+                elements.OnElementAdded += ChangeValue;
+                elements.OnElementCreated += ChangeValue;
+
+                if (!elements.AddElement(item.Key.ToString()))
+                    newInventory.items.Remove(item.Key);
+
+                elements.OnElementAdded -= ChangeValue;
+                elements.OnElementCreated -= ChangeValue;
+            }
+
+            _changes = newInventory;
+        }
+
+        public override void Clear()
+        {
+            MClInventoryElements.Clear();
+        }
+
+        public override ModificationType Check_Changes()
+        {
+            var inventory = GetInventory();
+
+            foreach (var item in inventory.items)
+            {
+                if (!_changes.items.ContainsKey(item.Key) || _changes.items[item.Key] != item.Value)
+                    return ModificationType.EditData;
+            }
+
+            return ModificationType.None;
+        }
+
+        public override void Remove_Changes()
+        {
+            LoadInventoryItems(_changes);
+        }
     }
 }

@@ -6,10 +6,12 @@ using UnityEngine.UIElements;
 
 namespace Burmuruk.Tesis.Editor.Controls
 {
-    public class BaseItemSetting : UnityEditor.Editor, IClearable, IChangesObserver, ISaveable
+    public class BaseItemSetting : UnityEditor.Editor, IClearable, IChangesObserver, ISaveable, INameTracker
     {
         protected string _id = null;
+        protected string _name = null;
         protected NameSettings _nameControl;
+        protected ModificationType _modificationType;
 
         public event Action<ModificationType, ElementType, string, CreationData> OnCreationModified;
 
@@ -18,6 +20,27 @@ namespace Burmuruk.Tesis.Editor.Controls
         public ObjectField OfSprite { get; private set; }
         public ObjectField OfPickup { get; private set; }
         public UnsignedIntegerField UfCapacity { get; private set; }
+        protected ModificationType CurModificationType
+        {
+            get => _modificationType;
+            set
+            {
+                if (value == ModificationType.None)
+                {
+                    _modificationType = value;
+                    return;
+                }
+                else if (value == ModificationType.Rename)
+                {
+                    _modificationType = ModificationType.Rename;
+                    return;
+                }
+                else if ((_modificationType | ModificationType.Rename) != 0)
+                    _modificationType |= value;
+
+                _modificationType = value;
+            }
+        }
 
         public virtual void Initialize(VisualElement container, NameSettings nameControl)
         {
@@ -35,6 +58,7 @@ namespace Burmuruk.Tesis.Editor.Controls
         public virtual void UpdateInfo(InventoryItem data, ItemDataArgs args)
         {
             TxtName.value = data.name;
+            _name = data.name;
             TxtDescription.value = data.Description;
             OfSprite.value = data.Sprite;
             OfPickup.value = data.Pickup;
@@ -57,6 +81,11 @@ namespace Burmuruk.Tesis.Editor.Controls
             return (data, null);
         }
 
+        public void UpdateDisplayedName()
+        {
+            TxtName.name = _name;
+        }
+
         public virtual void Clear()
         {
             TxtName.value = "";
@@ -66,19 +95,20 @@ namespace Burmuruk.Tesis.Editor.Controls
             UfCapacity.value = 0;
         }
 
-        public virtual bool Check_Changes()
+        public virtual ModificationType Check_Changes()
         {
-            return false;
+            return ModificationType.None;
         }
 
         public virtual string Save()
         {
-            if (!Check_Changes()) return null;
+            var modificationType = Check_Changes();
+            if (modificationType == ModificationType.None) return null;
 
             var data = GetInfo(null);
             CreationData creationData = new CreationData(TxtName.text, data);
 
-            return SavingSystem.SaveCreation(ElementType.Buff, in _id, in creationData);
+            return SavingSystem.SaveCreation(ElementType.Buff, in _id, in creationData, modificationType);
         }
 
         public virtual CreationData Load(ElementType type, string id)
@@ -101,21 +131,9 @@ namespace Burmuruk.Tesis.Editor.Controls
         }
     }
 
-    public interface ISaveable
-    {
-        public string Save();
-        public CreationData Load(ElementType type, string id);
-    }
-
     public interface IClearable
     {
         public abstract void Clear();
-    }
-
-    public interface IChangesObserver
-    {
-        public bool Check_Changes();
-        public void Remove_Changes();
     }
 
     public record ItemDataArgs

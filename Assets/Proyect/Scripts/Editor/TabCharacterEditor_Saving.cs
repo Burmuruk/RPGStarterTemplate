@@ -6,13 +6,11 @@ namespace Burmuruk.Tesis.Editor
 {
     public partial class TabCharacterEditor : BaseLevelEditor
     {
-        public event Action<ModificationType, ElementType, string, CreationData> OnCreationModified;
-
         #region Saving
         private bool Save_Creation()
         {
             var type = currentSettingTag.type;
-            string errorMessage = settingsElements[type].Save();
+            string errorMessage = CreationControls[type].Save();
 
             if (!string.IsNullOrEmpty(errorMessage))
             {
@@ -70,7 +68,7 @@ namespace Burmuruk.Tesis.Editor
 
         private T Load_ElementBaseData<T>(ElementType type, string id) where T : InventoryItem
         {
-            if (!charactersLists.creations[type].TryGetValue(id, out CreationData creationData))
+            if (!SavingSystem.Data.creations[type].TryGetValue(id, out CreationData creationData))
                 return null;
 
             T data = (T)creationData.data;
@@ -152,7 +150,7 @@ namespace Burmuruk.Tesis.Editor
                 _ => INFO_ITEM_SETTINGS_NAME,
             });
 
-            settingsElements[type].Load(type, element.Id);
+            CreationControls[type].Load(type, element.Id);
 
             //switch (type)
             //{
@@ -211,16 +209,5 @@ namespace Burmuruk.Tesis.Editor
 
 
         #endregion
-    }
-
-    [Flags]
-    public enum ModificationType
-    {
-        None,
-        Add,
-        Remove,
-        EditData,
-        Rename,
-        ColourReasigment
     }
 }

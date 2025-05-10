@@ -63,38 +63,39 @@ namespace Burmuruk.Tesis.Editor.Controls
         }
 
         #region Saving
-        public override bool Check_Changes()
+        public override ModificationType Check_Changes()
         {
-            bool haveChanges = false;
             //throw new InvalidNameExeption();
 
-            if (_nameControl.Check_Changes())
+            if ((_nameControl.Check_Changes() | ModificationType.None) != 0)
             {
-                haveChanges = true;
+                CurModificationType = ModificationType.Rename;
             }
-            
-            if (BuffAdder.Check_Changes())
+
+            if ((BuffAdder.Check_Changes() | ModificationType.None) != 0)
             {
-                hasUnsavedChanges = true;
+                CurModificationType = ModificationType.EditData;
             }
 
             if (ConsumptionTime.value != _changes.ConsumptionTime)
             {
                 Highlight(ConsumptionTime, true, BorderColour.HighlightBorder);
-                haveChanges = true;
+
+                CurModificationType = ModificationType.EditData;
             }
             if (AreaRadious.value != _changes.AreaRadious)
             {
                 Highlight(AreaRadious, true, BorderColour.HighlightBorder);
-                haveChanges = true;
+
+                CurModificationType = ModificationType.EditData;
             }
 
-            return haveChanges;
+            return CurModificationType;
         }
 
         public override string Save()
         {
-            if (!Check_Changes()) return null;
+            if (Check_Changes()) return null;
 
             var data = GetBuffsIds(ElementType.Buff);
             CreationData creationData = new CreationData(TxtName.text, data);

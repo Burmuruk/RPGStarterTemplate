@@ -99,9 +99,9 @@ namespace Burmuruk.Tesis.Editor.Controls
             return false;
         }
 
-        public void AddElement(string value)
+        public bool AddElement(string value)
         {
-            if (value == "None") return;
+            if (value == "None") return false;
 
             int? componentIdx = null;
 
@@ -121,7 +121,7 @@ namespace Burmuruk.Tesis.Editor.Controls
                 componentIdx = newIdx;
             }
             else if (!componentIdx.HasValue)
-                return;
+                return false;
 
             Components[componentIdx.Value].NameButton.text = value;
 
@@ -145,6 +145,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             }
 
             OnElementAdded(Components[componentIdx.Value]);
+            return true;
         }
 
         private int? DefaultCreationValidator()

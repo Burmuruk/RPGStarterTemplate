@@ -112,58 +112,56 @@ namespace Burmuruk.Tesis.Editor.Controls
             BuffAdder.Clear();
         }
 
-        public override bool Check_Changes()
+        public override ModificationType Check_Changes()
         {
-            bool hasChanges = false;
-
-            if (_nameControl.Check_Changes())
+            if ((_nameControl.Check_Changes() & ModificationType.None) == 0)
             {
-                hasChanges = true;
+                CurModificationType = ModificationType.Rename;
             }
 
             if (_changesWeapon.BodyPart != (EquipmentType)Placement.value)
             {
-                hasChanges = true;
+                CurModificationType = ModificationType.EditData;
                 Highlight(Placement, true);
             }
             if (_changesWeapon.Damage != Damage.value)
             {
-                hasChanges = true;
+                CurModificationType = ModificationType.EditData;
                 Highlight(Damage, true);
             }
             if (_changesWeapon.DamageRate != RateDamage.value)
             {
-                hasChanges = true;
+                CurModificationType = ModificationType.EditData;
                 Highlight(RateDamage, true);
             }
             if (_changesWeapon.MinDistance != MinDistance.value)
             {
-                hasChanges = true;
+                CurModificationType = ModificationType.EditData;
                 Highlight(MinDistance, true);
             }
             if (_changesWeapon.MaxDistance != MaxDistance.value)
             {
-                hasChanges = true;
+                CurModificationType = ModificationType.EditData;
                 Highlight(MaxDistance, true);
             }
             if (_changesWeapon.ReloadTime != ReloadTime.value)
             {
-                hasChanges = true;
+                CurModificationType = ModificationType.EditData;
                 Highlight(ReloadTime, true);
             }
             if (_changesWeapon.MaxAmmo != MaxAmmo.value)
             {
-                hasChanges = true;
+                CurModificationType = ModificationType.EditData;
                 Highlight(MaxAmmo, true);
             }
             if (_changesWeapon.ReloadTime != ReloadTime.value)
             {
-                hasChanges = true;
+                CurModificationType = ModificationType.EditData;
                 Highlight(ReloadTime, true);
             }
             if (_changesWeapon.MaxAmmo != MaxAmmo.value)
             {
-                hasChanges = true;
+                CurModificationType = ModificationType.EditData;
                 Highlight(MaxAmmo, true);
             }
             //if (_changesWeapon.BodyPart != (EquipmentType)EFBodyPart.value)
@@ -173,11 +171,11 @@ namespace Burmuruk.Tesis.Editor.Controls
             //}
             if ((WeaponType)_changesWeapon.GetSubType() != (WeaponType)Damage.value)
             {
-                hasChanges = true;
+                CurModificationType = ModificationType.EditData;
                 Highlight(EMWeaponType.Name, true);
             }
 
-            return hasChanges;
+            return CurModificationType;
         }
     }
 }

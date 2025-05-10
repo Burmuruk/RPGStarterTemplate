@@ -9,17 +9,16 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static Burmuruk.Tesis.Editor.TabCharacterEditor;
+using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
 
 namespace Burmuruk.Tesis.Editor.Controls
 {
-    public class CharacterSettings : BaseItemSetting
+    public class CharacterSettings : SubWindow, ISaveable
     {
-        const string INFO_HEALTH_SETTINGS_NAME = "HealthSettings";
-        const string INFO_EQUIPMENT_SETTINGS_NAME = "EquipmentSettings";
-        const string INFO_INVENTORY_SETTINGS_NAME = "InventorySettings";
         const string STATS_CONTAINER_NAME = "infoStats";
-        Dictionary<CharacterTab, BaseItemSetting> subTabs = new();
+        Dictionary<CharacterTab, SubWindow> subTabs = new();
         CharacterData _characterData;
+        private string _id;
 
         CharacterTab curTab = CharacterTab.None;
         VisualElement container;
@@ -105,17 +104,19 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         private void CreateSubTabs()
         {
-            VisualElement invtContainer = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/Proyect/Game/UIToolkit/CharacterEditor/Tabs/{INFO_INVENTORY_SETTINGS_NAME}.uxml").Instantiate();
             subTabs.Add(CharacterTab.Inventory, new InventorySettings());
             var inventory = (InventorySettings)subTabs[CharacterTab.Inventory];
-            inventory.Initialize(invtContainer, TxtName);
+            inventory.Initialize(container, _nameControl);
             inventory.GoBack += () => ChangeTab(CharacterTab.None);
             inventory.OnElementClicked += ChangeTab;
 
-            VisualElement equipContainer = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/Proyect/Game/UIToolkit/CharacterEditor/Tabs/{INFO_EQUIPMENT_SETTINGS_NAME}.uxml").Instantiate();
             subTabs.Add(CharacterTab.Equipment, new EquipmentSettings());
-            subTabs[CharacterTab.Equipment].Initialize(equipContainer, _nameControl);
-            ((EquipmentSettings)subTabs[CharacterTab.Equipment]).GoBack += () => ChangeTab(CharacterTab.None);
+            subTabs[CharacterTab.Equipment].Initialize(container, _nameControl);
+            subTabs[CharacterTab.Equipment].GoBack += () => ChangeTab(CharacterTab.None);
+
+            subTabs.Add(CharacterTab.Health, new HealthSettings());
+            subTabs[CharacterTab.Health].Initialize(container, _nameControl);
+            subTabs[CharacterTab.Health].GoBack += () => ChangeTab(CharacterTab.None);
         }
 
         private void ChangeTab(ComponentType type)
@@ -152,8 +153,6 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         public override void Clear()
         {
-            base.Clear();
-
             TxtName.value = "";
             //CFCreationColor.value = Color.black;
             subTabs[CharacterTab.Inventory].Clear();
@@ -172,7 +171,13 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             if (curTab == newTab) return;
 
+            VisualElement tab = newTab switch
+            {
 
+            };
+
+            //EnableContainer(subTabs, true);
+            EnableContainer(tab, true);
         }
 
         private void ClearTabs()
@@ -238,12 +243,7 @@ namespace Burmuruk.Tesis.Editor.Controls
         }
         #endregion
 
-        public override (InventoryItem item, ItemDataArgs args) GetInfo(ItemDataArgs args)
-        {
-            return base.GetInfo(args);
-        }
-
-        public override bool Check_Changes()
+        public override ModificationType Check_Changes()
         {
             bool hasChanges = false;
 
@@ -252,11 +252,21 @@ namespace Burmuruk.Tesis.Editor.Controls
                 hasChanges = true;
             }
 
+            if (subTabs[CharacterTab.Health].Check_Changes())
+                hasChanges = true;
+
+            if (subTabs[CharacterTab.Inventory].Check_Changes())
+                hasChanges = true;
+
+            if (subTabs[CharacterTab.Equipment].Check_Changes())
+                hasChanges = true;
+
+
 
             return hasChanges;
         }
 
-        public override string Save()
+        public string Save()
         {
             if (!Check_Changes())
                 return null;
@@ -265,7 +275,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             return SaveChanges_Character(_nameControl.name, _id, _nameControl.name);
         }
 
-        public override CreationData Load(ElementType type, string id)
+        public CreationData Load(ElementType type, string id)
         {
             CreationData? data = SavingSystem.Load(ElementType.Character, _id);
 
@@ -281,7 +291,7 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             Components.DDFElement.value = "None";
 
-            return base.Load(type, id);
+            return data.Value;
         }
 
         private string SaveChanges_Character(string name, string id, string newName = "")
@@ -381,30 +391,12 @@ namespace Burmuruk.Tesis.Editor.Controls
                         break;
 
                     case ComponentType.Inventory:
-                        LoadInventoryItems((Inventory)component.Value);
+                        ((InventorySettings)subTabs[CharacterTab.Health]).LoadInventoryItems((Inventory)component.Value);
                         break;
 
 
                     case ComponentType.Equipment:
-                        var equipment = (Equipment)component.Value;
-                        var elements = EquipmentS.MClEquipmentElements;
-                        elements.RestartValues();
-
-                        foreach (var item in equipment.equipment)
-                        {
-                            Action<ElementCreation> EditData = (e) =>
-                            {
-                                e.Toggle.value = item.Value.equipped;
-                                e.EnumField.value = item.Value.place;
-                            };
-                            elements.OnElementCreated += (e) => EditData(e);
-                            elements.OnElementAdded += (e) => EditData(e);
-
-                            elements.AddElement(item.Key.ToString());
-
-                            elements.OnElementCreated -= (e) => EditData(e);
-                            elements.OnElementAdded -= (e) => EditData(e);
-                        }
+                        EquipmentS.LoadEquipment((Equipment)component.Value);
                         break;
 
                     case ComponentType.Dialogue:
@@ -418,23 +410,11 @@ namespace Burmuruk.Tesis.Editor.Controls
             }
         }
 
-        private void LoadInventoryItems(in Inventory inventory)
+        public override void Remove_Changes()
         {
-            var elements = InventoryS.MClInventoryElements;
-            elements.RestartValues();
-
-            foreach (var item in inventory.items)
-            {
-                int amount = item.Value;
-                Action<ElementCreation> ChangeValue = (e) => elements.ChangeAmount(e.idx, amount);
-                elements.OnElementAdded += ChangeValue;
-                elements.OnElementCreated += ChangeValue;
-
-                elements.AddElement(item.Key.ToString());
-
-                elements.OnElementAdded -= ChangeValue;
-                elements.OnElementCreated -= ChangeValue;
-            }
+            subTabs[CharacterTab.Inventory].Remove_Changes();
+            subTabs[CharacterTab.Equipment].Remove_Changes();
+            subTabs[CharacterTab.Health].Remove_Changes();
         }
     }
 }

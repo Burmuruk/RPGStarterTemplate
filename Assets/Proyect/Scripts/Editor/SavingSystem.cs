@@ -12,6 +12,7 @@ namespace Burmuruk.Tesis.Editor
         const string DATA_PATH = "Assets/Proyect/Game/ScriptableObjects/Tool/CharacterTag.asset";
 
         public static CharacterTag Data { get; private set; } = null;
+        public static event Action<ModificationType, ElementType, string, CreationData> OnCreationModified;
 
         public static void Initialize()
         {
@@ -32,6 +33,12 @@ namespace Burmuruk.Tesis.Editor
             {
                 Notify("Labels found.", BorderColour.Approved);
             }
+
+            OnCreationModified += (modification, type, id, data) =>
+            {
+                var info = new BaseCreationInfo(id, data.Name, data);
+                CreationScheduler.ChangeData(modification, type, id, info);
+            };
         }
 
         public static CreationData GetCreation(ElementType type, string id)
@@ -39,9 +46,18 @@ namespace Burmuruk.Tesis.Editor
             return Data.creations[type][id];
         }
 
-        public static string SaveCreation(ElementType type, in string id, in CreationData data)
+        public static string SaveCreation(ElementType type, in string id, in CreationData data, ModificationType modificationType)
         {
-            return null;
+            string newId = id;
+            bool result = Save_CreationData(type, ref newId, data);
+
+            if (result)
+            {
+                OnCreationModified?.Invoke(modificationType, type, newId, data);
+                return "Objeto guardado";
+            }
+
+            return "Guardado no completado";
         }
 
         public static CreationData? Load(ElementType type, string id)
@@ -52,8 +68,10 @@ namespace Burmuruk.Tesis.Editor
             return Data.creations[type][id];
         }
 
-        static bool Save_CreationData(ElementType type, string name, ref string id, object args, string newName = "")
+        static bool Save_CreationData(ElementType type, ref string id, CreationData creationData, string newName = "")
         {
+            string name = creationData.Name;
+
             if (string.IsNullOrEmpty(newName))
             {
                 if (!VerifyName(name)) return false;
@@ -79,7 +97,7 @@ namespace Burmuruk.Tesis.Editor
             else
                 id = Guid.NewGuid().ToString();
 
-            var creation = new CreationData(newName, args);
+            var creation = new CreationData(newName, creationData.data);
             Data.creations[type].TryAdd(id, creation);
 
             //EditorUtility.SetDirty(charactersLists);
@@ -88,5 +106,28 @@ namespace Burmuruk.Tesis.Editor
 
             return true;
         }
+    }
+
+    public interface ISaveable
+    {
+        public string Save();
+        public CreationData Load(ElementType type, string id);
+    }
+
+    [Flags]
+    public enum ModificationType
+    {
+        None,
+        Add,
+        Remove,
+        EditData,
+        Rename,
+        ColourReasigment
+    }
+
+    public interface IChangesObserver
+    {
+        public ModificationType Check_Changes();
+        public void Remove_Changes();
     }
 }

@@ -13,11 +13,36 @@ namespace Burmuruk.Tesis.Editor.Controls
         private List<BuffsDataUI> buffs = new();
         private VisualElement elementsContainer;
         private Dictionary<string, string> buffNames;
+        protected ModificationType _modificationType;
 
         public Foldout BuffsList { get; private set; }
         public UnsignedIntegerField BuffsCount { get; private set; }
         public Button BtnAddBuff { get; private set; }
         public Button BtnRemoveBuff { get; private set; }
+        protected ModificationType CurModificationType
+        {
+            get => _modificationType;
+            set
+            {
+                if (value == ModificationType.None)
+                {
+                    _modificationType = value;
+                    return;
+                }
+                else if (value == ModificationType.Rename)
+                {
+                    _modificationType = ModificationType.Rename;
+                    return;
+                }
+                else if ((_modificationType | ModificationType.Rename) != 0)
+                {
+                    _modificationType |= value;
+                    return;
+                }
+
+                _modificationType = value;
+            }
+        }
 
         public BuffAdderUI(VisualElement container)
         {
@@ -254,6 +279,10 @@ namespace Burmuruk.Tesis.Editor.Controls
             return null;
         }
 
+        /// <summary>
+        /// Returns the corresponding ids with data. Empty values are discarded.
+        /// </summary>
+        /// <returns></returns>
         public List<NamedBuff> GetBuffsData()
         {
             var buffsData = new List<NamedBuff>();
@@ -283,31 +312,76 @@ namespace Burmuruk.Tesis.Editor.Controls
             BuffsCount.value = 0;
         }
 
-        public bool Check_Changes()
+        public ModificationType Check_Changes()
         {
             var namedBuffs = GetBuffsData();
 
+            Check_Names(namedBuffs);
+
             if (_changes.Count != namedBuffs.Count)
-                return true;
+                return CurModificationType = ModificationType.EditData;
 
-            for (int i = 0; i < _changes.Count; i++)
+            //for (int i = 0; i < _changes.Count; i++)
+            //{
+            //    if (_changes[i].Value.Name != namedBuffs[i].Name)
+            //        return CurModificationType = ModificationType.EditData;
+
+            //    if (namedBuffs[i].Name == INVALIDNAME)
+            //    {
+            //        if (_changes[i].Value.Data != namedBuffs[i].Data)
+            //            return CurModificationType = ModificationType.EditData;
+            //    }
+            //}
+
+            return CurModificationType;
+        }
+
+        private void Check_Names(List<NamedBuff> namedBuffs)
+        {
+            foreach (var buff in namedBuffs)
             {
-                if (_changes[i].Value.Name != namedBuffs[i].Name)
-                    return true;
-
-                if (namedBuffs[i].Name == INVALIDNAME)
+                if (buff.Name != "")
                 {
-                    if (_changes[i].Value.Data != namedBuffs[i].Data)
-                        return true;
+                    bool containsName = false;
+                    foreach (var name in _changes)
+                    {
+                        if (name.HasValue && name.Value.Name == buff.Name)
+                        {
+                            containsName = true;
+                            break;
+                        }
+                    }
+
+                    if (!containsName)
+                    {
+                        CurModificationType = ModificationType.EditData;
+                    }
+                }
+                else if (buff.Name == "")
+                {
+                    bool hasData = false;
+
+                    foreach (var change in _changes)
+                    {
+                        if (change.HasValue && change.Value.Name == "")
+                        {
+                            if (change.Value.Data == buff.Data)
+                            {
+                                hasData = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!hasData)
+                        CurModificationType = ModificationType.EditData;
                 }
             }
-
-            return false;
         }
 
         public void Remove_Changes()
         {
-            throw new System.NotImplementedException();
+            
         }
     }
 }

@@ -125,7 +125,7 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             if (evt.keyCode == KeyCode.Return)
             {
-                if (!TabCharacterEditor.VerifyVariableName(TxtNewValue.value))
+                if (!VerifyVariableName(TxtNewValue.value))
                     return;
 
                 switch (CurrentState)

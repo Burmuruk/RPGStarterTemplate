@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using static Burmuruk.Tesis.Editor.TabCharacterEditor;
 
 namespace Burmuruk.Tesis.Editor
 {
@@ -45,7 +44,7 @@ namespace Burmuruk.Tesis.Editor
         }
     }
 
-    internal class UIListScheduler<T,U> where U : struct
+    internal class UIListScheduler<T, U> where U : struct
     {
         Dictionary<ModificationType, Dictionary<T, List<IUIListContainer<U>>>> modifiers = new()
         {

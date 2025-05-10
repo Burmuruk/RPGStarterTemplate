@@ -1,8 +1,6 @@
-using Burmuruk.Tesis.Editor.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine.UIElements;
 using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
@@ -27,7 +25,7 @@ namespace Burmuruk.Tesis.Editor
     public class BaseLevelEditor : EditorWindow
     {
         protected VisualElement container;
-        
+
         protected Dictionary<string, Button> tabButtons = new();
         protected Dictionary<string, VisualElement> infoContainers = new();
         protected string curTab = "";
@@ -45,9 +43,9 @@ namespace Burmuruk.Tesis.Editor
 
         protected void GetNotificationSection()
         {
-            UtilitiesUI.pNotification = container.Q<VisualElement>("notifications");
-            UtilitiesUI.pNotification = container.Q<Label>("lblNotifications");
-            UtilitiesUI.pNotification.AddToClassList("Disable");
+            pNotification = container.Q<VisualElement>("notifications");
+            lblNotification = container.Q<Label>("lblNotifications");
+            pNotification.AddToClassList("Disable");
         }
 
         protected virtual void ChangeTab(string tab)
@@ -164,5 +162,5 @@ namespace Burmuruk.Tesis.Editor
 
             return false;
         }
-    } 
+    }
 }

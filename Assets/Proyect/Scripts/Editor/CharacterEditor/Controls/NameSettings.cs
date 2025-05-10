@@ -5,22 +5,47 @@ using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
 
 namespace Burmuruk.Tesis.Editor.Controls
 {
-    public class NameSettings : UnityEditor.Editor, IChangesObserver
+    public class NameSettings : UnityEditor.Editor, IChangesObserver, IClearable
     {
+        const string TXT_CREATION_NAME = "txtName";
+        const string CREATION_COLOUR_NAME = "cfSettingColour";
         string _lastName;
         Color _lastColour;
 
         public TextField TxtName { get; private set; }
         public ColorField TxtColour { get; private set; }
 
-        public NameSettings(string name)
+        public NameSettings(VisualElement container)
         {
+            TxtName = container.Q<TextField>(TXT_CREATION_NAME);
+            TxtColour = container.Q<ColorField>(CREATION_COLOUR_NAME);
+
+            TxtName.RegisterCallback<KeyUpEvent>(OnKeyUp_txtNameCreation);
+            TxtColour.RegisterValueChangedCallback(OnValueChanged_CFCreationColour);
+
             TxtName.value = name;
         }
 
-        public NameSettings(string name, Vector4 colour) : this(name)
+        public NameSettings(VisualElement container, Vector4 colour) : this(container)
         {
             TxtColour.value = colour;
+
+            
+        }
+
+        private void OnValueChanged_CFCreationColour(ChangeEvent<Color> evt)
+        {
+            //characterData.color = evt.newValue;
+            //((CharacterData)editingData[ElementType.Character].data).color = evt.newValue;
+        }
+
+        private void OnKeyUp_txtNameCreation(KeyUpEvent evt)
+        {
+            if (!VerifyName(TxtName.value))
+            {
+                Notify("Nombre no válido", BorderColour.Error);
+                return;
+            }
         }
 
         public bool IsTheNameUsed(string name)
@@ -44,14 +69,28 @@ namespace Burmuruk.Tesis.Editor.Controls
             return false;
         }
 
-        public bool Check_Changes()
+        public ModificationType Check_Changes()
         {
-            return _lastName != TxtName.value && _lastColour != TxtColour.value;
+            ModificationType modification = default;
+
+            if (_lastName != TxtName.value)
+                modification = ModificationType.Rename;
+
+            if (_lastColour != TxtColour.value)
+                modification |= ModificationType.Rename;
+
+            return modification;
         }
 
         public void Remove_Changes()
         {
-            throw new System.NotImplementedException();
+            TxtName.value = _lastName;
+        }
+
+        public void Clear()
+        {
+            TxtName.value = "";
+            _lastName = "";
         }
     }
 }

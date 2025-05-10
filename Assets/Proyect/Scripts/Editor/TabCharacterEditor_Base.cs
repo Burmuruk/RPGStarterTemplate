@@ -1,4 +1,5 @@
 using Burmuruk.Tesis.Combat;
+using Burmuruk.Tesis.Editor.Controls;
 using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
 using System;
@@ -27,8 +28,7 @@ namespace Burmuruk.Tesis.Editor
         const string INFO_GENERAL_SETTINGS_CHARACTER_NAME = "GeneralSettingsCharacter";
         const string INFO_DIALOGUES_NAME = "infoDialoguesContainer";
         const string INFO_SETUP_NAME = "InfoBase";
-
-        CharacterTag charactersLists;
+        ComponentsListUI<ElementCreationPinable> creations;
         TextField txtSearch_Right;
         TextField txtSearch_Left;
         Button btnClearSearch;
@@ -142,6 +142,10 @@ namespace Burmuruk.Tesis.Editor
                 foreach (var containerName in names)
                 {
                     VisualElement newContainer = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/Proyect/Game/UIToolkit/CharacterEditor/Tabs/{containerName}.uxml").Instantiate();
+                    StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/LineTags.uss");
+                    StyleSheet styleSheetColour = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/BorderColours.uss");
+                    newContainer.styleSheets.Add(styleSheet);
+                    newContainer.styleSheets.Add(styleSheetColour);
 
                     infoContainers.Add(containerName, newContainer);
                     tabNames[containerName] = "";
@@ -209,11 +213,7 @@ namespace Burmuruk.Tesis.Editor
             infoRight = rightPanel.Q<VisualElement>("elementsContainer");
 
             infoSetup = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/Proyect/Game/UIToolkit/CharacterEditor/{INFO_SETUP_NAME}.uxml").Instantiate();
-            txtNameCreation = infoSetup.Q<TextField>(TXT_CREATION_NAME);
-            CFCreationColor = infoSetup.Q<ColorField>(CREATION_COLOUR_NAME);
-
-            txtNameCreation.RegisterCallback<KeyUpEvent>(OnKeyUp_txtNameCreation);
-            CFCreationColor.RegisterValueChangedCallback(OnValueChanged_CFCreationColour);
+            nameSettings = new NameSettings(infoSetup);
 
             EnableContainer(infoSetup, false);
             infoRight.Add(infoSetup);
@@ -221,36 +221,9 @@ namespace Burmuruk.Tesis.Editor
             return splitView;
         }
 
-        private void OnValueChanged_CFCreationColour(ChangeEvent<Color> evt)
-        {
-            //characterData.color = evt.newValue;
-            //((CharacterData)editingData[ElementType.Character].data).color = evt.newValue;
-        }
-
-        private void OnKeyUp_txtNameCreation(KeyUpEvent evt)
-        {
-            Verify_TxtCreationName();
-
-            tabNames[curTab] = nameSettings.TxtName.value;
-        }
-
-        private void Verify_TxtCreationName()
-        {
-            if (regName.IsMatch(nameSettings.TxtName.value))
-            {
-                Highlight(nameSettings.TxtName, false);
-                DisableNotification();
-            }
-            else
-            {
-                Highlight(nameSettings.TxtName, true, BorderColour.Error);
-                Notify("The name is not allowed.", BorderColour.Error);
-            }
-        }
-
         private void CreateTags(VisualElement leftContainer, VisualElement rightContainer)
         {
-            var max = charactersLists.defaultElements.Count;
+            var max = SavingSystem.Data.defaultElements.Count;
             AddTags(leftContainer, ref btnsLeft_Tag, true);
             AddTags(rightContainer, ref btnsRight_Tag, false);
 
@@ -275,7 +248,7 @@ namespace Burmuruk.Tesis.Editor
 
                     if (i < max)
                     {
-                        var element = charactersLists.defaultElements[i];
+                        var element = SavingSystem.Data.defaultElements[i];
                         b.element.text = element.ToString();
                         int j = i;
 
@@ -346,9 +319,9 @@ namespace Burmuruk.Tesis.Editor
         {
             var type = (ElementType)creations[elementIdx].Type;
             string id = creations[elementIdx].Id;
-            var data = charactersLists.creations[type][id];
+            var data = SavingSystem.Data.creations[type][id];
 
-            charactersLists.creations[type].Remove(id);
+            SavingSystem.Data.creations[type].Remove(id);
             OnCreationModified?.Invoke(ModificationType.Remove, type, id, data);
             
             Notify("Element deleted.", BorderColour.Approved);
@@ -363,7 +336,7 @@ namespace Burmuruk.Tesis.Editor
             Load_CreationData(element, type);
 
             btnsRight_Tag.ForEach(t => Highlight(t.element, false));
-            txtNameCreation.value = creations[idx].NameButton.text;
+            nameSettings.TxtName.value = creations[idx].NameButton.text;
             CFCreationColor.value = Color.black;
 
             int tagIdx = 0;
@@ -417,7 +390,7 @@ namespace Burmuruk.Tesis.Editor
                 if (string.IsNullOrEmpty(text))
                     return;
 
-                foreach (var character in charactersLists.characters)
+                foreach (var character in SavingSystem.Data.characters)
                 {
                     if (character.name == text)
                     {
@@ -518,7 +491,7 @@ namespace Burmuruk.Tesis.Editor
 
                 for (int i = 0; i < count; i++)
                 {
-                    if (!charactersLists.creations.ContainsKey((ElementType)i))
+                    if (!SavingSystem.Data.creations.ContainsKey((ElementType)i))
                         continue;
 
                     if (FindValues(text, (ElementType)i, out List<string> found))
@@ -554,7 +527,7 @@ namespace Burmuruk.Tesis.Editor
 
             bool FindValues(string text, ElementType type, out List<string> valuesIds)
             {
-                valuesIds = (from c in charactersLists.creations[type]
+                valuesIds = (from c in SavingSystem.Data.creations[type]
                              where c.Value.Name.ToLower().Contains(text.ToLower())
                              select c.Key).ToList();
 
@@ -587,7 +560,7 @@ namespace Burmuruk.Tesis.Editor
                 cur.Type = element.type;
                 cur.idx = element.elementIdx;
                 cur.Id = element.creationId;
-                cur.NameButton.text = charactersLists.creations[element.type][element.creationId].Name;
+                cur.NameButton.text = SavingSystem.Data.creations[element.type][element.creationId].Name;
             }
         }
 
@@ -607,17 +580,17 @@ namespace Burmuruk.Tesis.Editor
 
             if (type == ElementType.None)
             {
-                foreach (var elementData in charactersLists.creations)
+                foreach (var elementData in SavingSystem.Data.creations)
                 {
-                    var ids = charactersLists.creations[elementData.Key].Select(creation => creation.Key).ToList();
+                    var ids = SavingSystem.Data.creations[elementData.Key].Select(creation => creation.Key).ToList();
 
                     if (ids != null && ids.Count > 0)
                         values.Add((elementData.Key, ids));
                 }
             }
-            else if (charactersLists.creations.ContainsKey(type))
+            else if (SavingSystem.Data.creations.ContainsKey(type))
             {
-                var ids = charactersLists.creations[type].Select(creation => creation.Key).ToList();
+                var ids = SavingSystem.Data.creations[type].Select(creation => creation.Key).ToList();
 
                 if (ids != null && ids.Count > 0)
                     values.Add((type, ids));
@@ -649,7 +622,7 @@ namespace Burmuruk.Tesis.Editor
             nameSettings.TxtName.SetValueWithoutNotify(tabNames[tab]);
 
             if (!string.IsNullOrEmpty(nameSettings.TxtName.value))
-                Verify_TxtCreationName();
+                VerifyName(nameSettings.TxtName.value);
         }
 
         #region Events

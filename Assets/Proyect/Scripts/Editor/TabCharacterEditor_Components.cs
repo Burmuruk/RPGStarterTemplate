@@ -9,6 +9,9 @@ namespace Burmuruk.Tesis.Editor
     public partial class TabCharacterEditor : BaseLevelEditor
     {
         const string infoHealthName = "HealthSettings";
+        const string infoEquipmentName = "EquipmentSettings";
+        const string infoInventoryName = "InventorySettings";
+
         NameSettings nameSettings;
         FloatField ffHealthValue;
         Button btnBackHealthSettings;
@@ -16,20 +19,18 @@ namespace Burmuruk.Tesis.Editor
         Toggle tglShowElementColour;
         Toggle tglShowCustomColour;
 
-        Dictionary<ElementType, BaseItemSetting> settingsElements = new();
+        Dictionary<ElementType, UnityEditor.Editor> CreationControls = new();
         [SerializeField] List<BuffData> curWeaponsBuffs;
         Dictionary<string, string> tabNames = new();
 
         private void Setup_Coponents()
         {
-            nameSettings = new NameSettings("");
-
             CreationScheduler.creationsNames = GetCreationNames;
-            OnCreationModified += (modification, type, id, data) =>
-            {
-                var info = new BaseCreationInfo(id, data.Name, data);
-                CreationScheduler.ChangeData(modification, type, id, info);
-            };
+            //OnCreationModified += (modification, type, id, data) =>
+            //{
+            //    var info = new BaseCreationInfo(id, data.Name, data);
+            //    CreationScheduler.ChangeData(modification, type, id, info);
+            //};
         }
 
         private Dictionary<string, string> GetCreationNames(ElementType type)
@@ -48,14 +49,14 @@ namespace Burmuruk.Tesis.Editor
         {
             var settings = new BaseItemSetting();
             settings.Initialize(infoContainers[INFO_ITEM_SETTINGS_NAME], nameSettings);
-            settingsElements.Add(ElementType.Item, settings);
+            CreationControls.Add(ElementType.Item, settings);
         }
 
         private void Create_WeaponSettings()
         {
             var settings = new WeaponSetting();
             settings.Initialize(infoContainers[INFO_WEAPON_SETTINGS_NAME], nameSettings);
-            settingsElements.Add(ElementType.Weapon, settings);
+            CreationControls.Add(ElementType.Weapon, settings);
 
             //OnCreationAdded += (type, item) =>
             //{
@@ -85,14 +86,14 @@ namespace Burmuruk.Tesis.Editor
             var settings = new ConsumableSettings();
             settings.Initialize(infoContainers[INFO_CONSUMABLE_SETTINGS_NAME], nameSettings);
 
-            settingsElements.Add(ElementType.Consumable, settings);
+            CreationControls.Add(ElementType.Consumable, settings);
         }
 
         private void Create_ArmourSettings()
         {
             var settings = new ArmourSetting();
             settings.Initialize(infoContainers[INFO_ARMOUR_SETTINGS_NAME], nameSettings);
-            settingsElements.Add(ElementType.Armour, settings);
+            CreationControls.Add(ElementType.Armour, settings);
         }
 
         private void Create_GeneralCharacterSettings()

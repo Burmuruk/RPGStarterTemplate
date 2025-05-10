@@ -1,27 +1,30 @@
-﻿using Burmuruk.Tesis.Inventory;
-using System;
+﻿using Burmuruk.Tesis.Editor.Utilities;
+using System.Runtime.Remoting.Messaging;
+using UnityEditor;
 using UnityEngine.UIElements;
 
 namespace Burmuruk.Tesis.Editor.Controls
 {
-    public class HealthSettings : BaseItemSetting, ISubWindow
+    public class HealthSettings : SubWindow
     {
+        const string INFO_HEALTH_SETTINGS_NAME = "HealthSettings";
         private float _health;
-
-        public event Action GoBack;
 
         public FloatField FFHealth { get; private set; }
         public Button btnBackHealthSettings { get; private set; }
 
         public override void Initialize(VisualElement container, NameSettings nameControl)
         {
-            FFHealth = container.Q<FloatField>("health");
+            base.Initialize(container, nameControl);
+
+            var control = UtilitiesUI.CreateDefaultTab(INFO_HEALTH_SETTINGS_NAME);
+            container.hierarchy.Add(control);
+            _instance = control;
+            FFHealth = container.Q<FloatField>();
             FFHealth.value = 0;
-
-            FFHealth.RegisterValueChangedCallback(OnValueChanged_FFHealthValue);
-
             btnBackHealthSettings = container.Q<Button>();
 
+            FFHealth.RegisterValueChangedCallback(OnValueChanged_FFHealthValue);
             btnBackHealthSettings.clicked += GoBack;
         }
 
@@ -49,7 +52,28 @@ namespace Burmuruk.Tesis.Editor.Controls
                 _ => null
             };
 
-            characterData.components.TryAdd(type, item);
+            //characterData.components.TryAdd(type, item);
+        }
+
+        public override void Clear()
+        {
+            _health = 0;
+            FFHealth.value = 0;
+        }
+
+        public override ModificationType Check_Changes()
+        {
+            var modificationType = ModificationType.None;
+
+            if (FFHealth.value != _health)
+                modificationType = ModificationType.EditData;
+
+            return modificationType;
+        }
+
+        public override void Remove_Changes()
+        {
+            FFHealth.value = _health;
         }
     }
 }

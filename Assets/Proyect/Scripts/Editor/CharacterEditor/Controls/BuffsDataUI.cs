@@ -58,6 +58,10 @@ namespace Burmuruk.Tesis.Editor.Controls
             DDBuff.choices.AddRange(newNames.Keys);
         }
 
+        /// <summary>
+        /// Returns buffs's names and info. "" for custom values and None for empty values.
+        /// </summary>
+        /// <returns></returns>
         public NamedBuff GetInfo()
         {
             if (DDBuff.value == "Custom")
