@@ -1,51 +1,24 @@
 using Burmuruk.Tesis.Inventory;
-using System;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Burmuruk.Tesis.Editor.Controls
 {
-    public class BaseItemSetting : UnityEditor.Editor, IClearable, IChangesObserver, ISaveable, INameTracker
+    public class BaseItemSetting : BaseInfoTracker, ISaveable
     {
         protected string _id = null;
-        protected string _name = null;
-        protected NameSettings _nameControl;
-        protected ModificationType _modificationType;
+        protected InventoryItem _changes;
 
-        public event Action<ModificationType, ElementType, string, CreationData> OnCreationModified;
-
-        public TextField TxtName { get; private set; }
         public TextField TxtDescription { get; private set; }
         public ObjectField OfSprite { get; private set; }
         public ObjectField OfPickup { get; private set; }
         public UnsignedIntegerField UfCapacity { get; private set; }
-        protected ModificationType CurModificationType
-        {
-            get => _modificationType;
-            set
-            {
-                if (value == ModificationType.None)
-                {
-                    _modificationType = value;
-                    return;
-                }
-                else if (value == ModificationType.Rename)
-                {
-                    _modificationType = ModificationType.Rename;
-                    return;
-                }
-                else if ((_modificationType | ModificationType.Rename) != 0)
-                    _modificationType |= value;
 
-                _modificationType = value;
-            }
-        }
-
-        public virtual void Initialize(VisualElement container, NameSettings nameControl)
+        public override void Initialize(VisualElement container, CreationsBaseInfo nameControl)
         {
             _nameControl = nameControl;
-            TxtName = nameControl.TxtName;
+
             TxtDescription = container.Q<TextField>("txtDescription");
             OfSprite = container.Q<ObjectField>("opSprite");
             OfPickup = container.Q<ObjectField>("opPickup");
@@ -53,25 +26,33 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             OfSprite.objectType = typeof(Sprite);
             OfPickup.objectType = typeof(Pickup);
+            _nameControl.TxtName.RegisterValueChangedCallback((evt) => 
+            {
+                if (IsActive)
+                    TempName = evt.newValue;
+            });
         }
 
-        public virtual void UpdateInfo(InventoryItem data, ItemDataArgs args)
+        public virtual void UpdateInfo(InventoryItem data, ItemDataArgs args, ItemType type = ItemType.Consumable)
         {
-            TxtName.value = data.name;
-            _name = data.name;
+            _nameControl.TxtName.value = data.Name;
+            TempName = data.Name;
             TxtDescription.value = data.Description;
             OfSprite.value = data.Sprite;
             OfPickup.value = data.Pickup;
             UfCapacity.value = (uint)data.Capacity;
+
+            _changes ??= new InventoryItem();
+            _changes.UpdataInfo(data.Name, data.Description, type, (Sprite)OfSprite.value, (Pickup)OfPickup.value, unchecked((int)UfCapacity.value));
         }
 
         public virtual (InventoryItem item, ItemDataArgs args) GetInfo(ItemDataArgs args)
         {
             var data = new InventoryItem();
 
-            data.Populate(
-                TxtName.text,
-                TxtDescription.text,
+            data.UpdataInfo(
+                _nameControl.TxtName.value,
+                TxtDescription.value,
                 ItemType.None,
                 (Sprite)OfSprite.value,
                 (Pickup)OfPickup.value,
@@ -81,53 +62,87 @@ namespace Burmuruk.Tesis.Editor.Controls
             return (data, null);
         }
 
-        public void UpdateDisplayedName()
+        public override void Clear()
         {
-            TxtName.name = _name;
-        }
-
-        public virtual void Clear()
-        {
-            TxtName.value = "";
             TxtDescription.value = "";
             OfSprite.value = null;
             OfPickup.value = null;
             UfCapacity.value = 0;
+            CurModificationType = ModificationTypes.None;
+            _changes = null;
+            _id = null;
+            base.Clear();
         }
 
-        public virtual ModificationType Check_Changes()
+        protected void ClearItemInfo()
         {
-            return ModificationType.None;
+            _changes.UpdataInfo("", "", _changes.Type, null, null, 0);
+        }
+
+        public override ModificationTypes Check_Changes()
+        {
+            if (_changes == null) return CurModificationType = ModificationTypes.Add;
+
+            CurModificationType = ModificationTypes.None;
+
+            if ((_nameControl.Check_Changes() & ModificationTypes.None) != 0)
+                CurModificationType = ModificationTypes.Rename;
+
+            if (TxtDescription.value != _changes.Description)
+                CurModificationType = ModificationTypes.EditData;
+
+            if (OfSprite.value != _changes.Sprite)
+                CurModificationType = ModificationTypes.EditData;
+
+            if (OfPickup.value != _changes.Pickup)
+                CurModificationType = ModificationTypes.EditData;
+
+            if (UfCapacity.value != _changes.Capacity)
+                CurModificationType = ModificationTypes.EditData;
+
+            return CurModificationType;
         }
 
         public virtual string Save()
         {
             var modificationType = Check_Changes();
-            if (modificationType == ModificationType.None) return null;
+            if (modificationType == ModificationTypes.None) return null;
 
             var data = GetInfo(null);
-            CreationData creationData = new CreationData(TxtName.text, data);
+            CreationData creationData = new CreationData(_nameControl.TxtName.value, data);
 
-            return SavingSystem.SaveCreation(ElementType.Buff, in _id, in creationData, modificationType);
+            return SavingSystem.SaveCreation(ElementType.Item, in _id, in creationData, modificationType);
         }
 
         public virtual CreationData Load(ElementType type, string id)
         {
             CreationData? result = SavingSystem.Load(type, id);
 
-            if (!result.HasValue)
+            if (result.HasValue)
             {
                 _id = id;
                 (var item, var args) = ((InventoryItem, ItemDataArgs))result.Value.data;
                 UpdateInfo(item, args);
+                Set_CreationState(CreationsState.Editing);
             }
 
             return result.Value;
         }
 
-        public void Remove_Changes()
+        public override void Remove_Changes()
         {
-            throw new NotImplementedException();
+            TempName = _changes.name;
+            _nameControl.TxtName.value = _changes.Name;
+            TxtDescription.value = _changes.Description;
+            OfSprite.value = _changes.Sprite;
+            OfPickup.value = _changes.Pickup;
+            UfCapacity.value = (uint)_changes.Capacity;
+            CurModificationType = ModificationTypes.None;
+        }
+
+        public override void UpdateName()
+        {
+            _nameControl.TxtName.value = TempName;
         }
     }
 

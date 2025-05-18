@@ -1,6 +1,4 @@
 ﻿using Burmuruk.Tesis.Editor.Utilities;
-using System.Runtime.Remoting.Messaging;
-using UnityEditor;
 using UnityEngine.UIElements;
 
 namespace Burmuruk.Tesis.Editor.Controls
@@ -13,19 +11,18 @@ namespace Burmuruk.Tesis.Editor.Controls
         public FloatField FFHealth { get; private set; }
         public Button btnBackHealthSettings { get; private set; }
 
-        public override void Initialize(VisualElement container, NameSettings nameControl)
+        public override void Initialize(VisualElement container)
         {
-            base.Initialize(container, nameControl);
+            base.Initialize(container);
 
-            var control = UtilitiesUI.CreateDefaultTab(INFO_HEALTH_SETTINGS_NAME);
-            container.hierarchy.Add(control);
-            _instance = control;
+            _instance = UtilitiesUI.CreateDefaultTab(INFO_HEALTH_SETTINGS_NAME);
+            container.hierarchy.Add(_instance);
             FFHealth = container.Q<FloatField>();
             FFHealth.value = 0;
-            btnBackHealthSettings = container.Q<Button>();
+            btnBackHealthSettings = _instance.Q<Button>();
 
             FFHealth.RegisterValueChangedCallback(OnValueChanged_FFHealthValue);
-            btnBackHealthSettings.clicked += GoBack;
+            btnBackHealthSettings.clicked += () => GoBack?.Invoke();
         }
 
         public void UpdateHealth(float value)
@@ -61,12 +58,12 @@ namespace Burmuruk.Tesis.Editor.Controls
             FFHealth.value = 0;
         }
 
-        public override ModificationType Check_Changes()
+        public override ModificationTypes Check_Changes()
         {
-            var modificationType = ModificationType.None;
+            var modificationType = ModificationTypes.None;
 
             if (FFHealth.value != _health)
-                modificationType = ModificationType.EditData;
+                modificationType = ModificationTypes.EditData;
 
             return modificationType;
         }

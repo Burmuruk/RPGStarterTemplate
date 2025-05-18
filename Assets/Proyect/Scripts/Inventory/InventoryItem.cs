@@ -1,10 +1,7 @@
-﻿using Burmuruk.WorldG.Patrol;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
-using static UnityEditor.Experimental.GraphView.Port;
 
 namespace Burmuruk.Tesis.Inventory
 {
@@ -46,13 +43,14 @@ namespace Burmuruk.Tesis.Inventory
 #if UNITY_EDITOR
                 SerializedObject serializedObject = new(this);
                 SerializedProperty property = serializedObject.FindProperty("_id");
-                serializedObject.ApplyModifiedProperties(); 
+                serializedObject.ApplyModifiedProperties();
 #endif
 
                 return _id;
             }
         }
         public string Name { get => m_name; }
+        public new string name { get => m_name; }
         public string Description { get => m_description; }
         public Sprite Sprite { get => m_sprite; }
         public ItemType Type { get => _type; }
@@ -72,7 +70,7 @@ namespace Burmuruk.Tesis.Inventory
             throw new NotImplementedException();
         }
 
-        public void Populate(string name, string description, ItemType type, 
+        public void UpdataInfo(string name, string description, ItemType type,
             Sprite sprite, Pickup pickup, int capacity)
         {
             m_name = name;
@@ -85,7 +83,7 @@ namespace Burmuruk.Tesis.Inventory
 
         public void Copy(InventoryItem original)
         {
-            m_name = original.name;
+            m_name = original.Name;
             m_description = original.Description;
             _type = original.Type;
             m_sprite = original.Sprite;

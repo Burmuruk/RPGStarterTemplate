@@ -13,28 +13,28 @@ namespace Burmuruk.Tesis.Editor.Controls
         private List<BuffsDataUI> buffs = new();
         private VisualElement elementsContainer;
         private Dictionary<string, string> buffNames;
-        protected ModificationType _modificationType;
+        protected ModificationTypes _modificationType;
 
         public Foldout BuffsList { get; private set; }
         public UnsignedIntegerField BuffsCount { get; private set; }
         public Button BtnAddBuff { get; private set; }
         public Button BtnRemoveBuff { get; private set; }
-        protected ModificationType CurModificationType
+        protected ModificationTypes CurModificationType
         {
             get => _modificationType;
             set
             {
-                if (value == ModificationType.None)
+                if (value == ModificationTypes.None)
                 {
                     _modificationType = value;
                     return;
                 }
-                else if (value == ModificationType.Rename)
+                else if (value == ModificationTypes.Rename)
                 {
-                    _modificationType = ModificationType.Rename;
+                    _modificationType = ModificationTypes.Rename;
                     return;
                 }
-                else if ((_modificationType | ModificationType.Rename) != 0)
+                else if ((_modificationType | ModificationTypes.Rename) != 0)
                 {
                     _modificationType |= value;
                     return;
@@ -53,48 +53,42 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             SetupFoldOut(container);
             BuffsCount.RegisterCallback<KeyUpEvent>(OnValueChanged_BuffsCount);
-            CreationScheduler.Add(ModificationType.Rename, ElementType.Buff, this);
-            CreationScheduler.Add(ModificationType.Add, ElementType.Buff, this);
-            CreationScheduler.Add(ModificationType.Remove, ElementType.Buff, this);
+            CreationScheduler.Add(ModificationTypes.Rename, ElementType.Buff, this);
+            CreationScheduler.Add(ModificationTypes.Add, ElementType.Buff, this);
+            CreationScheduler.Add(ModificationTypes.Remove, ElementType.Buff, this);
             buffNames = CreationScheduler.GetNames(ElementType.Buff);
+            buffNames ??= new();
         }
 
-        //public void AddData(in CreationData data)
-        //{
-        //    foreach (var buff in buffs)
-        //    {
-        //        buffNames.TryGetValue(buff.DDBuff.value, out string selectedId);
-        //        buff.DDBuff.choices.Clear();
-
-        //        buff.DDBuff.choices.Add("None");
-        //        buff.DDBuff.choices.AddRange(newBuffsNames.Keys);
-
-        //        foreach (var newName in newBuffsNames)
-        //        {
-        //            if (newName.Value == selectedId)
-        //            {
-        //                buff.DDBuff.value = newName.Key;
-        //                goto nextTurn;
-        //            }
-        //        }
-
-        //        buff.DDBuff.value = "None";
-
-        //    nextTurn:
-        //        ;
-        //    }
-
-        //    this.buffNames = newBuffsNames;
-        //}
-
-        public virtual void AddData(in BaseCreationInfo newValue)
+        public void AddData(in BaseCreationInfo data)
         {
+            var newBuffsNames = buffNames;
+            newBuffsNames.TryAdd(data.Name, data.Id);
+
             foreach (var buff in buffs)
             {
-                buff.DDBuff.choices.Add(newValue.Name);
+                buffNames.TryGetValue(buff.DDBuff.value, out string selectedId);
+                buff.DDBuff.choices.Clear();
+
+                buff.DDBuff.choices.Add("Custom");
+                buff.DDBuff.choices.AddRange(newBuffsNames.Keys);
+
+                foreach (var newName in newBuffsNames)
+                {
+                    if (newName.Value == selectedId)
+                    {
+                        buff.DDBuff.value = newName.Key;
+                        goto nextTurn;
+                    }
+                }
+
+                buff.DDBuff.value = "None";
+
+            nextTurn:
+                ;
             }
 
-            buffNames.TryAdd(newValue.Name, newValue.Id);
+            this.buffNames = newBuffsNames;
         }
 
         public virtual void RemoveData(in BaseCreationInfo newValue)
@@ -134,6 +128,8 @@ namespace Burmuruk.Tesis.Editor.Controls
 
                 ++i;
             }
+
+            if (!idx.HasValue) return;
 
             foreach (var buff in buffs)
             {
@@ -312,14 +308,14 @@ namespace Burmuruk.Tesis.Editor.Controls
             BuffsCount.value = 0;
         }
 
-        public ModificationType Check_Changes()
+        public ModificationTypes Check_Changes()
         {
             var namedBuffs = GetBuffsData();
 
             Check_Names(namedBuffs);
 
             if (_changes.Count != namedBuffs.Count)
-                return CurModificationType = ModificationType.EditData;
+                return CurModificationType = ModificationTypes.EditData;
 
             //for (int i = 0; i < _changes.Count; i++)
             //{
@@ -354,7 +350,7 @@ namespace Burmuruk.Tesis.Editor.Controls
 
                     if (!containsName)
                     {
-                        CurModificationType = ModificationType.EditData;
+                        CurModificationType = ModificationTypes.EditData;
                     }
                 }
                 else if (buff.Name == "")
@@ -374,14 +370,30 @@ namespace Burmuruk.Tesis.Editor.Controls
                     }
 
                     if (!hasData)
-                        CurModificationType = ModificationType.EditData;
+                        CurModificationType = ModificationTypes.EditData;
                 }
             }
         }
 
         public void Remove_Changes()
         {
+            List<(string id, BuffData? data)> newData = new();
+
+            foreach (var change in _changes)
+            {
+                if (!change.HasValue) continue;
+
+                if (change.Value.Name == INVALIDNAME)
+                {
+                    newData.Add(("", change.Value.Data));
+                }
+                else
+                {
+                    newData.Add((buffNames[change.Value.Name], null));
+                }
+            }
             
+            UpdateData(newData);
         }
     }
 }

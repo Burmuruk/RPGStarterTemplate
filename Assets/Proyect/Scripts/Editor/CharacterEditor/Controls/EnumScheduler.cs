@@ -6,15 +6,15 @@ namespace Burmuruk.Tesis.Editor
 {
     internal static class EnumScheduler
     {
-        private static UIListScheduler<Enum, EnumModificationData> scheduler;
+        private static UIListScheduler<Type, EnumModificationData> scheduler;
 
-        public static void Add(ModificationType modificationType, Enum key, IUIListContainer<EnumModificationData> container)
+        public static void Add(ModificationTypes modificationType, Type key, IUIListContainer<EnumModificationData> container)
         {
             scheduler ??= new();
             scheduler.AddContainer(modificationType, key, container);
         }
 
-        public static void ChangeData(ModificationType modificationType, Enum key)
+        public static void ChangeData(ModificationTypes modificationType, Type key)
         {
             scheduler.ChangeData(modificationType, key, default);
         }
@@ -25,13 +25,13 @@ namespace Burmuruk.Tesis.Editor
         public static Func<ElementType, Dictionary<string, string>> creationsNames;
         private static UIListScheduler<ElementType, BaseCreationInfo> scheduler;
 
-        public static void Add(ModificationType modificationType, ElementType key, IUIListContainer<BaseCreationInfo> container)
+        public static void Add(ModificationTypes modificationType, ElementType key, IUIListContainer<BaseCreationInfo> container)
         {
             scheduler ??= new();
             scheduler.AddContainer(modificationType, key, container);
         }
 
-        public static void ChangeData(ModificationType modificationType, ElementType key, string id, BaseCreationInfo data)
+        public static void ChangeData(ModificationTypes modificationType, ElementType key, string id, BaseCreationInfo data)
         {
             var names = GetNames(key);
 
@@ -46,15 +46,15 @@ namespace Burmuruk.Tesis.Editor
 
     internal class UIListScheduler<T, U> where U : struct
     {
-        Dictionary<ModificationType, Dictionary<T, List<IUIListContainer<U>>>> modifiers = new()
+        Dictionary<ModificationTypes, Dictionary<T, List<IUIListContainer<U>>>> modifiers = new()
         {
-            { ModificationType.Add, new() },
-            { ModificationType.Remove, new() },
-            { ModificationType.EditData, new() },
-            { ModificationType.Rename, new() },
+            { ModificationTypes.Add, new() },
+            { ModificationTypes.Remove, new() },
+            { ModificationTypes.EditData, new() },
+            { ModificationTypes.Rename, new() },
         };
 
-        public void AddContainer(ModificationType modificationType, T key, IUIListContainer<U> container)
+        public void AddContainer(ModificationTypes modificationType, T key, IUIListContainer<U> container)
         {
             if (!modifiers[modificationType].ContainsKey(key))
                 modifiers[modificationType].Add(key, new List<IUIListContainer<U>>());
@@ -67,37 +67,41 @@ namespace Burmuruk.Tesis.Editor
             }
         }
 
-        public void ChangeData(ModificationType modificationType, T key, in U data)
+        public void ChangeData(ModificationTypes modificationType, T key, in U data)
         {
-            if (!modifiers[modificationType].ContainsKey(key))
+            if ((modificationType & ModificationTypes.None) != 0)
                 return;
 
-            if ((modificationType & ModificationType.Add) != 0)
+            foreach (ModificationTypes mod in Enum.GetValues(typeof(ModificationTypes)))
             {
-                foreach (var modifier in modifiers[modificationType][key])
+                if ((modificationType & mod) == 0 || !modifiers[mod].ContainsKey(key))
+                    continue;
+
+                if (modifiers[mod].ContainsKey(key))
                 {
-                    modifier.AddData(in data);
+                    MakeChange(data, mod, key);
                 }
             }
-            if ((modificationType & ModificationType.Remove) != 0)
+        }
+
+        private void MakeChange(in U data, ModificationTypes modificationType, T key)
+        {
+            foreach (var modifier in modifiers[modificationType][key])
             {
-                foreach (var modifier in modifiers[modificationType][key])
+                switch (modificationType)
                 {
-                    modifier.RemoveData(in data);
-                }
-            }
-            if ((modificationType & ModificationType.EditData) != 0)
-            {
-                foreach (var modifier in modifiers[modificationType][key])
-                {
-                    modifier.EditData(in data);
-                }
-            }
-            if ((modificationType & ModificationType.Rename) != 0)
-            {
-                foreach (var modifier in modifiers[modificationType][key])
-                {
-                    modifier.RenameCreation(in data);
+                    case ModificationTypes.Remove:
+                        modifier.RemoveData(in data);
+                        break;
+                    case ModificationTypes.Add:
+                        modifier.AddData(in data);
+                        break;
+                    case ModificationTypes.EditData:
+                        modifier.EditData(in data);
+                        break;
+                    case ModificationTypes.Rename:
+                        modifier.RenameCreation(in data);
+                        break;
                 }
             }
         }

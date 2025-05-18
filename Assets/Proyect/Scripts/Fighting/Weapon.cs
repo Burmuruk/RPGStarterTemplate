@@ -80,11 +80,16 @@ namespace Burmuruk.Tesis.Combat
             ModsList.RemoveModification(character, ModifiableStat.MinDistance, m_minDistance);
         }
 
-        public void Populate(EquipmentType bodyPart, int damage, float rateDamage, float minDistance, float maxDistance,
+        public void UpdateInfo(EquipmentType bodyPart, WeaponType subType, int damage, float rateDamage, float minDistance, float maxDistance,
                 float reloadTime, int maxAmmo, BuffData[] data)
         {
-            (m_bodyPart, m_damage, m_rateDamage, m_minDistance, m_maxDistance, this.reloadTime, this.maxAmmo, m_buffsData) = 
-                (bodyPart, damage, rateDamage, minDistance, maxDistance, reloadTime, maxAmmo, data);
+            (m_bodyPart, weaponType, m_damage, m_rateDamage, m_minDistance, m_maxDistance, this.reloadTime, this.maxAmmo, m_buffsData) = 
+                (bodyPart, subType, damage, rateDamage, minDistance, maxDistance, reloadTime, maxAmmo, data);
+        }
+
+        public override object GetSubType()
+        {
+            return weaponType;
         }
 
         private void EquipMod()
@@ -96,12 +101,5 @@ namespace Burmuruk.Tesis.Combat
         {
 
         }
-    }
-
-    public enum WeaponType
-    {
-        None,
-        Sword,
-        Gun
     }
 }

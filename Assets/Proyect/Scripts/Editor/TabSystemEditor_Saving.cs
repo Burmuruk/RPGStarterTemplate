@@ -2,6 +2,8 @@ using Burmuruk.Tesis.Saving;
 using Burmuruk.Tesis.Utilities;
 using System;
 using System.Collections.Generic;
+using UnityEditor;
+using UnityEditor.PackageManager;
 using UnityEngine.UIElements;
 using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
 
@@ -12,6 +14,7 @@ namespace Burmuruk.Tesis.Editor
         TextField[] savingTxtFields;
         string[] enumValues;
         const int systemEnumValues = 3;
+        private string _path;
 
         private void InitializeSaving()
         {
@@ -19,11 +22,16 @@ namespace Burmuruk.Tesis.Editor
 
             GetAceptButton(savingButtons).clicked += OnAccept_SavingBtn;
             GetCancelButton(savingButtons).clicked += OnCanceled_SavingBtn;
+            string[] guids = AssetDatabase.FindAssets(typeof(SavingExecution).Name + " t:Script");
+            if (guids.Length > 0)
+            {
+                _path = AssetDatabase.GUIDToAssetPath(guids[0]);
+            }
         }
 
         private void Show_Saving()
         {
-            if (changesInTab) ;
+            //if (changesInTab) ;
             //Display warning
 
             DisableNotification();
@@ -157,19 +165,18 @@ namespace Burmuruk.Tesis.Editor
                 return;
             }
 
-            if (enumEditor.Modify("SavingExecution", newValues.ToArray(), "", out string error))
+            try
             {
-                ClearSavingValues();
-                EnableSavingButtons(false);
-                Notify("Changes applied.", BorderColour.Approved);
+                if (enumEditor.SetValues(typeof(SavingExecution).Name, _path, newValues.ToArray()))
+                {
+                    ClearSavingValues();
+                    EnableSavingButtons(false);
+                    Notify("Changes applied.", BorderColour.Approved);
+                }
             }
-            else if (!string.IsNullOrEmpty(error))
+            catch (InvalidDataExeption e)
             {
-                Notify(error, BorderColour.Error);
-            }
-            else
-            {
-                Notify("Error ocurred when trying to apply changes.", BorderColour.Error);
+                Notify(e.Message, BorderColour.Error);
             }
         }
 

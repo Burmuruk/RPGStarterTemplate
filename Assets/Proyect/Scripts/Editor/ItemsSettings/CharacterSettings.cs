@@ -1,5 +1,4 @@
-﻿using Burmuruk.Tesis.Inventory;
-using Burmuruk.Tesis.Stats;
+﻿using Burmuruk.Tesis.Stats;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -13,15 +12,15 @@ using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
 
 namespace Burmuruk.Tesis.Editor.Controls
 {
-    public class CharacterSettings : SubWindow, ISaveable
+    public class CharacterSettings : BaseInfoTracker, ISaveable, ISubWindowsContainer
     {
+        VisualElement _parent;
         const string STATS_CONTAINER_NAME = "infoStats";
         Dictionary<CharacterTab, SubWindow> subTabs = new();
-        CharacterData _characterData;
+        CharacterData? _characterData;
         private string _id;
 
         CharacterTab curTab = CharacterTab.None;
-        VisualElement container;
         VisualElement statsContainer;
         StatsVisualizer basicStats = null;
 
@@ -43,86 +42,81 @@ namespace Burmuruk.Tesis.Editor.Controls
             Enum
         }
 
-        public ComponentsListUI<ElementComponent> Components { get; private set; }
+        public ComponentsListUI<ElementComponent> ComponentsList { get; private set; }
         public EnumModifierUI<CharacterType> EMCharacterType { get; private set; }
         public VariablesAdderUI Adder { get; private set; }
         public EquipmentSettings EquipmentS { get => (EquipmentSettings)subTabs[CharacterTab.Equipment]; }
         public InventorySettings InventoryS { get => (InventorySettings)subTabs[CharacterTab.Inventory]; }
 
-        public override void Initialize(VisualElement container, NameSettings name)
+        public CharacterSettings (VisualElement parent)
+        {
+            _parent = parent;
+        }
+
+        public override void Initialize(VisualElement container, CreationsBaseInfo name)
         {
             base.Initialize(container, name);
-            this.container = container;
+            _instance = container;
 
-            Components = new ComponentsListUI<ElementComponent>(container);
-            Components.OnElementClicked += OpenComponentSettings;
-            statsContainer = container.Q<VisualElement>(STATS_CONTAINER_NAME);
-
-            EMCharacterType = new EnumModifierUI<CharacterType>(container.Q<VisualElement>(EnumModifierUI<CharacterType>.ContainerName));
-            EMCharacterType.EnumField.RegisterValueChangedCallback(SetCharacterType);
-
-            Populate_AddComponents();
-            Populate_EFCharacterType();
-
+            ComponentsList = new ComponentsListUI<ElementComponent>(container);
+            ComponentsList.OnElementClicked += OpenComponentSettings;
+            Setup_EMCharacterType();
             var instance = ScriptableObject.CreateInstance<StatsVisualizer>();
+            statsContainer = container.Q<VisualElement>(STATS_CONTAINER_NAME);
             statsContainer.Add(new InspectorElement(instance));
             basicStats = instance;
-
             VisualElement adderUI = container.Q<VisualElement>("VariblesAdder");
             Adder = new(adderUI, statsContainer);
 
-            #region Inventory
-            Components.DDFElement.RegisterValueChangedCallback((e) => Components.AddElement(e.newValue));
-            Components.CreationValidator += ContainsCreation;
-
-            #endregion
+            Populate_AddComponents();
+            //populate_efcharactertype();
+            //components.ddfelement.registervaluechangedcallback((e) => components.addelement(e.newvalue));
+            //components.creationvalidator += containscreation;
 
             CreateSubTabs();
         }
 
         private void Populate_AddComponents()
         {
-            Components.DDFElement.choices.Clear();
+            ComponentsList.DDFElement.choices.Clear();
 
-            foreach (var type in Enum.GetValues(typeof(ComponentType)))
+            foreach (var name in Enum.GetNames(typeof(ComponentType)))
             {
-                Components.DDFElement.choices.Add(type.ToString());
+                ComponentsList.DDFElement.choices.Add(name);
             }
 
-            Components.DDFElement.SetValueWithoutNotify("None");
+            ComponentsList.DDFElement.value = "None";
         }
 
-        private void Populate_EFCharacterType()
+        private void Setup_EMCharacterType()
         {
+            EMCharacterType = new EnumModifierUI<CharacterType>(_instance.Q<VisualElement>(EnumModifierUI<CharacterType>.ContainerName));
+            EMCharacterType.Name.text = "Character Type";
             EMCharacterType.EnumField.Init(CharacterType.None);
-        }
-
-        private void SetCharacterType(ChangeEvent<Enum> evt)
-        {
-            _characterData.characterType = (CharacterType)evt.newValue;
         }
 
         private void CreateSubTabs()
         {
-            subTabs.Add(CharacterTab.Inventory, new InventorySettings());
-            var inventory = (InventorySettings)subTabs[CharacterTab.Inventory];
-            inventory.Initialize(container, _nameControl);
-            inventory.GoBack += () => ChangeTab(CharacterTab.None);
-            inventory.OnElementClicked += ChangeTab;
+            subTabs.Add(CharacterTab.None, this);
+            //var parent = _instance.parent.Q<ScrollView>("infoContainer").Q<VisualElement>("unity-content-container");
 
-            subTabs.Add(CharacterTab.Equipment, new EquipmentSettings());
-            subTabs[CharacterTab.Equipment].Initialize(container, _nameControl);
-            subTabs[CharacterTab.Equipment].GoBack += () => ChangeTab(CharacterTab.None);
+            subTabs.Add(CharacterTab.Inventory, new InventorySettings(_parent));
+            var inventory = (InventorySettings)subTabs[CharacterTab.Inventory];
+            inventory.Initialize(inventory.Instance);
+            inventory.GoBack += () => ChangeWindow(CharacterTab.None);
+            inventory.OnElementClicked += ChangeTab;
+            EnableContainer(inventory.Instance, false);
+
+            subTabs.Add(CharacterTab.Equipment, new EquipmentSettings(_parent));
+            var equipment = subTabs[CharacterTab.Equipment];
+            equipment.Initialize(equipment.Instance);
+            equipment.GoBack += () => ChangeWindow(CharacterTab.None);
+            EnableContainer(equipment.Instance, false);
 
             subTabs.Add(CharacterTab.Health, new HealthSettings());
-            subTabs[CharacterTab.Health].Initialize(container, _nameControl);
-            subTabs[CharacterTab.Health].GoBack += () => ChangeTab(CharacterTab.None);
-        }
-
-        private void ChangeTab(ComponentType type)
-        {
-            if (type == ComponentType.Health)
-                ChangeTab(CharacterTab.Health);
+            subTabs[CharacterTab.Health].Initialize(_parent);
+            subTabs[CharacterTab.Health].GoBack += () => ChangeWindow(CharacterTab.None);
+            EnableContainer(subTabs[CharacterTab.Health].Instance, false);
         }
 
         private int? ContainsCreation(IList list, string name)
@@ -153,41 +147,53 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         public override void Clear()
         {
+            if (curTab != CharacterTab.None)
+            {
+                subTabs[curTab].Clear();
+                return;
+            }
+
             TxtName.value = "";
-            //CFCreationColor.value = Color.black;
+            ComponentsList.Clear();
             subTabs[CharacterTab.Inventory].Clear();
             subTabs[CharacterTab.Equipment].Clear();
-            EMCharacterType.EnumField.SetValueWithoutNotify(CharacterType.None);
+            subTabs[CharacterTab.Health].Clear();
+            EMCharacterType.Value = CharacterType.None;
 
             var instance = ScriptableObject.CreateInstance<StatsVisualizer>();
             statsContainer.Clear();
             statsContainer.Add(new InspectorElement(instance));
             basicStats = instance;
-            _characterData = new();
+            _characterData = null;
+            TempName = "";
+            _id = null;
+        }
+
+        public override void UpdateName()
+        {
+            TxtName.value = TempName;
         }
 
         #region Tab control
-        private void ChangeTab(CharacterTab newTab)
+        private void ChangeTab(ComponentType type)
+        {
+            if (type == ComponentType.Health)
+                ChangeWindow(CharacterTab.Health);
+        }
+
+        private void ChangeWindow(CharacterTab newTab)
         {
             if (curTab == newTab) return;
 
-            VisualElement tab = newTab switch
-            {
-
-            };
-
-            //EnableContainer(subTabs, true);
-            EnableContainer(tab, true);
+            EnableContainer(subTabs[curTab].Instance, false);
+            EnableContainer(subTabs[newTab].Instance, true);
+            curTab = newTab;
         }
-
-        private void ClearTabs()
-        {
-
-        }
+        #endregion
 
         private void OpenComponentSettings(int componentIdx)
         {
-            var type = (ComponentType)Components[componentIdx].Type;
+            var type = (ComponentType)ComponentsList[componentIdx].Type;
 
             CharacterTab newTab = type switch
             {
@@ -210,7 +216,7 @@ namespace Burmuruk.Tesis.Editor.Controls
                 default: break;
             }
 
-            ChangeTab(newTab);
+            ChangeWindow(newTab);
         }
 
         private void Load_InventoryItemsInEquipment()
@@ -218,7 +224,6 @@ namespace Burmuruk.Tesis.Editor.Controls
             var items = ((InventorySettings)subTabs[CharacterTab.Inventory]).MClInventoryElements;
             ((EquipmentSettings)subTabs[CharacterTab.Equipment]).Load_EquipmentFromList(items);
         }
-        #endregion
 
         #region Variable generation
         private (Type, VisualElement) GenerateVariable(string name) =>
@@ -234,7 +239,7 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             (var type, var element) = GenerateVariable(name);
 
-            container.Add(element);
+            _instance.Add(element);
         }
 
         private void InitializeElement(in VisualElement element)
@@ -243,72 +248,121 @@ namespace Burmuruk.Tesis.Editor.Controls
         }
         #endregion
 
-        public override ModificationType Check_Changes()
+        public override ModificationTypes Check_Changes()
         {
-            bool hasChanges = false;
-
-            if (_nameControl.Check_Changes())
+            try
             {
-                hasChanges = true;
+                if (_characterData == null) return CurModificationType = ModificationTypes.Add;
+
+                CurModificationType = ModificationTypes.None;
+
+                if ((_nameControl.Check_Changes() & ModificationTypes.None) == 0)
+                {
+                    CurModificationType = ModificationTypes.Rename;
+                }
+
+                if ((subTabs[CharacterTab.Health].Check_Changes() & ModificationTypes.None) != 0)
+                    CurModificationType = ModificationTypes.EditData;
+
+                if ((subTabs[CharacterTab.Inventory].Check_Changes() & ModificationTypes.None) != 0)
+                    CurModificationType = ModificationTypes.EditData;
+
+                if ((subTabs[CharacterTab.Equipment].Check_Changes() & ModificationTypes.None) != 0)
+                    CurModificationType = ModificationTypes.EditData;
+
+                if (_characterData.Value.stats.speed != basicStats.stats.speed &&
+                    _characterData.Value.stats.damageRate != basicStats.stats.Damage &&
+                    _characterData.Value.stats.damageRate != basicStats.stats.damageRate &&
+                    _characterData.Value.stats.eyesRadious != basicStats.stats.eyesRadious &&
+                    _characterData.Value.stats.MinDistance != basicStats.stats.MinDistance
+                    )
+                {
+                    CurModificationType = ModificationTypes.EditData;
+                }
+
+                if (_characterData.Value.characterType != EMCharacterType.Value)
+                    CurModificationType = ModificationTypes.EditData;
+
+                if (_characterData.Value.components.Count == ComponentsList.Components.Count)
+                {
+                    foreach (var component in ComponentsList.Components)
+                    {
+                        if (!_characterData.Value.components.ContainsKey((ComponentType)component.Type))
+                        {
+                            CurModificationType = ModificationTypes.EditData;
+                            break;
+                        }
+                    }
+                }
+                else
+                    CurModificationType = ModificationTypes.EditData;
+
+                return CurModificationType;
             }
+            catch (InvalidExeption e)
+            {
+                throw e;
+            }
+        }
 
-            if (subTabs[CharacterTab.Health].Check_Changes())
-                hasChanges = true;
+        private CharacterData GetInfo()
+        {
+            CharacterData newData = new();
+            newData.components ??= new();
+            AddCharacterComponents(ref newData);
+            newData.characterType = (CharacterType)EMCharacterType.EnumField.value;
+            newData.stats = basicStats.stats;
+            newData.characterName = TxtName.value;
 
-            if (subTabs[CharacterTab.Inventory].Check_Changes())
-                hasChanges = true;
-
-            if (subTabs[CharacterTab.Equipment].Check_Changes())
-                hasChanges = true;
-
-
-
-            return hasChanges;
+            return newData;
         }
 
         public string Save()
         {
-            if (!Check_Changes())
-                return null;
+            try
+            {
+                if ((Check_Changes() & ModificationTypes.None) != 0)
+                    return null;
 
-            //SavingSystem.SaveCreation(ElementType.Character, new CreationData())
-            return SaveChanges_Character(_nameControl.name, _id, _nameControl.name);
+                var newData = GetInfo();
+                return SavingSystem.SaveCreation(ElementType.Character, _id, new CreationData(newData.characterName, newData), CurModificationType);
+            }
+            catch (InvalidExeption e)
+            {
+                throw e;
+            }
         }
 
         public CreationData Load(ElementType type, string id)
         {
-            CreationData? data = SavingSystem.Load(ElementType.Character, _id);
+            CreationData? data = SavingSystem.Load(ElementType.Character, id);
 
             if (!data.HasValue)
             {
                 return default;
             }
 
-            var characterData = (CharacterData)data.Value.data;
-            basicStats.stats = _characterData.stats;
-            LoadCharacterComponents(in characterData);
-            EMCharacterType.EnumField.value = characterData.characterType;
-
-            Components.DDFElement.value = "None";
+            LoadInfo((CharacterData)data.Value.data, id);
+            Set_CreationState(CreationsState.Editing);
 
             return data.Value;
         }
 
-        private string SaveChanges_Character(string name, string id, string newName = "")
+        private void LoadInfo(in CharacterData newData, string id)
         {
-            _characterData.components ??= new();
-
-            AddCharacterComponents();
-            //_characterData.color = CFCreationColor.value;
-            _characterData.characterType = (CharacterType)EMCharacterType.EnumField.value;
-            _characterData.stats = basicStats.stats;
-            return SavingSystem.SaveCreation(ElementType.Character, id, new CreationData(name, _characterData));
-            //return Save_CreationData(ElementType.Character, name, ref id, _characterData, newName);
+            _characterData = newData;
+            LoadCharacterComponents(in newData);
+            ComponentsList.DDFElement.value = "None";
+            EMCharacterType.Value = _characterData.Value.characterType;
+            basicStats.stats = _characterData.Value.stats;
+            TxtName.value = _characterData.Value.characterName;
+            TempName = _characterData.Value.characterName;
+            _id = id;
         }
 
-        private void AddCharacterComponents()
+        private void AddCharacterComponents(ref CharacterData characterData)
         {
-            var components = from comp in Components.Components
+            var components = from comp in ComponentsList.Components
                              where !comp.element.ClassListContains("Disable")
                              select comp;
 
@@ -318,19 +372,19 @@ namespace Burmuruk.Tesis.Editor.Controls
                 {
                     case ComponentType.Health:
                         var health = ((HealthSettings)subTabs[CharacterTab.Health]).FFHealth.value;
-                        
-                        _characterData.components[ComponentType.Health] = health;
+
+                        characterData.components[ComponentType.Health] = health;
                         break;
 
                     case ComponentType.Inventory:
-                        AddInventoryComponent();
+                        AddInventoryComponent(ref characterData);
                         break;
 
                     case ComponentType.Equipment:
-                        AddInventoryComponent();
+                        AddInventoryComponent(ref characterData);
 
-                        var inventory = (Inventory)_characterData.components[ComponentType.Inventory];
-                        _characterData.components[ComponentType.Equipment] =  EquipmentS.GetEquipment(in inventory);
+                        var inventory = (Inventory)characterData.components[ComponentType.Inventory];
+                        characterData.components[ComponentType.Equipment] = EquipmentS.GetEquipment(in inventory);
                         break;
 
                     case ComponentType.None:
@@ -340,44 +394,24 @@ namespace Burmuruk.Tesis.Editor.Controls
                         break;
 
                     default:
-                        _characterData.components[(ComponentType)component.Type] = null;
+                        characterData.components[(ComponentType)component.Type] = null;
                         break;
                 }
             }
         }
 
-        private void AddInventoryComponent()
+        private void AddInventoryComponent(ref CharacterData characterData)
         {
-            if (_characterData.components.ContainsKey(ComponentType.Inventory))
+            if (characterData.components.ContainsKey(ComponentType.Inventory))
                 return;
 
             var inventory = ((InventorySettings)subTabs[CharacterTab.Inventory]).GetInventory();
-            _characterData.components[ComponentType.Inventory] = inventory;
-        }
-
-        private void LoadChanges_Character(string creationId)
-        {
-            const ElementType type = ElementType.Character;
-            CreationData? data = SavingSystem.Load(ElementType.Character, _id);
-
-            if (!data.HasValue)
-            {
-
-            }
-
-            CharacterData characterData = (CharacterData)data.Value.data;
-
-            _characterData = characterData;
-            basicStats.stats = _characterData.stats;
-            LoadCharacterComponents(in characterData);
-            EMCharacterType.EnumField.value = characterData.characterType;
-
-            Components.DDFElement.value = "None";
+            characterData.components[ComponentType.Inventory] = inventory;
         }
 
         private void LoadCharacterComponents(in CharacterData data)
         {
-            Components.Clear();
+            ComponentsList.Clear();
 
             foreach (var component in data.components)
             {
@@ -391,7 +425,7 @@ namespace Burmuruk.Tesis.Editor.Controls
                         break;
 
                     case ComponentType.Inventory:
-                        ((InventorySettings)subTabs[CharacterTab.Health]).LoadInventoryItems((Inventory)component.Value);
+                        ((InventorySettings)subTabs[CharacterTab.Inventory]).LoadInventoryItems((Inventory)component.Value);
                         break;
 
 
@@ -406,15 +440,38 @@ namespace Burmuruk.Tesis.Editor.Controls
                         break;
                 }
 
-                Components.AddElement(component.Key.ToString());
+                ComponentsList.AddElement(component.Key.ToString());
             }
         }
 
         public override void Remove_Changes()
         {
-            subTabs[CharacterTab.Inventory].Remove_Changes();
-            subTabs[CharacterTab.Equipment].Remove_Changes();
-            subTabs[CharacterTab.Health].Remove_Changes();
+            _nameControl.Remove_Changes();
+
+            if (curTab != CharacterTab.None)
+            {
+                subTabs[curTab].Remove_Changes();
+                return;
+            }
+
+            TempName = _nameControl.name;
+            CharacterData newInfo = _characterData.Value;
+            LoadInfo(newInfo, _id);
         }
+
+        public void CloseWindows()
+        {
+            for (int i = 1; i < Enum.GetValues(typeof(CharacterTab)).Length; i++)
+            {
+                EnableContainer(subTabs[(CharacterTab)i].Instance, false);
+            }
+
+            curTab = CharacterTab.None;
+        }
+    }
+
+    public interface ISubWindowsContainer
+    {
+        public void CloseWindows();
     }
 }

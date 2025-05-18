@@ -1,6 +1,6 @@
 ﻿namespace Burmuruk.Tesis.Editor
 {
-    internal struct EnumModificationData
+    public struct EnumModificationData
     {
         public readonly string id;
         public readonly string name;

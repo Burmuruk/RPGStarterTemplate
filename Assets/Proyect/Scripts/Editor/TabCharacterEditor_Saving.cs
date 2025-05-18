@@ -9,61 +9,19 @@ namespace Burmuruk.Tesis.Editor
         #region Saving
         private bool Save_Creation()
         {
-            var type = currentSettingTag.type;
-            string errorMessage = CreationControls[type].Save();
-
-            if (!string.IsNullOrEmpty(errorMessage))
+            try
             {
-                Notify("Error al guardar", BorderColour.Error);
-                return false;
+                var type = currentSettingTag.type;
+                string errorMessage = CreationControls[type].Save();
+
+                Notify(errorMessage, BorderColour.Approved);
+
+                return true;
             }
-
-            Notify("Elemento guardado", BorderColour.Approved);
-            
-            //switch (type)
-            //{
-            //    case ElementType.Character:
-            //        result = SaveChanges_Character(creationName, id, creationName);
-            //        break;
-
-            //    case ElementType.Buff:
-
-            //        newData = CurBuffData.visualizer.buff;
-            //        result = Save_CreationData(ElementType.Buff, creationName, ref id, newData);
-            //        break;
-
-            //    case ElementType.Item:
-            //    case ElementType.Weapon:
-            //    case ElementType.Armour:
-            //    case ElementType.Consumable:
-            //        newData = type switch
-            //        {
-            //            ElementType.Item => settingsElements[ElementType.Item].GetInfo(null).item,
-            //            ElementType.Weapon => GetBuffsIds(ElementType.Weapon),
-            //            ElementType.Armour => settingsElements[ElementType.Armour].GetInfo(null).item,
-            //            ElementType.Consumable => GetBuffsIds(ElementType.Consumable),
-            //            _ => null
-            //        };
-
-            //        settingsElements[type].Save();
-
-            //        result = Save_CreationData(type, creationName, ref id, newData);
-            //        break;
-
-            //    default: return false;
-            //}
-
-            //if (result)
-            //{
-            //    OnCreationModified?.Invoke(ModificationType.Add, type, id, new CreationData(creationName, newData));
-            //    Notify("Succsessfully created.", BorderColour.Approved);
-            //}
-            //else
-            //{
-            //    return false;
-            //}
-
-            return true;
+            catch (InvalidExeption e)
+            {
+                throw e;
+            }
         }
 
         private T Load_ElementBaseData<T>(ElementType type, string id) where T : InventoryItem
@@ -75,66 +33,6 @@ namespace Burmuruk.Tesis.Editor
 
             return data;
         }
-
-        //private bool SaveChanges_Character(string name, string id, string newName = "")
-        //{
-        //    characterData.components ??= new();
-
-        //    AddCharacterComponents();
-        //    characterData.color = CFCreationColor.value;
-        //    characterData.characterType = (CharacterType)emCharacterType.EnumField.value;
-        //    characterData.stats = basicStats.stats;
-
-        //    return Save_CreationData(ElementType.Character, name, ref id, characterData, newName);
-        //}
-
-        //private void AddCharacterComponents()
-        //{
-        //    var components = from comp in characterComponents.Components
-        //                     where !comp.element.ClassListContains("Disable")
-        //                     select comp;
-
-        //    foreach (var component in components)
-        //    {
-        //        switch ((ComponentType)component.Type)
-        //        {
-        //            case ComponentType.Health:
-        //                var health = infoContainers[infoHealthName].Q<FloatField>().value;
-        //                characterData.components[ComponentType.Health] = health;
-        //                break;
-
-        //            case ComponentType.Inventory:
-        //                AddInventoryComponent();
-        //                break;
-
-        //            case ComponentType.Equipment:
-        //                AddInventoryComponent();
-
-        //                var inventory = (Inventory)characterData.components[ComponentType.Inventory];
-        //                characterData.components[ComponentType.Equipment] = GetEquipment(in inventory);
-        //                break;
-
-        //            case ComponentType.None:
-        //                break;
-
-        //            case ComponentType.Dialogue:
-        //                break;
-
-        //            default:
-        //                characterData.components[(ComponentType)component.Type] = null;
-        //                break;
-        //        }
-        //    }
-        //}
-
-        //private void AddInventoryComponent()
-        //{
-        //    if (characterData.components.ContainsKey(ComponentType.Inventory))
-        //        return;
-
-        //    var inventory = GetInventory();
-        //    characterData.components[ComponentType.Inventory] = inventory;
-        //} 
         #endregion
 
         #region Loading

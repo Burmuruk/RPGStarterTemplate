@@ -1,4 +1,5 @@
-﻿using UnityEngine.UIElements;
+﻿using Burmuruk.Tesis.Editor.Utilities;
+using UnityEngine.UIElements;
 
 namespace Burmuruk.Tesis.Editor.Controls
 {
@@ -11,24 +12,29 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             DDFType = container.Q<DropdownField>("ddfType");
             DDFElement = container.Q<DropdownField>("ddfElement");
-        }
 
-        private void Initialize_DDAddComponent()
-        {
             DDFElement.RegisterValueChangedCallback(AddComponent);
+            VisualElement element = new VisualElement();
+            element.style.height = 50;
+            element.style.width = 30;
+            container.hierarchy.Add(element);
         }
 
         private void AddComponent(ChangeEvent<string> evt)
         {
             if (Check_HasCharacterComponent(evt.newValue)) return;
-            AddElement(evt.newValue);
+
+            if (DDFType == null)
+                AddElement(evt.newValue);
+            else
+                AddElement(evt.newValue, DDFType.value);
 
             DDFElement.SetValueWithoutNotify("None");
         }
 
-        protected override T CreateNewComponent(string value, out int idx)
+        protected override T CreateNewComponent(string value, string type, out int idx)
         {
-            var component = base.CreateNewComponent(value, out idx);
+            var component = base.CreateNewComponent(value, type, out idx);
             int newIdx = idx;
 
             component.RemoveButton.clicked += () => RemoveComponent(newIdx);
@@ -41,7 +47,7 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             if (newValue < 0)
             {
-                notifyCallback("Negative values are not allowed", BorderColour.Error);
+                UtilitiesUI.Notify("Negative values are not allowed", BorderColour.Error);
                 return;
             }
 
@@ -61,8 +67,8 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             base.Clear();
 
-            DDFType.SetValueWithoutNotify("None");
-            DDFElement.SetValueWithoutNotify("None");
+            DDFType?.SetValueWithoutNotify("None");
+            DDFElement?.SetValueWithoutNotify("None");
         }
     }
 }

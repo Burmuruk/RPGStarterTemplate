@@ -1,35 +1,34 @@
 ﻿using System;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Burmuruk.Tesis.Editor.Controls
 {
-    public abstract class SubWindow : UnityEditor.Editor, IClearable, IChangesObserver, INameTracker
+    public abstract class SubWindow : UnityEditor.Editor, IClearable, IChangesObserver, IEnableable
     {
-        protected NameSettings _nameControl;
         protected VisualElement _container;
         protected VisualElement _instance;
-        protected ModificationType _modificationType;
+        protected ModificationTypes _modificationType;
 
+        public bool IsActive { get; set; }
         public VisualElement Container { get => _container; }
         public VisualElement Instance { get => _instance; }
-        public TextField TxtName => _nameControl.TxtName;
-        protected ModificationType CurModificationType
+
+        protected ModificationTypes CurModificationType
         {
             get => _modificationType;
             set
             {
-                if (value == ModificationType.None)
+                if (value == ModificationTypes.None || value == ModificationTypes.Add)
                 {
                     _modificationType = value;
                     return;
                 }
-                else if (value == ModificationType.Rename)
+                else if (value == ModificationTypes.Rename)
                 {
-                    _modificationType = ModificationType.Rename;
+                    _modificationType = ModificationTypes.Rename;
                     return;
                 }
-                else if ((_modificationType | ModificationType.Rename) != 0)
+                else if ((_modificationType | ModificationTypes.Rename) != 0)
                 {
                     _modificationType |= value;
                     return;
@@ -41,23 +40,21 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         public Action GoBack;
 
-        public virtual void Initialize(VisualElement container, NameSettings name)
+        public virtual void Initialize(VisualElement container)
         {
-            _nameControl = name;
             _container = container;
         }
 
-        public abstract ModificationType Check_Changes();
+        public abstract ModificationTypes Check_Changes();
 
         public abstract void Clear();
 
         public abstract void Remove_Changes();
     }
 
-    public interface INameTracker
+    public interface IEnableable
     {
-        public TextField TxtName { get; }
-
-        public void Initialize(VisualElement container, NameSettings name);
+        public bool IsActive { get; set; }
+        public void Enable(bool enabled) => IsActive = enabled;
     }
 }

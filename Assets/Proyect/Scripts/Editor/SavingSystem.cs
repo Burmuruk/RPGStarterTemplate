@@ -12,7 +12,7 @@ namespace Burmuruk.Tesis.Editor
         const string DATA_PATH = "Assets/Proyect/Game/ScriptableObjects/Tool/CharacterTag.asset";
 
         public static CharacterTag Data { get; private set; } = null;
-        public static event Action<ModificationType, ElementType, string, CreationData> OnCreationModified;
+        public static event Action<ModificationTypes, ElementType, string, CreationData> OnCreationModified;
 
         public static void Initialize()
         {
@@ -46,7 +46,7 @@ namespace Burmuruk.Tesis.Editor
             return Data.creations[type][id];
         }
 
-        public static string SaveCreation(ElementType type, in string id, in CreationData data, ModificationType modificationType)
+        public static string SaveCreation(ElementType type, in string id, in CreationData data, ModificationTypes modificationType)
         {
             string newId = id;
             bool result = Save_CreationData(type, ref newId, data);
@@ -106,6 +106,16 @@ namespace Burmuruk.Tesis.Editor
 
             return true;
         }
+
+        public static bool Remove(ElementType type, string id)
+        {
+            var lastData = Data.creations[type][id];
+            Data.creations[type].Remove(id);
+
+            OnCreationModified?.Invoke(ModificationTypes.Remove, type, id, lastData);
+
+            return true;
+        }
     }
 
     public interface ISaveable
@@ -115,19 +125,26 @@ namespace Burmuruk.Tesis.Editor
     }
 
     [Flags]
-    public enum ModificationType
+    public enum ModificationTypes
     {
-        None,
-        Add,
-        Remove,
-        EditData,
-        Rename,
-        ColourReasigment
+        None = 0,
+        Add = 1,
+        Remove = 1<<1,
+        EditData = 1 << 2,
+        Rename = 1 << 3,
+        ColourReasigment = 1 << 4
     }
 
     public interface IChangesObserver
     {
-        public ModificationType Check_Changes();
+        public ModificationTypes Check_Changes();
         public void Remove_Changes();
+    }
+
+    public enum CreationsState
+    {
+        None,
+        Creating,
+        Editing,
     }
 }

@@ -8,9 +8,22 @@ namespace Burmuruk.Tesis.Editor.Utilities
 {
     public static class UtilitiesUI
     {
+        private const string BORDER_COLOURS_STYLESHEET_NAME = "BorderColours";
+        private static StyleSheet _hightlight_Colours;
         public static VisualElement pNotification = null;
         public static Label lblNotification;
-        static Regex regName = new Regex(@"(?m)^[a-zA-Z](?!.*\W)+\w*");
+        static Regex regName = new Regex(@"(?m)^[a-zA-Z](?!.*\W)+\w*", RegexOptions.Compiled);
+
+        private static StyleSheet Border_Colours
+        {
+            get
+            {
+                if (_hightlight_Colours == null)
+                    _hightlight_Colours = AssetDatabase.LoadAssetAtPath<StyleSheet>($"Assets/Proyect/Game/UIToolkit/Styles/{BORDER_COLOURS_STYLESHEET_NAME}.uss");
+
+                return _hightlight_Colours;
+            }
+        }
 
         public static void Notify(string message, BorderColour colour)
         {
@@ -48,23 +61,26 @@ namespace Burmuruk.Tesis.Editor.Utilities
                 pNotification.AddToClassList("Disable");
         }
 
-        public static void Highlight(VisualElement textField, bool shouldHighlight, BorderColour colour = BorderColour.HighlightBorder)
+        public static void Highlight(VisualElement element, bool shouldHighlight, BorderColour colour = BorderColour.HighlightBorder)
         {
+            if (!element.styleSheets.Contains(Border_Colours))
+                element.styleSheets.Add(Border_Colours);
+
             string colourText = colour.ToString();
-            RemoveStyleClass(textField, colourText);
+            RemoveStyleClass(element, colourText);
 
             if (shouldHighlight)
             {
-                if (!textField.ClassListContains(colourText))
+                if (!element.ClassListContains(colourText))
                 {
-                    textField.AddToClassList(colourText);
+                    element.AddToClassList(colourText);
                 }
             }
             else
             {
-                if (textField.ClassListContains(colourText))
+                if (element.ClassListContains(colourText))
                 {
-                    textField.RemoveFromClassList(colourText);
+                    element.RemoveFromClassList(colourText);
                 }
             }
 
@@ -134,12 +150,6 @@ namespace Burmuruk.Tesis.Editor.Utilities
                 return false;
             }
 
-            //if (IsTheNameUsed(name))
-            //{
-            //    Notify("The name it's already been used.", BorderColour.Error);
-            //    return false;
-            //}
-
             if (!VerifyVariableName(name))
             {
                 Notify("Invalid name", BorderColour.Error);
@@ -149,12 +159,9 @@ namespace Burmuruk.Tesis.Editor.Utilities
             return true;
         }
 
-        public static void HighlightChanges<T>()
+        public static bool IsDisabled(VisualElement element)
         {
-            //if (a != b)
-            //{
-
-            //}
+            return element.ClassListContains("Disable");
         }
 
         public static VisualElement CreateDefaultTab(string fileName)

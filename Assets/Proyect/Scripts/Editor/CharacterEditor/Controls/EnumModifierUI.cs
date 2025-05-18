@@ -1,17 +1,21 @@
+using Burmuruk.Tesis.Combat;
 using Burmuruk.Tesis.Stats;
 using Burmuruk.Tesis.Utilities;
 using System;
+using UnityEditor;
+using UnityEditor.Compilation;
+using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
 
 namespace Burmuruk.Tesis.Editor.Controls
 {
-    public class EnumModifierUI<T> : IClearable where T : Enum
+    public class EnumModifierUI<T> : IClearable, IUIListContainer<EnumModificationData> where T : Enum
     {
         public const string ContainerName = "EnumModifier";
         EnumEditor enumEditor = new();
-        string path = null;
+        string _path = null;
         State state = State.None;
 
         enum State
@@ -31,6 +35,7 @@ namespace Burmuruk.Tesis.Editor.Controls
         public TextField TxtNewValue { get; private set; }
         public VisualElement EnumContainer { get; private set; }
         public VisualElement NewValueContainer { get; private set; }
+        public T Value { get => (T)EnumField.value; set => EnumField.value = value; }
         private State CurrentState 
         { 
             get => state;
@@ -60,13 +65,15 @@ namespace Burmuruk.Tesis.Editor.Controls
             EnumField.Init(default(T));
             TxtNewValue.RegisterCallback<KeyUpEvent>(OnKeyUp_TxtCharacterType);
 
-            //path
-            path = "";
+            string[] guids = AssetDatabase.FindAssets(typeof(T).Name + " t:Script");
+            if (guids.Length > 0)
+            {
+                _path = AssetDatabase.GUIDToAssetPath(guids[0]);
+            }
 
             EnableContainer(NewValueContainer, false);
+            EnumScheduler.Add(ModificationTypes.EditData, typeof(T), this);
         }
-
-        public T Value => (T)EnumField.value;
 
         private void OnClick_EditValue()
         {
@@ -94,13 +101,19 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             ShowElements(false);
 
-            if (!enumEditor.RemoveOption(path, EnumField.text, out string error))
+            try
             {
-                Notify(error, BorderColour.Error); 
+                if (!enumEditor.RemoveOption(_path, EnumField.text)) return;
+            }
+            catch (InvalidDataExeption e)
+            {
+                Notify(e.Message, BorderColour.Error);
+                CurrentState = State.None;
                 return;
             }
 
-            CurrentState = State.None;
+            EnumScheduler.ChangeData(ModificationTypes.EditData, typeof(T));
+            enumEditor.RecompileScripts();
         }
 
         private void OnClick_AddButton()
@@ -111,6 +124,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             {
                 BtnAddValue.text = "^";
                 ShowElements(true);
+                BtnAddValue.SetEnabled(true);
                 CurrentState = State.Adding; 
             }
             else
@@ -126,46 +140,64 @@ namespace Burmuruk.Tesis.Editor.Controls
             if (evt.keyCode == KeyCode.Return)
             {
                 if (!VerifyVariableName(TxtNewValue.value))
-                    return;
-
-                switch (CurrentState)
                 {
-                    case State.Adding:
-                        if (!Add_EnumValue("CharacterType")) return;
-
-                        break;
-
-                    case State.Editing:
-                        if (!enumEditor.Rename(path, EnumField.text, TxtNewValue.text, out string error))
-                        {
-                            Notify(error, BorderColour.Error);
-                            return;
-                        }
-                        break;
-
-                    default:
-                        return;
+                    Notify("Not valid name", BorderColour.Error);
+                    return;
                 }
 
+                if (IsNameInUse(TxtNewValue.value.ToLower()))
+                {
+                    Notify("name in use", BorderColour.Error);
+                    return;
+                }
+
+                try
+                {
+                    switch (CurrentState)
+                    {
+                        case State.Adding:
+                            if (!enumEditor.AddValue(typeof(T).Name, _path, TxtNewValue.value)) return;
+
+                            break;
+
+                        case State.Editing:
+                            if (!enumEditor.Rename(_path, typeof(T).Name, EnumField.value.ToString(), TxtNewValue.text)) return;
+
+                            break;
+
+                        default:
+                            return;
+                    }
+                }
+                catch (InvalidDataExeption e)
+                {
+                    Notify(e.Message, BorderColour.Error);
+                    return;
+                }
+
+                EnumScheduler.ChangeData(ModificationTypes.EditData, typeof(T));
+                Notify("Chages made", BorderColour.Approved);
+                Debug.Log("finished");
                 ShowElements(false);
                 EnumField.SetValueWithoutNotify(CharacterType.None);
                 CurrentState = State.None;
+
+                enumEditor.RecompileScripts();
             }
         }
 
-        private bool Add_EnumValue(string EnumName)
+        private bool IsNameInUse(string newName)
         {
-            string error = "";
-            //enumEditor.Modify(EnumName, new string[] { emCharacterType.TxtNewValue.value }, "Path", out string error);
-
-            if (!string.IsNullOrEmpty(error))
+            foreach (var name in Enum.GetNames(typeof(T)))
             {
-                Notify(error, BorderColour.Error);
-                return false;
+                if (name.ToLower() == newName)
+                {
+                    Notify("The name already exists", BorderColour.Error);
+                    return true;
+                }
             }
 
-            Notify("Value added", BorderColour.Approved);
-            return true;
+            return false;
         }
 
         private void ShowElements(bool shouldShow = true)
@@ -193,13 +225,15 @@ namespace Burmuruk.Tesis.Editor.Controls
         public virtual void Clear()
         {
             state = State.None;
+            Value = default(T);
             ShowElements(false);
             HighlightButton(false);
         }
 
-        public void OnDataChanged(in string[] newValues)
+        public virtual void EditData(in EnumModificationData newValue)
         {
-            
+            EnumField.Init(default(T));
+            Debug.Log("Initialazing enum");
         }
     }
 }

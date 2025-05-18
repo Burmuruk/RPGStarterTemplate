@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using UnityEngine.UIElements;
 
 namespace Burmuruk.Tesis.Editor
@@ -53,6 +54,35 @@ namespace Burmuruk.Tesis.Editor
             base.Initialize(container, idx);
 
             Pin = container.Q<Button>("btnPin");
+        }
+
+        public void Swap_BasicInfoWith(ElementCreationPinable element)
+        {
+            var (pinned, type, id, name, toggle, amount) =
+                (element.pinned, 
+                element.Type.ToString(), 
+                element.Id,
+                element.NameButton.text, 
+                element.Toggle.value,
+                element.IFAmount.value);
+
+            (element.pinned, element.Id, element.NameButton.text, element.Toggle.value, element.IFAmount.value) =
+                (this.pinned, Id, NameButton.text, Toggle.value, IFAmount.value);
+
+            element.SetType(Type.ToString());
+
+            (this.pinned, Id, NameButton.text, Toggle.value, IFAmount.value) =
+                (pinned, id, name, toggle, amount);
+
+            SetType(type);
+        }
+
+        public void SetInfo(bool pinned, ElementType type, string id, string name)
+        {
+            this.pinned = pinned;
+            SetType(type.ToString());
+            Id = id;
+            NameButton.text = name;
         }
     }
 }

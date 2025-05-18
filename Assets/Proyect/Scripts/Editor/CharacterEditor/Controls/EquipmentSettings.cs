@@ -25,22 +25,33 @@ namespace Burmuruk.Tesis.Editor.Controls
         public EnumModifierUI<EquipmentType> EMBodyPart { get; private set; }
         public VisualElement InfoBodyPlacement { get; private set; }
 
-        public override void Initialize(VisualElement container, NameSettings name)
+        public EquipmentSettings(VisualElement container)
         {
-            base.Initialize(container, name);
+            _container = container;
+            _instance = UtilitiesUI.CreateDefaultTab(INFO_EQUIPMENT_SETTINGS_NAME);
+            _container.hierarchy.Add(_instance);
+        }
 
-            var control = UtilitiesUI.CreateDefaultTab(INFO_EQUIPMENT_SETTINGS_NAME);
-            _container.hierarchy.Add(control);
+        public override void Initialize(VisualElement container)
+        {
+            base.Initialize(container);
+
             BTNBackEquipmentSettings = container.Q<Button>();
             BTNBackEquipmentSettings.clicked += () => GoBack?.Invoke();
 
-            EMBodyPart = new EnumModifierUI<EquipmentType>(container.Q<VisualElement>(EnumModifierUI<EquipmentType>.ContainerName));
+            EMBodyPart = new EnumModifierUI<EquipmentType>(_instance.Q<VisualElement>(EnumModifierUI<EquipmentType>.ContainerName));
 
-            InfoBodyPlacement = container.Q<VisualElement>("infoBodySplit");
+            InfoBodyPlacement = _instance.Q<VisualElement>("infoBodySplit");
             CreateSplitViewEquipment(InfoBodyPlacement);
 
-            var equipmentList = container.Q<VisualElement>(ComponentsList.CONTAINER_NAME);
+            var equipmentList = _instance.Q<VisualElement>(ComponentsList.CONTAINER_NAME);
             MClEquipmentElements = new(equipmentList);
+            MClEquipmentElements.OnElementCreated += DisablePin;
+        }
+
+        private void DisablePin(ElementCreation element)
+        {
+            EnableContainer(element.element.Q<Button>("btnPin"), false);
         }
 
         private void Setup_EquipmentElementButton(int componentIdx)
@@ -87,7 +98,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             int idx = 0;
             foreach (var component in inventory.Components)
             {
-                MClEquipmentElements.AddElement(component.NameButton.text);
+                MClEquipmentElements.AddElement(component.NameButton.text, component.Type.ToString());
                 Setup_EquipmentElementButton(idx++);
             }
         }
@@ -181,21 +192,22 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             MClEquipmentElements.RestartValues();
 
-            foreach (var item in equipment.equipment)
-            {
-                Action<ElementCreation> EditData = (e) =>
+            if (equipment.equipment != null)
+                foreach (var item in equipment.equipment)
                 {
-                    e.Toggle.value = item.Value.equipped;
-                    e.EnumField.value = item.Value.place;
-                };
-                MClEquipmentElements.OnElementCreated += (e) => EditData(e);
-                MClEquipmentElements.OnElementAdded += (e) => EditData(e);
+                    Action<ElementCreation> EditData = (e) =>
+                    {
+                        e.Toggle.value = item.Value.equipped;
+                        e.EnumField.value = item.Value.place;
+                    };
+                    MClEquipmentElements.OnElementCreated += (e) => EditData(e);
+                    MClEquipmentElements.OnElementAdded += (e) => EditData(e);
 
-                MClEquipmentElements.AddElement(item.Key.ToString());
+                    MClEquipmentElements.AddElement(item.Key.ToString());
 
-                MClEquipmentElements.OnElementCreated -= (e) => EditData(e);
-                MClEquipmentElements.OnElementAdded -= (e) => EditData(e);
-            }
+                    MClEquipmentElements.OnElementCreated -= (e) => EditData(e);
+                    MClEquipmentElements.OnElementAdded -= (e) => EditData(e);
+                }
         }
 
         public override void Clear()
@@ -203,16 +215,17 @@ namespace Burmuruk.Tesis.Editor.Controls
             EMBodyPart.Clear();
         }
 
-        public override ModificationType Check_Changes()
+        public override ModificationTypes Check_Changes()
         {
 
 
-            return ModificationType.None;
+            return ModificationTypes.None;
         }
 
         public override void Remove_Changes()
         {
-            LoadEquipment(_Changes);
+            var newData = _Changes;
+            LoadEquipment(newData);
         }
     }
 }

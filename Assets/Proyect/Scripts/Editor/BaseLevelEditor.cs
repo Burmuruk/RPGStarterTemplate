@@ -1,3 +1,4 @@
+using Burmuruk.Tesis.Editor.Controls;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,7 @@ namespace Burmuruk.Tesis.Editor
         Approved,
         Error,
         HighlightBorder,
+        LightBorder,
         StateBorder,
         BuffBorder,
         CharacterBorder,
@@ -27,7 +29,7 @@ namespace Burmuruk.Tesis.Editor
         protected VisualElement container;
 
         protected Dictionary<string, Button> tabButtons = new();
-        protected Dictionary<string, VisualElement> infoContainers = new();
+        protected Dictionary<string, (VisualElement element, ElementType type)> infoContainers = new();
         protected string curTab = "";
         protected string lastTab = "";
 
@@ -61,10 +63,10 @@ namespace Burmuruk.Tesis.Editor
 
             foreach (var curTab in infoContainers.Values)
             {
-                EnableContainer(curTab, false);
+                EnableContainer(curTab.element, false);
             }
 
-            EnableContainer(infoContainers[tab], true);
+            EnableContainer(infoContainers[tab].element, true);
             curTab = tab;
         }
 
@@ -78,9 +80,9 @@ namespace Burmuruk.Tesis.Editor
 
             foreach (var container in infoContainers)
             {
-                if (!container.Value.ClassListContains("Disable"))
+                if (!container.Value.element.ClassListContains("Disable"))
                 {
-                    container.Value.AddToClassList("Disable");
+                    container.Value.element.AddToClassList("Disable");
                 }
             }
 
@@ -92,7 +94,7 @@ namespace Burmuruk.Tesis.Editor
         {
             if (string.IsNullOrEmpty(curTab)) return;
 
-            EnableContainer(infoContainers[curTab], false);
+            EnableContainer(infoContainers[curTab].element, false);
             return;
         }
 

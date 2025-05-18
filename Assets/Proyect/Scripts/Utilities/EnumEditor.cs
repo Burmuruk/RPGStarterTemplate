@@ -1,7 +1,6 @@
 ﻿using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEngine;
 
@@ -9,86 +8,36 @@ namespace Burmuruk.Tesis.Utilities
 {
     public class EnumEditor
     {
-        public bool AddEnumValue(string enumName, string value, string filePath)
+        public bool AddValue(string enumName, string filePath, string value)
         {
-            if (Application.isPlaying) return false;
+            if (Application.isPlaying || !File.Exists(filePath)) return false;
 
             if (HasSpecialCharacter(enumName) || HasSpecialCharacter(value))
                 return false;
 
-            var lines = File.ReadAllLines(filePath);
+            string text = File.ReadAllText(filePath);
 
-            bool containsEnum = false;
-            bool elementAdded = false;
+            string find = @"(?<=\benum\b\s+" + enumName + @"\s*?{(?s).*)(?'lastVal'\w+)\s*?,?(?=\s*?})";
+            string repleace = @"${lastVal}," + "\r\n\t" + value + ",";
+            string result = Regex.Replace(text, find, repleace);
 
-            if (!RewriteFile())
-                return false;
-
-            if (containsEnum && elementAdded)
-            {
-                AssetDatabase.Refresh();
-                RecompileScripts();
-            }
-
-            return containsEnum && elementAdded;
-
-            bool RewriteFile()
-            {
-                bool enumStarted = false;
-                bool endOfEnum = false;
-                string lastLine = "";
-
-                using (var writer = new StreamWriter(filePath))
-                {
-                    foreach (var line in lines)
-                    {
-                        if (line.Contains("{"))
-                        {
-                            if (line.Contains("}") || line.Contains(",")) return false;
-
-                            enumStarted = true;
-                        }
-                        else if (line.Contains("}"))
-                        {
-                            endOfEnum = true;
-                            elementAdded = true;
-
-                            writer.WriteLine($"     {value},");
-                        }
-                        else if (enumStarted && !lastLine.Contains(",") && !endOfEnum)
-                        {
-                            writer.WriteLine(line + ",");
-                            lastLine = line;
-                            continue;
-                        }
-
-                        writer.WriteLine(line);
-                        lastLine = line;
-
-                        if (line.Contains($"enum {enumName}"))
-                            containsEnum = true;
-                    }
-                }
-
-                return true;
-            }
+            File.WriteAllText(filePath, result);
+            return true;
         }
 
-        public bool Modify(string enumName, string[] values, string filePath, out string error)
+        public bool SetValues(string enumName, string filePath, params string[] values)
         {
-            error = "";
-
-            if (Application.isPlaying) 
-            { 
-                error = "Can't continue when running application."; 
-                return false; 
+            if (Application.isPlaying)
+            {
+                throw new InvalidDataException("Can't continue when running application.");
             }
 
             if (HasSpecialCharacter(enumName) || values.Any(chr => HasSpecialCharacter(chr)))
             {
-                error = "Special characteres are not allowed.";
-                return false;
+                throw new InvalidDataException("Special characteres are not allowed.");
             }
+
+            if (!File.Exists(filePath)) return false;
 
             var lines = File.ReadAllLines(filePath);
 
@@ -97,12 +46,6 @@ namespace Burmuruk.Tesis.Utilities
 
             if (!RewriteFile())
                 return false;
-
-            if (containsEnum && elementAdded)
-            {
-                AssetDatabase.Refresh();
-                RecompileScripts();
-            }
 
             return containsEnum && elementAdded;
 
@@ -116,7 +59,7 @@ namespace Burmuruk.Tesis.Utilities
 
                     foreach (var line in lines)
                     {
-                        if (line.Contains("{"))
+                        if (line.Contains("{") && containsEnum)
                         {
                             if (line.Contains("}") || line.Contains(",")) return false;
 
@@ -128,8 +71,12 @@ namespace Burmuruk.Tesis.Utilities
                         }
                         else if (inValues)
                         {
-                            writer.WriteLine(values[i] + ",");
-                            ++i;
+                            while (i < values.Length)
+                            {
+                                writer.WriteLine(values[i] + ",");
+                                ++i;
+                            }
+
                             continue;
                         }
 
@@ -144,44 +91,30 @@ namespace Burmuruk.Tesis.Utilities
             }
         }
 
-        public bool Rename(string filePath, string oldName, string newName, out string error)
+        public bool Rename(string filePath, string enumName, string oldName, string newName)
         {
-            error = "";
-
             if (Application.isPlaying)
             {
-                error = "Can't continue when running application.";
-                return false;
+                throw new InvalidDataException("Can't continue when running application.");
             }
 
-            var lines = File.ReadAllLines(filePath);
-            string lowerName = char.ToLower(oldName[0]) + oldName.Substring(1, oldName.Length - 1);
-            string upperName = char.ToUpper(oldName[0]) + oldName.Substring(1, oldName.Length - 1);
+            string text = File.ReadAllText(filePath);
+            string find = @"(?<=\benum\b\s+" + enumName + @"\s*?{.*)" + oldName + @"\s*?,?(?=.*?})";
+            string repleace = newName + ",";
+            string result = Regex.Replace(text, find, repleace, RegexOptions.Singleline);
 
-            Regex lowRegex = new Regex(lowerName);
-            Regex upperRegex = new Regex(upperName);
-
-            using (var writer = new StreamWriter(filePath))
-            {
-                foreach (var line in lines)
-                {
-                    string newLine = lowRegex.Replace(line, newName);
-                    string newLine2 = upperRegex.Replace(line, newName);
-                }
-            }
+            File.WriteAllText(filePath, result);
 
             return true;
         }
 
-        public bool RemoveOption(string filePath, string optionName, out string error)
+        public bool RemoveOption(string filePath, string optionName)
         {
-            error = "";
-
             if (Application.isPlaying)
             {
-                error = "Can't continue when running application.";
-                return false;
+                throw new InvalidDataException("Can't continue when running application.");
             }
+            if (!File.Exists(filePath)) return false;
 
             var lines = File.ReadAllLines(filePath);
             string lowerName = char.ToLower(optionName[0]) + optionName.Substring(1, optionName.Length - 1);
@@ -196,13 +129,15 @@ namespace Burmuruk.Tesis.Utilities
                 {
                     if (lowRegex.IsMatch(line) || upperRegex.IsMatch(line))
                         continue;
-                } 
+
+                    writer.WriteLine(line);
+                }
             }
 
             return true;
         }
 
-        private void RecompileScripts()
+        public void RecompileScripts()
         {
             CompilationPipeline.RequestScriptCompilation();
         }

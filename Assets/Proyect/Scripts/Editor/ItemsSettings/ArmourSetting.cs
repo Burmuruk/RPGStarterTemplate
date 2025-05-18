@@ -6,20 +6,25 @@ namespace Burmuruk.Tesis.Editor.Controls
 {
     public class ArmourSetting : BaseItemSetting
     {
-        private int _changes;
-
         public EnumModifierUI<EquipmentType> EquipmentPlace { get; private set; }
 
-        public override void Initialize(VisualElement container, NameSettings nameControl)
+        public override void Initialize(VisualElement container, CreationsBaseInfo nameControl)
         {
             base.Initialize(container, nameControl);
 
             EquipmentPlace = new EnumModifierUI<EquipmentType>(container);
         }
 
-        public override void UpdateInfo(InventoryItem data, ItemDataArgs args)
+        public override void UpdateInfo(InventoryItem data, ItemDataArgs args, ItemType type = ItemType.Armor)
         {
-            base.UpdateInfo(data, args);
+            _changes = new ArmourElement();
+            base.UpdateInfo(data, args, type);
+            var armour = data as ArmourElement;
+
+            if (armour == null) return;
+
+            EquipmentPlace.Value = (EquipmentType)armour.GetEquipLocation();
+            (_changes as ArmourElement).Populate(EquipmentPlace.Value);
         }
 
         public override (InventoryItem item, ItemDataArgs args) GetInfo(ItemDataArgs args)
@@ -33,18 +38,47 @@ namespace Burmuruk.Tesis.Editor.Controls
             return (armour, null);
         }
 
-        public override ModificationType Check_Changes()
+        public override ModificationTypes Check_Changes()
         {
-            if ((_nameControl.Check_Changes() & ModificationType.None) == 0)
-                CurModificationType = ModificationType.Rename;
+            if (_changes == null) return CurModificationType = ModificationTypes.Add;
 
-            if (_changes != (int)EquipmentPlace.Value)
+            base.Check_Changes();
+            var location = (EquipmentType)(_changes as ArmourElement).GetEquipLocation();
+
+            if (location != EquipmentPlace.Value)
             {
-                CurModificationType = ModificationType.EditData;
+                CurModificationType = ModificationTypes.EditData;
                 Highlight(EquipmentPlace.EnumField, true);
             }
 
             return CurModificationType;
+        }
+
+        public override string Save()
+        {
+            var modificationType = Check_Changes();
+            if (modificationType == ModificationTypes.None) return null;
+
+            var data = GetInfo(null);
+            CreationData creationData = new CreationData(_nameControl.TxtName.value, data);
+
+            return SavingSystem.SaveCreation(ElementType.Armour, in _id, in creationData, modificationType);
+        }
+
+        public override void Clear()
+        {
+            base.Clear();
+
+            EquipmentPlace.Value = EquipmentType.None;
+            _changes = null;
+        }
+
+        public override void Remove_Changes()
+        {
+            base.Remove_Changes();
+
+            var changes = _changes as ArmourElement;
+            EquipmentPlace.Value = (EquipmentType)changes.GetEquipLocation();
         }
     }
 

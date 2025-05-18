@@ -28,7 +28,7 @@ namespace Burmuruk.Tesis.Editor
         const string INFO_GENERAL_SETTINGS_CHARACTER_NAME = "GeneralSettingsCharacter";
         const string INFO_DIALOGUES_NAME = "infoDialoguesContainer";
         const string INFO_SETUP_NAME = "InfoBase";
-        ComponentsListUI<ElementCreationPinable> creations;
+        ComponentsList<ElementCreationPinable> creations;
         TextField txtSearch_Right;
         TextField txtSearch_Left;
         Button btnClearSearch;
@@ -46,9 +46,7 @@ namespace Burmuruk.Tesis.Editor
         (ElementType type, int idx) currentSettingTag = (ElementType.None, -1);
 
         (ElementType type, string text) lastLeftSearch = default;
-        (ElementType type, string text) lastRightSearch = default;
         ElementType currentFilter = ElementType.None;
-        ElementType rightSearchType = ElementType.None;
 
         public struct TagData
         {
@@ -124,31 +122,30 @@ namespace Burmuruk.Tesis.Editor
             infoMainContainer = container.Q<VisualElement>(INFO_MAIN_CONTAINER_NAME);
             infoContainers = new();
 
-            AddContainer(new string[]
-            {
-                INFO_CHARACTER_NAME,
-                INFO_ITEM_SETTINGS_NAME,
-                INFO_WEAPON_SETTINGS_NAME,
-                INFO_BUFF_SETTINGS_NAME,
-                INFO_ARMOUR_SETTINGS_NAME,
-                INFO_CONSUMABLE_SETTINGS_NAME,
-            }, infoSetup);
+            AddContainer(infoSetup, true,
+                (INFO_CHARACTER_NAME, ElementType.Character),
+                (INFO_ITEM_SETTINGS_NAME, ElementType.Item),
+                (INFO_WEAPON_SETTINGS_NAME, ElementType.Weapon),
+                (INFO_BUFF_SETTINGS_NAME, ElementType.Buff),
+                (INFO_ARMOUR_SETTINGS_NAME, ElementType.Armour),
+                (INFO_CONSUMABLE_SETTINGS_NAME, ElementType.Consumable)
+                );
 
-            AddContainer(new string[] { INFO_GENERAL_SETTINGS_CHARACTER_NAME }, infoRight, false);
-            infoRight.Add(infoContainers[INFO_GENERAL_SETTINGS_CHARACTER_NAME]);
+            AddContainer(infoRight, false, (INFO_GENERAL_SETTINGS_CHARACTER_NAME, ElementType.None));
+            infoRight.Add(infoContainers[INFO_GENERAL_SETTINGS_CHARACTER_NAME].element);
 
-            void AddContainer(string[] names, VisualElement container, bool shouldAdd = true)
+            void AddContainer(VisualElement container, bool shouldAdd, params (string name, ElementType type)[] names)
             {
-                foreach (var containerName in names)
+                foreach (var containerData in names)
                 {
-                    VisualElement newContainer = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/Proyect/Game/UIToolkit/CharacterEditor/Tabs/{containerName}.uxml").Instantiate();
+                    VisualElement newContainer = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/Proyect/Game/UIToolkit/CharacterEditor/Tabs/{containerData.name}.uxml").Instantiate();
                     StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/LineTags.uss");
                     StyleSheet styleSheetColour = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/BorderColours.uss");
                     newContainer.styleSheets.Add(styleSheet);
                     newContainer.styleSheets.Add(styleSheetColour);
 
-                    infoContainers.Add(containerName, newContainer);
-                    tabNames[containerName] = "";
+                    infoContainers.Add(containerData.name, (newContainer, containerData.type));
+                    tabNames[containerData.name] = "";
                     
                     if (shouldAdd)
                         container.Q<ScrollView>("infoContainer").Add(newContainer);
@@ -156,6 +153,11 @@ namespace Burmuruk.Tesis.Editor
                     EnableContainer(newContainer, false);
                 }
             }
+        }
+
+        private void EnableControl(bool shouldEnable)
+        {
+            (CreationControls[infoContainers[curTab].type] as IEnableable).Enable(shouldEnable);
         }
 
         private void CreateTagsContainer()
@@ -213,7 +215,7 @@ namespace Burmuruk.Tesis.Editor
             infoRight = rightPanel.Q<VisualElement>("elementsContainer");
 
             infoSetup = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/Proyect/Game/UIToolkit/CharacterEditor/{INFO_SETUP_NAME}.uxml").Instantiate();
-            nameSettings = new NameSettings(infoSetup);
+            nameSettings = new CreationsBaseInfo(infoSetup);
 
             EnableContainer(infoSetup, false);
             infoRight.Add(infoSetup);
@@ -272,7 +274,7 @@ namespace Burmuruk.Tesis.Editor
         private void Add_SearchElements(VisualElement container, int amount)
         {
             VisualTreeAsset ElementTag = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/CharacterEditor/Elements/ElementTag.uxml");
-            creations = new(container);
+            creations = new (container);
             creations.OnElementClicked += DisplayElementPanel;
             creations.OnElementCreated += (ElementCreationPinable element) =>
             {
@@ -319,10 +321,7 @@ namespace Burmuruk.Tesis.Editor
         {
             var type = (ElementType)creations[elementIdx].Type;
             string id = creations[elementIdx].Id;
-            var data = SavingSystem.Data.creations[type][id];
-
-            SavingSystem.Data.creations[type].Remove(id);
-            OnCreationModified?.Invoke(ModificationType.Remove, type, id, data);
+            SavingSystem.Remove(type, id);
             
             Notify("Element deleted.", BorderColour.Approved);
         }
@@ -337,7 +336,7 @@ namespace Burmuruk.Tesis.Editor
 
             btnsRight_Tag.ForEach(t => Highlight(t.element, false));
             nameSettings.TxtName.value = creations[idx].NameButton.text;
-            CFCreationColor.value = Color.black;
+            nameSettings.Colour.value = Color.black;
 
             int tagIdx = 0;
             foreach (var tag in btnsRight_Tag)
@@ -353,8 +352,9 @@ namespace Burmuruk.Tesis.Editor
             }
 
             EnableContainer(infoSetup, true);
-            infoSetup.Q<Label>("txtState").text = "Editing";
-            settingsState = SettingsState.Editing;
+            //infoSetup.Q<Button>("btnState").text = "Editing";
+            //settingsState = CreationsState.Editing;
+            (CreationControls[type] as BaseInfoTracker).Set_CreationState(CreationsState.Editing);
             btnSettingAccept.text = "Apply";
             editingElement = (type, creations[idx].NameButton.text, idx);
         }
@@ -401,27 +401,24 @@ namespace Burmuruk.Tesis.Editor
             }
         }
 
-        private bool TryEnableCharacterElements(out List<(int elementIdx, ElementType type, string creationId)> enabledButtonsIdx, List<(ElementType type, List<string> id)> namesList)
+        private bool TryEnableCharacterElements(List<(ElementType type, List<string> ids)> names)
         {
             bool enabled = false;
-            enabledButtonsIdx = null;
-            int typeIdx = 0;
 
-            if (namesList == null || namesList.Count == 0) return false;
+            if (names == null || names.Count == 0) return false;
 
             for (int i = 0; i < creations.Components.Count; i++)
             {
             nextTurn:
                 if (creations.Components[i].pinned)
                 {
-                    if (namesList.Count <= 0) continue;
+                    if (names.Count <= 0) continue;
 
-                    for (int k = 0; k < namesList.Count; k++)
+                    for (int k = 0; k < names[0].ids.Count; k++)
                     {
                         if (creations.Components[i].NameButton.text.Contains(GetName(k)))
                         {
                             enabled = true;
-                            namesList.RemoveAt(k);
                             RemoveName(k);
                             ++i;
                             goto nextTurn;
@@ -431,20 +428,21 @@ namespace Burmuruk.Tesis.Editor
                     continue;
                 }
 
-                if (namesList.Count > 0)
+                if (names.Count > 0)
                 {
-                    creations.Components[i].NameButton.text = GetName(0);
+                    creations.Components[i].SetInfo(false, names[0].type, names[0].ids[0], GetName(0));
                     EnableContainer(creations.Components[i].element, true);
 
                     if (tglShowElementColour.value)
-                        Highlight(creations.Components[i].element, true, GetElementColour(namesList[0].type));
-
-                    if (tglShowCustomColour.value)
                     {
-                        //Show custom colour on element
+                        if (tglShowCustomColour.value)
+                        {
+                            //Show custom colour on element
+                        }
+                        else
+                            Highlight(creations.Components[i].element, true, GetElementColour(names[0].type));
                     }
 
-                    (enabledButtonsIdx ??= new()).Add((i, namesList[typeIdx].type, namesList[typeIdx].id[0]));
                     enabled = true;
                     RemoveName(0);
                 }
@@ -457,25 +455,19 @@ namespace Burmuruk.Tesis.Editor
 
             return enabled;
 
-            string GetName(int idx)
-            {
-                return namesList[typeIdx].id[idx];
-            }
+            string GetName(int idx) =>
+                SavingSystem.Data.creations[names[0].type][names[0].ids[idx]].Name;
 
             void RemoveName(int idx)
             {
-                namesList[typeIdx].id.RemoveAt(idx);
+                names[0].ids.RemoveAt(idx);
 
-                if (namesList[typeIdx].id.Count <= 0)
+                if (names[0].ids.Count <= 0)
                 {
-                    namesList.RemoveAt(typeIdx);
+                    names.RemoveAt(0);
                 }
             }
         }
-        //string GetName(int idx)
-        //{
-        //    return charactersLists.creations[namesList[idx].type][namesList[idx].idx];
-        //}
 
         private void SearchElementTag(string text, ElementType searchType)
         {
@@ -513,9 +505,7 @@ namespace Burmuruk.Tesis.Editor
             if (idsFound != null && idsFound.Count > 0)
             {
                 Debug.Log("somenting found");
-                TryEnableCharacterElements(out List<(int, ElementType, string)> idxs, idsFound);
-                UpdateElementsData(idxs);
-
+                TryEnableCharacterElements(idsFound);
                 lastLeftSearch = (searchType, text);
             }
             else
@@ -548,22 +538,6 @@ namespace Burmuruk.Tesis.Editor
             }
         }
 
-        void UpdateElementsData(List<(int elementIdx, ElementType type, string creationId)> idxs)
-        {
-            if (idxs == null) return;
-
-            foreach (var element in idxs)
-            {
-                var cur = creations[element.elementIdx];
-
-                cur.element = creations[element.elementIdx].element;
-                cur.Type = element.type;
-                cur.idx = element.elementIdx;
-                cur.Id = element.creationId;
-                cur.NameButton.text = SavingSystem.Data.creations[element.type][element.creationId].Name;
-            }
-        }
-
         private void SearchAllElements()
         {
             SearchAllElements(ElementType.None);
@@ -576,16 +550,16 @@ namespace Burmuruk.Tesis.Editor
 
             lastLeftSearch = (ElementType.None, "");
             txtSearch_Left.value = "";
-            List<(ElementType type, List<string> id)> values = new();
+            List<(ElementType type, List<string> ids)> values = new();
 
             if (type == ElementType.None)
             {
-                foreach (var elementData in SavingSystem.Data.creations)
+                foreach (var curType in SavingSystem.Data.creations.Keys)
                 {
-                    var ids = SavingSystem.Data.creations[elementData.Key].Select(creation => creation.Key).ToList();
+                    var ids = SavingSystem.Data.creations[curType].Select(creation => creation.Key).ToList();
 
                     if (ids != null && ids.Count > 0)
-                        values.Add((elementData.Key, ids));
+                        values.Add((curType, ids));
                 }
             }
             else if (SavingSystem.Data.creations.ContainsKey(type))
@@ -603,8 +577,7 @@ namespace Burmuruk.Tesis.Editor
 
             if (values.Count > 0)
             {
-                TryEnableCharacterElements(out List<(int, ElementType, string)> idxs, values);
-                UpdateElementsData(idxs);
+                TryEnableCharacterElements(values);
             }
             else
                 DisableElements();
@@ -612,17 +585,31 @@ namespace Burmuruk.Tesis.Editor
 
         protected override void ChangeTab(string tab)
         {
-            if (IsHighlighted(nameSettings.TxtName, out _))
-            {
-                Highlight(nameSettings.TxtName, false);
-                DisableNotification();
-            }
-
             base.ChangeTab(tab);
-            nameSettings.TxtName.SetValueWithoutNotify(tabNames[tab]);
 
             if (!string.IsNullOrEmpty(nameSettings.TxtName.value))
                 VerifyName(nameSettings.TxtName.value);
+
+            if (infoContainers[curTab].type != ElementType.None)
+            {
+                if (CreationControls[infoContainers[curTab].type] is BaseInfoTracker t && t != null)
+                    t.UpdateName();
+
+                if (CreationControls[infoContainers[curTab].type] is IEnableable e && e != null)
+                    e.Enable(true);
+            }
+
+            if (infoContainers.ContainsKey(lastTab) && infoContainers[lastTab].type != ElementType.None)
+            {
+                if (CreationControls[infoContainers[lastTab].type] is ISubWindowsContainer c && c != null)
+                    c.CloseWindows();
+
+                if (CreationControls[infoContainers[lastTab].type] is IEnableable e && e != null)
+                    e.Enable(false);
+            }
+
+            nameSettings.TxtName.Focus();
+            DisableNotification();
         }
 
         #region Events
@@ -708,9 +695,9 @@ namespace Burmuruk.Tesis.Editor
             }
 
             EnableContainer(infoSetup, true);
-            infoSetup.Q<Label>("txtState").text = "Creating";
+            //infoSetup.Q<Button>("btnState").text = "Creating";
+            //settingsState = CreationsState.Creating;
             btnSettingAccept.text = "Create";
-            settingsState = SettingsState.Creating;
 
             btnsRight_Tag.ForEach(t => Highlight(t.element, false));
             Highlight(btnsRight_Tag[idx].element, true);
@@ -727,10 +714,22 @@ namespace Burmuruk.Tesis.Editor
 
             for (int i = 0; i < creations.Components.Count; i++)
             {
+                if (IsDisabled(creations[i].element)) break;
+
                 if (!creations[i].pinned)
                 {
-                    SwapPin(elementIdx, i);
-                    break;
+                    if (i == elementIdx)
+                    {
+                        Pin(elementIdx);
+                        return;
+                    }
+                    else
+                    {
+                        SwapPin(elementIdx, i);
+                        Pin(elementIdx, false);
+                        Pin(i);
+                    }
+                    return;
                 }
             }
         }
@@ -749,49 +748,74 @@ namespace Burmuruk.Tesis.Editor
 
         private void Displace_Pins(int elementIdx)
         {
-            bool moved = false;
+            int last = 0;
 
             for (int i = elementIdx + 1; i < creations.Components.Count; i++)
             {
-                if (creations[i].pinned)
+                if (IsDisabled(creations[i].element))
                 {
-                    SwapPin(i, i - 1);
-                    moved = true;
-                }
-                else
+                    last = i - 1;
                     break;
+                }
+
+                if (!creations[i].pinned)
+                { 
+                    if (i == elementIdx + 1)
+                    {
+                        Pin(elementIdx, false);
+                    }
+                    else
+                    {
+                        SwapPin(i - 1, elementIdx);
+                        Pin(i - 1, false);
+                    }
+                    return;
+                }
             }
 
-            if (!moved)
+            if (last == elementIdx)
             {
-                var data = creations[elementIdx];
-                data.pinned = false;
-                creations[elementIdx] = data;
-                Highlight(creations[elementIdx].Pin, false);
+                Pin(elementIdx, false);
             }
+            else
+            {
+                SwapPin(elementIdx, last);
+                Pin(last, false);
+            }
+        }
+
+        private void Pin(int elementIdx, bool shouldPin = true)
+        {
+            if (shouldPin)
+            {
+                Highlight(creations[elementIdx].Pin, true);
+            }
+            else
+            {
+                Highlight(creations[elementIdx].Pin, true, BorderColour.LightBorder);
+            }
+
+            creations[elementIdx].pinned = shouldPin;
         }
 
         private void SwapPin(int lastTarget, int target)
         {
-            //SavingSystem.Data.creations
-            var lastData = creations[target];
-            lastData.element = creations[lastTarget].element;
-            lastData.pinned = false;
-            var newData = creations[lastTarget];
-            newData.element = creations[target].element;
-            newData.pinned = true;
+            creations[lastTarget].Swap_BasicInfoWith(creations[target]);
+            //var lastData = creations[target];
+            //lastData.element = creations[lastTarget].element;
+            //lastData.pinned = false;
+            //var newData = creations[lastTarget];
+            //newData.element = creations[target].element;
+            //newData.pinned = true;
 
-            creations[lastTarget] = lastData;
-            //creations[lastTarget].ResetExtraValues();
-            creations[target] = newData;
-            //creations[target].ResetExtraValues();
+            //creations[lastTarget] = lastData;
+            ////creations[lastTarget].ResetExtraValues();
+            //creations[target] = newData;
+            ////creations[target].ResetExtraValues();
 
-            var lastText = creations[lastTarget].NameButton.text;
-            creations[lastTarget].NameButton.text = creations[target].NameButton.text;
-            creations[target].NameButton.text = lastText;
-
-            Highlight(creations[lastTarget].Pin, false);
-            Highlight(creations[target].Pin, true);
+            //var lastText = creations[lastTarget].NameButton.text;
+            //creations[lastTarget].NameButton.text = creations[target].NameButton.text;
+            //creations[target].NameButton.text = lastText;
         }
 
         private BorderColour GetElementColour(ElementType type) =>

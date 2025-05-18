@@ -12,14 +12,14 @@ namespace Burmuruk.Tesis.Editor
         const string infoEquipmentName = "EquipmentSettings";
         const string infoInventoryName = "InventorySettings";
 
-        NameSettings nameSettings;
+        CreationsBaseInfo nameSettings;
         FloatField ffHealthValue;
         Button btnBackHealthSettings;
 
         Toggle tglShowElementColour;
         Toggle tglShowCustomColour;
 
-        Dictionary<ElementType, UnityEditor.Editor> CreationControls = new();
+        Dictionary<ElementType, ISaveable> CreationControls = new();
         [SerializeField] List<BuffData> curWeaponsBuffs;
         Dictionary<string, string> tabNames = new();
 
@@ -37,6 +37,11 @@ namespace Burmuruk.Tesis.Editor
         {
             Dictionary<string, string> names = new();
 
+            if (!SavingSystem.Data.creations.ContainsKey(type))
+            {
+                return null;
+            }
+
             foreach (var name in SavingSystem.Data.creations[type])
             {
                 names.Add(name.Key, name.Value.Name);
@@ -48,14 +53,14 @@ namespace Burmuruk.Tesis.Editor
         private void Create_ItemTab()
         {
             var settings = new BaseItemSetting();
-            settings.Initialize(infoContainers[INFO_ITEM_SETTINGS_NAME], nameSettings);
+            settings.Initialize(infoContainers[INFO_ITEM_SETTINGS_NAME].element, nameSettings);
             CreationControls.Add(ElementType.Item, settings);
         }
 
         private void Create_WeaponSettings()
         {
             var settings = new WeaponSetting();
-            settings.Initialize(infoContainers[INFO_WEAPON_SETTINGS_NAME], nameSettings);
+            settings.Initialize(infoContainers[INFO_WEAPON_SETTINGS_NAME].element, nameSettings);
             CreationControls.Add(ElementType.Weapon, settings);
 
             //OnCreationAdded += (type, item) =>
@@ -70,7 +75,8 @@ namespace Burmuruk.Tesis.Editor
         private void Create_BuffSettings()
         {
             BuffSettings buffSettings = new BuffSettings();
-            buffSettings.Initialize(container, nameSettings);
+            buffSettings.Initialize(infoContainers[INFO_BUFF_SETTINGS_NAME].element, nameSettings);
+            CreationControls.Add(ElementType.Buff, buffSettings);
 
             //editingData[ElementType.Buff].data = ScriptableObject.CreateInstance<BuffVisulizer>();
             //var curBuff = editingData[ElementType.Buff].data as BuffVisulizer;
@@ -84,7 +90,7 @@ namespace Burmuruk.Tesis.Editor
             //infoContainers[INFO_CONSUMABLE_SETTINGS_NAME].Add(new InspectorElement(curConsumableData));
 
             var settings = new ConsumableSettings();
-            settings.Initialize(infoContainers[INFO_CONSUMABLE_SETTINGS_NAME], nameSettings);
+            settings.Initialize(infoContainers[INFO_CONSUMABLE_SETTINGS_NAME].element, nameSettings);
 
             CreationControls.Add(ElementType.Consumable, settings);
         }
@@ -92,16 +98,16 @@ namespace Burmuruk.Tesis.Editor
         private void Create_ArmourSettings()
         {
             var settings = new ArmourSetting();
-            settings.Initialize(infoContainers[INFO_ARMOUR_SETTINGS_NAME], nameSettings);
+            settings.Initialize(infoContainers[INFO_ARMOUR_SETTINGS_NAME].element, nameSettings);
             CreationControls.Add(ElementType.Armour, settings);
         }
 
         private void Create_GeneralCharacterSettings()
         {
-            tglShowElementColour = infoContainers[INFO_GENERAL_SETTINGS_CHARACTER_NAME].Q<Toggle>();
+            tglShowElementColour = infoContainers[INFO_GENERAL_SETTINGS_CHARACTER_NAME].element.Q<Toggle>();
             tglShowElementColour.RegisterValueChangedCallback(OnValueChanged_TGLElementColour);
 
-            tglShowCustomColour = infoContainers[INFO_GENERAL_SETTINGS_CHARACTER_NAME].Q<Toggle>();
+            tglShowCustomColour = infoContainers[INFO_GENERAL_SETTINGS_CHARACTER_NAME].element.Q<Toggle>();
             tglShowCustomColour.RegisterValueChangedCallback(OnValueChanged_TGLCustomColour);
         }
 

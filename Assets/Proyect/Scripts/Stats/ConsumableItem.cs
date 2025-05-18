@@ -29,7 +29,7 @@ namespace Burmuruk.Tesis.Stats
             if (buffs != null && buffs.Length > 0)
                 return buffs[0].stat;
 
-            return ConsumableType.None;
+            return ModifiableStat.None;
         }
 
         public void Populate(BuffData[] buffs, float consumptionTime, float areaRadious)
@@ -59,13 +59,6 @@ namespace Burmuruk.Tesis.Stats
 
             callback?.Invoke();
         }
-    }
-
-    public enum ConsumableType
-    {
-        None,
-        Hp,
-        Speed
     }
 
     public interface IPickable

@@ -55,7 +55,9 @@ namespace Burmuruk.Tesis.Editor.Controls
         public void SetValues(Dictionary<string, string> newNames)
         {
             DDBuff.choices.Add("Custom");
-            DDBuff.choices.AddRange(newNames.Keys);
+
+            if (newNames != null)
+                DDBuff.choices.AddRange(newNames.Keys);
         }
 
         /// <summary>

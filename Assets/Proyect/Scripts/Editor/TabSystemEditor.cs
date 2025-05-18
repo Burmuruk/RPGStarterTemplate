@@ -52,14 +52,14 @@ namespace Burmuruk.Tesis.Editor
 
         protected override void GetInfoContainers()
         {
-            infoContainers.Add(infoNavName, container.Q<VisualElement>(infoNavName));
+            infoContainers.Add(infoNavName, (container.Q<VisualElement>(infoNavName), default));
             //infoContainers.Add(infoInteractionName, Parent.Q<VisualElement>(infoInteractionName));
             //infoContainers.Add(infoMissionsName, Parent.Q<VisualElement>(infoMissionsName));
-            infoContainers.Add(infoSavingName, container.Q<VisualElement>(infoSavingName));
+            infoContainers.Add(infoSavingName, (container.Q<VisualElement>(infoSavingName), default));
 
             foreach (var container in infoContainers.Values)
             {
-                container.AddToClassList("Disable");
+                container.element.AddToClassList("Disable");
             }
         }
 
@@ -80,7 +80,7 @@ namespace Burmuruk.Tesis.Editor
 
         private void Show_Missions()
         {
-            if (changesInTab) ;
+            //if (changesInTab) ;
             //Display warning
 
             DisableNotification();
@@ -89,7 +89,7 @@ namespace Burmuruk.Tesis.Editor
 
         private void Show_Interactions()
         {
-            if (changesInTab) ;
+            //if (changesInTab) ;
             //Display warning
 
             DisableNotification();
@@ -104,7 +104,7 @@ namespace Burmuruk.Tesis.Editor
             else
                 Notify("The Navigation map wasn't found.", BorderColour.Error);
 
-            ChangeTab(infoContainers[infoNavName]);
+            ChangeTab(infoContainers[infoNavName].element);
             SelectTabBtn(btnNavName);
             VisualElement navInfo = container.Q<VisualElement>("navInfoContainer");
 

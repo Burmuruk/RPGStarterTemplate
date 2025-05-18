@@ -24,16 +24,21 @@ namespace Burmuruk.Tesis.Editor.Controls
         public Button btnBackInventorySettings { get; private set; }
         public ComponentsListUI<ElementCreation> MClInventoryElements { get; private set; }
 
-        public override void Initialize(VisualElement container, NameSettings name)
+        public InventorySettings(VisualElement container)
         {
-            base.Initialize(container, name);
+            _container = container;
+            _instance = UtilitiesUI.CreateDefaultTab(INFO_INVENTORY_SETTINGS_NAME);
+            _container.Add(_instance);
+        }
 
-            var control = UtilitiesUI.CreateDefaultTab(INFO_INVENTORY_SETTINGS_NAME);
-            _container.Add(control);
-            btnBackInventorySettings = container.Q<Button>();
+        public override void Initialize(VisualElement container)
+        {
+            base.Initialize(container);
+
+            btnBackInventorySettings = _instance.Q<Button>();
             btnBackInventorySettings.clicked += () => GoBack?.Invoke();
-            container.Q<VisualElement>(ComponentsList.CONTAINER_NAME);
-            MClInventoryElements = new ComponentsListUI<ElementCreation>(container);
+            _instance.Q<VisualElement>(ComponentsList.CONTAINER_NAME);
+            MClInventoryElements = new ComponentsListUI<ElementCreation>(_instance);
             MClInventoryElements.DDFType.RegisterValueChangedCallback((evt) => OnValueChanged_EFInventoryType(evt));
             MClInventoryElements.DDFType.SetValueWithoutNotify("None");
             MClInventoryElements.DDFElement.RegisterValueChangedCallback((evt) => OnValueChanged_DDFInventoryElement(evt.newValue));
@@ -130,19 +135,20 @@ namespace Burmuruk.Tesis.Editor.Controls
             elements.RestartValues();
             var newInventory = inventory;
 
-            foreach (var item in inventory.items)
-            {
-                int amount = item.Value;
-                Action<ElementCreation> ChangeValue = (e) => elements.ChangeAmount(e.idx, amount);
-                elements.OnElementAdded += ChangeValue;
-                elements.OnElementCreated += ChangeValue;
+            if (inventory.items != null)
+                foreach (var item in inventory.items)
+                {
+                    int amount = item.Value;
+                    Action<ElementCreation> ChangeValue = (e) => elements.ChangeAmount(e.idx, amount);
+                    elements.OnElementAdded += ChangeValue;
+                    elements.OnElementCreated += ChangeValue;
 
-                if (!elements.AddElement(item.Key.ToString()))
-                    newInventory.items.Remove(item.Key);
+                    if (!elements.AddElement(item.Key.ToString()))
+                        newInventory.items.Remove(item.Key);
 
-                elements.OnElementAdded -= ChangeValue;
-                elements.OnElementCreated -= ChangeValue;
-            }
+                    elements.OnElementAdded -= ChangeValue;
+                    elements.OnElementCreated -= ChangeValue;
+                }
 
             _changes = newInventory;
         }
@@ -152,22 +158,25 @@ namespace Burmuruk.Tesis.Editor.Controls
             MClInventoryElements.Clear();
         }
 
-        public override ModificationType Check_Changes()
+        public override ModificationTypes Check_Changes()
         {
             var inventory = GetInventory();
+
+            if (_changes.items == null) return CurModificationType = ModificationTypes.None;
 
             foreach (var item in inventory.items)
             {
                 if (!_changes.items.ContainsKey(item.Key) || _changes.items[item.Key] != item.Value)
-                    return ModificationType.EditData;
+                    return ModificationTypes.EditData;
             }
 
-            return ModificationType.None;
+            return ModificationTypes.None;
         }
 
         public override void Remove_Changes()
         {
-            LoadInventoryItems(_changes);
+            var newData = _changes;
+            LoadInventoryItems(newData);
         }
     }
 }

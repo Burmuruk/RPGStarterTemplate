@@ -1,9 +1,5 @@
 using Burmuruk.Tesis.Combat;
 using Burmuruk.Tesis.Inventory;
-using Burmuruk.Tesis.Stats;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine.UIElements;
 using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
 
@@ -11,9 +7,6 @@ namespace Burmuruk.Tesis.Editor.Controls
 {
     public class WeaponSetting : ItemBuffReader
     {
-        private Weapon _changesWeapon;
-
-        public EnumField Placement { get; private set; }
         public UnsignedIntegerField Damage { get; private set; }
         public FloatField RateDamage { get; private set; }
         public FloatField MinDistance { get; private set; }
@@ -23,12 +16,11 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         public EnumField EFBodyPart { get; private set; }
         public EnumModifierUI<WeaponType> EMWeaponType { get; private set; }
-        
-        public override void Initialize(VisualElement container, NameSettings name)
+
+        public override void Initialize(VisualElement container, CreationsBaseInfo name)
         {
             base.Initialize(container, name);
 
-            Placement = container.Q<EnumField>("efBodyPart");
             Damage = container.Q<UnsignedIntegerField>("txtDamage");
             RateDamage = container.Q<FloatField>("txtRateDamage");
             MinDistance = container.Q<FloatField>("MinDistance");
@@ -40,7 +32,6 @@ namespace Burmuruk.Tesis.Editor.Controls
             EFBodyPart.Init(EquipmentType.None);
             //var bodyPart = container.Q<EnumField>("efBodyPart");
             //bodyPart.Init(EquipmentPlace.None);
-            Placement.Init(EquipmentType.None);
 
             var typeAdder = container.Q<VisualElement>("TypeAdderWeapon");
             EMWeaponType = new EnumModifierUI<WeaponType>(typeAdder);
@@ -52,39 +43,46 @@ namespace Burmuruk.Tesis.Editor.Controls
             BuffAdder = new BuffAdderUI(container);
         }
 
-        public override void UpdateInfo(InventoryItem data, ItemDataArgs args)
+        public override void UpdateInfo(InventoryItem data, ItemDataArgs args, ItemType type = ItemType.Weapon)
         {
-            base.UpdateInfo(data, args);
+            _changes = new Weapon();
+            base.UpdateInfo(data, args, type);
 
             var weapon = data as Weapon;
             var buffArgs = args as BuffsNamesDataArgs;
 
             if (weapon == null) return;
 
-            Placement.SetValueWithoutNotify(weapon.BodyPart);
+            EFBodyPart.value = weapon.BodyPart;
             Damage.value = (uint)weapon.Damage;
             RateDamage.value = weapon.ReloadTime;
             MinDistance.value = weapon.MinDistance;
             MaxDistance.value = weapon.MaxDistance;
             ReloadTime.value = weapon.ReloadTime;
             MaxAmmo.value = weapon.MaxAmmo;
+            EMWeaponType.Value = (WeaponType)weapon.GetSubType();
+
+            (_changes as Weapon).UpdateInfo(
+                weapon.BodyPart, EMWeaponType.Value, weapon.Damage, weapon.DamageRate,
+                weapon.MinDistance, weapon.MaxDistance, weapon.ReloadTime, weapon.MaxAmmo, weapon.BuffsData);
 
             UpdateBuffs(weapon.BuffsData, buffArgs);
         }
 
         public override (InventoryItem item, ItemDataArgs args) GetInfo(ItemDataArgs args)
         {
-            var createdBuffs = args as CreatedBuffsDataArgs;
+            //var createdBuffs = args as CreatedBuffsDataArgs;
 
-            if (createdBuffs == null) return default;
+            //if (createdBuffs == null) return default;
 
             Weapon weapon = new Weapon();
             weapon.Copy(base.GetInfo(args).item);
 
             (var buffs, var buffsNames) = GetBuffsInfo();
 
-            weapon.Populate(
-                (EquipmentType)Placement.value,
+            weapon.UpdateInfo(
+                (EquipmentType)EFBodyPart.value,
+                EMWeaponType.Value,
                 (int)unchecked(Damage.value),
                 RateDamage.value,
                 MinDistance.value,
@@ -100,82 +98,123 @@ namespace Burmuruk.Tesis.Editor.Controls
         public override void Clear()
         {
             base.Clear();
-            Placement.SetValueWithoutNotify(default);
             Damage.value = 0;
             RateDamage.value = 0;
             MinDistance.value = 0;
             MaxDistance.value = 0;
             ReloadTime.value = 0;
             MaxAmmo.value = 0;
-            EFBodyPart.SetValueWithoutNotify(default);
+            EFBodyPart.value = EquipmentType.None;
             EMWeaponType.Clear();
             BuffAdder.Clear();
+
+            _changes = new Weapon();
         }
 
-        public override ModificationType Check_Changes()
+        public override ModificationTypes Check_Changes()
         {
-            if ((_nameControl.Check_Changes() & ModificationType.None) == 0)
-            {
-                CurModificationType = ModificationType.Rename;
-            }
+            if (_changes == null) return CurModificationType = ModificationTypes.Add;
 
-            if (_changesWeapon.BodyPart != (EquipmentType)Placement.value)
-            {
-                CurModificationType = ModificationType.EditData;
-                Highlight(Placement, true);
-            }
+            base.Check_Changes();
+            var _changesWeapon = _changes as Weapon;
+
             if (_changesWeapon.Damage != Damage.value)
             {
-                CurModificationType = ModificationType.EditData;
+                CurModificationType = ModificationTypes.EditData;
                 Highlight(Damage, true);
             }
             if (_changesWeapon.DamageRate != RateDamage.value)
             {
-                CurModificationType = ModificationType.EditData;
+                CurModificationType = ModificationTypes.EditData;
                 Highlight(RateDamage, true);
             }
             if (_changesWeapon.MinDistance != MinDistance.value)
             {
-                CurModificationType = ModificationType.EditData;
+                CurModificationType = ModificationTypes.EditData;
                 Highlight(MinDistance, true);
             }
             if (_changesWeapon.MaxDistance != MaxDistance.value)
             {
-                CurModificationType = ModificationType.EditData;
+                CurModificationType = ModificationTypes.EditData;
                 Highlight(MaxDistance, true);
             }
             if (_changesWeapon.ReloadTime != ReloadTime.value)
             {
-                CurModificationType = ModificationType.EditData;
+                CurModificationType = ModificationTypes.EditData;
                 Highlight(ReloadTime, true);
             }
             if (_changesWeapon.MaxAmmo != MaxAmmo.value)
             {
-                CurModificationType = ModificationType.EditData;
+                CurModificationType = ModificationTypes.EditData;
                 Highlight(MaxAmmo, true);
             }
             if (_changesWeapon.ReloadTime != ReloadTime.value)
             {
-                CurModificationType = ModificationType.EditData;
+                CurModificationType = ModificationTypes.EditData;
                 Highlight(ReloadTime, true);
             }
             if (_changesWeapon.MaxAmmo != MaxAmmo.value)
             {
-                CurModificationType = ModificationType.EditData;
+                CurModificationType = ModificationTypes.EditData;
                 Highlight(MaxAmmo, true);
             }
-            //if (_changesWeapon.BodyPart != (EquipmentType)EFBodyPart.value)
-            //{
-            //    hasChanges = true;
-            //    Highlight(EFBodyPart, true);
-            //}
-            if ((WeaponType)_changesWeapon.GetSubType() != (WeaponType)Damage.value)
+            if (_changesWeapon.BodyPart != (EquipmentType)EFBodyPart.value)
             {
-                CurModificationType = ModificationType.EditData;
+                CurModificationType = ModificationTypes.EditData;
+                Highlight(EFBodyPart, true);
+            }
+            if ((WeaponType)_changesWeapon.GetSubType() != EMWeaponType.Value)
+            {
+                CurModificationType = ModificationTypes.EditData;
                 Highlight(EMWeaponType.Name, true);
             }
 
             return CurModificationType;
+        }
+
+        public override string Save()
+        {
+            var modificationType = Check_Changes();
+
+            if ((modificationType & ModificationTypes.None) != 0)
+                return null;
+
+            var data = GetInfo(null);
+            CreationData creationData = new CreationData(_nameControl.TxtName.text, data);
+
+            return SavingSystem.SaveCreation(ElementType.Weapon, in _id, in creationData, modificationType);
+        }
+
+        public override CreationData Load(ElementType type, string id)
+        {
+            CreationData? result = SavingSystem.Load(type, id);
+
+            if (result.HasValue)
+            {
+                _id = id;
+                (var item, var args) = ((InventoryItem, ItemDataArgs))result.Value.data;
+                UpdateInfo(item, args);
+                Set_CreationState(CreationsState.Editing);
+            }
+
+            return result.Value;
+        }
+
+        public override void Remove_Changes()
+        {
+            base.Remove_Changes();
+
+            var changes = _changes as Weapon;
+
+            Damage.value = unchecked((uint)changes.Damage);
+            RateDamage.value = changes.DamageRate;
+            MinDistance.value = changes.MinDistance;
+            MaxDistance.value = changes.MaxDistance;
+            ReloadTime.value = changes.ReloadTime;
+            MaxAmmo.value = changes.MaxAmmo;
+            EFBodyPart.value = changes.BodyPart;
+            EMWeaponType.Value = (WeaponType)changes.GetSubType();
+            BuffAdder.Remove_Changes();
         }
     }
 }

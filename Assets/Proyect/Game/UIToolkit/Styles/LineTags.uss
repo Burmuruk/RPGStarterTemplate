@@ -84,18 +84,6 @@
 .LineExtraButton {
     min-width: 25px;
     max-width: 30px;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    border-top-left-radius: 3px;
-    border-top-right-radius: 3px;
-    border-bottom-right-radius: 3px;
-    border-bottom-left-radius: 3px;
-    border-left-color: rgb(87, 83, 83);
-    border-right-color: rgb(87, 83, 83);
-    border-top-color: rgb(87, 83, 83);
-    border-bottom-color: rgb(87, 83, 83);
     background-color: rgb(42, 42, 42);
     color: rgb(231, 228, 228);
     font-size: 12px;

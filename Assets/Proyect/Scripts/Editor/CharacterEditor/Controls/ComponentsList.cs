@@ -17,7 +17,6 @@ namespace Burmuruk.Tesis.Editor.Controls
     public class ComponentsList<T> : ComponentsList, IClearable where T : ElementCreationUI, new()
     {
         List<int> _amounts;
-        protected Action<string, BorderColour> notifyCallback;
         public Action<int> OnElementClicked = delegate { };
 
         public Action<T> OnElementCreated = delegate { };
@@ -99,11 +98,28 @@ namespace Burmuruk.Tesis.Editor.Controls
             return false;
         }
 
-        public bool AddElement(string value)
+        public bool AddElement(string name, string type)
         {
-            if (value == "None") return false;
+            if (!AddNewElement(name, type, out int? componentIdx))
+                return false;
 
-            int? componentIdx = null;
+            OnElementAdded(Components[componentIdx.Value]);
+            return true;
+        }
+
+        public bool AddElement(string name)
+        {
+            if (!AddNewElement(name, name, out int? componentIdx))
+                return false;
+
+            OnElementAdded(Components[componentIdx.Value]);
+            return true;
+        }
+
+        private bool AddNewElement(string name, string type, out int? componentIdx)
+        {
+            componentIdx = null;
+            if (name == "None") return false;
 
             if (CreationValidator == null)
             {
@@ -111,19 +127,20 @@ namespace Burmuruk.Tesis.Editor.Controls
             }
             else
             {
-                componentIdx = CreationValidator(Components, value);
+                componentIdx = CreationValidator(Components, name);
             }
 
             if (componentIdx == -1)
             {
                 int newIdx = 0;
-                CreateNewComponent(value, out newIdx);
+                CreateNewComponent(name, type, out newIdx);
                 componentIdx = newIdx;
             }
             else if (!componentIdx.HasValue)
                 return false;
 
-            Components[componentIdx.Value].NameButton.text = value;
+            Components[componentIdx.Value].NameButton.text = name;
+            Components[componentIdx.Value].SetType(type);
 
             if (Components[componentIdx.Value] is ElementComponent)
             {
@@ -132,9 +149,9 @@ namespace Burmuruk.Tesis.Editor.Controls
 
                 if (compType == ComponentType.Equipment)
                 {
-                    var comps = (from c in Components 
-                                where (ComponentType)c.Type == ComponentType.Inventory && !c.element.ClassListContains("Disable")
-                                select c).ToArray();
+                    var comps = (from c in Components
+                                 where (ComponentType)c.Type == ComponentType.Inventory && !c.element.ClassListContains("Disable")
+                                 select c).ToArray();
 
                     if (comps == null || comps.Length == 0)
                     {
@@ -144,7 +161,6 @@ namespace Burmuruk.Tesis.Editor.Controls
                 }
             }
 
-            OnElementAdded(Components[componentIdx.Value]);
             return true;
         }
 
@@ -165,15 +181,17 @@ namespace Burmuruk.Tesis.Editor.Controls
             return componentIdx;
         }
 
-        protected virtual T CreateNewComponent(string value, out int idx)
+        protected virtual T CreateNewComponent(string value, string type, out int idx)
         {
             idx = Components.Count;
 
             VisualTreeAsset element = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/CharacterEditor/Elements/ElementComponent.uxml");
             StyleSheet basicStyle = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/BasicSS.uss");
+            StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/LineTags.uss");
+            StyleSheet styleSheetColour = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/BorderColours.uss");
             var component = new T();
             component.Initialize(element.Instantiate(), idx);
-            component.SetType(value);
+            component.SetType(type);
 
             Components.Add(component);
             Container.Add(Components[idx].element);
@@ -182,6 +200,8 @@ namespace Burmuruk.Tesis.Editor.Controls
             int newIdx = idx;
             component.NameButton.clicked += () => OnElementClicked(newIdx);
             component.element.styleSheets.Add(basicStyle);
+            component.element.styleSheets.Add(styleSheet);
+            component.element.styleSheets.Add(styleSheetColour);
             StartAmount(component, idx);
             OnElementCreated(component);
 
@@ -199,7 +219,7 @@ namespace Burmuruk.Tesis.Editor.Controls
                     goto case ComponentType.Health;
 
                 case ComponentType.Health:
-                    //SetClickableButtonColour(componentIdx);
+                    SetClickableButtonColour(componentIdx);
                     break;
 
                 default:
@@ -208,6 +228,12 @@ namespace Burmuruk.Tesis.Editor.Controls
                     Components[componentIdx].NameButton.style.backgroundColor = new Color(0.1647059f, 0.1647059f, 0.1647059f);
                     break;
             }
+        }
+
+        private void SetClickableButtonColour(int componentIdx)
+        {
+            Components[componentIdx].NameButton.AddToClassList("ClickableBtn");
+            Components[componentIdx].NameButton.style.backgroundColor = new Color(0.4627451f, 0.4627451f, 4627451f);
         }
 
         protected virtual void RemoveComponent(int idx)
@@ -220,7 +246,7 @@ namespace Burmuruk.Tesis.Editor.Controls
                     {
                         if ((ComponentType)component.Type == ComponentType.Equipment)
                         {
-                            notifyCallback("Equipment requires an Inventory component to store the items", BorderColour.Error);
+                            Notify("Equipment requires an Inventory component to store the items", BorderColour.Error);
                             return;
                         }
                     }

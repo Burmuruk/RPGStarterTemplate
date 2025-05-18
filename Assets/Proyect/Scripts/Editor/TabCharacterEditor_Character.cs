@@ -1,6 +1,5 @@
 using Burmuruk.Tesis.Editor.Controls;
 using Burmuruk.Tesis.Stats;
-using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
@@ -9,7 +8,6 @@ namespace Burmuruk.Tesis.Editor
 {
     public partial class TabCharacterEditor : BaseLevelEditor
     {
-        ColorField CFCreationColor;
         Button btnSettingAccept;
         Button btnSettingCancel;
 
@@ -26,14 +24,6 @@ namespace Burmuruk.Tesis.Editor
         const string BTN_SETTINGS_ACCEPT_NAME = "btnSettingAccept";
         const string BTN_SETTINGS_CANCEL_NAME = "btnSettingCancel";
         (ElementType type, string name, int elementIdx) editingElement = default;
-        SettingsState settingsState;
-
-        enum SettingsState
-        {
-            None,
-            Creating,
-            Editing,
-        }
 
         public class StatsVisualizer : ScriptableObject
         {
@@ -50,8 +40,9 @@ namespace Burmuruk.Tesis.Editor
 
         private void Create_CharacterTab()
         {
-            CharacterSettings characterSettings = new CharacterSettings();
-            characterSettings.Initialize(infoContainers[INFO_CHARACTER_NAME], nameSettings);
+            ScriptableObject.CreateInstance<CharacterSettings>();
+            CharacterSettings characterSettings = new CharacterSettings(infoSetup.Q<ScrollView>("infoContainer").Q("unity-content-container"));
+            characterSettings.Initialize(infoContainers[INFO_CHARACTER_NAME].element, nameSettings);
 
             CreationControls.Add(ElementType.Character, characterSettings);
         }
@@ -59,150 +50,91 @@ namespace Burmuruk.Tesis.Editor
         private void OnCancel_BtnSetting()
         {
             ElementType type = currentSettingTag.type;
-            ((IChangesObserver)CreationControls[type]).Remove_Changes();
+            var state = (CreationControls[type] as BaseInfoTracker).CreationsState;
 
-            //switch (currentSettingTag.type)
-            //{
-            //    case ElementType.Character:
-            //        settingsElements[ElementType.Character].DiscardChanges();
-            //        break;
-            //    case ElementType.Weapon:
-            //    case ElementType.Consumable:
-            //    case ElementType.Item:
-            //    case ElementType.Armour:
-
-            //        if (settingsState != SettingsState.Editing)
-            //            nameSettings.TxtName.value = "";
-
-            //        CFCreationColor.value = Color.black;
-
-            //        (settingsElements[currentSettingTag.type] as IClearable).Clear();
-            //        break;
-
-            //    case ElementType.Buff:
-            //        CurBuffData.data.creationId = null;
-            //        CurBuffData.visualizer.buff = default;
-            //        EditorUtility.SetDirty(CurBuffData.visualizer);
-            //        break;
-
-            //    default: break;
-            //}
-        }
-
-        private void OnAccept_BtnAccept()
-        {
-            switch (settingsState)
+            switch (state)
             {
-                case SettingsState.None:
+                case CreationsState.None:
                     break;
 
-                case SettingsState.Creating:
-                    if (!Save_Creation())
-                        return;
+                case CreationsState.Creating:
+                    ((IClearable)CreationControls[type]).Clear();
                     break;
 
-                case SettingsState.Editing:
-                    if (!Edit_Creation())
-                        return;
+                case CreationsState.Editing:
+                    ((IChangesObserver)CreationControls[type]).Remove_Changes();
                     break;
 
                 default:
                     break;
             }
+        }
 
-            OnCancel_BtnSetting();
+        private void OnAccept_BtnAccept()
+        {
+            ElementType type = currentSettingTag.type;
+            var state = (CreationControls[type] as BaseInfoTracker).CreationsState;
 
-            settingsState = SettingsState.None;
-            EnableContainer(infoSetup, false);
-            Highlight(btnsRight_Tag[currentSettingTag.idx].element, false);
-            currentSettingTag = (ElementType.None, -1);
-            editingElement = (ElementType.None, "", -1);
+            try
+            {
+                switch (state)
+                {
+                    case CreationsState.None:
+                        break;
 
-            SearchAllElements();
+                    case CreationsState.Creating:
+                        if (!Save_Creation())
+                            return;
+
+                        (CreationControls[type] as IClearable).Clear();
+                        break;
+
+                    case CreationsState.Editing:
+                        if (!Edit_Creation())
+                            return;
+                        break;
+
+                    default:
+                        break;
+                }
+
+                OnCancel_BtnSetting();
+                EnableContainer(infoSetup, false);
+                ChangeTab(INFO_GENERAL_SETTINGS_CHARACTER_NAME);
+                //EnableContainer(infoSetup, false);
+                Highlight(btnsRight_Tag[currentSettingTag.idx].element, false);
+                currentSettingTag = (ElementType.None, -1);
+                editingElement = (ElementType.None, "", -1);
+
+                SearchAllElements();
+            }
+            catch (InvalidExeption e)
+            {
+                Notify(e.Name, BorderColour.Error);
+                throw;
+            }
         }
 
         private bool Edit_Creation()
         {
-            ElementType type = currentSettingTag.type;
-            string result = CreationControls[type].Save();
-
-            if (result != null)
+            try
             {
-                Notify(result, BorderColour.Error);
-                return false;
+                ElementType type = currentSettingTag.type;
+                string result = CreationControls[type].Save();
+
+                if (result != null)
+                {
+                    Notify(result, BorderColour.Error);
+                    return false;
+                }
+
+                Notify("Changes saved", BorderColour.Approved);
+                return true;
             }
-
-            Notify("Changes saved", BorderColour.Approved);
-            return true;
-
-            //switch (type)
-            //{
-            //    case ElementType.Character:
-            //        result = SaveChanges_Character(editingElement.name, curData.creationId, txtNameCreation.value);
-            //        break;
-
-            //    case ElementType.Buff:
-
-            //        var visualizer = curData.data as BuffVisulizer;
-
-            //        //if (!settingsElements[currentSettingTag.type].CheckChanges(visualizer.buff, out List<VisualElement> changes))
-            //        //    return false;
-
-            //        var buff = charactersLists.creations[ElementType.Buff][curData.creationId];
-
-            //        result = Save_CreationData(ElementType.Buff, buff.Name, ref curData.creationId, visualizer.buff, txtNameCreation.text);
-            //        break;
-
-            //    case ElementType.Item:
-            //    case ElementType.Armour:
-
-            //        var creationData = (InventoryItem)editingData[type].data;
-
-            //        if (!settingsElements[currentSettingTag.type].CheckChanges(creationData, null, out List<VisualElement> changes, out modType))
-            //            return false;
-
-            //        result = Save_Creation();
-            //        break;
-
-            //    case ElementType.Weapon:
-            //    case ElementType.Consumable:
-
-            //        (var item, var args) = ((InventoryItem, BuffsNamesDataArgs))editingData[type].data;
-
-            //        if (!settingsElements[currentSettingTag.type].CheckChanges(item, args, out List<VisualElement> bChanges, out modType))
-            //            return false;
-
-            //        newData = type switch
-            //        {
-            //            ElementType.Item => settingsElements[ElementType.Item].GetInfo(null).item,
-            //            ElementType.Weapon => GetBuffsIds(ElementType.Weapon),
-            //            ElementType.Armour => settingsElements[ElementType.Armour].GetInfo(null).item,
-            //            ElementType.Consumable => GetBuffsIds(ElementType.Consumable),
-            //            _ => null
-            //        };
-
-            //        result = Save_CreationData(type, curData.name, ref curData.creationId, newData, curData.name);
-
-            //        break;
-
-            //    default: break;
-            //}
-
-            //if (result)
-            //{
-            //    OnCreationModified?.Invoke(modType, type, curData.creationId, new CreationData(curData.name, newData));
-            //    Notify("Element edited.", BorderColour.Approved);
-            //}
-            //else
-            //    return false;
-
-            //return true;
-        }
-
-        private void SetClickableButtonColour(int componentIdx)
-        {
-            creations[componentIdx].NameButton.AddToClassList("ClickableBtn");
-            creations[componentIdx].NameButton.style.backgroundColor = new Color(0.4627451f, 0.4627451f, 4627451f);
+            catch (InvalidExeption e)
+            {
+                throw e;
+            }
         }
     }
 }

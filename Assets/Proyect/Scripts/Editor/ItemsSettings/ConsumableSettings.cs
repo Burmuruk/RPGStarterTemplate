@@ -1,7 +1,6 @@
 using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine.UIElements;
 using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
 
@@ -9,24 +8,22 @@ namespace Burmuruk.Tesis.Editor.Controls
 {
     public class ConsumableSettings : ItemBuffReader
     {
-        ConsumableItem _changes;
-
         public FloatField ConsumptionTime { get; private set; }
         public FloatField AreaRadious { get; private set; }
 
-        public override void Initialize(VisualElement container, NameSettings name)
+        public override void Initialize(VisualElement container, CreationsBaseInfo name)
         {
             base.Initialize(container, name);
 
             BuffAdder = new BuffAdderUI(container);
             ConsumptionTime = container.Q<FloatField>("ffConsumptionTime");
             AreaRadious = container.Q<FloatField>("ffAreaRadious");
-            _changes = new ConsumableItem();
         }
 
-        public override void UpdateInfo(InventoryItem data, ItemDataArgs args)
+        public override void UpdateInfo(InventoryItem data, ItemDataArgs args, ItemType type = ItemType.Consumable)
         {
-            base.UpdateInfo(data, args);
+            _changes = new ConsumableItem();
+            base.UpdateInfo(data, args, type);
             var consumable = data as ConsumableItem;
             var buffArgs = args as BuffsNamesDataArgs;
 
@@ -34,6 +31,7 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             ConsumptionTime.value = consumable.ConsumptionTime;
             AreaRadious.value = consumable.AreaRadious;
+            (_changes as ConsumableItem).Populate(consumable.Buffs, ConsumptionTime.value, AreaRadious.value);
 
             UpdateBuffs(consumable.Buffs, buffArgs);
         }
@@ -60,52 +58,75 @@ namespace Burmuruk.Tesis.Editor.Controls
             BuffAdder.Clear();
             ConsumptionTime.value = 0;
             AreaRadious.value = 0;
+
+            _changes = null;
         }
 
         #region Saving
-        public override ModificationType Check_Changes()
+        public override ModificationTypes Check_Changes()
         {
-            //throw new InvalidNameExeption();
+            if (_changes == null) return CurModificationType = ModificationTypes.Add;
 
-            if ((_nameControl.Check_Changes() | ModificationType.None) != 0)
+            CurModificationType = ModificationTypes.None;
+            var lastData = _changes as ConsumableItem;
+            base.Check_Changes();
+
+            if ((BuffAdder.Check_Changes() & ModificationTypes.None) != 0)
             {
-                CurModificationType = ModificationType.Rename;
+                CurModificationType = ModificationTypes.EditData;
             }
 
-            if ((BuffAdder.Check_Changes() | ModificationType.None) != 0)
-            {
-                CurModificationType = ModificationType.EditData;
-            }
-
-            if (ConsumptionTime.value != _changes.ConsumptionTime)
+            if (ConsumptionTime.value != lastData.ConsumptionTime)
             {
                 Highlight(ConsumptionTime, true, BorderColour.HighlightBorder);
 
-                CurModificationType = ModificationType.EditData;
+                CurModificationType = ModificationTypes.EditData;
             }
-            if (AreaRadious.value != _changes.AreaRadious)
+
+            if (AreaRadious.value != lastData.AreaRadious)
             {
                 Highlight(AreaRadious, true, BorderColour.HighlightBorder);
 
-                CurModificationType = ModificationType.EditData;
+                CurModificationType = ModificationTypes.EditData;
             }
 
             return CurModificationType;
         }
 
+        public override void Remove_Changes()
+        {
+            base.Remove_Changes();
+
+            var changes = _changes as ConsumableItem;
+
+            BuffAdder.Remove_Changes();
+            ConsumptionTime.value = changes.ConsumptionTime;
+            AreaRadious.value = changes.AreaRadious;
+        }
+
         public override string Save()
         {
-            if (Check_Changes()) return null;
+            if ((Check_Changes() & ModificationTypes.None) != 0)
+                return null;
 
             var data = GetBuffsIds(ElementType.Buff);
             CreationData creationData = new CreationData(TxtName.text, data);
 
-            return SavingSystem.SaveCreation(ElementType.Buff, in _id, in creationData);
+            return SavingSystem.SaveCreation(ElementType.Consumable, in _id, in creationData, CurModificationType);
         }
 
         public override CreationData Load(ElementType type, string id)
         {
-            return SavingSystem.Load(type, id).Value;
+            CreationData? result = SavingSystem.Load(type, id);
+
+            if (!result.HasValue) return default;
+
+            _id = id;
+            (var item, var args) = ((InventoryItem, BuffsNamesDataArgs))result.Value.data;
+            UpdateInfo(item, args);
+            Set_CreationState(CreationsState.Editing);
+
+            return result.Value;
         }
         #endregion
     }

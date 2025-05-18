@@ -12,14 +12,14 @@
 
     internal class InvalidNameExeption : InvalidExeption
     {
-        public InvalidNameExeption(string name = "Nombre no váldo") : base(name)
+        public InvalidNameExeption(string name = "Invalid name") : base(name)
         {
         }
     }
 
     internal class InvalidDataExeption : InvalidExeption
     {
-        public InvalidDataExeption(string name = "Información inválida detectada.") : base(name)
+        public InvalidDataExeption(string name = "Invalid information") : base(name)
         {
         }
     }

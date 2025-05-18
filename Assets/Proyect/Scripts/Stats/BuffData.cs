@@ -5,6 +5,7 @@ namespace Burmuruk.Tesis.Stats
     [Serializable]
     public struct BuffData
     {
+        public string name;
         public ModifiableStat stat;
         public float value;
         public float duration;

@@ -1,4 +1,4 @@
-﻿namespace Burmuruk.Tesis.Stats
+namespace Burmuruk.Tesis.Stats
 {
     public enum CharacterType
     {
@@ -9,6 +9,6 @@
         HordeChief,
         Hologram,
         Flock,
-        Boss
+        Boss,
     }
 }
