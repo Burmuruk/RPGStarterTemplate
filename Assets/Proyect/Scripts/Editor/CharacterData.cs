@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Burmuruk.Tesis.Editor
 {
-    struct CharacterData
+    public struct CharacterData
     {
         public string characterName;
         public Color color;
@@ -21,13 +21,13 @@ namespace Burmuruk.Tesis.Editor
 
     public struct Inventory
     {
-        public Dictionary<ElementType, int> items;
+        public Dictionary<string, int> items;
     }
 
     public struct Equipment
     {
         public Inventory inventory;
-        public Dictionary<ElementType, EquipData> equipment;
+        public Dictionary<string, EquipData> equipment;
 
         public Equipment(Inventory inventory)
         {

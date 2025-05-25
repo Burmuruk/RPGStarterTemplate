@@ -6,9 +6,12 @@
             <ui:Label tabindex="-1" text="General settings" parse-escape-sequences="true" display-tooltip-when-elided="true" class="Title" style="-unity-text-align: lower-center; font-size: 14px;" />
         </ui:VisualElement>
         <ui:Label tabindex="-1" text="Results" parse-escape-sequences="true" display-tooltip-when-elided="true" class="Title" />
-        <ui:TextField picking-mode="Ignore" label="Destination" value="Assets/" class="LineElements" />
+        <ui:TextField picking-mode="Ignore" label="Destination" value="Assets" name="txtLocation" class="LineElements" />
+        <ui:VisualElement name="pButtons" class="LineElements" style="justify-content: center; flex-shrink: 0; margin-top: 10px; margin-bottom: 15px;">
+            <ui:Button text="Generate all elements" parse-escape-sequences="true" display-tooltip-when-elided="true" name="btnGenerateElements" class="ClickableBtn" style="flex-shrink: 0; min-height: 20px;" />
+        </ui:VisualElement>
         <ui:Label tabindex="-1" text="Customization" parse-escape-sequences="true" display-tooltip-when-elided="true" class="Title" />
         <ui:Toggle label="Show type colour" name="tglShowTypeColour" class="LineElements" />
-        <ui:Toggle label="Test" name="ShowCustomColours" class="LineElements" />
+        <ui:Toggle label="Show custom colours" name="ShowCustomColours" class="LineElements" />
     </ui:VisualElement>
 </ui:UXML>

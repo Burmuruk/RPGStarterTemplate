@@ -15,7 +15,6 @@ namespace Burmuruk.Tesis.Editor
         CreationsBaseInfo nameSettings;
         FloatField ffHealthValue;
         Button btnBackHealthSettings;
-
         Toggle tglShowElementColour;
         Toggle tglShowCustomColour;
 
@@ -26,11 +25,9 @@ namespace Burmuruk.Tesis.Editor
         private void Setup_Coponents()
         {
             CreationScheduler.creationsNames = GetCreationNames;
-            //OnCreationModified += (modification, type, id, data) =>
-            //{
-            //    var info = new BaseCreationInfo(id, data.Name, data);
-            //    CreationScheduler.ChangeData(modification, type, id, info);
-            //};
+            var generalSettings = new GeneralCharacterSettings();
+            CreationControls.Add(ElementType.None, generalSettings);
+            generalSettings.Initialize(infoRight, CreationControls);
         }
 
         private Dictionary<string, string> GetCreationNames(ElementType type)
@@ -62,14 +59,6 @@ namespace Burmuruk.Tesis.Editor
             var settings = new WeaponSetting();
             settings.Initialize(infoContainers[INFO_WEAPON_SETTINGS_NAME].element, nameSettings);
             CreationControls.Add(ElementType.Weapon, settings);
-
-            //OnCreationAdded += (type, item) =>
-            //{
-            //    if (type == ElementType.Buff)
-            //    {
-            //        UpdateBuffEnumTypes(settings.BuffAdder);
-            //    }
-            //};
         }
 
         private void Create_BuffSettings()
@@ -77,18 +66,10 @@ namespace Burmuruk.Tesis.Editor
             BuffSettings buffSettings = new BuffSettings();
             buffSettings.Initialize(infoContainers[INFO_BUFF_SETTINGS_NAME].element, nameSettings);
             CreationControls.Add(ElementType.Buff, buffSettings);
-
-            //editingData[ElementType.Buff].data = ScriptableObject.CreateInstance<BuffVisulizer>();
-            //var curBuff = editingData[ElementType.Buff].data as BuffVisulizer;
-
-            //infoContainers[INFO_BUFF_SETTINGS_NAME].Add(new InspectorElement(curBuff));
         }
 
         private void Create_ConsumableSettings()
         {
-            //curConsumableData = ScriptableObject.CreateInstance<ConsumableItem>();
-            //infoContainers[INFO_CONSUMABLE_SETTINGS_NAME].Add(new InspectorElement(curConsumableData));
-
             var settings = new ConsumableSettings();
             settings.Initialize(infoContainers[INFO_CONSUMABLE_SETTINGS_NAME].element, nameSettings);
 
@@ -113,19 +94,12 @@ namespace Burmuruk.Tesis.Editor
 
         private void OnValueChanged_TGLCustomColour(ChangeEvent<bool> evt)
         {
-            Show_ElementsColours(tglShowCustomColour);
+            searchBar.ShowCustomColour = evt.newValue;
         }
 
         private void OnValueChanged_TGLElementColour(ChangeEvent<bool> evt)
         {
-            Show_ElementsColours(tglShowElementColour);
-        }
-
-        private void Show_ElementsColours(Toggle toggle)
-        {
-            toggle.value = !toggle.value;
-
-            SearchAllElements();
+            searchBar.ShowElementColour = evt.newValue;
         }
     }
 }

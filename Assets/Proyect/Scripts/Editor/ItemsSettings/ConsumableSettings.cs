@@ -31,7 +31,7 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             ConsumptionTime.value = consumable.ConsumptionTime;
             AreaRadious.value = consumable.AreaRadious;
-            (_changes as ConsumableItem).Populate(consumable.Buffs, ConsumptionTime.value, AreaRadious.value);
+            (_changes as ConsumableItem).UpdateInfo(consumable.Buffs, ConsumptionTime.value, AreaRadious.value);
 
             UpdateBuffs(consumable.Buffs, buffArgs);
         }
@@ -43,7 +43,7 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             (var buffs, var buffsNames) = GetBuffsInfo();
 
-            newItem.Populate(
+            newItem.UpdateInfo(
                 buffs.ToArray(),
                 ConsumptionTime.value,
                 AreaRadious.value
@@ -104,12 +104,12 @@ namespace Burmuruk.Tesis.Editor.Controls
             AreaRadious.value = changes.AreaRadious;
         }
 
-        public override string Save()
+        public override bool Save()
         {
             if ((Check_Changes() & ModificationTypes.None) != 0)
-                return null;
+                return false;
 
-            var data = GetBuffsIds(ElementType.Buff);
+            var data = GetBuffsIds();
             CreationData creationData = new CreationData(TxtName.text, data);
 
             return SavingSystem.SaveCreation(ElementType.Consumable, in _id, in creationData, CurModificationType);
@@ -123,8 +123,8 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             _id = id;
             (var item, var args) = ((InventoryItem, BuffsNamesDataArgs))result.Value.data;
-            UpdateInfo(item, args);
             Set_CreationState(CreationsState.Editing);
+            UpdateInfo(item, args);
 
             return result.Value;
         }

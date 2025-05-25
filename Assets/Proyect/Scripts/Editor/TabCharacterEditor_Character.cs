@@ -105,13 +105,10 @@ namespace Burmuruk.Tesis.Editor
                 Highlight(btnsRight_Tag[currentSettingTag.idx].element, false);
                 currentSettingTag = (ElementType.None, -1);
                 editingElement = (ElementType.None, "", -1);
-
-                SearchAllElements();
             }
-            catch (InvalidExeption e)
+            catch (InvalidDataExeption e)
             {
                 Notify(e.Name, BorderColour.Error);
-                throw;
             }
         }
 
@@ -120,11 +117,11 @@ namespace Burmuruk.Tesis.Editor
             try
             {
                 ElementType type = currentSettingTag.type;
-                string result = CreationControls[type].Save();
+                bool result = CreationControls[type].Save();
 
-                if (result != null)
+                if (!result)
                 {
-                    Notify(result, BorderColour.Error);
+                    Notify("Couldn't save changes.", BorderColour.Error);
                     return false;
                 }
 

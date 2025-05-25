@@ -24,7 +24,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             if (armour == null) return;
 
             EquipmentPlace.Value = (EquipmentType)armour.GetEquipLocation();
-            (_changes as ArmourElement).Populate(EquipmentPlace.Value);
+            (_changes as ArmourElement).UpdateInfo(EquipmentPlace.Value);
         }
 
         public override (InventoryItem item, ItemDataArgs args) GetInfo(ItemDataArgs args)
@@ -33,7 +33,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             var baseInfo = base.GetInfo(args);
             armour.Copy(baseInfo.Item1);
 
-            armour.Populate((EquipmentType)EquipmentPlace.EnumField.value);
+            armour.UpdateInfo((EquipmentType)EquipmentPlace.EnumField.value);
 
             return (armour, null);
         }
@@ -54,10 +54,10 @@ namespace Burmuruk.Tesis.Editor.Controls
             return CurModificationType;
         }
 
-        public override string Save()
+        public override bool Save()
         {
             var modificationType = Check_Changes();
-            if (modificationType == ModificationTypes.None) return null;
+            if (modificationType == ModificationTypes.None) return false;
 
             var data = GetInfo(null);
             CreationData creationData = new CreationData(_nameControl.TxtName.value, data);

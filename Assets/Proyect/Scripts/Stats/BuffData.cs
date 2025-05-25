@@ -1,10 +1,12 @@
 ﻿using System;
+using UnityEngine;
 
 namespace Burmuruk.Tesis.Stats
 {
     [Serializable]
     public struct BuffData
     {
+        [Tooltip("Use it to remember it's functionality. It doesn't serves as ID.")]
         public string name;
         public ModifiableStat stat;
         public float value;

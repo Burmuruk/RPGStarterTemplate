@@ -51,24 +51,25 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         private void OnValueChanged_TxtName(ChangeEvent<string> evt)
         {
-            if (!VerifyName(evt.newValue))
+            if (!evt.newValue.VerifyName())
             {
                 Highlight(TxtName, true, BorderColour.Error);
-                return;
             }
-
-            if (_creationsState == CreationsState.Editing && IsTheNameUsed(evt.newValue))
+            else if (_creationsState != CreationsState.Editing && IsTheNameUsed(evt.newValue))
             {
                 Highlight(TxtName, true, BorderColour.Error);
                 Notify("Name in use", BorderColour.Error);
             }
-
-            Highlight(TxtName, false);
+            else
+            {
+                Highlight(TxtName, false);
+                DisableNotification();
+            }
         }
 
         private bool ValidateName()
         {
-            if (!VerifyName(TxtName.value))
+            if (!TxtName.value.VerifyName())
             {
                 Highlight(TxtName, true, BorderColour.Error);
                 throw new InvalidNameExeption();
@@ -96,15 +97,6 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             //characterData.color = evt.newValue;
             //((CharacterData)editingData[ElementType.Character].data).color = evt.newValue;
-        }
-
-        private void OnKeyUp_txtNameCreation(KeyUpEvent evt)
-        {
-            if (!VerifyName(TxtName.value))
-            {
-                Highlight(TxtName, true, BorderColour.Error);
-                return;
-            }
         }
 
         public bool IsTheNameUsed(string name)

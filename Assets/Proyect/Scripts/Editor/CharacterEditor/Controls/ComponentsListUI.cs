@@ -13,16 +13,19 @@ namespace Burmuruk.Tesis.Editor.Controls
             DDFType = container.Q<DropdownField>("ddfType");
             DDFElement = container.Q<DropdownField>("ddfElement");
 
-            DDFElement.RegisterValueChangedCallback(AddComponent);
             VisualElement element = new VisualElement();
             element.style.height = 50;
             element.style.width = 30;
             container.hierarchy.Add(element);
         }
 
-        private void AddComponent(ChangeEvent<string> evt)
+        public void AddComponent(ChangeEvent<string> evt)
         {
-            if (Check_HasCharacterComponent(evt.newValue)) return;
+            if (Check_HasCharacterComponent(evt.newValue))
+            {
+                DDFElement.SetValueWithoutNotify("None");
+                return;
+            }
 
             if (DDFType == null)
                 AddElement(evt.newValue);
@@ -45,22 +48,7 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         private void UpdateTxtAmount(int idx, int newValue)
         {
-            if (newValue < 0)
-            {
-                UtilitiesUI.Notify("Negative values are not allowed", BorderColour.Error);
-                return;
-            }
-
-            var amount = newValue - Amounts[idx];
-
-            if (amount < 0)
-            {
-                ChangeAmount(idx, 0);
-            }
-            else
-            {
-                ChangeAmount(idx, amount);
-            }
+            ChangeAmount(idx, newValue);
         }
 
         public override void Clear()

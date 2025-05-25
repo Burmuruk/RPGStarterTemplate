@@ -10,10 +10,12 @@ using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
 
 namespace Burmuruk.Tesis.Editor.Controls
 {
-    public class EquipmentSettings : SubWindow
+    public class EquipmentSettings : SubWindow, IUIListContainer<BaseCreationInfo>
     {
         const string INFO_EQUIPMENT_SETTINGS_NAME = "EquipmentSettings";
         Equipment _Changes = default;
+        Inventory _inventory;
+        Queue<string> _itemsIds = new();
 
         class EquipmentVisualizer : ScriptableObject
         {
@@ -47,7 +49,59 @@ namespace Burmuruk.Tesis.Editor.Controls
             var equipmentList = _instance.Q<VisualElement>(ComponentsList.CONTAINER_NAME);
             MClEquipmentElements = new(equipmentList);
             MClEquipmentElements.OnElementCreated += DisablePin;
+            MClEquipmentElements.AddElementExtraData += Set_Id;
+            RegisterToChanges();
         }
+
+        private void Set_Id(ElementCreation creation)
+        {
+            if (_itemsIds.Count <= 0) return;
+
+            creation.Id = _itemsIds.Dequeue();
+        }
+
+        #region Changes traker
+        private void RegisterToChanges()
+        {
+            ElementType[] elements = new ElementType[]
+            {
+                ElementType.Item,
+                ElementType.Consumable,
+                ElementType.Weapon,
+                ElementType.Armour,
+            };
+
+            foreach (var element in elements)
+                CreationScheduler.Add(ModificationTypes.Rename, element, this);
+
+            foreach (var element in elements)
+                CreationScheduler.Add(ModificationTypes.Remove, element, this);
+        }
+
+        public virtual void RenameCreation(in BaseCreationInfo newValue)
+        {
+            foreach (var component in MClEquipmentElements.Components)
+            {
+                if (component.Id == newValue.Id)
+                {
+                    component.NameButton.text = newValue.Name;
+                    return;
+                }
+            }
+        }
+
+        public virtual void RemoveData(in BaseCreationInfo newValue)
+        {
+            for (int i = 0; i < MClEquipmentElements.Components.Count; i++)
+            {
+                if (MClEquipmentElements[i].Id == newValue.Id)
+                {
+                    MClEquipmentElements.RemoveComponent(i);
+                    return;
+                }
+            }
+        }
+        #endregion
 
         private void DisablePin(ElementCreation element)
         {
@@ -59,23 +113,23 @@ namespace Burmuruk.Tesis.Editor.Controls
             var type = (ElementType)MClEquipmentElements[componentIdx].Type;
             if (type == ElementType.Armour || type == ElementType.Weapon || type == ElementType.Ability)
             {
-                MClEquipmentElements.Components[componentIdx].Toggle.SetEnabled(true);
+                MClEquipmentElements[componentIdx].Toggle.SetEnabled(true);
             }
             else
             {
-                MClEquipmentElements.Components[componentIdx].Toggle.SetEnabled(false);
+                MClEquipmentElements[componentIdx].Toggle.SetEnabled(false);
             }
 
-            if (!MClEquipmentElements.Components[componentIdx].Toggle.ClassListContains("Disable"))
+            if (!MClEquipmentElements[componentIdx].Toggle.ClassListContains("Disable"))
                 return;
 
-            EnableContainer(MClEquipmentElements.Components[componentIdx].RemoveButton, false);
-            EnableContainer(MClEquipmentElements.Components[componentIdx].IFAmount, false);
-            EnableContainer(MClEquipmentElements.Components[componentIdx].Toggle, true);
+            EnableContainer(MClEquipmentElements[componentIdx].RemoveButton, false);
+            //EnableContainer(MClEquipmentElements[componentIdx].IFAmount, false);
+            EnableContainer(MClEquipmentElements[componentIdx].Toggle, true);
 
-            MClEquipmentElements.Components[componentIdx].Toggle.RegisterValueChangedCallback((evt) => OnValueChanged_TglEquipment(evt.newValue, componentIdx));
-            MClEquipmentElements.Components[componentIdx].EnumField.Init(EquipmentType.None);
-            MClEquipmentElements.Components[componentIdx].EnumField.RegisterValueChangedCallback((evt) => OnValueChanged_EFEquipment(evt.newValue, componentIdx));
+            MClEquipmentElements[componentIdx].Toggle.RegisterValueChangedCallback((evt) => OnValueChanged_TglEquipment(evt.newValue, componentIdx));
+            MClEquipmentElements[componentIdx].EnumField.Init(EquipmentType.None);
+            MClEquipmentElements[componentIdx].EnumField.RegisterValueChangedCallback((evt) => OnValueChanged_EFEquipment(evt.newValue, componentIdx));
         }
 
         private void OnValueChanged_EFEquipment(Enum newValue, int componentIdx)
@@ -90,18 +144,29 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         public void Load_EquipmentFromList(ComponentsListUI<ElementCreation> inventory)
         {
-            for (int i = 0; i < MClEquipmentElements.Components.Count; i++)
-            {
-                EnableContainer(MClEquipmentElements.Components[i].element, false);
-            }
+            MClEquipmentElements.Components.ForEach(c => EnableContainer(c.element, false));
 
             int idx = 0;
             foreach (var component in inventory.Components)
             {
+                _itemsIds.Enqueue(component.Id);
                 MClEquipmentElements.AddElement(component.NameButton.text, component.Type.ToString());
                 Setup_EquipmentElementButton(idx++);
             }
         }
+
+        //public void Load_InventoryItems(in Inventory inventory)
+        //{
+        //    MClEquipmentElements.Components.ForEach(c => EnableContainer(c.element, false));
+        //    _inventory = inventory;
+
+        //    int idx = 0;
+        //    foreach (var component in inventory.items)
+        //    {
+        //        MClEquipmentElements.AddElement(component.NameButton.text, component.Type.ToString());
+        //        Setup_EquipmentElementButton(idx++);
+        //    }
+        //}
 
         private void CreateSplitViewEquipment(VisualElement container)
         {
@@ -174,11 +239,9 @@ namespace Burmuruk.Tesis.Editor.Controls
             {
                 if (MClEquipmentElements[i].Toggle.value)
                 {
-                    var type = (ElementType)MClEquipmentElements[i].Type;
-
-                    equipment.equipment.TryAdd(type, new EquipData()
+                    equipment.equipment.TryAdd(MClEquipmentElements[i].Id, new EquipData()
                     {
-                        type = type,
+                        type = (ElementType)MClEquipmentElements[i].Type,
                         place = Enum.Parse<EquipmentType>(MClEquipmentElements[i].EnumField.text),
                         equipped = true,
                     });
@@ -200,10 +263,13 @@ namespace Burmuruk.Tesis.Editor.Controls
                         e.Toggle.value = item.Value.equipped;
                         e.EnumField.value = item.Value.place;
                     };
+                    if (!SavingSystem.Data.TryGetCreation(item.Key, out var data, out var type))
+                        continue;
+
                     MClEquipmentElements.OnElementCreated += (e) => EditData(e);
                     MClEquipmentElements.OnElementAdded += (e) => EditData(e);
 
-                    MClEquipmentElements.AddElement(item.Key.ToString());
+                    MClEquipmentElements.AddElement(data.Name, type.ToString());
 
                     MClEquipmentElements.OnElementCreated -= (e) => EditData(e);
                     MClEquipmentElements.OnElementAdded -= (e) => EditData(e);

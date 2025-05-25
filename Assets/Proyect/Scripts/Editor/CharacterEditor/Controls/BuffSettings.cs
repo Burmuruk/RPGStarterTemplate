@@ -60,11 +60,6 @@ namespace Burmuruk.Tesis.Editor.Controls
             _changesBuff = new NamedBuff(data.name, data);
         }
 
-        public override void UpdateName()
-        {
-            TxtName.value = TempName;
-        }
-
         public override void Clear()
         {
             Value.value = 0;
@@ -133,11 +128,11 @@ namespace Burmuruk.Tesis.Editor.Controls
             return CurModificationType;
         }
 
-        public string Save()
+        public bool Save()
         {
             var result = Check_Changes();
             if ((result & ModificationTypes.None) != 0)
-                return "No changes found";
+                return false;
 
             var data = new CreationData(_nameControl.TxtName.value, GetInfo());
 
@@ -156,8 +151,8 @@ namespace Burmuruk.Tesis.Editor.Controls
             {
                 BuffData newData = (BuffData)data.Value.data;
                 _id = id;
-                UpdateInfo(newData);
                 Set_CreationState(CreationsState.Editing);
+                UpdateInfo(newData);
                 return data.Value;
             }
         }

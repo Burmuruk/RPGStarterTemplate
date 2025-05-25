@@ -50,6 +50,8 @@ namespace Burmuruk.Tesis.Editor.Controls
         public abstract void Clear();
 
         public abstract void Remove_Changes();
+
+        public virtual void Enable(bool enabled) => IsActive = enabled;
     }
 
     public interface IEnableable

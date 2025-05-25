@@ -5,27 +5,36 @@ using UnityEngine;
 
 namespace Burmuruk.Tesis.Inventory
 {
+    [RequireComponent(typeof(MeshRenderer))]
     public class InventoryEquipDecorator : MonoBehaviour, IInventory
     {
-        [SerializeField] List<InitalEquipedItemData> initialItems;
-        [SerializeField] Inventory inventory;
-        [SerializeField] Equipment equipment;
+        [SerializeField] List<InitalEquipedItemData> _initialItems;
+        [SerializeField] Inventory _inventory;
+        [SerializeField] Equipment _equipment;
 
         [Serializable]
-        struct InitalEquipedItemData
+        public struct InitalEquipedItemData
         {
-            [SerializeField] InventoryItem item;
-            [SerializeField] bool isEquip;
-            [SerializeField] Character character;
+            [SerializeField] InventoryItem _item;
+            [SerializeField] bool _isEquip;
+            [SerializeField, Tooltip("Leave empty to use a Chraracter component attached to this GameObject")] 
+            Character _character;
 
-            public readonly InventoryItem Item { get =>  item; }
-            public readonly bool IsEquiped {  get => isEquip; }
-            public readonly Character Character { get => character; }
+            public InventoryItem Item { get => _item; private set => _item = value; }
+            public bool IsEquiped {  get => _isEquip; private set => _isEquip = value; }
+            public Character Character { get => _character; private set => _character = value; }
+
+            public void Initilize(InventoryItem item, bool equip, Character character = null)
+            {
+                Item = item;
+                IsEquiped = equip;
+                Character = character;
+            }
         }
 
-        EquipeableItem alarmedRemovedItem = default;
-        (Character player, EquipeableItem item) alarmedEquipItem = default;
-        public ref Equipment Equipped { get => ref equipment; }
+        EquipeableItem _alarmedRemovedItem = default;
+        (Character player, EquipeableItem item) _alarmedEquipItem = default;
+        public ref Equipment Equipped { get => ref _equipment; }
 
         public event Action OnTryDeleteEquiped;
         public event Action OnTryAlreadyEquiped;
@@ -35,7 +44,7 @@ namespace Burmuruk.Tesis.Inventory
             InitInventory();
         }
 
-        public void SetInventory(Inventory inventory) => this.inventory = inventory;
+        public void SetInventory(Inventory inventory) => this._inventory = inventory;
 
         public bool TryEquip(Character player, InventoryItem item, out List<EquipeableItem> unequippedItems)
         {
@@ -45,7 +54,7 @@ namespace Burmuruk.Tesis.Inventory
             var equiped = (EquipeableItem)item;
             if (equiped.Characters.Contains(player)) return false;
 
-            alarmedEquipItem = (player, (EquipeableItem)item);
+            _alarmedEquipItem = (player, (EquipeableItem)item);
 
             if (equiped.IsEquip && !CheckHaveMoreItems(item.ID))
             {
@@ -53,13 +62,13 @@ namespace Burmuruk.Tesis.Inventory
                 return false;
             }
 
-            unequippedItems = UnequipWeaponSlot(player, alarmedEquipItem.item);
+            unequippedItems = UnequipWeaponSlot(player, _alarmedEquipItem.item);
             Equip();
             return true;
 
             bool CheckHaveMoreItems(in int itemId)
             {
-                return inventory.GetItemCount(itemId) > equiped.Characters.Count;
+                return _inventory.GetItemCount(itemId) > equiped.Characters.Count;
             }
         }
 
@@ -79,13 +88,13 @@ namespace Burmuruk.Tesis.Inventory
 
         private void Equip()
         {
-            var (player, equipeableItem) = alarmedEquipItem;
+            var (player, equipeableItem) = _alarmedEquipItem;
             equipeableItem.Equip(player);
 
             VerifyBonus(equipeableItem, player);
             UpdateModel(player, equipeableItem);
 
-            alarmedEquipItem = default;
+            _alarmedEquipItem = default;
         }
 
         private void VerifyBonus(EquipeableItem equipeableItem, Character player)
@@ -96,16 +105,21 @@ namespace Burmuruk.Tesis.Inventory
 
         private void InitInventory()
         {
-            if (initialItems != null)
+            if (_initialItems != null)
             {
-                foreach (var itemData in initialItems)
+                foreach (var itemData in _initialItems)
                 {
                     Add(itemData.Item.ID);
 
                     if (itemData.IsEquiped)
                     {
-                        var item = inventory.GetItem(itemData.Item.ID);
-                        TryEquip(itemData.Character, itemData.Item, out _);
+                        var character = itemData.Character;
+                        if (itemData.Character == null)
+                            character = gameObject.GetComponent<Character>();
+
+                        if (character == null) return;
+
+                        TryEquip(character, itemData.Item, out _);
                     }
                 }
             }
@@ -134,16 +148,16 @@ namespace Burmuruk.Tesis.Inventory
 
         public bool Add(int id)
         {
-            return inventory.Add(id);
+            return _inventory.Add(id);
         }
 
         public bool Remove(int id)
         {
-            var item = inventory.GetItem(id);
+            var item = _inventory.GetItem(id);
 
             if (item == null) return false;
 
-            alarmedRemovedItem = (EquipeableItem)item;
+            _alarmedRemovedItem = (EquipeableItem)item;
 
             if (((EquipeableItem)item).IsEquip)
             {
@@ -158,26 +172,26 @@ namespace Burmuruk.Tesis.Inventory
 
         private void RemoveAlarmedItem()
         {
-            if (alarmedRemovedItem == null) return;
+            if (_alarmedRemovedItem == null) return;
 
-            inventory.Remove(alarmedRemovedItem.ID);
+            _inventory.Remove(_alarmedRemovedItem.ID);
 
-            alarmedRemovedItem = default;
+            _alarmedRemovedItem = default;
         }
 
         public InventoryItem GetItem(int id)
         {
-            return inventory.GetItem(id);
+            return _inventory.GetItem(id);
         }
 
         public List<InventoryItem> GetList(ItemType type)
         {
-            return inventory.GetList(type);
+            return _inventory.GetList(type);
         }
 
         public List<InventoryItem> GetEquipedItems(ItemType itemType, Character character)
         {
-            var items = inventory.GetList(itemType);
+            var items = _inventory.GetList(itemType);
 
             List<InventoryItem> equipedItems = new(); 
 
@@ -195,7 +209,7 @@ namespace Burmuruk.Tesis.Inventory
 
         public int GetItemCount(int id)
         {
-            return inventory.GetItemCount(id);
+            return _inventory.GetItemCount(id);
         }
     }
 }

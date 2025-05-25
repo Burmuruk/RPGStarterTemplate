@@ -1,5 +1,4 @@
-﻿using Burmuruk.Tesis.Control;
-using Burmuruk.Tesis.Inventory;
+﻿using Burmuruk.Tesis.Inventory;
 using System;
 using UnityEngine;
 using Character = Burmuruk.Tesis.Control.Character;
@@ -7,17 +6,17 @@ using Character = Burmuruk.Tesis.Control.Character;
 namespace Burmuruk.Tesis.Stats
 {
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Consumable", order = 3)]
-    public class ConsumableItem : EquipeableItem, IUsable
+    public class ConsumableItem : EquipeableItem, IUsable, IBuffUser
     {
         [Space(), Header("Attributes")]
-        [SerializeField] BuffData[] buffs;
+        [SerializeField] BuffData[] _buffs;
         [SerializeField] float consumptionTime;
         [SerializeField] float areaRadious;
 
         //public int Value { get => value; }
         public float ConsumptionTime { get => consumptionTime; }
         public float AreaRadious { get => areaRadious; }
-        public BuffData[] Buffs { get => buffs; }
+        public BuffData[] Buffs { get => _buffs; }
 
         public override object GetEquipLocation()
         {
@@ -26,27 +25,27 @@ namespace Burmuruk.Tesis.Stats
 
         public override object GetSubType()
         {
-            if (buffs != null && buffs.Length > 0)
-                return buffs[0].stat;
+            if (_buffs != null && _buffs.Length > 0)
+                return _buffs[0].stat;
 
             return ModifiableStat.None;
         }
 
-        public void Populate(BuffData[] buffs, float consumptionTime, float areaRadious)
+        public void UpdateInfo(BuffData[] buffs, float consumptionTime, float areaRadious)
         {
-             (this.buffs, this.consumptionTime, this.areaRadious) =
-             (buffs, consumptionTime, areaRadious);
+            (this._buffs, this.consumptionTime, this.areaRadious) =
+            (buffs, consumptionTime, areaRadious);
         }
 
         public virtual void Use(Character character, object args, Action callback)
         {
-            foreach (var buff in buffs)
+            foreach (var buff in _buffs)
             {
                 if (buff.stat == ModifiableStat.HP)
                 {
                     if (buff.value < 0)
                     {
-                        BuffsManager.Instance.AddBuff(character, buff, () => character.Health.ApplyDamage((int)buff.value)); 
+                        BuffsManager.Instance.AddBuff(character, buff, () => character.Health.ApplyDamage((int)buff.value));
                     }
                     else
                         BuffsManager.Instance.AddBuff(character, buff, () => character.Health.Heal((int)buff.value));
@@ -59,6 +58,8 @@ namespace Burmuruk.Tesis.Stats
 
             callback?.Invoke();
         }
+
+        public void UpdateBuffData(BuffData[] buffData) => _buffs = buffData;
     }
 
     public interface IPickable

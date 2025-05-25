@@ -64,9 +64,9 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             (_changes as Weapon).UpdateInfo(
                 weapon.BodyPart, EMWeaponType.Value, weapon.Damage, weapon.DamageRate,
-                weapon.MinDistance, weapon.MaxDistance, weapon.ReloadTime, weapon.MaxAmmo, weapon.BuffsData);
+                weapon.MinDistance, weapon.MaxDistance, weapon.ReloadTime, weapon.MaxAmmo, weapon.Buffs);
 
-            UpdateBuffs(weapon.BuffsData, buffArgs);
+            UpdateBuffs(weapon.Buffs, buffArgs);
         }
 
         public override (InventoryItem item, ItemDataArgs args) GetInfo(ItemDataArgs args)
@@ -172,14 +172,14 @@ namespace Burmuruk.Tesis.Editor.Controls
             return CurModificationType;
         }
 
-        public override string Save()
+        public override bool Save()
         {
             var modificationType = Check_Changes();
 
             if ((modificationType & ModificationTypes.None) != 0)
-                return null;
+                return false;
 
-            var data = GetInfo(null);
+            var data = GetBuffsIds();
             CreationData creationData = new CreationData(_nameControl.TxtName.text, data);
 
             return SavingSystem.SaveCreation(ElementType.Weapon, in _id, in creationData, modificationType);
@@ -192,9 +192,9 @@ namespace Burmuruk.Tesis.Editor.Controls
             if (result.HasValue)
             {
                 _id = id;
-                (var item, var args) = ((InventoryItem, ItemDataArgs))result.Value.data;
-                UpdateInfo(item, args);
+                (var item, var args) = ((InventoryItem, BuffsNamesDataArgs))result.Value.data;
                 Set_CreationState(CreationsState.Editing);
+                UpdateInfo(item, args);
             }
 
             return result.Value;

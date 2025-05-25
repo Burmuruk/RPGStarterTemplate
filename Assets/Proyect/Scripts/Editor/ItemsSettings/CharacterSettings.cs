@@ -20,6 +20,7 @@ namespace Burmuruk.Tesis.Editor.Controls
         CharacterData? _characterData;
         private string _id;
 
+        CharacterTab _lastTab;
         CharacterTab curTab = CharacterTab.None;
         VisualElement statsContainer;
         StatsVisualizer basicStats = null;
@@ -59,7 +60,11 @@ namespace Burmuruk.Tesis.Editor.Controls
             _instance = container;
 
             ComponentsList = new ComponentsListUI<ElementComponent>(container);
+            ComponentsList.DDFElement.RegisterValueChangedCallback(ComponentsList.AddComponent);
             ComponentsList.OnElementClicked += OpenComponentSettings;
+            ComponentsList.CreationValidator += ContainsCreation;
+            ComponentsList.AddElementExtraData += Setup_ComponentButton;
+            ComponentsList.OnElementRemoved += Clear_ComponentData;
             Setup_EMCharacterType();
             var instance = ScriptableObject.CreateInstance<StatsVisualizer>();
             statsContainer = container.Q<VisualElement>(STATS_CONTAINER_NAME);
@@ -69,11 +74,16 @@ namespace Burmuruk.Tesis.Editor.Controls
             Adder = new(adderUI, statsContainer);
 
             Populate_AddComponents();
-            //populate_efcharactertype();
-            //components.ddfelement.registervaluechangedcallback((e) => components.addelement(e.newvalue));
-            //components.creationvalidator += containscreation;
-
             CreateSubTabs();
+        }
+
+        private void Clear_ComponentData(ElementComponent element)
+        {
+            var tabType = Get_TabType((ComponentType)element.Type);
+
+            if (!subTabs.ContainsKey(tabType)) return;
+
+            subTabs[tabType].Clear();
         }
 
         private void Populate_AddComponents()
@@ -98,7 +108,6 @@ namespace Burmuruk.Tesis.Editor.Controls
         private void CreateSubTabs()
         {
             subTabs.Add(CharacterTab.None, this);
-            //var parent = _instance.parent.Q<ScrollView>("infoContainer").Q<VisualElement>("unity-content-container");
 
             subTabs.Add(CharacterTab.Inventory, new InventorySettings(_parent));
             var inventory = (InventorySettings)subTabs[CharacterTab.Inventory];
@@ -145,6 +154,55 @@ namespace Burmuruk.Tesis.Editor.Controls
             return emptyIdx;
         }
 
+        /// <summary>
+        /// Adds an inventory if the new element is an equipment and the inventory it's not in the list.
+        /// </summary>
+        /// <param name="element">Equipment component</param>
+        private void AddEquipment(ElementComponent element)
+        {
+            if ((ComponentType)element.Type != ComponentType.Equipment) return;
+
+            var comps = (from c in ComponentsList.Components
+                         where (ComponentType)c.Type == ComponentType.Inventory && !c.element.ClassListContains("Disable")
+                            select c).ToArray();
+
+            if (comps == null || comps.Length == 0)
+            {
+                ComponentsList.AddElement(ComponentType.Inventory.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Setup element by setting id, changing colour or enable its button.
+        /// </summary>
+        /// <param name="element"></param>
+        private void Setup_ComponentButton(ElementComponent element)
+        {
+            switch ((ComponentType)element.Type)
+            {
+                case ComponentType.Equipment:
+                    AddEquipment(element);
+                    goto case ComponentType.Health;
+
+                case ComponentType.Inventory:
+                case ComponentType.Health:
+                    SetClickableButtonColour(element);
+                    break;
+
+                default:
+                    if (element.NameButton.ClassListContains("ClickableBtn"))
+                        element.NameButton.RemoveFromClassList("ClickableBtn");
+                    element.NameButton.style.backgroundColor = new Color(0.1647059f, 0.1647059f, 0.1647059f);
+                    break;
+            }
+        }
+
+        private void SetClickableButtonColour(ElementComponent element)
+        {
+            element.NameButton.AddToClassList("ClickableBtn");
+            element.NameButton.style.backgroundColor = new Color(0.4627451f, 0.4627451f, 4627451f);
+        }
+
         public override void Clear()
         {
             if (curTab != CharacterTab.None)
@@ -153,7 +211,7 @@ namespace Burmuruk.Tesis.Editor.Controls
                 return;
             }
 
-            TxtName.value = "";
+            TxtName.SetValueWithoutNotify("");
             ComponentsList.Clear();
             subTabs[CharacterTab.Inventory].Clear();
             subTabs[CharacterTab.Equipment].Clear();
@@ -167,11 +225,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             _characterData = null;
             TempName = "";
             _id = null;
-        }
-
-        public override void UpdateName()
-        {
-            TxtName.value = TempName;
+            _lastTab = CharacterTab.None;
         }
 
         #region Tab control
@@ -187,6 +241,7 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             EnableContainer(subTabs[curTab].Instance, false);
             EnableContainer(subTabs[newTab].Instance, true);
+            _lastTab = newTab;
             curTab = newTab;
         }
         #endregion
@@ -195,13 +250,7 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             var type = (ComponentType)ComponentsList[componentIdx].Type;
 
-            CharacterTab newTab = type switch
-            {
-                ComponentType.Equipment => CharacterTab.Equipment,
-                ComponentType.Health => CharacterTab.Health,
-                ComponentType.Inventory => CharacterTab.Inventory,
-                _ => CharacterTab.None
-            };
+            CharacterTab newTab = Get_TabType(type);
 
             if (newTab == CharacterTab.None) return;
 
@@ -219,9 +268,19 @@ namespace Burmuruk.Tesis.Editor.Controls
             ChangeWindow(newTab);
         }
 
-        private void Load_InventoryItemsInEquipment()
+        private CharacterTab Get_TabType(ComponentType type) =>
+            type switch
+            {
+                ComponentType.Equipment => CharacterTab.Equipment,
+                ComponentType.Health => CharacterTab.Health,
+                ComponentType.Inventory => CharacterTab.Inventory,
+                _ => CharacterTab.None
+            };
+
+    private void Load_InventoryItemsInEquipment()
         {
             var items = ((InventorySettings)subTabs[CharacterTab.Inventory]).MClInventoryElements;
+            //var inventory = (subTabs[CharacterTab.Inventory] as InventorySettings).GetInventory();
             ((EquipmentSettings)subTabs[CharacterTab.Equipment]).Load_EquipmentFromList(items);
         }
 
@@ -317,17 +376,17 @@ namespace Burmuruk.Tesis.Editor.Controls
             return newData;
         }
 
-        public string Save()
+        public bool Save()
         {
             try
             {
                 if ((Check_Changes() & ModificationTypes.None) != 0)
-                    return null;
+                    return false;
 
                 var newData = GetInfo();
                 return SavingSystem.SaveCreation(ElementType.Character, _id, new CreationData(newData.characterName, newData), CurModificationType);
             }
-            catch (InvalidExeption e)
+            catch (InvalidDataExeption e)
             {
                 throw e;
             }
@@ -342,8 +401,8 @@ namespace Burmuruk.Tesis.Editor.Controls
                 return default;
             }
 
-            LoadInfo((CharacterData)data.Value.data, id);
             Set_CreationState(CreationsState.Editing);
+            LoadInfo((CharacterData)data.Value.data, id);
 
             return data.Value;
         }
@@ -371,7 +430,7 @@ namespace Burmuruk.Tesis.Editor.Controls
                 switch ((ComponentType)component.Type)
                 {
                     case ComponentType.Health:
-                        var health = ((HealthSettings)subTabs[CharacterTab.Health]).FFHealth.value;
+                        float health = ((HealthSettings)subTabs[CharacterTab.Health]).FFHealth.value;
 
                         characterData.components[ComponentType.Health] = health;
                         break;
@@ -454,6 +513,7 @@ namespace Burmuruk.Tesis.Editor.Controls
                 return;
             }
 
+            _lastTab = CharacterTab.None;
             TempName = _nameControl.name;
             CharacterData newInfo = _characterData.Value;
             LoadInfo(newInfo, _id);
@@ -467,6 +527,16 @@ namespace Burmuruk.Tesis.Editor.Controls
             }
 
             curTab = CharacterTab.None;
+        }
+
+        public override void Enable(bool enabled)
+        {
+            base.Enable(enabled);
+
+            if (enabled)
+                ChangeWindow(_lastTab);
+            else
+                CloseWindows();
         }
     }
 

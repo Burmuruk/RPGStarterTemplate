@@ -26,7 +26,18 @@ namespace Burmuruk.Tesis.Editor.Controls
         public override void Clear()
         {
             TempName = "";
-            TxtName.value = "";
+            TxtName.SetValueWithoutNotify("");
+        }
+
+        public override void Enable(bool enabled)
+        {
+            base.Enable(enabled);
+
+            if (enabled)
+            {
+                _nameControl.SetState(_creationsState);
+                UpdateName();
+            }
         }
 
         public virtual void UpdateName()

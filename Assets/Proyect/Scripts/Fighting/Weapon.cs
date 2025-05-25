@@ -1,13 +1,12 @@
 ﻿using Burmuruk.Tesis.Control;
 using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Stats;
-using System.Linq;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Combat
 {
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Weapon", order = 1)]
-    public class Weapon : EquipeableItem
+    public class Weapon : EquipeableItem, IBuffUser
     {
         [Header("Equipment")]
         [SerializeField] EquipmentType m_bodyPart;
@@ -20,7 +19,7 @@ namespace Burmuruk.Tesis.Combat
         [SerializeField] float reloadTime;
         [SerializeField] int maxAmmo;
         [Space(), Header("Buffs")]
-        [SerializeField] BuffData[] m_buffsData;
+        [SerializeField] BuffData[] _buffs;
         [Space(), Header("Modifications")]
         [SerializeField] Equipment equipment;
 
@@ -32,31 +31,34 @@ namespace Burmuruk.Tesis.Combat
         public int MaxAmmo { get => maxAmmo; }
         public int Ammo { get; private set; }
         public float ReloadTime { get => reloadTime; }
-        public BuffData[] BuffsData { get => m_buffsData; }
+        public BuffData[] Buffs { get => _buffs; }
 
         public bool TryGetBuff(out BuffData? buffData)
         {
             buffData = null;
 
-            if (m_buffsData == null || m_buffsData.Length == 0) return false;
+            if (_buffs == null || _buffs.Length == 0) return false;
 
-            int idx = Random.Range(0, m_buffsData.Length);
+            int idx = Random.Range(0, _buffs.Length);
 
-            if (m_buffsData[idx].probability == 1)
+            if (_buffs[idx].probability == 1)
             {
-                buffData = m_buffsData[idx];
+                buffData = _buffs[idx];
                 return true;
             }
 
             float probability = Random.Range(0, 1.0f);
 
-            if (probability <= m_buffsData[idx].probability)
+            if (probability <= _buffs[idx].probability)
             {
-                buffData = m_buffsData[idx];
+                buffData = _buffs[idx];
                 return true;
             }
             else return false;
         }
+
+        public void UpdateBuffData(BuffData[] buffData) =>
+            _buffs = buffData;
 
         public override object GetEquipLocation()
         {
@@ -83,7 +85,7 @@ namespace Burmuruk.Tesis.Combat
         public void UpdateInfo(EquipmentType bodyPart, WeaponType subType, int damage, float rateDamage, float minDistance, float maxDistance,
                 float reloadTime, int maxAmmo, BuffData[] data)
         {
-            (m_bodyPart, weaponType, m_damage, m_rateDamage, m_minDistance, m_maxDistance, this.reloadTime, this.maxAmmo, m_buffsData) = 
+            (m_bodyPart, weaponType, m_damage, m_rateDamage, m_minDistance, m_maxDistance, this.reloadTime, this.maxAmmo, _buffs) =
                 (bodyPart, subType, damage, rateDamage, minDistance, maxDistance, reloadTime, maxAmmo, data);
         }
 

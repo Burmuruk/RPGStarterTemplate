@@ -70,7 +70,7 @@ namespace Burmuruk.Tesis.Inventory
             throw new NotImplementedException();
         }
 
-        public void UpdataInfo(string name, string description, ItemType type,
+        public void UpdateInfo(string name, string description, ItemType type,
             Sprite sprite, Pickup pickup, int capacity)
         {
             m_name = name;

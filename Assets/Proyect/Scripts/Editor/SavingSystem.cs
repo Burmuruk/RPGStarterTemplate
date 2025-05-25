@@ -10,7 +10,6 @@ namespace Burmuruk.Tesis.Editor
     public static class SavingSystem
     {
         const string DATA_PATH = "Assets/Proyect/Game/ScriptableObjects/Tool/CharacterTag.asset";
-
         public static CharacterTag Data { get; private set; } = null;
         public static event Action<ModificationTypes, ElementType, string, CreationData> OnCreationModified;
 
@@ -46,18 +45,13 @@ namespace Burmuruk.Tesis.Editor
             return Data.creations[type][id];
         }
 
-        public static string SaveCreation(ElementType type, in string id, in CreationData data, ModificationTypes modificationType)
+        public static bool SaveCreation(ElementType type, in string id, in CreationData data, ModificationTypes modificationType)
         {
             string newId = id;
-            bool result = Save_CreationData(type, ref newId, data);
+            bool saved = Save_CreationData(type, ref newId, data);
 
-            if (result)
-            {
-                OnCreationModified?.Invoke(modificationType, type, newId, data);
-                return "Objeto guardado";
-            }
-
-            return "Guardado no completado";
+            OnCreationModified?.Invoke(modificationType, type, newId, data);
+            return saved;
         }
 
         public static CreationData? Load(ElementType type, string id)
@@ -74,13 +68,13 @@ namespace Burmuruk.Tesis.Editor
 
             if (string.IsNullOrEmpty(newName))
             {
-                if (!VerifyName(name)) return false;
+                if (!name.VerifyName()) return false;
 
                 newName = name;
             }
             else if (newName != name)
             {
-                if (!VerifyName(newName))
+                if (!newName.VerifyName())
                     return false;
             }
 
@@ -120,7 +114,7 @@ namespace Burmuruk.Tesis.Editor
 
     public interface ISaveable
     {
-        public string Save();
+        public bool Save();
         public CreationData Load(ElementType type, string id);
     }
 
@@ -129,7 +123,7 @@ namespace Burmuruk.Tesis.Editor
     {
         None = 0,
         Add = 1,
-        Remove = 1<<1,
+        Remove = 1 << 1,
         EditData = 1 << 2,
         Rename = 1 << 3,
         ColourReasigment = 1 << 4

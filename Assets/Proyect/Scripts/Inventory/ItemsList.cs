@@ -8,7 +8,7 @@ namespace Burmuruk.Tesis.Inventory
     public class ItemsList : ScriptableObject
     {
         [Header("General Lists")]
-        [SerializeField] List<InventoryItem> items;
+        [SerializeField] List<InventoryItem> _items;
 
         Dictionary<int, InventoryItem> _mainList;
 
@@ -29,13 +29,21 @@ namespace Burmuruk.Tesis.Inventory
                     ).ToList();
         }
 
+        public void AddItem(InventoryItem item)
+        {
+#if UNITY_EDITOR
+            _items ??= new();
+            _items.Add(item); 
+#endif
+        }
+
         private void Initialize()
         {
             if (_mainList != null) return;
 
             _mainList = new Dictionary<int, InventoryItem>();
 
-            foreach (var item in items)
+            foreach (var item in _items)
             {
                 _mainList.Add(item.ID, item);
             }

@@ -18,6 +18,16 @@ namespace Burmuruk.Tesis.Editor
             //ElementType.State,
             ElementType.Buff,
         };
+        string _creationPath;
+
+        public string CreationPath
+        {
+            get => _creationPath;
+            set
+            {
+                _creationPath = value;
+            }
+        }
 
         [Serializable]
         public struct CharacterProfile
@@ -25,7 +35,7 @@ namespace Burmuruk.Tesis.Editor
             public string name;
         }
 
-        public bool GetCreation(string name, ElementType type, out string id)
+        public bool TryGetCreation(string name, ElementType type, out string id)
         {
             id = null;
             if (!creations.ContainsKey(type)) return false;
@@ -40,6 +50,27 @@ namespace Burmuruk.Tesis.Editor
             }
 
             return false;
+        }
+
+        public bool TryGetCreation(string id, out CreationData data, out ElementType type)
+        {
+            data = default;
+            type = default;
+
+            foreach (var key in creations.Keys)
+            {
+                foreach (var creation in creations[key])
+                {
+                    if (creation.Key == id)
+                    {
+                        data = creation.Value;
+                        type = key;
+                        return true;
+                    }
+                }
+            }
+
+            return true;
         }
     }
 

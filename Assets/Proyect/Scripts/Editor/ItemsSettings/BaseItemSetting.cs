@@ -43,14 +43,14 @@ namespace Burmuruk.Tesis.Editor.Controls
             UfCapacity.value = (uint)data.Capacity;
 
             _changes ??= new InventoryItem();
-            _changes.UpdataInfo(data.Name, data.Description, type, (Sprite)OfSprite.value, (Pickup)OfPickup.value, unchecked((int)UfCapacity.value));
+            _changes.UpdateInfo(data.Name, data.Description, type, (Sprite)OfSprite.value, (Pickup)OfPickup.value, unchecked((int)UfCapacity.value));
         }
 
         public virtual (InventoryItem item, ItemDataArgs args) GetInfo(ItemDataArgs args)
         {
             var data = new InventoryItem();
 
-            data.UpdataInfo(
+            data.UpdateInfo(
                 _nameControl.TxtName.value,
                 TxtDescription.value,
                 ItemType.None,
@@ -76,7 +76,7 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         protected void ClearItemInfo()
         {
-            _changes.UpdataInfo("", "", _changes.Type, null, null, 0);
+            _changes.UpdateInfo("", "", _changes.Type, null, null, 0);
         }
 
         public override ModificationTypes Check_Changes()
@@ -85,7 +85,7 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             CurModificationType = ModificationTypes.None;
 
-            if ((_nameControl.Check_Changes() & ModificationTypes.None) != 0)
+            if ((_nameControl.Check_Changes() & ModificationTypes.None) == 0)
                 CurModificationType = ModificationTypes.Rename;
 
             if (TxtDescription.value != _changes.Description)
@@ -103,10 +103,10 @@ namespace Burmuruk.Tesis.Editor.Controls
             return CurModificationType;
         }
 
-        public virtual string Save()
+        public virtual bool Save()
         {
             var modificationType = Check_Changes();
-            if (modificationType == ModificationTypes.None) return null;
+            if (modificationType == ModificationTypes.None) return false;
 
             var data = GetInfo(null);
             CreationData creationData = new CreationData(_nameControl.TxtName.value, data);
@@ -122,8 +122,8 @@ namespace Burmuruk.Tesis.Editor.Controls
             {
                 _id = id;
                 (var item, var args) = ((InventoryItem, ItemDataArgs))result.Value.data;
-                UpdateInfo(item, args);
                 Set_CreationState(CreationsState.Editing);
+                UpdateInfo(item, args);
             }
 
             return result.Value;
@@ -153,9 +153,6 @@ namespace Burmuruk.Tesis.Editor.Controls
 
     public record ItemDataArgs
     {
-        public ItemDataArgs()
-        {
 
-        }
     }
 }

@@ -7,39 +7,39 @@ namespace Burmuruk.Tesis.Stats
 {
     public class Health : MonoBehaviour, IJsonSaveable
     {
-        [SerializeField] int hp;
-        [SerializeField] int maxHp;
+        [SerializeField] int _hp;
+        [SerializeField] int _maxHp;
 
         public event Action<Transform> OnDied;
         public event Action<int> OnDamaged;
 
-        public int HP { get => hp; }
-        public int MaxHp { get => maxHp; }
-        public bool IsAlive { get => hp > 0; }
+        public int HP { get => _hp; }
+        public int MaxHp { get => _maxHp; }
+        public bool IsAlive { get => _hp > 0; }
 
         private void Awake()
         {
-            ModsList.AddVariable(GetComponent<Control.Character>(), ModifiableStat.HP, () => hp, (value) => { hp = (int)value; });
+            ModsList.AddVariable(GetComponent<Control.Character>(), ModifiableStat.HP, () => _hp, (value) => { _hp = (int)value; });
         }
 
         public void ApplyDamage(int damage)
         {
             if (!IsAlive) return;
 
-            hp = Math.Max(hp - damage, 0);
+            _hp = Math.Max(_hp - damage, 0);
 
-            if (hp <= 0)
+            if (_hp <= 0)
             {
                 Die();
                 return;
             }
 
-            OnDamaged?.Invoke(hp);
+            OnDamaged?.Invoke(_hp);
         }
 
         public void Heal(int value)
         {
-            hp = Math.Min(hp + value, maxHp);
+            _hp = Math.Min(_hp + value, _maxHp);
         }
 
         private void Die()
@@ -50,12 +50,12 @@ namespace Burmuruk.Tesis.Stats
         public JToken CaptureAsJToken(out SavingExecution execution)
         {
             execution = SavingExecution.General;
-            return JToken.FromObject(hp);
+            return JToken.FromObject(_hp);
         }
 
         public void LoadAsJToken(JToken state)
         {
-            hp = state.ToObject<int>();
+            _hp = state.ToObject<int>();
         }
     }
 }

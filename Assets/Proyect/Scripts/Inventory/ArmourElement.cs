@@ -44,7 +44,7 @@ namespace Burmuruk.Tesis.Inventory
             return m_bodyPart;
         }
 
-        public void Populate(EquipmentType type)
+        public void UpdateInfo(EquipmentType type)
         {
             m_bodyPart = type;
         }

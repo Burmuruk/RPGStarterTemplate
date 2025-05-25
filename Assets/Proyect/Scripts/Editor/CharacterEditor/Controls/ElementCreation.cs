@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using UnityEngine.UIElements;
+using Burmuruk.Tesis.Editor.Utilities;
 
 namespace Burmuruk.Tesis.Editor
 {
@@ -33,19 +34,20 @@ namespace Burmuruk.Tesis.Editor
         }
     }
 
-    public class ElementCreationPinable : ElementCreation
+    public class ElementCreationPinnable : ElementCreation
     {
         public bool pinned;
         public Button Pin { get; private set; }
 
-        public ElementCreationPinable()
+        public ElementCreationPinnable()
         {
 
         }
 
-        public ElementCreationPinable(VisualElement container, int idx) : base(container, idx)
+        public ElementCreationPinnable(VisualElement container, int idx) : base(container, idx)
         {
             Pin = container.Q<Button>("btnPin");
+            UtilitiesUI.EnableContainer(Pin, true);
             pinned = false;
         }
 
@@ -54,9 +56,10 @@ namespace Burmuruk.Tesis.Editor
             base.Initialize(container, idx);
 
             Pin = container.Q<Button>("btnPin");
+            UtilitiesUI.EnableContainer(Pin, true);
         }
 
-        public void Swap_BasicInfoWith(ElementCreationPinable element)
+        public void Swap_BasicInfoWith(ElementCreationPinnable element)
         {
             var (pinned, type, id, name, toggle, amount) =
                 (element.pinned, 

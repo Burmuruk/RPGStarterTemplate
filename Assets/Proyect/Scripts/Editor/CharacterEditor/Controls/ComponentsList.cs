@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor;
-using UnityEngine;
 using UnityEngine.UIElements;
 using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
 
@@ -21,7 +19,10 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         public Action<T> OnElementCreated = delegate { };
         public Action<T> OnElementAdded = delegate { };
+        public Action<T> OnElementRemoved = delegate { };
         public Func<IList, string, int?> CreationValidator = null;
+        public Func<int, bool> DeletionValidator = null;
+        public Action<T> AddElementExtraData;
 
         public VisualElement Parent { get; private set; }
         public VisualElement Container { get; private set; }
@@ -40,7 +41,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             container.styleSheets.Add(styleSheetColour);
             Parent = container;
             Container = container.Q<VisualElement>("componentsConatiner");
-            if (Container ==  null)
+            if (Container == null)
             {
                 Container = container.Q<VisualElement>("elementsContainer");
             }
@@ -52,26 +53,26 @@ namespace Burmuruk.Tesis.Editor.Controls
         public void IncrementElement(int idx, bool shouldIncrement = true, int value = 1)
         {
             _amounts[idx] += shouldIncrement ? value : -value;
-            Components[idx].IFAmount.value = _amounts[idx];
+            Components[idx].IFAmount.SetValueWithoutNotify(_amounts[idx]);
         }
 
         public bool ChangeAmount(int idx, int amount)
         {
             if (amount < 0)
             {
-                Components[idx].IFAmount.value = _amounts[idx];
+                Components[idx].IFAmount.SetValueWithoutNotify(_amounts[idx]);
                 return false;
             }
 
             _amounts[idx] = amount;
-            Components[idx].IFAmount.value = amount;
+            Components[idx].IFAmount.SetValueWithoutNotify(amount);
 
             return true;
         }
 
         public void StartAmount(T element, int idx)
         {
-            element.IFAmount.value = 1;
+            element.IFAmount.SetValueWithoutNotify(1);
             _amounts[idx] = 1;
         }
 
@@ -132,8 +133,7 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             if (componentIdx == -1)
             {
-                int newIdx = 0;
-                CreateNewComponent(name, type, out newIdx);
+                CreateNewComponent(name, type, out int newIdx);
                 componentIdx = newIdx;
             }
             else if (!componentIdx.HasValue)
@@ -141,44 +141,28 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             Components[componentIdx.Value].NameButton.text = name;
             Components[componentIdx.Value].SetType(type);
+            EnableContainer(Components[componentIdx.Value].element, true);
 
-            if (Components[componentIdx.Value] is ElementComponent)
-            {
-                var compType = (ComponentType)Components[componentIdx.Value].Type;
-                Setup_ComponentButton(compType, componentIdx.Value);
-
-                if (compType == ComponentType.Equipment)
-                {
-                    var comps = (from c in Components
-                                 where (ComponentType)c.Type == ComponentType.Inventory && !c.element.ClassListContains("Disable")
-                                 select c).ToArray();
-
-                    if (comps == null || comps.Length == 0)
-                    {
-                        Debug.Log("no inv");
-                        AddElement(ComponentType.Inventory.ToString());
-                    }
-                }
-            }
+            AddElementExtraData?.Invoke(Components[componentIdx.Value]);
 
             return true;
         }
 
+        /// <summary>
+        /// Looks for the first disabled element.
+        /// </summary>
+        /// <returns></returns>
         private int? DefaultCreationValidator()
         {
-            int? componentIdx = -1;
-
             for (int i = 0; i < Components.Count; i++)
             {
                 if (Components[i].element.ClassListContains("Disable"))
                 {
-                    componentIdx = i;
-                    EnableContainer(Components[i].element, true);
-                    break;
+                    return i;
                 }
             }
 
-            return componentIdx;
+            return -1;
         }
 
         protected virtual T CreateNewComponent(string value, string type, out int idx)
@@ -208,55 +192,33 @@ namespace Burmuruk.Tesis.Editor.Controls
             return component;
         }
 
-        private void Setup_ComponentButton(ComponentType type, int componentIdx)
+        public virtual void RemoveComponent(int idx)
         {
-            switch (type)
-            {
-                case ComponentType.Inventory:
-                    goto case ComponentType.Health;
+            if (DeletionValidator != null && !DeletionValidator(idx))
+                return;
 
-                case ComponentType.Equipment:
-                    goto case ComponentType.Health;
-
-                case ComponentType.Health:
-                    SetClickableButtonColour(componentIdx);
-                    break;
-
-                default:
-                    if (Components[componentIdx].NameButton.ClassListContains("ClickableBtn"))
-                        Components[componentIdx].NameButton.RemoveFromClassList("ClickableBtn");
-                    Components[componentIdx].NameButton.style.backgroundColor = new Color(0.1647059f, 0.1647059f, 0.1647059f);
-                    break;
-            }
-        }
-
-        private void SetClickableButtonColour(int componentIdx)
-        {
-            Components[componentIdx].NameButton.AddToClassList("ClickableBtn");
-            Components[componentIdx].NameButton.style.backgroundColor = new Color(0.4627451f, 0.4627451f, 4627451f);
-        }
-
-        protected virtual void RemoveComponent(int idx)
-        {
-            if (((ComponentType)Components[idx].Type) == ComponentType.Inventory)
-            {
-                foreach (var component in Components)
-                {
-                    if (!component.element.ClassListContains("Disable"))
-                    {
-                        if ((ComponentType)component.Type == ComponentType.Equipment)
-                        {
-                            Notify("Equipment requires an Inventory component to store the items", BorderColour.Error);
-                            return;
-                        }
-                    }
-                    else
-                        break;
-                }
-            }
+            OnElementRemoved?.Invoke(Components[idx]);
 
             ChangeAmount(idx, 0);
             EnableContainer(Components[idx].element, false);
+            Displaceids(idx);
+        }
+
+        private void Displaceids(int startIdx)
+        {
+            int idx = startIdx;
+
+            for (int i = startIdx + 1; i < Components.Count - 1; i++)
+            {
+                Components[i].idx = idx;
+                Amounts[i] = Amounts[idx++];
+            }
+
+            Components[startIdx].idx = Components.Count - 1;
+            Components.Add(Components[startIdx]);
+            Components.RemoveAt(startIdx);
+            Amounts.Add(Amounts[startIdx]);
+            Amounts.RemoveAt(startIdx);
         }
 
         public virtual void Clear()

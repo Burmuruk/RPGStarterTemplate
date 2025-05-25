@@ -1,10 +1,7 @@
-using Burmuruk.Tesis.Combat;
 using Burmuruk.Tesis.Stats;
 using Burmuruk.Tesis.Utilities;
 using System;
 using UnityEditor;
-using UnityEditor.Compilation;
-using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
@@ -36,8 +33,8 @@ namespace Burmuruk.Tesis.Editor.Controls
         public VisualElement EnumContainer { get; private set; }
         public VisualElement NewValueContainer { get; private set; }
         public T Value { get => (T)EnumField.value; set => EnumField.value = value; }
-        private State CurrentState 
-        { 
+        private State CurrentState
+        {
             get => state;
             set
             {
@@ -85,7 +82,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             {
                 BtnEditValue.text = "^";
                 ShowElements(true);
-                CurrentState = State.Editing; 
+                CurrentState = State.Editing;
             }
             else
             {
@@ -125,7 +122,7 @@ namespace Burmuruk.Tesis.Editor.Controls
                 BtnAddValue.text = "^";
                 ShowElements(true);
                 BtnAddValue.SetEnabled(true);
-                CurrentState = State.Adding; 
+                CurrentState = State.Adding;
             }
             else
             {
@@ -156,12 +153,14 @@ namespace Burmuruk.Tesis.Editor.Controls
                     switch (CurrentState)
                     {
                         case State.Adding:
-                            if (!enumEditor.AddValue(typeof(T).Name, _path, TxtNewValue.value)) return;
+                            if (!enumEditor.AddValue(typeof(T).Name, _path, TxtNewValue.value))
+                                return;
 
                             break;
 
                         case State.Editing:
-                            if (!enumEditor.Rename(_path, typeof(T).Name, EnumField.value.ToString(), TxtNewValue.text)) return;
+                            if (!enumEditor.Rename(_path, typeof(T).Name, EnumField.value.ToString(), TxtNewValue.text))
+                                return;
 
                             break;
 

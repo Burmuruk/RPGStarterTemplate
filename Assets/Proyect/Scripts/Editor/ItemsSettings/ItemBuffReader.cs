@@ -11,7 +11,7 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         public BuffAdderUI BuffAdder { get; protected set; }
 
-        public (InventoryItem, BuffsNamesDataArgs) GetBuffsIds(ElementType type)
+        public (InventoryItem, BuffsNamesDataArgs) GetBuffsIds()
         {
             return ((InventoryItem, BuffsNamesDataArgs))GetInfo(GetCreatedEnums(ElementType.Buff));
         }

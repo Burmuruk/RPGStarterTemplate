@@ -2,7 +2,6 @@
 using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine.UIElements;
-using static Codice.Client.BaseCommands.Import.Commit;
 
 namespace Burmuruk.Tesis.Editor.Utilities
 {
@@ -142,7 +141,7 @@ namespace Burmuruk.Tesis.Editor.Utilities
 
         public static bool VerifyVariableName(string name) => regName.IsMatch(name);
 
-        public static bool VerifyName(string name)
+        public static bool VerifyName(this string name)
         {
             if (string.IsNullOrEmpty(name))
             {
