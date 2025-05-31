@@ -5,54 +5,17 @@ using UnityEngine.UIElements;
 
 namespace Burmuruk.Tesis.Editor.Controls
 {
-    public class BuffAdderUI : IClearable, IUIListContainer<BaseCreationInfo>, IChangesObserver
+    public class BuffAdderUI : MyCustomList, IUIListContainer<BaseCreationInfo>, IChangesObserver
     {
         public const string INVALIDNAME = "Custom";
 
         private List<NamedBuff?> _changes = new();
         private List<BuffsDataUI> buffs = new();
-        private VisualElement elementsContainer;
         private Dictionary<string, string> buffNames;
-        protected ModificationTypes _modificationType;
 
-        public Foldout BuffsList { get; private set; }
-        public UnsignedIntegerField BuffsCount { get; private set; }
-        public Button BtnAddBuff { get; private set; }
-        public Button BtnRemoveBuff { get; private set; }
-        protected ModificationTypes CurModificationType
+        public BuffAdderUI(VisualElement container) : base(container)
         {
-            get => _modificationType;
-            set
-            {
-                if (value == ModificationTypes.None)
-                {
-                    _modificationType = value;
-                    return;
-                }
-                else if (value == ModificationTypes.Rename)
-                {
-                    _modificationType = ModificationTypes.Rename;
-                    return;
-                }
-                else if ((_modificationType | ModificationTypes.Rename) != 0)
-                {
-                    _modificationType |= value;
-                    return;
-                }
-
-                _modificationType = value;
-            }
-        }
-
-        public BuffAdderUI(VisualElement container)
-        {
-            BuffsList = container.Q<Foldout>("mainFoldOut");
-            BtnAddBuff = container.Q<Button>("btnAdd");
-            BtnRemoveBuff = container.Q<Button>("btnRemove");
-            BuffsCount = container.Q<UnsignedIntegerField>("uiAmount");
-
-            SetupFoldOut(container);
-            BuffsCount.RegisterCallback<KeyUpEvent>(OnValueChanged_BuffsCount);
+            TxtCount.RegisterCallback<KeyUpEvent>(OnValueChanged_BuffsCount);
             CreationScheduler.Add(ModificationTypes.Rename, ElementType.Buff, this);
             CreationScheduler.Add(ModificationTypes.Add, ElementType.Buff, this);
             CreationScheduler.Add(ModificationTypes.Remove, ElementType.Buff, this);
@@ -60,7 +23,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             buffNames ??= new();
         }
 
-        public void AddData(in BaseCreationInfo data)
+        public virtual void AddData(in BaseCreationInfo data)
         {
             var newBuffsNames = buffNames;
             newBuffsNames.TryAdd(data.Name, data.Id);
@@ -148,11 +111,11 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             if (evt.keyCode != KeyCode.Return && evt.keyCode != KeyCode.KeypadEnter) return;
 
-            int amount = ((int)BuffsCount.value) - buffs.Count;
+            int amount = ((int)TxtCount.value) - buffs.Count;
 
             if (amount == 0)
             {
-                buffs.ForEach(buff => { elementsContainer.Remove(buff.Element); });
+                buffs.ForEach(buff => { _elementsContainer.Remove(buff.Element); });
                 buffs.Clear();
             }
             else if (amount > 0)
@@ -173,24 +136,13 @@ namespace Burmuruk.Tesis.Editor.Controls
             }
         }
 
-        private void SetupFoldOut(VisualElement container)
+        protected override void SetupFoldOut()
         {
-            BuffsList.text = "Buffs";
-            elementsContainer = new VisualElement();
+            base.SetupFoldOut();
 
-            ScrollView scrollView = new ScrollView();
-            scrollView.style.maxHeight = 180;
-            scrollView.style.flexGrow = 1;
-            scrollView.verticalScrollerVisibility = ScrollerVisibility.Auto;
-            scrollView.Add(elementsContainer);
-            BuffsList.Add(scrollView);
-
-            var buttons = container.Q<VisualElement>("buttonsContainer");
-            buttons.parent.Remove(buttons);
-            BuffsList.Add(buttons);
-
-            BtnAddBuff.clicked += () => AddBuff();
-            BtnRemoveBuff.clicked += () => RemoveBuff();
+            Foldout.text = "Buffs";
+            BtnAdd.clicked += () => AddBuff();
+            BtnRemove.clicked += () => RemoveBuff();
         }
 
         private VisualElement AddBuff()
@@ -199,9 +151,9 @@ namespace Burmuruk.Tesis.Editor.Controls
             buff.SetValues(buffNames);
 
             buffs.Add(buff);
-            elementsContainer.Add(buff.Element);
+            _elementsContainer.Add(buff.Element);
 
-            BuffsCount.SetValueWithoutNotify((uint)buffs.Count);
+            TxtCount.SetValueWithoutNotify((uint)buffs.Count);
             return buff.Element;
         }
 
@@ -211,9 +163,9 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             var buff = buffs[buffs.Count - 1];
 
-            elementsContainer.Remove(buff.Element);
+            _elementsContainer.Remove(buff.Element);
             buffs.RemoveAt(buffs.Count - 1);
-            BuffsCount.SetValueWithoutNotify((uint)buffs.Count);
+            TxtCount.SetValueWithoutNotify((uint)buffs.Count);
         }
 
         public void UpdateData(List<(string id, BuffData? buff)> buffsData)
@@ -301,14 +253,13 @@ namespace Burmuruk.Tesis.Editor.Controls
             return buffsData;
         }
 
-        public virtual void Clear()
+        public override void Clear()
         {
-            elementsContainer.Clear();
+            base.Clear();
             buffs.Clear();
-            BuffsCount.value = 0;
         }
 
-        public ModificationTypes Check_Changes()
+        public override ModificationTypes Check_Changes()
         {
             var namedBuffs = GetBuffsData();
 

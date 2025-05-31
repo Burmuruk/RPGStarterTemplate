@@ -14,11 +14,13 @@ namespace Burmuruk.Tesis.Editor.Controls
 {
     public class CharacterSettings : BaseInfoTracker, ISaveable, ISubWindowsContainer
     {
+        #region Variables
         VisualElement _parent;
         const string STATS_CONTAINER_NAME = "infoStats";
         Dictionary<CharacterTab, SubWindow> subTabs = new();
         CharacterData? _characterData;
         private string _id;
+        private List<VisualElement> _variablesContainers;
 
         CharacterTab _lastTab;
         CharacterTab curTab = CharacterTab.None;
@@ -42,52 +44,79 @@ namespace Burmuruk.Tesis.Editor.Controls
             Double,
             Enum
         }
+        #endregion
 
+        #region Properties
+        public Toggle TglSave { get; private set; }
         public ComponentsListUI<ElementComponent> ComponentsList { get; private set; }
         public EnumModifierUI<CharacterType> EMCharacterType { get; private set; }
+        public ObjectField OFBaseClass { get; private set; }
         public VariablesAdderUI Adder { get; private set; }
         public EquipmentSettings EquipmentS { get => (EquipmentSettings)subTabs[CharacterTab.Equipment]; }
-        public InventorySettings InventoryS { get => (InventorySettings)subTabs[CharacterTab.Inventory]; }
+        public InventorySettings InventoryS { get => (InventorySettings)subTabs[CharacterTab.Inventory]; } 
+        #endregion
 
         public CharacterSettings (VisualElement parent)
         {
             _parent = parent;
         }
 
+        #region Initialization
         public override void Initialize(VisualElement container, CreationsBaseInfo name)
         {
             base.Initialize(container, name);
             _instance = container;
 
+            TglSave = container.Q<Toggle>("TglSave");
+            OFBaseClass = container.Q<ObjectField>("OFBaseClass");
+            OFBaseClass.objectType = typeof(Tesis.Control.Character);
             ComponentsList = new ComponentsListUI<ElementComponent>(container);
+
+            Setup_ComponentsList();
+            Setup_EMCharacterType();
+            CreateSubTabs();
+            Setup_Stats(container);
+        }
+
+        private void Setup_Stats(VisualElement container)
+        {
+            var instance = ScriptableObject.CreateInstance<StatsVisualizer>();
+            statsContainer = container.Q<VisualElement>(STATS_CONTAINER_NAME);
+            statsContainer.Clear();
+            basicStats = instance;
+            AddStats();
+            
+            statsContainer.schedule.Execute(() =>
+            {
+                VisualElement adderUI = container.Q<VisualElement>("VariblesAdder");
+                Adder = new(adderUI, Get_Headers());
+            }).ExecuteLater(100);
+        }
+
+        private List<string> Get_Headers()
+        {
+            var properties = statsContainer.Query<PropertyField>().ToList();
+            List<string> labels = new();
+            
+            foreach (var property in properties)
+            {
+                var newLabels = property.Query<Label>().ToList();
+
+                if (newLabels.Count > 1)
+                    labels.Add(newLabels[0].text);
+            }
+            
+            return labels;
+        }
+
+        private void Setup_ComponentsList()
+        {
             ComponentsList.DDFElement.RegisterValueChangedCallback(ComponentsList.AddComponent);
             ComponentsList.OnElementClicked += OpenComponentSettings;
             ComponentsList.CreationValidator += ContainsCreation;
             ComponentsList.AddElementExtraData += Setup_ComponentButton;
             ComponentsList.OnElementRemoved += Clear_ComponentData;
-            Setup_EMCharacterType();
-            var instance = ScriptableObject.CreateInstance<StatsVisualizer>();
-            statsContainer = container.Q<VisualElement>(STATS_CONTAINER_NAME);
-            statsContainer.Add(new InspectorElement(instance));
-            basicStats = instance;
-            VisualElement adderUI = container.Q<VisualElement>("VariblesAdder");
-            Adder = new(adderUI, statsContainer);
 
-            Populate_AddComponents();
-            CreateSubTabs();
-        }
-
-        private void Clear_ComponentData(ElementComponent element)
-        {
-            var tabType = Get_TabType((ComponentType)element.Type);
-
-            if (!subTabs.ContainsKey(tabType)) return;
-
-            subTabs[tabType].Clear();
-        }
-
-        private void Populate_AddComponents()
-        {
             ComponentsList.DDFElement.choices.Clear();
 
             foreach (var name in Enum.GetNames(typeof(ComponentType)))
@@ -127,82 +156,58 @@ namespace Burmuruk.Tesis.Editor.Controls
             subTabs[CharacterTab.Health].GoBack += () => ChangeWindow(CharacterTab.None);
             EnableContainer(subTabs[CharacterTab.Health].Instance, false);
         }
+        #endregion
 
-        private int? ContainsCreation(IList list, string name)
+        #region Stats visualization
+        private void AddStats()
         {
-            var components = (List<ElementComponent>)list;
-            int i = 0;
-            int? emptyIdx = -1;
+            var members = typeof(BasicStats).GetFields();
+            var so = new SerializedObject(basicStats);
 
-            foreach (var component in components)
+            foreach (var member in members)
             {
-                if (!component.element.ClassListContains("Disable"))
-                {
-                    if (component.NameButton.text == name)
-                    {
-                        return null;
-                    }
-                }
-                else if (!emptyIdx.HasValue)
-                {
-                    emptyIdx = i;
-                }
+                var prop = so.FindProperty("stats");
 
-                ++i;
+                AddStatWithToggle(statsContainer, prop.FindPropertyRelative(member.Name), member.Name);
             }
 
-            return emptyIdx;
+            so.ApplyModifiedProperties();
         }
 
-        /// <summary>
-        /// Adds an inventory if the new element is an equipment and the inventory it's not in the list.
-        /// </summary>
-        /// <param name="element">Equipment component</param>
-        private void AddEquipment(ElementComponent element)
+        private void EditBasicStat(ChangeEvent<bool> evt, string name)
         {
-            if ((ComponentType)element.Type != ComponentType.Equipment) return;
+            if (evt.newValue) return;
+        }
 
-            var comps = (from c in ComponentsList.Components
-                         where (ComponentType)c.Type == ComponentType.Inventory && !c.element.ClassListContains("Disable")
-                            select c).ToArray();
+        void AddStatWithToggle(VisualElement parent, SerializedProperty property, string name)
+        {
+            var row = new VisualElement();
+            row.style.flexDirection = FlexDirection.Row;
+            row.style.alignItems = Align.Center;
+            //row.style.marginBottom = 4;
 
-            if (comps == null || comps.Length == 0)
+            var field = new PropertyField(property, name);
+            field.Bind(property.serializedObject);
+            field.style.flexGrow = 1;
+
+            var toggle = new Toggle()
             {
-                ComponentsList.AddElement(ComponentType.Inventory.ToString());
-            }
+                text = "",
+                tooltip = $"Acción personalizada para {name}"
+            };
+            toggle.RegisterValueChangedCallback(evt => EditBasicStat(evt, name));
+
+            toggle.style.width = 24;
+            toggle.style.marginLeft = 4;
+
+            row.Add(field);
+            row.Add(toggle);
+
+            parent.Add(row);
         }
+        #endregion
 
-        /// <summary>
-        /// Setup element by setting id, changing colour or enable its button.
-        /// </summary>
-        /// <param name="element"></param>
-        private void Setup_ComponentButton(ElementComponent element)
-        {
-            switch ((ComponentType)element.Type)
-            {
-                case ComponentType.Equipment:
-                    AddEquipment(element);
-                    goto case ComponentType.Health;
-
-                case ComponentType.Inventory:
-                case ComponentType.Health:
-                    SetClickableButtonColour(element);
-                    break;
-
-                default:
-                    if (element.NameButton.ClassListContains("ClickableBtn"))
-                        element.NameButton.RemoveFromClassList("ClickableBtn");
-                    element.NameButton.style.backgroundColor = new Color(0.1647059f, 0.1647059f, 0.1647059f);
-                    break;
-            }
-        }
-
-        private void SetClickableButtonColour(ElementComponent element)
-        {
-            element.NameButton.AddToClassList("ClickableBtn");
-            element.NameButton.style.backgroundColor = new Color(0.4627451f, 0.4627451f, 4627451f);
-        }
-
+        #region Public methods
         public override void Clear()
         {
             if (curTab != CharacterTab.None)
@@ -227,85 +232,6 @@ namespace Burmuruk.Tesis.Editor.Controls
             _id = null;
             _lastTab = CharacterTab.None;
         }
-
-        #region Tab control
-        private void ChangeTab(ComponentType type)
-        {
-            if (type == ComponentType.Health)
-                ChangeWindow(CharacterTab.Health);
-        }
-
-        private void ChangeWindow(CharacterTab newTab)
-        {
-            if (curTab == newTab) return;
-
-            EnableContainer(subTabs[curTab].Instance, false);
-            EnableContainer(subTabs[newTab].Instance, true);
-            _lastTab = newTab;
-            curTab = newTab;
-        }
-        #endregion
-
-        private void OpenComponentSettings(int componentIdx)
-        {
-            var type = (ComponentType)ComponentsList[componentIdx].Type;
-
-            CharacterTab newTab = Get_TabType(type);
-
-            if (newTab == CharacterTab.None) return;
-
-            switch (type)
-            {
-                case ComponentType.Equipment:
-                    Load_InventoryItemsInEquipment();
-                    break;
-                case ComponentType.Inventory:
-                    break;
-
-                default: break;
-            }
-
-            ChangeWindow(newTab);
-        }
-
-        private CharacterTab Get_TabType(ComponentType type) =>
-            type switch
-            {
-                ComponentType.Equipment => CharacterTab.Equipment,
-                ComponentType.Health => CharacterTab.Health,
-                ComponentType.Inventory => CharacterTab.Inventory,
-                _ => CharacterTab.None
-            };
-
-    private void Load_InventoryItemsInEquipment()
-        {
-            var items = ((InventorySettings)subTabs[CharacterTab.Inventory]).MClInventoryElements;
-            //var inventory = (subTabs[CharacterTab.Inventory] as InventorySettings).GetInventory();
-            ((EquipmentSettings)subTabs[CharacterTab.Equipment]).Load_EquipmentFromList(items);
-        }
-
-        #region Variable generation
-        private (Type, VisualElement) GenerateVariable(string name) =>
-            name switch
-            {
-                "string" => (typeof(string), new TextField()),
-                "int" => (typeof(int), new IntegerField()),
-                "float" => (typeof(float), new FloatField()),
-                _ => (null, null)
-            };
-
-        private void AddVariable(string name)
-        {
-            (var type, var element) = GenerateVariable(name);
-
-            _instance.Add(element);
-        }
-
-        private void InitializeElement(in VisualElement element)
-        {
-
-        }
-        #endregion
 
         public override ModificationTypes Check_Changes()
         {
@@ -356,24 +282,15 @@ namespace Burmuruk.Tesis.Editor.Controls
                 else
                     CurModificationType = ModificationTypes.EditData;
 
+                if (_characterData.Value.shouldSave != TglSave.value)
+                    CurModificationType = ModificationTypes.EditData;
+
                 return CurModificationType;
             }
             catch (InvalidExeption e)
             {
                 throw e;
             }
-        }
-
-        private CharacterData GetInfo()
-        {
-            CharacterData newData = new();
-            newData.components ??= new();
-            AddCharacterComponents(ref newData);
-            newData.characterType = (CharacterType)EMCharacterType.EnumField.value;
-            newData.stats = basicStats.stats;
-            newData.characterName = TxtName.value;
-
-            return newData;
         }
 
         public bool Save()
@@ -407,6 +324,198 @@ namespace Burmuruk.Tesis.Editor.Controls
             return data.Value;
         }
 
+        public override void Remove_Changes()
+        {
+            _nameControl.Remove_Changes();
+
+            if (curTab != CharacterTab.None)
+            {
+                subTabs[curTab].Remove_Changes();
+                return;
+            }
+
+            _lastTab = CharacterTab.None;
+            TempName = _nameControl.name;
+            CharacterData newInfo = _characterData.Value;
+            LoadInfo(newInfo, _id);
+        }
+
+        public void CloseWindows()
+        {
+            for (int i = 1; i < Enum.GetValues(typeof(CharacterTab)).Length; i++)
+            {
+                EnableContainer(subTabs[(CharacterTab)i].Instance, false);
+            }
+
+            curTab = CharacterTab.None;
+        }
+
+        public override void Enable(bool enabled)
+        {
+            base.Enable(enabled);
+
+            if (enabled)
+                ChangeWindow(_lastTab);
+            else
+                CloseWindows();
+        }
+        #endregion
+
+        #region Events
+        private void OpenComponentSettings(int componentIdx)
+        {
+            var type = (ComponentType)ComponentsList[componentIdx].Type;
+
+            CharacterTab newTab = Get_TabType(type);
+
+            if (newTab == CharacterTab.None) return;
+
+            switch (type)
+            {
+                case ComponentType.Equipment:
+                    Load_InventoryItemsInEquipment();
+                    break;
+                case ComponentType.Inventory:
+                    break;
+
+                default: break;
+            }
+
+            ChangeWindow(newTab);
+        }
+
+        private int? ContainsCreation(IList list, string name)
+        {
+            var components = (List<ElementComponent>)list;
+            int i = 0;
+            int? emptyIdx = -1;
+
+            foreach (var component in components)
+            {
+                if (!component.element.ClassListContains("Disable"))
+                {
+                    if (component.NameButton.text == name)
+                    {
+                        return null;
+                    }
+                }
+                else if (!emptyIdx.HasValue)
+                {
+                    emptyIdx = i;
+                }
+
+                ++i;
+            }
+
+            return emptyIdx;
+        }
+
+        /// <summary>
+        /// Setup element by setting id, changing colour or enable its button.
+        /// </summary>
+        /// <param name="element"></param>
+        private void Setup_ComponentButton(ElementComponent element)
+        {
+            switch ((ComponentType)element.Type)
+            {
+                case ComponentType.Equipment:
+                    AddEquipment(element);
+                    goto case ComponentType.Health;
+
+                case ComponentType.Inventory:
+                case ComponentType.Health:
+                    SetClickableButtonColour(element);
+                    break;
+
+                default:
+                    if (element.NameButton.ClassListContains("ClickableBtn"))
+                        element.NameButton.RemoveFromClassList("ClickableBtn");
+                    element.NameButton.style.backgroundColor = new Color(0.1647059f, 0.1647059f, 0.1647059f);
+                    break;
+            }
+        }
+
+        private void Clear_ComponentData(ElementComponent element)
+        {
+            var tabType = Get_TabType((ComponentType)element.Type);
+
+            if (!subTabs.ContainsKey(tabType)) return;
+
+            subTabs[tabType].Clear();
+        }
+        #endregion
+
+        /// <summary>
+        /// Adds an inventory if the new element is an equipment and the inventory it's not in the list.
+        /// </summary>
+        /// <param name="element">Equipment component</param>
+        private void AddEquipment(ElementComponent element)
+        {
+            if ((ComponentType)element.Type != ComponentType.Equipment) return;
+
+            var comps = (from c in ComponentsList.Components
+                         where (ComponentType)c.Type == ComponentType.Inventory && !c.element.ClassListContains("Disable")
+                            select c).ToArray();
+
+            if (comps == null || comps.Length == 0)
+            {
+                ComponentsList.AddElement(ComponentType.Inventory.ToString());
+            }
+        }
+
+        private void SetClickableButtonColour(ElementComponent element)
+        {
+            element.NameButton.AddToClassList("ClickableBtn");
+            element.NameButton.style.backgroundColor = new Color(0.4627451f, 0.4627451f, 4627451f);
+        }
+
+        #region Tab control
+        private void ChangeTab(ComponentType type)
+        {
+            if (type == ComponentType.Health)
+                ChangeWindow(CharacterTab.Health);
+        }
+
+        private void ChangeWindow(CharacterTab newTab)
+        {
+            if (curTab == newTab) return;
+
+            EnableContainer(subTabs[curTab].Instance, false);
+            EnableContainer(subTabs[newTab].Instance, true);
+            _lastTab = newTab;
+            curTab = newTab;
+        }
+        #endregion
+
+        private CharacterTab Get_TabType(ComponentType type) =>
+            type switch
+            {
+                ComponentType.Equipment => CharacterTab.Equipment,
+                ComponentType.Health => CharacterTab.Health,
+                ComponentType.Inventory => CharacterTab.Inventory,
+                _ => CharacterTab.None
+            };
+
+        private void Load_InventoryItemsInEquipment()
+        {
+            var items = ((InventorySettings)subTabs[CharacterTab.Inventory]).MClInventoryElements;
+            //var inventory = (subTabs[CharacterTab.Inventory] as InventorySettings).GetInventory();
+            ((EquipmentSettings)subTabs[CharacterTab.Equipment]).Load_EquipmentFromList(items);
+        }
+
+        private CharacterData GetInfo()
+        {
+            CharacterData newData = new();
+            newData.components ??= new();
+            AddCharacterComponents(ref newData);
+            newData.characterType = (CharacterType)EMCharacterType.EnumField.value;
+            newData.stats = basicStats.stats;
+            newData.characterName = TxtName.value;
+            newData.shouldSave = TglSave.value;
+
+            return newData;
+        }
+
         private void LoadInfo(in CharacterData newData, string id)
         {
             _characterData = newData;
@@ -416,6 +525,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             basicStats.stats = _characterData.Value.stats;
             TxtName.value = _characterData.Value.characterName;
             TempName = _characterData.Value.characterName;
+            TglSave.value = _characterData.Value.shouldSave;
             _id = id;
         }
 
@@ -501,42 +611,6 @@ namespace Burmuruk.Tesis.Editor.Controls
 
                 ComponentsList.AddElement(component.Key.ToString());
             }
-        }
-
-        public override void Remove_Changes()
-        {
-            _nameControl.Remove_Changes();
-
-            if (curTab != CharacterTab.None)
-            {
-                subTabs[curTab].Remove_Changes();
-                return;
-            }
-
-            _lastTab = CharacterTab.None;
-            TempName = _nameControl.name;
-            CharacterData newInfo = _characterData.Value;
-            LoadInfo(newInfo, _id);
-        }
-
-        public void CloseWindows()
-        {
-            for (int i = 1; i < Enum.GetValues(typeof(CharacterTab)).Length; i++)
-            {
-                EnableContainer(subTabs[(CharacterTab)i].Instance, false);
-            }
-
-            curTab = CharacterTab.None;
-        }
-
-        public override void Enable(bool enabled)
-        {
-            base.Enable(enabled);
-
-            if (enabled)
-                ChangeWindow(_lastTab);
-            else
-                CloseWindows();
         }
     }
 

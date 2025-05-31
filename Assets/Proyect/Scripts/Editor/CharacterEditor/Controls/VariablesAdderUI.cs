@@ -6,32 +6,53 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using static Burmuruk.Tesis.Utilities.VariablesAdder;
 using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
+using System;
+using Burmuruk.Tesis.Editor.Controls;
+using UnityEditor.UIElements;
 
 namespace Burmuruk.Tesis.Editor
 {
     public class VariablesAdderUI
     {
+        List<string> _headers = new();
         List<(Label label, VariableType type)> newVariables = new();
         VisualElement target;
 
         public Button ButtonAdd { get; private set; }
         public Button ButtonCancel { get; private set; }
+        public VisualElement PMoreOptions { get; private set; }
+        public TextField TxtHeader { get; private set; }
+        public DropdownField DDFHeader { get; private set; }
         public EnumField EFType { get; private set; }
         public TextField TxtName { get; private set; }
         public VisualElement ValuesContainer { get; private set; }
+        public ComponentsList<ElementCreation<VariableType>> VariablesList { get; private set; }
 
-        public VariablesAdderUI(VisualElement container, VisualElement target)
+        public VariablesAdderUI(VisualElement container, List<string> headers)
         {
+            _headers = headers;
             ButtonAdd = container.Q<Button>("btnAddBasicStats");
             ButtonCancel = container.Q<Button>("btnCancel");
+            PMoreOptions = container.Q<VisualElement>("PNewValueControls");
+            TxtHeader = container.Q<TextField>("txtHeader");
+            DDFHeader = container.Q<DropdownField>("DDFHeader");
             EFType = container.Q<EnumField>();
             TxtName = container.Q<TextField>("txtName");
-            ValuesContainer = container.Q<VisualElement>("newValuesContainer");
+            ValuesContainer = container.Q<VisualElement>("componentsConatiner");
+            VariablesList = new ComponentsList<ElementCreation<VariableType>>(container);
 
+            VariablesList.OnElementCreated += SetElementStyle;
+            VariablesList.OnElementAdded += _ => Enable_AplyButton(VariablesList.Components.Count);
+            VariablesList.OnElementRemoved += _ => Enable_AplyButton(VariablesList.EnabledCount -1);
             this.target = ValuesContainer;
             ButtonAdd.clicked += OnClick_AddButton;
             EFType.Init(VariableType.Int);
 
+            EnableContainer(PMoreOptions, false);
+            EnableContainer(TxtHeader, false);
+            
+            Setup_DDFHeader();
+            TxtHeader.RegisterValueChangedCallback(OnTxtHeaderChanged);
             TxtName.RegisterCallback<KeyUpEvent>(OnKeyUp_TxtName);
             ButtonCancel.clicked += () =>
             {
@@ -43,22 +64,85 @@ namespace Burmuruk.Tesis.Editor
             ShowElements(false);
         }
 
-        public void AddVariable()
+        private void Enable_AplyButton(int amount)
         {
-            if (!VerifyVariableName(TxtName.value)) return;
+            ButtonAdd.SetEnabled(amount > 0);
+        }
 
-            //Path.GetDirectoryName(typeof(vari).Assembly.Location);
+        private void SetElementStyle(ElementCreation<VariableType> creation)
+        {
+            creation.RemoveButton.clicked += () =>
+            {
+                VariablesList.RemoveComponent(creation.idx);
+            };
+        }
 
-            string path = Path.GetDirectoryName(typeof(BasicStats).Assembly.Location);
-            //Debug.Log( AssetDatabase.get("BasicStats") + "  \tAsset database");
-            VariablesAdder adder = new(path);
+        private void OnTxtHeaderChanged(ChangeEvent<string> evt)
+        {
+            VerifyHeaderName();
+        }
 
-            Debug.Log(path);
+        private bool VerifyHeaderName()
+        {
+            foreach (var choice in DDFHeader.choices)
+            {
+                if (choice == TxtHeader.value)
+                {
+                    Highlight(TxtHeader, true, BorderColour.Error);
+                    Notify("Header name in use", BorderColour.Error);
+                    return false;
+                }
+            }
 
-            Label newElement = new(TxtName.text);
+            Highlight(TxtHeader, false);
+            DisableNotification();
+            return true;
+        }
 
-            newVariables.Add((newElement, (VariableType)EFType.value));
-            target.Add(newElement);
+        private void Setup_DDFHeader()
+        {
+            DDFHeader.RegisterValueChangedCallback(OnDDFHederChanged);
+            DDFHeader.choices.Clear();
+            DDFHeader.choices.Add("New");
+
+            if (_headers.Count > 0)
+            {
+                DDFHeader.choices.AddRange(_headers);
+                DDFHeader.SetValueWithoutNotify(_headers[0]);
+            }
+            else
+            {
+                DDFHeader.SetValueWithoutNotify("None");
+            }
+        }
+
+        private void OnDDFHederChanged(ChangeEvent<string> evt)
+        {
+            bool enable = evt.newValue == "New";
+            EnableContainer(TxtHeader, enable);
+
+            if (enable)
+            {
+                TxtHeader.SetValueWithoutNotify("New header");
+            }
+            else
+                TxtHeader.SetValueWithoutNotify(evt.newValue);
+        }
+
+        public bool AddVariable()
+        {
+            if (!VerifyVariableName(TxtName.value))
+            {
+                Highlight(TxtName, true, BorderColour.Error);
+                Notify("Nombre no válido", BorderColour.Error);
+                return false;
+            }
+
+            Highlight(TxtName, false);
+            VariablesList.AddElement(TxtName.value, EFType.value.ToString());
+            DisableNotification();
+
+            return true;
         }
 
         public void RemoveExtraValues()
@@ -99,7 +183,8 @@ namespace Burmuruk.Tesis.Editor
         {
             if (evt.keyCode == KeyCode.Return)
             {
-                AddVariable();
+                if (!AddVariable()) return;
+
                 TxtName.value = "";
                 TxtName.Focus();
             }
@@ -107,7 +192,7 @@ namespace Burmuruk.Tesis.Editor
 
         private void OnClick_AddButton()
         {
-            if (EFType.ClassListContains("Disable"))
+            if (pNotification.ClassListContains("Disable"))
             {
                 ButtonAdd.text = "Apply changes";
                 ShowElements(true);
@@ -124,6 +209,8 @@ namespace Burmuruk.Tesis.Editor
 
         private void ResetValues()
         {
+            DDFHeader.SetValueWithoutNotify(_headers.Count > 0 ? _headers[0] : "None");
+            TxtHeader.SetValueWithoutNotify("New header value");
             ButtonAdd.text = "Add basic stat";
             TxtName.value = "Name";
             EFType.value = VariableType.Int;
@@ -131,9 +218,23 @@ namespace Burmuruk.Tesis.Editor
 
         private void ShowElements(bool shouldShow = true)
         {
-            EnableContainer(EFType, shouldShow);
-            EnableContainer(TxtName, shouldShow);
+            ButtonAdd.SetEnabled(!shouldShow);
+            EnableContainer(PMoreOptions, shouldShow);
+            //EnableContainer(EFType, shouldShow);
+            //EnableContainer(TxtName, shouldShow);
             EnableContainer(ButtonCancel, shouldShow);
+        }
+    }
+
+    public class ElementCreation<T> : ElementCreationUI where T : Enum
+    {
+        private T _type;
+
+        public override Enum Type { get; set; }
+
+        public override void SetType(string value)
+        {
+            _type = (T)Enum.Parse(typeof(T), value);
         }
     }
 }

@@ -266,7 +266,6 @@ MonoBehaviour:
     eyesRadious: 0
     earsRadious: 0
     minDistance: 0
-    m_slots: []
   mover: {fileID: 0}
   fighter: {fileID: 0}
   formation: 0

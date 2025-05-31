@@ -15,19 +15,53 @@ namespace Burmuruk.Tesis.Editor.Controls
     public class ComponentsList<T> : ComponentsList, IClearable where T : ElementCreationUI, new()
     {
         List<int> _amounts;
-        public Action<int> OnElementClicked = delegate { };
 
+        public Action<int> OnElementClicked = delegate { };
+        /// <summary>
+        /// Called after the element is created. Is empty by default.
+        /// </summary>
         public Action<T> OnElementCreated = delegate { };
+        /// <summary>
+        /// Called after the element is added. Is empty by default.
+        /// </summary>
         public Action<T> OnElementAdded = delegate { };
+        /// <summary>
+        /// Called before the element is removed. Is empty by default.
+        /// </summary>
         public Action<T> OnElementRemoved = delegate { };
-        public Func<IList, string, int?> CreationValidator = null;
-        public Func<int, bool> DeletionValidator = null;
+        /// <summary>
+        /// Called after the element is obteined but before it's added. Is empty by default.
+        /// </summary>
         public Action<T> AddElementExtraData;
+        /// <summary>
+        /// By default, looks for the first disabled element.
+        /// </summary>
+        public Func<IList, string, int?> CreationValidator = null;
+        /// <summary>
+        /// By default, checks if the element is enabled.
+        /// </summary>
+        public Func<int, bool> DeletionValidator = null;
 
         public VisualElement Parent { get; private set; }
         public VisualElement Container { get; private set; }
         public List<T> Components { get; private set; }
         public List<int> Amounts { get => _amounts; }
+        public int EnabledCount
+        {
+            get
+            {
+                int i = 0;
+                foreach (var component in Components)
+                {
+                    if (IsDisabled(component.element))
+                        return i;
+                    
+                    i++;
+                }
+
+                return i;
+            }
+        }
 
         public T this[int index]
         {
@@ -194,7 +228,11 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         public virtual void RemoveComponent(int idx)
         {
-            if (DeletionValidator != null && !DeletionValidator(idx))
+            if (DeletionValidator != null)
+            {
+                if (!DeletionValidator(idx)) return;
+            }
+            else if (IsDisabled(Components[idx].element))
                 return;
 
             OnElementRemoved?.Invoke(Components[idx]);
@@ -214,9 +252,13 @@ namespace Burmuruk.Tesis.Editor.Controls
                 Amounts[i] = Amounts[idx++];
             }
 
-            Components[startIdx].idx = Components.Count - 1;
-            Components.Add(Components[startIdx]);
+            var component = Components[startIdx];
+            component.idx = Components.Count - 1;
+            Components.Insert(Components.Count - 1, component);
             Components.RemoveAt(startIdx);
+            Container.Remove(component.element);
+            Container.Add(component.element);
+
             Amounts.Add(Amounts[startIdx]);
             Amounts.RemoveAt(startIdx);
         }

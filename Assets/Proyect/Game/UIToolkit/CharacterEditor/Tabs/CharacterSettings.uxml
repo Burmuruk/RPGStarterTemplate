@@ -4,13 +4,14 @@
     <Style src="project://database/Assets/Proyect/Game/UIToolkit/Styles/BasicSS.uss?fileID=7433441132597879392&amp;guid=2693b02dba201b24e87668e3aaaa0fc1&amp;type=3#BasicSS" />
     <Style src="project://database/Assets/Proyect/Game/UIToolkit/Styles/LineTags.uss?fileID=7433441132597879392&amp;guid=1db9e95078017b3489041439420a4a43&amp;type=3#LineTags" />
     <ui:VisualElement style="flex-grow: 1;">
+        <ui:Label tabindex="-1" text="Saving" parse-escape-sequences="true" display-tooltip-when-elided="true" name="Label" class="Title" />
+        <ui:Toggle label="Connect to saving system" name="TglSave" />
         <ui:VisualElement name="VisualElement" style="flex-grow: 1; max-height: 25px; min-height: 25px; padding-left: 5px;">
             <ui:Label tabindex="-1" text="Components" parse-escape-sequences="true" display-tooltip-when-elided="true" class="Title" />
         </ui:VisualElement>
         <ui:VisualElement name="infoComponents" class="FieldColour BaseBorder" style="flex-grow: 1; min-height: 150px; max-height: 200px; flex-shrink: 0;">
             <ui:VisualElement class="LineElements" style="flex-grow: 0; flex-shrink: 0;">
                 <ui:Label tabindex="-1" text="Name" parse-escape-sequences="true" display-tooltip-when-elided="true" style="padding-bottom: 0; padding-top: 1px; max-height: 20px; margin-top: 2px; color: rgb(204, 204, 204); -unity-font-style: normal; font-size: 12px; align-self: center; flex-grow: 1;" />
-                <ui:Label tabindex="-1" text="Save" parse-escape-sequences="true" display-tooltip-when-elided="true" style="padding-bottom: 0; padding-top: 1px; max-height: 20px; margin-top: 2px; color: rgb(204, 204, 204); -unity-font-style: normal; font-size: 12px; align-self: center; flex-grow: 1;" />
                 <ui:Label tabindex="-1" text="Remove" parse-escape-sequences="true" display-tooltip-when-elided="true" style="padding-bottom: 0; padding-top: 1px; max-height: 20px; margin-top: 2px; color: rgb(204, 204, 204); -unity-font-style: normal; font-size: 12px; align-self: center; flex-grow: 1;" />
             </ui:VisualElement>
             <ui:ScrollView name="componentsConatiner" style="flex-grow: 1;" />
@@ -20,6 +21,10 @@
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:Instance template="TypeAdder" name="TypeAdder" style="margin-top: 10px;" />
+        <uie:ObjectField label="Base class" name="OFBaseClass" class="LineElements" />
+        <ui:VisualElement class="LineContainer" style="flex-grow: 1; margin-top: 15px;">
+            <ui:Label tabindex="-1" text="* Toggle the stats that can be modified by buffs or mods." parse-escape-sequences="true" display-tooltip-when-elided="true" class="LineElements Title" />
+        </ui:VisualElement>
         <ui:VisualElement name="infoStats" style="flex-grow: 1;" />
         <ui:Instance template="VariblesAdder" name="VariblesAdder" />
     </ui:VisualElement>

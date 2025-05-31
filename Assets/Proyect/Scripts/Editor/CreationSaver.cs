@@ -1,6 +1,7 @@
 ﻿using Burmuruk.Tesis.Combat;
 using Burmuruk.Tesis.Editor.Controls;
 using Burmuruk.Tesis.Inventory;
+using Burmuruk.Tesis.Saving;
 using Burmuruk.Tesis.Stats;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using static Burmuruk.Tesis.Inventory.Equipment;
 using static Burmuruk.Tesis.Inventory.InventoryEquipDecorator;
 
 namespace Burmuruk.Tesis.Editor
@@ -24,6 +26,7 @@ namespace Burmuruk.Tesis.Editor
         const string WEAPONS_FOLDER = "Weapons";
         ItemsList _itemsList;
         string resultsPath = null;
+        List<GameObject> garbage = new();
 
         ItemsList ItemsList
         {
@@ -98,25 +101,36 @@ namespace Burmuruk.Tesis.Editor
                 _ => ITEMS_FOLDER,
             };
 
-        public void SavePlayer(CharacterData character)
+        public void SavePlayer(CharacterData data)
         {
-            
-            GameObject player = new GameObject("Player", Get_Components(in character));
+            GameObject player = new GameObject("Player", Get_Components(in data));
+            garbage.Add(player);
                 
-            foreach (var component in character.components)
-                Setup_Components(component.Key, player, component.Value, in character);
+            foreach (var component in data.components)
+                Setup_Components(component.Key, player, component.Value, in data);
 
-            GameObject instance = PrefabUtility.SaveAsPrefabAsset(player, Path + "/" + character.characterName + ".prefab");
+            player.GetComponent<Rigidbody>().freezeRotation = true;
+
+            GameObject instance = PrefabUtility.SaveAsPrefabAsset(player, Path + "/" + data.characterName + ".prefab");
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+            RemoveGarbage();
         }
+
+        private void RemoveGarbage() => garbage.ForEach(e => GameObject.DestroyImmediate(e));
 
         private Type[] Get_Components(in CharacterData characterData)
         {
             List<Type> components = new()
             {
-                typeof(Tesis.Control.Character),
+                Get_CharacterClass(characterData.characterType),
+                typeof(CapsuleCollider),
+                typeof(Rigidbody),
             };
+
+            if (characterData.shouldSave)
+                components.Add(typeof(JsonSaveableEntity));
+
             bool containsEquipment = characterData.components.ContainsKey(ComponentType.Equipment);
 
             foreach (var component in characterData.components)
@@ -124,12 +138,6 @@ namespace Burmuruk.Tesis.Editor
                 if (component.Key == ComponentType.None) continue;
 
                 if (component.Key == ComponentType.Inventory && containsEquipment) continue;
-
-                //if (component.Key == ComponentType.Equipment && containsEquipment)
-                //{
-                //    components.Add(Get_ComponentType(ComponentType.Inventory));
-                //    Add_CharacterComponent(ComponentType.Inventory, player, character.components[ComponentType.Inventory]);
-                //}
 
                 components.Add(Get_ComponentType(component.Key));
             }
@@ -188,6 +196,13 @@ namespace Burmuruk.Tesis.Editor
                 _ => null
             };
 
+        private Type Get_CharacterClass(CharacterType type) =>
+            type switch
+            {
+                CharacterType.Player => typeof(Tesis.Control.AI.AIGuildMember),
+                _ => typeof(Tesis.Control.AI.AIEnemyController),
+            };
+
         private void Setup_Health(GameObject instance, float health)
         {
             var inventory = instance.GetComponent<Tesis.Stats.Health>();
@@ -220,7 +235,7 @@ namespace Burmuruk.Tesis.Editor
             foreach (var data in equipment.equipment)
             {
                 string name = SavingSystem.Data.creations[data.Value.type][data.Key].Name;
-                //var item = AssetDatabase.LoadAssetAtPath<InventoryItem>(Path + "/" + ITEMS_FOLDER + name + ASSET_EXTENSION);
+                
                 foreach (var item in items)
                 {
                     if (item.name == name)
@@ -234,6 +249,8 @@ namespace Burmuruk.Tesis.Editor
             }
 
             initialItemsF.SetValue(equipper, initialItems);
+            
+            SetPlayerModel(instance, equipper, in equipment);
         }
 
         private void Setup_Movement(GameObject instance)
@@ -244,6 +261,72 @@ namespace Burmuruk.Tesis.Editor
         private void Setup_Fighter(GameObject instance)
         {
 
+        }
+
+
+        private void SetPlayerModel(GameObject player, InventoryEquipDecorator inventory, in Equipment equipment)
+        {
+            var eyes = new GameObject("Eyes");
+            eyes.transform.parent = player.transform;
+            var ears = new GameObject("Ears");
+            eyes.transform.parent = player.transform;
+
+            var body = GameObject.Instantiate(equipment.model, Vector3.zero, Quaternion.identity, player.transform);
+            garbage.Add(body);
+
+            Dictionary<(string cur, string parent), EquipmentType> names = new();
+            equipment.spawnPoints.ForEach(s =>
+            {
+                names.TryAdd((s.transform.name, s.transform.parent == null ? null : s.transform.parent.name), s.type);
+            });
+
+            var spawnPoints = GetSpawnPoints(body, ref names);
+
+            FieldInfo bodyF = typeof(InventoryEquipDecorator).GetField("body", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo spawnPointsF = typeof(InventoryEquipDecorator).GetField("spawnPoints", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            bodyF.SetValue(inventory, body);
+            spawnPointsF.SetValue(inventory, spawnPoints.ToArray());
+        }
+
+        private List<SpawnPointData> GetSpawnPoints(GameObject model, ref Dictionary<(string cur, string parent), EquipmentType> names)
+        {
+            var items = new List<SpawnPointData>();
+
+            for (int i = 0; i < model.transform.childCount; i++)
+            {
+                var child = model.transform.GetChild(i);
+                (string cur, string parent)? key = null;
+
+                foreach (var item in names)
+                {
+                    if (child.transform.name == item.Key.cur)
+                    {
+                        if (child.transform.parent.transform.name == item.Key.parent)
+                        {
+                            key = item.Key;
+                            break;
+                        }
+                    }
+
+                }
+
+                if (key.HasValue)
+                {
+                    var data = new SpawnPointData()
+                    {
+                        spawnType = (int)names[key.Value],
+                        spawnPoint = child,
+                    };
+                    items.Add(data);
+                    names.Remove(key.Value);
+                }
+
+                if (child.transform.childCount > 0)
+                    items.AddRange(GetSpawnPoints(child.gameObject, ref names));
+            }
+
+            return items;
         }
     }
 }

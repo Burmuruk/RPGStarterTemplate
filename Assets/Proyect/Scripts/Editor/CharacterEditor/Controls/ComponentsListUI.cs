@@ -40,7 +40,6 @@ namespace Burmuruk.Tesis.Editor.Controls
             var component = base.CreateNewComponent(value, type, out idx);
             int newIdx = idx;
 
-            component.RemoveButton.clicked += () => RemoveComponent(newIdx);
             component.IFAmount.RegisterValueChangedCallback((evt) => UpdateTxtAmount(newIdx, evt.newValue));
 
             return component;

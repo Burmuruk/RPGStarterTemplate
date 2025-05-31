@@ -11,7 +11,14 @@ namespace Burmuruk.Tesis.Editor
         public Color color;
         public BasicStats stats;
         public CharacterType characterType;
+        public bool shouldSave;
         public Dictionary<ComponentType, object> components;
+    }
+
+    public struct CharacterComponent
+    {
+        public object data;
+        public bool shouldSave;
     }
 
     struct Health
@@ -26,6 +33,8 @@ namespace Burmuruk.Tesis.Editor
 
     public struct Equipment
     {
+        public GameObject model;
+        public List<(Transform transform, EquipmentType type)> spawnPoints;
         public Inventory inventory;
         public Dictionary<string, EquipData> equipment;
 
@@ -33,6 +42,8 @@ namespace Burmuruk.Tesis.Editor
         {
             this.inventory = inventory;
             equipment = new();
+            model = null;
+            spawnPoints = null;
         }
     }
 

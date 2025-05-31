@@ -87,8 +87,6 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             if (!SavingSystem.Remove(type, id)) return;
 
-            Creations.RemoveComponent(elementIdx);
-
             Notify("Element deleted.", BorderColour.Approved);
         }
 
@@ -188,6 +186,8 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             for (int i = 0; i < Creations.Components.Count; i++)
             {
+                if (IsDisabled(Creations[i].element)) break;
+
                 if (Creations.Components[i].Id == newValue.Id)
                 {
                     Creations.RemoveComponent(i);
@@ -229,12 +229,10 @@ namespace Burmuruk.Tesis.Editor.Controls
 
                 if (lastLeftSearch.type == ElementType.None)
                 {
-                    Debug.Log("Search filter");
                     SearchAllElements(type);
                 }
                 else
                 {
-                    Debug.Log("Search last " + lastLeftSearch.type + " Filter: " + currentFilter);
                     SearchElementTag(txtSearch_Left.value, lastLeftSearch.type);
                 }
             }

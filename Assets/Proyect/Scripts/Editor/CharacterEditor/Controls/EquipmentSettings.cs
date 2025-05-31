@@ -2,6 +2,7 @@
 using Burmuruk.Tesis.Inventory;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -13,19 +14,17 @@ namespace Burmuruk.Tesis.Editor.Controls
     public class EquipmentSettings : SubWindow, IUIListContainer<BaseCreationInfo>
     {
         const string INFO_EQUIPMENT_SETTINGS_NAME = "EquipmentSettings";
-        Equipment _Changes = default;
+        Equipment? _changes = null;
         Inventory _inventory;
         Queue<string> _itemsIds = new();
-
-        class EquipmentVisualizer : ScriptableObject
-        {
-            [SerializeField] public Tesis.Inventory.Equipment equipment;
-        }
 
         public Button BTNBackEquipmentSettings { get; private set; }
         public ComponentsListUI<ElementCreation> MClEquipmentElements { get; private set; }
         public EnumModifierUI<EquipmentType> EMBodyPart { get; private set; }
         public VisualElement InfoBodyPlacement { get; private set; }
+        public ObjectField OFBody { get; private set; }
+        public TreeView TVBodyParts { get; private set; }
+        public EquipmentSpawnsList UIParts { get; private set; }
 
         public EquipmentSettings(VisualElement container)
         {
@@ -42,7 +41,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             BTNBackEquipmentSettings.clicked += () => GoBack?.Invoke();
 
             EMBodyPart = new EnumModifierUI<EquipmentType>(_instance.Q<VisualElement>(EnumModifierUI<EquipmentType>.ContainerName));
-
+            
             InfoBodyPlacement = _instance.Q<VisualElement>("infoBodySplit");
             CreateSplitViewEquipment(InfoBodyPlacement);
 
@@ -155,19 +154,6 @@ namespace Burmuruk.Tesis.Editor.Controls
             }
         }
 
-        //public void Load_InventoryItems(in Inventory inventory)
-        //{
-        //    MClEquipmentElements.Components.ForEach(c => EnableContainer(c.element, false));
-        //    _inventory = inventory;
-
-        //    int idx = 0;
-        //    foreach (var component in inventory.items)
-        //    {
-        //        MClEquipmentElements.AddElement(component.NameButton.text, component.Type.ToString());
-        //        Setup_EquipmentElementButton(idx++);
-        //    }
-        //}
-
         private void CreateSplitViewEquipment(VisualElement container)
         {
             TwoPaneSplitView splitView = new TwoPaneSplitView();
@@ -177,38 +163,139 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             var bodVis = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/CharacterEditor/Elements/BodyVisualizer.uxml");
             var leftSide = bodVis.Instantiate();
-            var objField = leftSide.Q<ObjectField>();
-            var tree = leftSide.Q<TreeView>();
-
-            var equipVis = ScriptableObject.CreateInstance<EquipmentVisualizer>();
-            VisualElement rightSide = new InspectorElement(equipVis);
-
-            objField.objectType = typeof(GameObject);
-            objField.RegisterValueChangedCallback(evt => OnBodyPicked(evt.newValue, leftSide.Q<TreeView>(), equipVis));
+            var spawnFile = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/CharacterEditor/Elements/BodySpawnPoint.uxml");
+            UIParts = new EquipmentSpawnsList(spawnFile.Instantiate());
+            OFBody = leftSide.Q<ObjectField>();
+            TVBodyParts = leftSide.Q<TreeView>();
+            Setup_LeftSide(leftSide);
+            Setup_TreeView();
 
             splitView.Insert(0, leftSide);
-            splitView.Insert(1, rightSide);
-
+            splitView.Insert(1, UIParts.Container);
             container.Add(splitView);
         }
 
-        private void OnBodyPicked(UnityEngine.Object body, TreeView tree, EquipmentVisualizer rightSide)
+        private void Setup_LeftSide(VisualElement side)
         {
-            var go = ((GameObject)body).transform;
-            int startIdx = 0;
-            tree.Clear();
+            OFBody.objectType = typeof(GameObject);
+            OFBody.RegisterValueChangedCallback(ShowBodyTree);
 
-            List<TreeViewItemData<string>> subItemData = GetChilds(go.transform, ref startIdx);
+            var scroll = side.Q<ScrollView>();
+            scroll.RegisterCallback<WheelEvent>(evt => evt.StopPropagation());
+        }
 
-            tree.makeItem = () => new Label();
-            tree.bindItem = (elem, idx) =>
+        //private void StopScroll(WheelEvent evt, ScrollView scroll)
+        //{
+        //    //bool scrollingDown = evt.delta.y > 0;
+        //    //float scrollOffset = scroll.scrollOffset.y;
+        //    //float contentHeight = scroll.contentContainer.layout.height;
+        //    //float viewHeight = scroll.layout.height;
+
+        //    //bool canScrollDown = scrollOffset + viewHeight < contentHeight;
+        //    //bool canScrollUp = scrollOffset > 0;
+
+        //    //if ((scrollingDown && canScrollDown) || (!scrollingDown && canScrollUp))
+        //    //{
+        //    //    // Si B aún puede desplazarse, evitamos que el scroll se propague al padre (A)
+        //    //    evt.StopPropagation();
+        //    //}
+        //}
+
+        private void Setup_TreeView()
+        {
+            TVBodyParts.SetEnabled(false);
+            TVBodyParts.Clear();
+            TVBodyParts.makeItem = () => new Label();
+            
+            TVBodyParts.bindItem = (element, i) =>
             {
-                elem.Q<Label>().text = subItemData[idx].data;
+                var data = TVBodyParts.GetItemDataForIndex<TransformNode>(i);
+                var label = element as Label;
+                label.text = data.name;
+
+                label.UnregisterCallback<PointerDownEvent>(OnPointerDown);
+                label.RegisterCallback<PointerDownEvent>(OnPointerDown);
+
+                void OnPointerDown(PointerDownEvent evt)
+                {
+                    evt.StopPropagation();
+                    if (evt.button != 0) return;
+                
+                    var go = data.transform?.gameObject;
+                    if (go == null || DragAndDrop.objectReferences.Length > 0) return;
+                    
+                    DragAndDrop.PrepareStartDrag();
+                    DragAndDrop.objectReferences = new UnityEngine.Object[] { go };
+                    DragAndDrop.StartDrag($"Dragging {go.name}");
+                }
+            };
+            TVBodyParts.fixedItemHeight = 16;
+        }
+
+        private void ShowBodyTree(ChangeEvent<UnityEngine.Object> evt)
+        {
+            GameObject selected = evt.newValue as GameObject;
+            if (selected == null) return;
+
+            int idCounter = 0;
+            var rootNode = BuildTree(selected.transform, ref idCounter);
+            var rootTreeItem = BuildTreeItem(rootNode);
+
+            if (rootTreeItem.children.Count() <= 0)
+            {
+                TVBodyParts.Clear();
+                TVBodyParts.SetEnabled(false);
+                return;
+            }
+
+            var rootItems = new List<TreeViewItemData<TransformNode>> { rootTreeItem };
+            TVBodyParts.SetRootItems(rootItems);
+            TVBodyParts.Rebuild();
+            TVBodyParts.SetEnabled(true);
+
+            EditorApplication.delayCall += () => CollapseAll(rootItems);
+        }
+
+        void CollapseAll(IEnumerable<TreeViewItemData<TransformNode>> items)
+        {
+            foreach (var item in items)
+            {
+                TVBodyParts.CollapseItem(item.id);
+                if (item.children != null && item.children.Count() > 0)
+                {
+                    CollapseAll(item.children);
+                }
+            }
+        }
+
+        void FlattenTree(TransformNode node, List<TransformNode> list)
+        {
+            list.Add(node);
+            foreach (var child in node.children)
+                FlattenTree(child, list);
+        }
+
+        TreeViewItemData<TransformNode> BuildTreeItem(TransformNode node)
+        {
+            var children = node.children.Select(child => BuildTreeItem(child)).ToList();
+            return new TreeViewItemData<TransformNode>(node.id, node, children);
+        }
+
+        private TransformNode BuildTree(Transform transform, ref int idCounter)
+        {
+            var node = new TransformNode
+            {
+                id = idCounter++,
+                name = transform.name,
+                transform = transform,
             };
 
-            tree.SetRootItems(subItemData);
-            tree.Rebuild();
-            rightSide.equipment.Body = (GameObject)body;
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                node.children.Add(BuildTree(transform.GetChild(i), ref idCounter));
+            }
+
+            return node;
         }
 
         private List<TreeViewItemData<string>> GetChilds(Transform transform, ref int idx)
@@ -255,43 +342,86 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             MClEquipmentElements.RestartValues();
 
-            if (equipment.equipment != null)
-                foreach (var item in equipment.equipment)
+            if (equipment.equipment == null) return;
+
+            _changes = equipment;
+
+            foreach (var item in equipment.equipment)
+            {
+                Action<ElementCreation> EditData = (e) =>
                 {
-                    Action<ElementCreation> EditData = (e) =>
-                    {
-                        e.Toggle.value = item.Value.equipped;
-                        e.EnumField.value = item.Value.place;
-                    };
-                    if (!SavingSystem.Data.TryGetCreation(item.Key, out var data, out var type))
-                        continue;
+                    e.Toggle.value = item.Value.equipped;
+                    e.EnumField.value = item.Value.place;
+                };
+                if (!SavingSystem.Data.TryGetCreation(item.Key, out var data, out var type))
+                    continue;
 
-                    MClEquipmentElements.OnElementCreated += (e) => EditData(e);
-                    MClEquipmentElements.OnElementAdded += (e) => EditData(e);
+                MClEquipmentElements.OnElementCreated += (e) => EditData(e);
+                MClEquipmentElements.OnElementAdded += (e) => EditData(e);
 
-                    MClEquipmentElements.AddElement(data.Name, type.ToString());
+                MClEquipmentElements.AddElement(data.Name, type.ToString());
 
-                    MClEquipmentElements.OnElementCreated -= (e) => EditData(e);
-                    MClEquipmentElements.OnElementAdded -= (e) => EditData(e);
-                }
+                MClEquipmentElements.OnElementCreated -= (e) => EditData(e);
+                MClEquipmentElements.OnElementAdded -= (e) => EditData(e);
+            }
+
+            UIParts.UpdateData(equipment.spawnPoints);
         }
 
         public override void Clear()
         {
             EMBodyPart.Clear();
+            UIParts.Clear();
+            _changes = null;
         }
 
         public override ModificationTypes Check_Changes()
         {
+            CurModificationType = ModificationTypes.None;
 
+            if (!_changes.HasValue) return ModificationTypes.None;
+
+            if (OFBody.value != _changes.Value.model) 
+                return ModificationTypes.EditData;
+
+            CurModificationType = UIParts.Check_Changes();
+
+            foreach (var item in _changes.Value.equipment)
+            {
+                foreach (var element in MClEquipmentElements.Components)
+                {
+                    if (element.Id == item.Key)
+                    {
+                        if ((ElementType)element.Type != item.Value.type ||
+                            element.Toggle.value != item.Value.equipped)
+                        {
+                            CurModificationType = ModificationTypes.EditData;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        CurModificationType = ModificationTypes.EditData;
+                        break;
+                    }
+                }
+            }
 
             return ModificationTypes.None;
         }
 
         public override void Remove_Changes()
         {
-            var newData = _Changes;
+            var newData = _changes.Value;
             LoadEquipment(newData);
         }
+    }
+
+    public class TransformNode
+    {
+        public int id;
+        public string name;
+        public List<TransformNode> children = new();
+        public Transform transform;
     }
 }

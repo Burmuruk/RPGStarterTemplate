@@ -28,7 +28,7 @@ namespace Burmuruk.Tesis.Inventory
         }
 
         [Serializable]
-        struct SpawnPointData
+        public struct SpawnPointData
         {
             public Transform spawnPoint;
             public int spawnType;

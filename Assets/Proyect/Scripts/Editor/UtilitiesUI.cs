@@ -11,7 +11,32 @@ namespace Burmuruk.Tesis.Editor.Utilities
         private static StyleSheet _hightlight_Colours;
         public static VisualElement pNotification = null;
         public static Label lblNotification;
+        static Regex regVariableName = new Regex(@"(?m)^[a-zA-Z](?!.*\W)+\w*", RegexOptions.Compiled);
         static Regex regName = new Regex(@"(?m)^[a-zA-Z](?!.*\W)+\w*", RegexOptions.Compiled);
+        public static readonly string[] Keywords = new[]
+        {
+            // base
+            "abstract", "as", "base", "bool", "break", "byte", "case", "catch",
+            "char", "checked", "class", "const", "continue", "decimal", "default",
+            "delegate", "do", "double", "else", "enum", "event", "explicit", "extern",
+            "false", "finally", "fixed", "float", "for", "foreach", "goto", "if",
+            "implicit", "in", "int", "interface", "internal", "is", "lock", "long",
+            "namespace", "new", "null", "object", "operator", "out", "override",
+            "params", "private", "protected", "public", "readonly", "ref", "return",
+            "sbyte", "sealed", "short", "sizeof", "stackalloc", "static", "string",
+            "struct", "switch", "this", "throw", "true", "try", "typeof", "uint",
+            "ulong", "unchecked", "unsafe", "ushort", "using", "virtual", "void",
+            "volatile", "while",
+
+            // C# 7+
+            "add", "alias", "async", "await", "dynamic", "from", "get", "global",
+            "group", "into", "join", "let", "orderby", "partial", "remove", "select",
+            "set", "value", "var", "where", "yield",
+
+            // C# 9
+            "record", "init", "with", "not"
+        };
+
 
         private static StyleSheet Border_Colours
         {
@@ -139,7 +164,16 @@ namespace Burmuruk.Tesis.Editor.Utilities
             }
         }
 
-        public static bool VerifyVariableName(string name) => regName.IsMatch(name);
+        public static bool VerifyVariableName(string name)
+        {
+            for (int i = 0; i < Keywords.Length; i++)
+            {
+                if (name.Contains(Keywords[i]))
+                    return false;
+            }
+
+            return regVariableName.IsMatch(name);
+        }
 
         public static bool VerifyName(this string name)
         {
@@ -149,7 +183,7 @@ namespace Burmuruk.Tesis.Editor.Utilities
                 return false;
             }
 
-            if (!VerifyVariableName(name))
+            if (!regName.IsMatch(name))
             {
                 Notify("Invalid name", BorderColour.Error);
                 return false;
