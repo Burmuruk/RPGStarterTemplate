@@ -14,6 +14,7 @@ namespace Burmuruk.Tesis.Editor.Controls
 
     public class ComponentsList<T> : ComponentsList, IClearable where T : ElementCreationUI, new()
     {
+        const string DEFAULT_ELEMENT_PATH = "Assets/RPGStarterTemplate/Tool/UIToolkit/CharacterEditor/Elements/ElementComponent.uxml";
         List<int> _amounts;
 
         public Action<int> OnElementClicked = delegate { };
@@ -68,11 +69,10 @@ namespace Burmuruk.Tesis.Editor.Controls
             get => Components[index];
             set => Components[index] = value;
         }
+        private string ElementPath { get; set; }
 
         public ComponentsList(VisualElement container)
         {
-            StyleSheet styleSheetColour = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/BasicSS.uss");
-            container.styleSheets.Add(styleSheetColour);
             Parent = container;
             Container = container.Q<VisualElement>("componentsConatiner");
             if (Container == null)
@@ -82,31 +82,37 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             _amounts = new();
             Components = new();
+            ElementPath = DEFAULT_ELEMENT_PATH;
+        }
+
+        public ComponentsList(VisualElement container, string elementPath) : this(container)
+        {
+            ElementPath = elementPath;
         }
 
         public void IncrementElement(int idx, bool shouldIncrement = true, int value = 1)
         {
             _amounts[idx] += shouldIncrement ? value : -value;
-            Components[idx].IFAmount.SetValueWithoutNotify(_amounts[idx]);
+            Components[idx].IFAmount?.SetValueWithoutNotify(_amounts[idx]);
         }
 
         public bool ChangeAmount(int idx, int amount)
         {
             if (amount < 0)
             {
-                Components[idx].IFAmount.SetValueWithoutNotify(_amounts[idx]);
+                Components[idx].IFAmount?.SetValueWithoutNotify(_amounts[idx]);
                 return false;
             }
 
             _amounts[idx] = amount;
-            Components[idx].IFAmount.SetValueWithoutNotify(amount);
+            Components[idx].IFAmount?.SetValueWithoutNotify(amount);
 
             return true;
         }
 
         public void StartAmount(T element, int idx)
         {
-            element.IFAmount.SetValueWithoutNotify(1);
+            element.IFAmount?.SetValueWithoutNotify(1);
             _amounts[idx] = 1;
         }
 
@@ -203,10 +209,7 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             idx = Components.Count;
 
-            VisualTreeAsset element = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/CharacterEditor/Elements/ElementComponent.uxml");
-            StyleSheet basicStyle = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/BasicSS.uss");
-            StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/LineTags.uss");
-            StyleSheet styleSheetColour = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/BorderColours.uss");
+            VisualTreeAsset element = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(ElementPath);
             var component = new T();
             component.Initialize(element.Instantiate(), idx);
             component.SetType(type);
@@ -216,10 +219,8 @@ namespace Burmuruk.Tesis.Editor.Controls
             Amounts.Add(idx);
 
             int newIdx = idx;
-            component.NameButton.clicked += () => OnElementClicked(newIdx);
-            component.element.styleSheets.Add(basicStyle);
-            component.element.styleSheets.Add(styleSheet);
-            component.element.styleSheets.Add(styleSheetColour);
+            if (component.NameButton != null)
+                component.NameButton.clicked += () => OnElementClicked(newIdx);
             StartAmount(component, idx);
             OnElementCreated(component);
 

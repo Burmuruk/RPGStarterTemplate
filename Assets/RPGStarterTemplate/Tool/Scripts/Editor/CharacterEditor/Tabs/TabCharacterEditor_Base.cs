@@ -46,15 +46,20 @@ namespace Burmuruk.Tesis.Editor
         public void CreateGUI()
         {
             container = rootVisualElement;
-            VisualTreeAsset visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/CharacterEditor/Tabs/CharacterTab.uxml");
+            VisualTreeAsset visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/RPGStarterTemplate/Tool/UIToolkit/CharacterEditor/Tabs/CharacterTab.uxml");
             rootTab = visualTree.Instantiate();
             container.Add(rootTab);
             //rootTab.style.height = new StyleLength(StyleKeyword.;
 
-            StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/BasicSS.uss");
-            StyleSheet styleSheet2 = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/TagSystem.uss");
-            container.styleSheets.Add(styleSheet);
-            container.styleSheets.Add(styleSheet2);
+            var styleSheets = new List<StyleSheet>()
+            {
+                AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/RPGStarterTemplate/Tool/UIToolkit/Styles/BasicSS.uss"),
+                AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/RPGStarterTemplate/Tool/UIToolkit/Styles/TagSystem.uss"),
+                AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/RPGStarterTemplate/Tool/UIToolkit/Styles/BorderColours.uss"),
+                AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/RPGStarterTemplate/Tool/UIToolkit/Styles/LineTags.uss"),
+            };
+
+            styleSheets.ForEach(styleSheet => { container.styleSheets.Add(styleSheet); });
 
             GetTabButtons();
             GetNotificationSection();
@@ -108,10 +113,10 @@ namespace Burmuruk.Tesis.Editor
             {
                 foreach (var containerData in names)
                 {
-                    VisualElement newContainer = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/Proyect/Game/UIToolkit/CharacterEditor/Tabs/{containerData.name}.uxml").Instantiate();
-                    StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/LineTags.uss");
-                    StyleSheet styleSheetColour = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/BorderColours.uss");
-                    StyleSheet styleSheetBasic = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/BasicSS.uss");
+                    VisualElement newContainer = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/RPGStarterTemplate/Tool/UIToolkit/CharacterEditor/Tabs/{containerData.name}.uxml").Instantiate();
+                    StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/RPGStarterTemplate/Tool/UIToolkit/Styles/LineTags.uss");
+                    StyleSheet styleSheetColour = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/RPGStarterTemplate/Tool/UIToolkit/Styles/BorderColours.uss");
+                    StyleSheet styleSheetBasic = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/RPGStarterTemplate/Tool/UIToolkit/Styles/BasicSS.uss");
                     newContainer.styleSheets.Add(styleSheet);
                     newContainer.styleSheets.Add(styleSheetColour);
                     newContainer.styleSheets.Add(styleSheetBasic);
@@ -129,9 +134,9 @@ namespace Burmuruk.Tesis.Editor
 
         private void CreateTagsContainer()
         {
-            VisualTreeAsset tagsContainer = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/CharacterEditor/TagsContainer.uxml");
-            StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/LineTags.uss");
-            StyleSheet styleSheetColour = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/BorderColours.uss");
+            VisualTreeAsset tagsContainer = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/RPGStarterTemplate/Tool/UIToolkit/CharacterEditor/TagsContainer.uxml");
+            StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/RPGStarterTemplate/Tool/UIToolkit/Styles/LineTags.uss");
+            StyleSheet styleSheetColour = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/RPGStarterTemplate/Tool/UIToolkit/Styles/BorderColours.uss");
 
             container.styleSheets.Add(styleSheet);
             container.styleSheets.Add(styleSheetColour);
@@ -175,7 +180,7 @@ namespace Burmuruk.Tesis.Editor
 
             infoRight = rightPanel.Q<VisualElement>("elementsContainer");
 
-            infoSetup = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/Proyect/Game/UIToolkit/CharacterEditor/{INFO_SETUP_NAME}.uxml").Instantiate();
+            infoSetup = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/RPGStarterTemplate/Tool/UIToolkit/CharacterEditor/{INFO_SETUP_NAME}.uxml").Instantiate();
             nameSettings = new CreationsBaseInfo(infoSetup);
 
             EnableContainer(infoSetup, false);

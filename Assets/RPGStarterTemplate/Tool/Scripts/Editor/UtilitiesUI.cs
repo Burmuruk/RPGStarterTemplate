@@ -43,7 +43,7 @@ namespace Burmuruk.Tesis.Editor.Utilities
             get
             {
                 if (_hightlight_Colours == null)
-                    _hightlight_Colours = AssetDatabase.LoadAssetAtPath<StyleSheet>($"Assets/Proyect/Game/UIToolkit/Styles/{BORDER_COLOURS_STYLESHEET_NAME}.uss");
+                    _hightlight_Colours = AssetDatabase.LoadAssetAtPath<StyleSheet>($"Assets/RPGStarterTemplate/Tool/UIToolkit/Styles/{BORDER_COLOURS_STYLESHEET_NAME}.uss");
 
                 return _hightlight_Colours;
             }
@@ -199,12 +199,7 @@ namespace Burmuruk.Tesis.Editor.Utilities
 
         public static VisualElement CreateDefaultTab(string fileName)
         {
-            VisualElement newContainer = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/Proyect/Game/UIToolkit/CharacterEditor/Tabs/{fileName}.uxml").Instantiate();
-            StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/LineTags.uss");
-            StyleSheet styleSheetColour = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/BorderColours.uss");
-            newContainer.styleSheets.Add(styleSheet);
-            newContainer.styleSheets.Add(styleSheetColour);
-
+            VisualElement newContainer = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/RPGStarterTemplate/Tool/UIToolkit/CharacterEditor/Tabs/{fileName}.uxml").Instantiate();
             return newContainer;
         }
     }

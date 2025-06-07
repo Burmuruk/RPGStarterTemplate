@@ -35,10 +35,10 @@ namespace Burmuruk.Tesis.Editor
         public void CreateGUI()
         {
             container = rootVisualElement;
-            VisualTreeAsset visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/SystemTab.uxml");
+            VisualTreeAsset visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/RPGStarterTemplate/Tool/UIToolkit/SystemEditor/SystemTab.uxml");
             container.Add(visualTree.Instantiate());
 
-            StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/BasicSS.uss");
+            StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/RPGStarterTemplate/Tool/UIToolkit/Styles/BasicSS.uss");
             container.styleSheets.Add(styleSheet);
 
             GetTabButtons();
@@ -111,9 +111,9 @@ namespace Burmuruk.Tesis.Editor
             if (navInfo.childCount == 0)
             {
                 var nodesInsta = ScriptableObject.CreateInstance<NodesList>();
-                var nodesEditor = NodeListEditor.CreateEditor(nodesInsta, typeof(NodeListEditor));
+                //var nodesEditor = NodeListEditor.CreateEditor(nodesInsta, typeof(NodesList));
 
-                navInfo.Add(new InspectorElement(nodesEditor));
+                navInfo.Add(new InspectorElement(nodesInsta));
             }
         }
 

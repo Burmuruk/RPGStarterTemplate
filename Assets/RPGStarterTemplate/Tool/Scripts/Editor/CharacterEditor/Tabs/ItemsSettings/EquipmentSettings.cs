@@ -110,6 +110,7 @@ namespace Burmuruk.Tesis.Editor.Controls
         private void Setup_EquipmentElementButton(int componentIdx)
         {
             var type = (ElementType)MClEquipmentElements[componentIdx].Type;
+
             if (type == ElementType.Armour || type == ElementType.Weapon || type == ElementType.Ability)
             {
                 MClEquipmentElements[componentIdx].Toggle.SetEnabled(true);
@@ -117,10 +118,8 @@ namespace Burmuruk.Tesis.Editor.Controls
             else
             {
                 MClEquipmentElements[componentIdx].Toggle.SetEnabled(false);
-            }
-
-            if (!MClEquipmentElements[componentIdx].Toggle.ClassListContains("Disable"))
                 return;
+            }
 
             EnableContainer(MClEquipmentElements[componentIdx].RemoveButton, false);
             //EnableContainer(MClEquipmentElements[componentIdx].IFAmount, false);
@@ -129,6 +128,13 @@ namespace Burmuruk.Tesis.Editor.Controls
             MClEquipmentElements[componentIdx].Toggle.RegisterValueChangedCallback((evt) => OnValueChanged_TglEquipment(evt.newValue, componentIdx));
             MClEquipmentElements[componentIdx].EnumField.Init(EquipmentType.None);
             MClEquipmentElements[componentIdx].EnumField.RegisterValueChangedCallback((evt) => OnValueChanged_EFEquipment(evt.newValue, componentIdx));
+
+            var item = ItemDataConverter.GetItem(type, MClEquipmentElements[componentIdx].Id);
+
+            if (item as EquipeableItem is var equipable && equipable != null)
+            {
+                MClEquipmentElements[componentIdx].EnumField.SetValueWithoutNotify((EquipmentType)equipable.GetEquipLocation());
+            }
         }
 
         private void OnValueChanged_EFEquipment(Enum newValue, int componentIdx)
@@ -161,9 +167,9 @@ namespace Burmuruk.Tesis.Editor.Controls
             splitView.fixedPaneInitialDimension = 215;
             splitView.AddToClassList("SplitViewStyle");
 
-            var bodVis = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/CharacterEditor/Elements/BodyVisualizer.uxml");
+            var bodVis = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/RPGStarterTemplate/Tool/UIToolkit/CharacterEditor/Elements/BodyVisualizer.uxml");
             var leftSide = bodVis.Instantiate();
-            var spawnFile = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/CharacterEditor/Elements/BodySpawnPoint.uxml");
+            var spawnFile = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/RPGStarterTemplate/Tool/UIToolkit/CharacterEditor/Elements/BodySpawnPoint.uxml");
             UIParts = new EquipmentSpawnsList(spawnFile.Instantiate());
             OFBody = leftSide.Q<ObjectField>();
             TVBodyParts = leftSide.Q<TreeView>();
@@ -320,7 +326,11 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         public Equipment GetEquipment(in Inventory inventory)
         {
-            var equipment = new Equipment(inventory);
+            var equipment = new Equipment(inventory)
+            {
+                model = OFBody.value as GameObject,
+                spawnPoints = UIParts.GetInfo(),
+            };
 
             for (int i = 0; i < MClEquipmentElements.Components.Count; i++)
             {

@@ -291,7 +291,7 @@ namespace Burmuruk.Tesis.Movement
         /// <returns>float m_speed</returns>
         public float GetSpeed()
         {
-            return Stats.Speed;
+            return Stats.speed;
         }
 
         /// <summary>

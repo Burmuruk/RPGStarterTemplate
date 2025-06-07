@@ -46,7 +46,6 @@ namespace Burmuruk.WorldG.Patrol
 
             public void Dispose()
             {
-                collection.Clear();
                 collection = null;
                 current = null;
                 return;
@@ -295,6 +294,9 @@ namespace Burmuruk.WorldG.Patrol
         {
             if (item)
                 lastSearched = points.Find(item);
+
+            if (lastSearched == null)
+                throw new InvalidOperationException("Last serached was null");
 
             return lastSearched.Next.Value;
         }

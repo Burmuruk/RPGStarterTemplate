@@ -2,21 +2,11 @@
 using System.Linq;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Utilities
+namespace Burmuruk.Tesis.Editor
 {
     public class VariablesAdder
     {
         string path;
-
-        public enum VariableType
-        {
-            Int,
-            Float,
-            String,
-            Vector2,
-            Vector3,
-            Colour,
-        }
 
         public VariablesAdder(string path)
         {
@@ -110,5 +100,15 @@ namespace Burmuruk.Tesis.Utilities
         {
             return value.Any(chr => !char.IsLetterOrDigit(chr));
         }
+    }
+
+    public enum VariableType
+    {
+        None,
+        String,
+        Int,
+        Float,
+        Double,
+        Enum
     }
 }

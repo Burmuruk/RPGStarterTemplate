@@ -1,7 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/Proyect/Game/UIToolkit/Styles/LineTags.uss?fileID=7433441132597879392&amp;guid=1db9e95078017b3489041439420a4a43&amp;type=3#LineTags" />
-    <Style src="project://database/Assets/Proyect/Game/UIToolkit/Styles/BasicSS.uss?fileID=7433441132597879392&amp;guid=2693b02dba201b24e87668e3aaaa0fc1&amp;type=3#BasicSS" />
-    <Style src="project://database/Assets/Proyect/Game/UIToolkit/Styles/BorderColours.uss?fileID=7433441132597879392&amp;guid=40097b2eb77aa8e43974dee7167dbb2d&amp;type=3#BorderColours" />
+    <Style src="project://database/Assets/RPGStarterTemplate/Tool/UIToolkit/Styles/LineTags.uss?fileID=7433441132597879392&amp;guid=1db9e95078017b3489041439420a4a43&amp;type=3#LineTags" />
+    <Style src="project://database/Assets/RPGStarterTemplate/Tool/UIToolkit/Styles/BasicSS.uss?fileID=7433441132597879392&amp;guid=2693b02dba201b24e87668e3aaaa0fc1&amp;type=3#BasicSS" />
+    <Style src="project://database/Assets/RPGStarterTemplate/Tool/UIToolkit/Styles/BorderColours.uss?fileID=7433441132597879392&amp;guid=40097b2eb77aa8e43974dee7167dbb2d&amp;type=3#BorderColours" />
     <ui:VisualElement name="VisualElement" style="flex-shrink: 0; flex-basis: 100%;">
         <ui:VisualElement name="TagHeaderContainer" class="BaseBorder SearchContainer" style="align-items: flex-start; padding-top: 5px; padding-right: 5px; padding-bottom: 5px; padding-left: 5px; margin-bottom: 2px; flex-shrink: 1; flex-wrap: nowrap; flex-grow: 0; flex-basis: auto; min-height: 60px;">
             <ui:VisualElement name="SearchContainer" class="TxtSearchContainer LineElements" style="height: 30px; width: 100%; flex-shrink: 0;">

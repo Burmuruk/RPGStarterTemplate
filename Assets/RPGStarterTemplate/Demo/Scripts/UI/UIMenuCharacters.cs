@@ -473,9 +473,9 @@ namespace Burmuruk.Tesis.UI
                 {
                     foreach (var character in equipedItem.Characters)
                     {
-                        if (player.stats.Color == character.stats.Color)
+                        if (player.stats.color == character.stats.color)
                         {
-                            colors.Add(character.stats.Color);
+                            colors.Add(character.stats.color);
                             break;
                         }
                     }
@@ -592,9 +592,9 @@ namespace Burmuruk.Tesis.UI
             var mainPlayer = players[0].Leader;
             mainPlayerImg.gameObject.SetActive(false);
 
-            playersImg[0].color = players[GetNextPlayerIdx(-1)].stats.Color;
-            playersImg[1].color = players[curPlayerIdx].stats.Color;
-            playersImg[2].color = players[GetNextPlayerIdx(1)].stats.Color;
+            playersImg[0].color = players[GetNextPlayerIdx(-1)].stats.color;
+            playersImg[1].color = players[curPlayerIdx].stats.color;
+            playersImg[2].color = players[GetNextPlayerIdx(1)].stats.color;
 
             int[] idxs = new int[3]
             {
@@ -683,8 +683,8 @@ namespace Burmuruk.Tesis.UI
 
         private void ChangeColor()
         {
-            var lastColor = players[curPlayerIdx].stats.Color;
-            players[curPlayerIdx].stats.Color = btnColorsDict[curBtnId].color;
+            var lastColor = players[curPlayerIdx].stats.color;
+            players[curPlayerIdx].stats.color = btnColorsDict[curBtnId].color;
             btnColorsDict[curBtnId].color = lastColor;
 
             print("ChangeColor");
@@ -762,7 +762,7 @@ namespace Burmuruk.Tesis.UI
         {
             foreach (var player in players)
             {
-                if (player.stats.Color == customization.Colors[idx])
+                if (player.stats.color == customization.Colors[idx])
                     return false;
             }
 

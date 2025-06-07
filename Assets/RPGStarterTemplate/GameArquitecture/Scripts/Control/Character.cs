@@ -22,18 +22,16 @@ namespace Burmuruk.Tesis.Control
         [Space(), Header("Perception"), Space()]
         [SerializeField] protected bool hasFarPerception;
         [SerializeField] protected bool hasClosePerception;
-        [SerializeField] CharacterType characterType;
         [SerializeField] protected string enemyTag;
+        [SerializeField] private CharacterType characterType;
 
         [Space(), Header("Status"), Space()]
         [SerializeField] public BasicStats stats;
-        //[SerializeField] protected float farRadious;
-        //[SerializeField] protected float closeRadious;
 
-        [HideInInspector] protected Health health;
         [HideInInspector] public Movement.Movement mover;
         [HideInInspector] public Fighter fighter;
         [HideInInspector] public ActionScheduler actionScheduler = new();
+        [HideInInspector] protected Health health;
         [HideInInspector] protected IInventory inventory;
 
         protected Collider[] eyesPerceibed, earsPerceibed;
@@ -129,13 +127,13 @@ namespace Burmuruk.Tesis.Control
         #endregion
 
         #region Public methods
-        public void SetUpMods()
+        public virtual void SetUpMods()
         {
             //ModsList.AddVariable(this, ModifiableStat.HP, _=>health.HP, (value) => health.HP = value);
-            ModsList.AddVariable((Character)this, ModifiableStat.Speed, () => stats.Speed, (value) => stats.Speed = value);
-            ModsList.AddVariable((Character)this, ModifiableStat.BaseDamage, () => stats.Damage, (value) => { stats.Damage = (int)value; });
-            ModsList.AddVariable((Character)this, ModifiableStat.GunFireRate, () => stats.DamageRate, (value) => { stats.damageRate = value; });
-            ModsList.AddVariable((Character)this, ModifiableStat.MinDistance, () => stats.MinDistance, (value) => { stats.MinDistance = value; });
+            ModsList.AddVariable((Character)this, ModifiableStat.Speed, () => stats.speed, (value) => stats.speed = value);
+            ModsList.AddVariable((Character)this, ModifiableStat.BaseDamage, () => stats.damage, (value) => { stats.damage = (int)value; });
+            ModsList.AddVariable((Character)this, ModifiableStat.GunFireRate, () => stats.damageRate, (value) => { stats.damageRate = value; });
+            ModsList.AddVariable((Character)this, ModifiableStat.MinDistance, () => stats.minDistance, (value) => { stats.minDistance = value; });
         }
 
         public virtual void SetStats(BasicStats newStats)
@@ -416,13 +414,13 @@ namespace Burmuruk.Tesis.Control
             JObject basicStatsData = new();
             Character character = (Character)this;
 
-            basicStatsData["Speed"] = ModsList.TryGetRealValue(stats.Speed, character, ModifiableStat.Speed);
-            basicStatsData["Damage"] = ModsList.TryGetRealValue(stats.Damage, character, ModifiableStat.BaseDamage);
-            basicStatsData["DamageRate"] = ModsList.TryGetRealValue(stats.DamageRate, character, ModifiableStat.GunFireRate);
+            basicStatsData["Speed"] = ModsList.TryGetRealValue(stats.speed, character, ModifiableStat.Speed);
+            basicStatsData["Damage"] = ModsList.TryGetRealValue(stats.damage, character, ModifiableStat.BaseDamage);
+            basicStatsData["DamageRate"] = ModsList.TryGetRealValue(stats.damageRate, character, ModifiableStat.GunFireRate);
             basicStatsData["Color"] = VectorToJToken.CaptureVector(stats.color);
             basicStatsData["EyesRadious"] = stats.eyesRadious;
             basicStatsData["EarsRadious"] = stats.earsRadious;
-            basicStatsData["MinDistance"] = ModsList.TryGetRealValue(stats.MinDistance, character, ModifiableStat.MinDistance);
+            basicStatsData["MinDistance"] = ModsList.TryGetRealValue(stats.minDistance, character, ModifiableStat.MinDistance);
 
             return basicStatsData;
         }
@@ -431,13 +429,13 @@ namespace Burmuruk.Tesis.Control
         {
             if (jToken is JObject state)
             {
-                stats.Speed = state["Speed"].ToObject<float>();
-                stats.Damage = state["Damage"].ToObject<int>();
+                stats.speed = state["Speed"].ToObject<float>();
+                stats.damage = state["Damage"].ToObject<int>();
                 stats.damageRate = state["DamageRate"].ToObject<float>();
                 stats.color = state["Color"].ToObject<Vector4>();
                 stats.eyesRadious = state["EyesRadious"].ToObject<float>();
                 stats.earsRadious = state["EarsRadious"].ToObject<float>();
-                stats.MinDistance = state["MinDistance"].ToObject<float>();
+                stats.minDistance = state["MinDistance"].ToObject<float>();
 
                 SetStats(stats);
             }

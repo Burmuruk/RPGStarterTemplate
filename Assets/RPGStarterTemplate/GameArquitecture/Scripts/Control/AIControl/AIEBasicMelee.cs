@@ -46,7 +46,7 @@ namespace Burmuruk.Tesis.Control.AI
             else if (Target == null) return;
 
             if (Vector3.Distance(Target.position, transform.position)
-                <= stats.MinDistance)
+                <= stats.minDistance)
             {
                 fighter.SetTarget(Target);
                 fighter.BasicAttack();
@@ -55,7 +55,7 @@ namespace Burmuruk.Tesis.Control.AI
 
         protected override void MovementManager()
         {
-            var dis = stats.MinDistance * .8f;
+            var dis = stats.minDistance * .8f;
 
             switch (playerAction)
             {

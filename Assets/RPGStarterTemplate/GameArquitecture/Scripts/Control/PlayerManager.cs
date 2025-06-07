@@ -298,7 +298,7 @@ namespace Burmuruk.Tesis.Control
 
                 foreach (var player in players)
                 {
-                    if (player.stats.Color == color)
+                    if (player.stats.color == color)
                     {
                         hasColor = true;
                         break;
@@ -314,7 +314,7 @@ namespace Burmuruk.Tesis.Control
 
             if (!newColor.HasValue) return;
 
-            member.stats.Color = newColor.Value;
+            member.stats.color = newColor.Value;
 
             //List<Color> usedColors = new();
 

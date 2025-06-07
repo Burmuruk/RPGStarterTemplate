@@ -10,57 +10,47 @@ namespace Burmuruk.Tesis.Stats
         [SerializeField] bool initilized;
         [SerializeField] CharacterData[] statsList;
 
-        Dictionary<CharacterType, Dictionary<int, CharacterData>> levelStatsDic;
+        Dictionary<CharacterType, Dictionary<int, BasicStats>> levelStatsDic;
 
         [Serializable]
         private struct CharacterData
         {
-            public CharacterType charactyerType;
+            public CharacterType characterType;
+            public List<LevelData> levelData;
+        }
+
+        [Serializable]
+        private struct LevelData
+        {
             public int level;
             public BasicStats stats;
         }
 
         public BasicStats GetDataByLevel(CharacterType type, int level)
         {
-            Initlize();
+            if (levelStatsDic == null)
+                Initlize();
 
-            return levelStatsDic[type][level].stats;
+            return levelStatsDic[type][level];
         }
 
         private void Initlize()
         {
-            if (initilized) return;
-
-            var charactersDic = new Dictionary<CharacterType, Dictionary<int, CharacterData>>();
-            var statsDic = new Dictionary<int, CharacterData>();
+            //if (initilized) return;
+            levelStatsDic = new Dictionary<CharacterType, Dictionary<int, BasicStats>>();
 
             foreach ( var statData in statsList)
             {
-                if (!charactersDic.ContainsKey(statData.charactyerType))
-                {
-                    statsDic = new()
-                    {
-                        { statData.level, statData },
-                    };
+                if (levelStatsDic.ContainsKey(statData.characterType))
+                    continue;
 
-                    charactersDic.Add(statData.charactyerType, statsDic);
-                }
-                else
-                {
-                    charactersDic[statData.charactyerType] = new();
+                levelStatsDic[statData.characterType] = new Dictionary<int, BasicStats>();
 
-                    if (!charactersDic[statData.charactyerType].ContainsKey(statData.level))
-                    {
-                        charactersDic[statData.charactyerType].Add(statData.level, statData);
-                    }
-                    else
-                    {
-                        charactersDic[statData.charactyerType][statData.level] = statData;
-                    }
+                foreach (var levelData in statData.levelData)
+                {
+                    levelStatsDic[statData.characterType][levelData.level] = levelData.stats;
                 }
             }
-
-            levelStatsDic = charactersDic;
 
             //initilized = true;
         }

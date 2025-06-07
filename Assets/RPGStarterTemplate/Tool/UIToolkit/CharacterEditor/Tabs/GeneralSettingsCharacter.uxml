@@ -1,12 +1,12 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/Proyect/Game/UIToolkit/Styles/BasicSS.uss?fileID=7433441132597879392&amp;guid=2693b02dba201b24e87668e3aaaa0fc1&amp;type=3#BasicSS" />
-    <Style src="project://database/Assets/Proyect/Game/UIToolkit/Styles/LineTags.uss?fileID=7433441132597879392&amp;guid=1db9e95078017b3489041439420a4a43&amp;type=3#LineTags" />
+    <Style src="project://database/Assets/RPGStarterTemplate/Tool/UIToolkit/Styles/BasicSS.uss?fileID=7433441132597879392&amp;guid=2693b02dba201b24e87668e3aaaa0fc1&amp;type=3#BasicSS" />
+    <Style src="project://database/Assets/RPGStarterTemplate/Tool/UIToolkit/Styles/LineTags.uss?fileID=7433441132597879392&amp;guid=1db9e95078017b3489041439420a4a43&amp;type=3#LineTags" />
     <ui:VisualElement style="flex-grow: 1; padding-top: 5px; padding-right: 5px; padding-bottom: 5px; padding-left: 8px;">
         <ui:VisualElement style="flex-grow: 0; flex-shrink: 0; margin-top: 0; margin-bottom: 20px;">
             <ui:Label tabindex="-1" text="General settings" parse-escape-sequences="true" display-tooltip-when-elided="true" class="Title" style="-unity-text-align: lower-center; font-size: 14px;" />
         </ui:VisualElement>
         <ui:Label tabindex="-1" text="Results" parse-escape-sequences="true" display-tooltip-when-elided="true" class="Title" />
-        <ui:TextField picking-mode="Ignore" label="Destination" value="Assets" name="txtLocation" class="LineElements" />
+        <ui:TextField picking-mode="Ignore" label="Destination" value="Assets/RPGStarterTemplate/Results" name="txtLocation" class="LineElements" />
         <ui:VisualElement name="pButtons" class="LineElements" style="justify-content: center; flex-shrink: 0; margin-top: 10px; margin-bottom: 15px;">
             <ui:Button text="Generate all elements" parse-escape-sequences="true" display-tooltip-when-elided="true" name="btnGenerateElements" class="ClickableBtn" style="flex-shrink: 0; min-height: 20px;" />
         </ui:VisualElement>

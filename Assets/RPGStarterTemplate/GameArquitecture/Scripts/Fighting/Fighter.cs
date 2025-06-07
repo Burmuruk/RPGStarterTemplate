@@ -54,7 +54,7 @@ namespace Burmuruk.Tesis.Combat
             //    }
             //};
 
-            float rate = m_Stats.Invoke().DamageRate;
+            float rate = m_Stats.Invoke().damageRate;
             cdBasicAttack = new CoolDownAction(in rate);
         }
 
@@ -78,17 +78,17 @@ namespace Burmuruk.Tesis.Combat
 
             if (cdBasicAttack.CanUse)
             {
-                if (Vector3.Distance(m_target.position, transform.position) > Stats.MinDistance)
+                if (Vector3.Distance(m_target.position, transform.position) > Stats.minDistance)
                     return;
 
-                m_targetHealth.ApplyDamage(Stats.Damage);
+                m_targetHealth.ApplyDamage(Stats.damage);
 
                 EquipeableItem weapon = m_inventory.Equipped[(int)Inventory.EquipmentType.WeaponR];
 
                 if (weapon != null && (weapon as Weapon).TryGetBuff(out BuffData? buff))
                 {
                     if (buff.HasValue)
-                        BuffsManager.Instance.AddBuff(transform.GetComponent<Control.Character>(), buff.Value, () => m_targetHealth.ApplyDamage(Stats.Damage));
+                        BuffsManager.Instance.AddBuff(transform.GetComponent<Control.Character>(), buff.Value, () => m_targetHealth.ApplyDamage(Stats.damage));
                 }
 
                 if (!gameObject.activeSelf) return;

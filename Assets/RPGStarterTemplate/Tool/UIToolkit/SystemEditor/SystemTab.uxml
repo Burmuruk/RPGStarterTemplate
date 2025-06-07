@@ -1,5 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/Proyect/Game/UIToolkit/Styles/BasicSS.uss?fileID=7433441132597879392&amp;guid=2693b02dba201b24e87668e3aaaa0fc1&amp;type=3#BasicSS" />
+    <Style src="project://database/Assets/RPGStarterTemplate/Tool/UIToolkit/Styles/BasicSS.uss?fileID=7433441132597879392&amp;guid=2693b02dba201b24e87668e3aaaa0fc1&amp;type=3#BasicSS" />
     <ui:VisualElement style="flex-grow: 1;">
         <ui:VisualElement name="tabHeaderContainer" class="TabsContainer" style="flex-grow: 0; flex-direction: row; flex-shrink: 0;">
             <ui:Button text="Navigation" parse-escape-sequences="true" display-tooltip-when-elided="true" name="btnNavigation" class="Tabs" />

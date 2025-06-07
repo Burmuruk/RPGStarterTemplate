@@ -1,11 +1,9 @@
 ﻿using Burmuruk.Tesis.Combat;
-using Burmuruk.Tesis.Editor.Controls;
 using Burmuruk.Tesis.Inventory;
 using Burmuruk.Tesis.Saving;
 using Burmuruk.Tesis.Stats;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
@@ -52,16 +50,16 @@ namespace Burmuruk.Tesis.Editor
             get
             {
                 string basePath = SavingSystem.Data.CreationPath;
-                if (!AssetDatabase.IsValidFolder(basePath + "/" + RESULT_PATH))
+                if (!AssetDatabase.IsValidFolder(basePath))
                 {
-                    AssetDatabase.CreateFolder(basePath, RESULT_PATH);
+                    AssetDatabase.CreateFolder("Assets/RPGStarterTemplate", RESULT_PATH);
                     AssetDatabase.Refresh();
                 }
 
-                if (!AssetDatabase.IsValidFolder(basePath + "/" + RESULT_PATH))
+                if (!AssetDatabase.IsValidFolder(basePath))
                     return null;
 
-                return resultsPath = basePath + "/" + RESULT_PATH;
+                return resultsPath;
             }
         }
 
@@ -105,7 +103,7 @@ namespace Burmuruk.Tesis.Editor
         {
             GameObject player = new GameObject("Player", Get_Components(in data));
             garbage.Add(player);
-                
+
             foreach (var component in data.components)
                 Setup_Components(component.Key, player, component.Value, in data);
 
@@ -141,7 +139,7 @@ namespace Burmuruk.Tesis.Editor
 
                 components.Add(Get_ComponentType(component.Key));
             }
-            
+
             return components.ToArray();
         }
 
@@ -227,7 +225,7 @@ namespace Burmuruk.Tesis.Editor
             var equipper = instance.GetComponent<InventoryEquipDecorator>();
 
             FieldInfo initialItemsF = typeof(InventoryEquipDecorator).GetField("_initialItems", BindingFlags.Instance | BindingFlags.NonPublic);
-            List<InitalEquipedItemData> initialItems = new ();
+            List<InitalEquipedItemData> initialItems = new();
 
             FieldInfo itemsF = typeof(ItemsList).GetField("_items", BindingFlags.Instance | BindingFlags.NonPublic);
             var items = (List<InventoryItem>)itemsF.GetValue(ItemsList);
@@ -235,7 +233,7 @@ namespace Burmuruk.Tesis.Editor
             foreach (var data in equipment.equipment)
             {
                 string name = SavingSystem.Data.creations[data.Value.type][data.Key].Name;
-                
+
                 foreach (var item in items)
                 {
                     if (item.name == name)
@@ -249,7 +247,7 @@ namespace Burmuruk.Tesis.Editor
             }
 
             initialItemsF.SetValue(equipper, initialItems);
-            
+
             SetPlayerModel(instance, equipper, in equipment);
         }
 

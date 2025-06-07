@@ -30,18 +30,23 @@ namespace Burmuruk.Tesis.Editor.Controls
             TglTypeColour = container.Q<Toggle>("tglShowTypeColour");
             TglCustomColour = container.Q<Toggle>("ShowCustomColours");
 
-            TxtLocation.RegisterValueChangedCallback(Verify_Path);
+            TxtLocation.RegisterValueChangedCallback(OnTxtLocation_Changed);
             BtnGenerate.clicked += CreatePrefabs;
             _creationSaver = new CreationSaver();
         }
 
-        private void Verify_Path(ChangeEvent<string> evt)
+        private void OnTxtLocation_Changed(ChangeEvent<string> evt)
         {
-            if (!AssetDatabase.IsValidFolder(evt.newValue))
+            VerifyPath(evt.newValue);
+        }
+
+        private bool VerifyPath(string path)
+        {
+            if (!AssetDatabase.IsValidFolder(path))
             {
                 Notify("Not valid directory", BorderColour.Error);
                 Highlight(TxtLocation, true, BorderColour.Error);
-                return;
+                return false;
             }
 
             //if (string.IsNullOrEmpty(AssetDatabase.AssetPathToGUID(_path)))
@@ -53,10 +58,11 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             Highlight(TxtLocation, true, BorderColour.Approved);
             DisableNotification();
-            SavingSystem.Data.CreationPath = evt.newValue;
+            SavingSystem.Data.CreationPath = path;
             EditorUtility.SetDirty(SavingSystem.Data);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+            return true;
         }
 
         public override ModificationTypes Check_Changes()
@@ -72,9 +78,12 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             if (string.IsNullOrEmpty(SavingSystem.Data.CreationPath))
             {
-                Highlight(TxtLocation, true, BorderColour.Error);
-                Notify("Must enter a location first", BorderColour.Error);
-                return;
+                if (string.IsNullOrEmpty(TxtLocation.value) || !VerifyPath(TxtLocation.value))
+                {
+                    Highlight(TxtLocation, true, BorderColour.Error);
+                    Notify("Must enter a location first", BorderColour.Error);
+                    return;
+                }
             }
 
             if (SavingSystem.Data.creations.Count <= 0 ||
@@ -101,7 +110,8 @@ namespace Burmuruk.Tesis.Editor.Controls
                         case ElementType.Weapon:
                         case ElementType.Consumable:
                             var (buffUser, cArgs) = ((InventoryItem, BuffsNamesDataArgs))creation.Value.data;
-
+                            InventoryItem newBuff = null;
+                            newBuff.Copy(buffUser);
                             Update_BuffsInfo(buffUser as IBuffUser, cArgs);
                             _creationSaver.SavetItem(buffUser);
                             break;

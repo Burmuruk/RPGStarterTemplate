@@ -4,8 +4,6 @@ namespace Burmuruk.Tesis.Control.AI
 {
     public class AIEBasicMachineGun : AIEnemyController
     {
-        Transform m_target;
-
         protected override void FindEnemies()
         {
             if (!IsTargetClose && !IsTargetFar) return;
@@ -36,7 +34,7 @@ namespace Burmuruk.Tesis.Control.AI
                 GetNearestTarget(earsPerceibed);
 
             if (Vector3.Distance(m_target.position, transform.position)
-                <= stats.MinDistance)
+                <= stats.minDistance)
             {
                 fighter.SetTarget(m_target);
                 fighter.BasicAttack();
@@ -49,7 +47,7 @@ namespace Burmuruk.Tesis.Control.AI
             {
                 case PlayerAction.Combat:
 
-                    var dis = stats.MinDistance * .8f;
+                    var dis = stats.minDistance * .8f;
 
                     if (Vector3.Distance(m_target.position, transform.position) > dis)
                     {

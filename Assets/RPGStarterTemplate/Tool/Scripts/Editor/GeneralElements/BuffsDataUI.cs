@@ -21,9 +21,9 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         public BuffsDataUI()
         {
-            VisualTreeAsset ElementTag = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Proyect/Game/UIToolkit/CharacterEditor/Controls/BuffsAdder.uxml");
-            StyleSheet basicStyleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/BasicSS.uss");
-            StyleSheet lineStyleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Proyect/Game/UIToolkit/Styles/LineTags.uss");
+            VisualTreeAsset ElementTag = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/RPGStarterTemplate/Tool/UIToolkit/CharacterEditor/Controls/BuffsAdder.uxml");
+            StyleSheet basicStyleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/RPGStarterTemplate/Tool/UIToolkit/Styles/BasicSS.uss");
+            StyleSheet lineStyleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/RPGStarterTemplate/Tool/UIToolkit/Styles/LineTags.uss");
             Element = ElementTag.Instantiate();
             Element.styleSheets.Add(basicStyleSheet);
             Element.styleSheets.Add(lineStyleSheet);

@@ -1,8 +1,6 @@
 ﻿using Burmuruk.Tesis.Editor.Utilities;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
 using UnityEngine.UIElements;
 using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
 
@@ -46,7 +44,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             _instance.Q<VisualElement>(ComponentsList.CONTAINER_NAME);
             MClInventoryElements = new ComponentsListUI<ElementCreation>(_instance);
             Setup_ComponentsList();
-            
+
             Populate_DDFType();
             Populate_DDFElement();
             RegisterToChanges();

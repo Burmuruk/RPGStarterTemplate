@@ -56,7 +56,7 @@ namespace Burmuruk.Tesis.Inventory
 
             _alarmedEquipItem = (player, (EquipeableItem)item);
 
-            if (equiped.IsEquip && !CheckHaveMoreItems(item.ID))
+            if (equiped.IsEquip && !HasAvailableItem(item.ID))
             {
                 OnTryAlreadyEquiped?.Invoke();
                 return false;
@@ -66,7 +66,7 @@ namespace Burmuruk.Tesis.Inventory
             Equip();
             return true;
 
-            bool CheckHaveMoreItems(in int itemId)
+            bool HasAvailableItem(in int itemId)
             {
                 return _inventory.GetItemCount(itemId) > equiped.Characters.Count;
             }

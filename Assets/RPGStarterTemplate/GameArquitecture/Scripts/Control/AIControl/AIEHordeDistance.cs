@@ -100,7 +100,7 @@ namespace Burmuruk.Tesis.Control.AI
                     {
                         if (!Target) return;
 
-                        var dis = stats.MinDistance * .8f;
+                        var dis = stats.minDistance * .8f;
 
                         if (Vector3.Distance(Target.transform.position, transform.position) > dis)
                         {

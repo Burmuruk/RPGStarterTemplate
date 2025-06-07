@@ -22,12 +22,39 @@ namespace Burmuruk.Tesis.Editor.Controls
             public ElementData(VisualElement container)
             {
                 this.container = container;
-                transform = new ObjectField("Bone");
-                place = new EnumField("Place", default(EquipmentType));
-                container.Add(transform);
-                container.Add(place);
+                
+                transform = new ObjectField("");
+                place = new EnumField("", default(EquipmentType));
+                
+                var row1 = InsertInRow(transform, "Spawn point");
+                var row2 = InsertInRow(place, "Place");
+                row2.style.marginBottom = 6;
+                container.Add(row1);
+                container.Add(row2);
 
                 Setup_Transform();
+            }
+
+            private VisualElement InsertInRow(VisualElement element, string name)
+            {
+                var row = Get_Row();
+                Label label = new Label();
+                label.AddToClassList("ElementTag");
+                element.AddToClassList("LineElements");
+                label.style.maxWidth = 20;
+                label.text = name;
+
+                row.Add(label);
+                row.Add(element);
+                return row;
+            }
+
+            private VisualElement Get_Row()
+            {
+                VisualElement row = new VisualElement();
+
+                row.AddToClassList("LineContainer");
+                return row;
             }
 
             private void Setup_Transform()
@@ -66,6 +93,19 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             TxtCount.RegisterCallback<KeyUpEvent>(ChangeAmount);
             TxtCount.RegisterCallback<DragPerformEvent>(OnBoneDropped);
+        }
+
+        public List<(Transform transform, EquipmentType type)> GetInfo()
+        {
+            var spawnPoints = new List<(Transform transform, EquipmentType type)>();
+
+            foreach (var item in _elements)
+            {
+                var transform = (item.transform.value as GameObject).transform;
+                spawnPoints.Add((transform, (EquipmentType)item.place.value));
+            }
+
+            return spawnPoints;
         }
 
         private void OnBoneDropped(DragPerformEvent evt)

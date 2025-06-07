@@ -7,6 +7,7 @@ namespace Burmuruk.Tesis.Editor
 {
     public struct CharacterData
     {
+        public string className;
         public string characterName;
         public Color color;
         public BasicStats stats;

@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.UIElements;
-using static Burmuruk.Tesis.Utilities.VariablesAdder;
 using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
 using System;
 using Burmuruk.Tesis.Editor.Controls;
@@ -12,64 +11,129 @@ using Burmuruk.Tesis.Editor.Controls;
 
 namespace Burmuruk.Tesis.Editor
 {
-    public class VariablesAdderUI
+    public class VariablesAdderUI : IClearable
     {
+        const string _elementPath = "Assets/RPGStarterTemplate/Tool/UIToolkit/CharacterEditor/Elements/StatElement.uxml";
+        Dictionary<string, StatNameData> _statsNames;
         List<string> _headers = new();
-        List<(Label label, VariableType type)> newVariables = new();
+        List<StatDataUI> newVariables = new();
         VisualElement target;
+        bool _enableApplyRequest = false;
 
-        public Button ButtonAdd { get; private set; }
-        public Button ButtonCancel { get; private set; }
+        class StatDataUI
+        {
+            public Label label;
+            public Toggle toggle;
+            ModChange data = new();
+
+            public string HeaderName { get => data.Header; set => data.Header = value; }
+            public string Oldname { get => data.OldName; set => data.OldName = value; }
+            public string NewName { get => data.NewName; set => data.NewName = value; }
+            public ModifiableStat Type { get => data.Type; set => data.Type = value; }
+
+        }
+
+        public event Action<bool> OnChange;
+        
+        public Button ButtonAddStat { get; private set; }
         public VisualElement PMoreOptions { get; private set; }
         public TextField TxtHeader { get; private set; }
         public DropdownField DDFHeader { get; private set; }
         public EnumField EFType { get; private set; }
         public TextField TxtName { get; private set; }
+        public Toggle TglEditStat { get; private set; }
+        public EnumModifierUI<ModifiableStat> EMStatType { get; private set; }
         public VisualElement ValuesContainer { get; private set; }
-        public ComponentsList<ElementCreation<VariableType>> VariablesList { get; private set; }
+        public ComponentsList<ElementStatVariable> VariablesList { get; private set; }
 
-        public VariablesAdderUI(VisualElement container, List<string> headers)
+        public VariablesAdderUI(VisualElement container, List<string> headers, Dictionary<string, StatNameData> statsNames)
         {
             _headers = headers;
-            ButtonAdd = container.Q<Button>("btnAddBasicStats");
-            ButtonCancel = container.Q<Button>("btnCancel");
+            _statsNames = statsNames;
+            ButtonAddStat = container.Q<Button>("btnCancel");
             PMoreOptions = container.Q<VisualElement>("PNewValueControls");
             TxtHeader = container.Q<TextField>("txtHeader");
             DDFHeader = container.Q<DropdownField>("DDFHeader");
             EFType = container.Q<EnumField>();
             TxtName = container.Q<TextField>("txtName");
+            TglEditStat = container.Q<Toggle>("tglEditStat");
             ValuesContainer = container.Q<VisualElement>("componentsConatiner");
-            VariablesList = new ComponentsList<ElementCreation<VariableType>>(container);
-
-            VariablesList.OnElementCreated += SetElementStyle;
-            VariablesList.OnElementAdded += _ => Enable_AplyButton(VariablesList.Components.Count);
-            VariablesList.OnElementRemoved += _ => Enable_AplyButton(VariablesList.EnabledCount -1);
-            this.target = ValuesContainer;
-            ButtonAdd.clicked += OnClick_AddButton;
+            EMStatType = new EnumModifierUI<ModifiableStat>(container.Q<VisualElement>("TypeAdder"));
+            VariablesList = new ComponentsList<ElementStatVariable>(container, _elementPath);
+            
+            Setup_VariablesList();
             EFType.Init(VariableType.Int);
+            Setup_DDFHeader();
 
             EnableContainer(PMoreOptions, false);
             EnableContainer(TxtHeader, false);
             
-            Setup_DDFHeader();
             TxtHeader.RegisterValueChangedCallback(OnTxtHeaderChanged);
             TxtName.RegisterCallback<KeyUpEvent>(OnKeyUp_TxtName);
-            ButtonCancel.clicked += () =>
-            {
-                ShowElements(false);
-                RemoveExtraValues();
-                ResetValues();
-            };
+            ButtonAddStat.clicked += OnClick_CancelButton;
+            TglEditStat.RegisterValueChangedCallback(OnClick_ToggleStat);
+            EnableContainer(EMStatType.Container, false);
 
             ShowElements(false);
         }
 
-        private void Enable_AplyButton(int amount)
+        private void OnClick_ToggleStat(ChangeEvent<bool> evt)
         {
-            ButtonAdd.SetEnabled(amount > 0);
+            EnableContainer(EMStatType.Container, evt.newValue);
+            EMStatType.Value = ModifiableStat.None;
         }
 
-        private void SetElementStyle(ElementCreation<VariableType> creation)
+        private void Setup_VariablesList()
+        {
+            VariablesList.OnElementCreated += SetElementStyle;
+            VariablesList.OnElementAdded += SetElementExtraData;
+            VariablesList.OnElementRemoved += _ => Enable_AplyButton(VariablesList.EnabledCount - 1);
+            this.target = ValuesContainer;
+        }
+
+        private void SetElementExtraData(ElementStatVariable element)
+        {
+            element.LblHeader.text = DDFHeader.value == "New" ? TxtHeader.value : DDFHeader.value;
+            element.VariableType = (VariableType)EFType.value;
+            element.NameButton.text = TxtName.value;
+            element.LblOldName.text = "sin valor";
+            element.Modification.text = EMStatType.Value.ToString();
+
+            //if ((StatModificationType)element.Type == StatModificationType.Rename)
+            //    Highlight(element.NameButton, true);
+            //else
+            //    Highlight(element.NameButton, false);
+
+            Enable_AplyButton(VariablesList.Components.Count);
+        }
+
+        private void OnClick_CancelButton()
+        {
+            if (IsDisabled(PMoreOptions))
+            {
+                ButtonAddStat.text = "Cancel";
+                ShowElements(true);
+                TxtName.Focus();
+            }
+            else
+            {
+                Clear();
+            }
+        }
+
+        private void Enable_AplyButton(int amount)
+        {
+            if (amount <= 0 && !_enableApplyRequest)
+            {
+                OnChange?.Invoke(false);
+            }
+            else if (amount > 0 || _enableApplyRequest)
+            {
+                OnChange?.Invoke(true);
+            }
+        }
+
+        private void SetElementStyle(ElementStatVariable creation)
         {
             creation.RemoveButton.clicked += () =>
             {
@@ -84,18 +148,19 @@ namespace Burmuruk.Tesis.Editor
 
         private bool VerifyHeaderName()
         {
+            string nameLower = TxtHeader.value.Trim().ToLower();
+
             foreach (var choice in DDFHeader.choices)
             {
-                if (choice == TxtHeader.value)
+                if (choice.ToLower() == nameLower)
                 {
-                    Highlight(TxtHeader, true, BorderColour.Error);
-                    Notify("Header name in use", BorderColour.Error);
+                    DDFHeader.SetValueWithoutNotify(choice);
+                    TxtHeader.SetValueWithoutNotify(choice);
+                    EnableContainer(TxtHeader, false);
                     return false;
                 }
             }
 
-            Highlight(TxtHeader, false);
-            DisableNotification();
             return true;
         }
 
@@ -131,16 +196,39 @@ namespace Burmuruk.Tesis.Editor
 
         public bool AddVariable()
         {
-            if (!VerifyVariableName(TxtName.value))
+            string name = TxtName.text.Trim().ToLower();
+
+            if (!VerifyVariableName(name))
             {
                 Highlight(TxtName, true, BorderColour.Error);
-                Notify("Nombre no v�lido", BorderColour.Error);
+                Notify("Not valid name", BorderColour.Error);
+                return false;
+            }
+            else if (!Verify_AddedNames(name.Trim()))
+            {
+                Highlight(TxtName, true);
+                Notify("Name already added", BorderColour.Error);
                 return false;
             }
 
             Highlight(TxtName, false);
-            VariablesList.AddElement(TxtName.value, EFType.value.ToString());
+            VariablesList.AddElement(name, EMStatType.Value.ToString());
             DisableNotification();
+            return true;
+        }
+
+        private bool Verify_AddedNames(string current)
+        {
+            var lower = current.ToLower().Trim();
+            foreach (var element in VariablesList.Components)
+            {
+                if (IsDisabled(element.element)) break;
+
+                if (element.NameButton.text.ToLower() == lower)
+                {
+                    return false;
+                }
+            }
 
             return true;
         }
@@ -152,77 +240,123 @@ namespace Burmuruk.Tesis.Editor
                 target.Remove(newVariables[0].label);
                 newVariables.RemoveAt(0);
             }
-
-            ShowElements(false);
         }
 
-        public void ApplyChanges()
+        public List<ModChange> GetInfo()
         {
-            string path = Path.GetDirectoryName(typeof(BasicStats).Assembly.Location);
-            VariablesAdder adder = new(path);
-            Debug.Log(path);
+            List<ModChange> values = new();
 
-            List<(VariableType type, string name)> values = new();
-
-            foreach ((Label label, VariableType type) value in newVariables)
+            foreach (var element in VariablesList.Components)
             {
-                values.Add((value.type, value.label.text));
+                values.Add(new ModChange
+                {
+                    Header = element.LblHeader.text,
+                    Type = (ModifiableStat)element.Type,
+                    OldName = element.OldName,
+                    NewName = element.NewName,
+                    VariableType = element.VariableType,
+                });
             }
 
-            if (!adder.Modify(path, values.ToArray(), out string error))
-            {
-                //notify
-            }
-
-            RemoveExtraValues();
-            ResetValues();
-            ShowElements(false);
+            return values;
         }
 
         private void OnKeyUp_TxtName(KeyUpEvent evt)
         {
+            bool result = Verify_BaseStatsNames();
+
             if (evt.keyCode == KeyCode.Return)
             {
-                if (!AddVariable()) return;
+                if (!result || !AddVariable()) return;
 
                 TxtName.value = "";
                 TxtName.Focus();
             }
         }
 
-        private void OnClick_AddButton()
+        private bool Verify_BaseStatsNames()
         {
-            if (pNotification.ClassListContains("Disable"))
-            {
-                ButtonAdd.text = "Apply changes";
-                ShowElements(true);
-                TxtName.Focus();
-            }
-            else
-            {
-                ApplyChanges();
-                ResetValues();
+            var nameLower = TxtName.text.ToLower();
 
-                ShowElements(false);
+            foreach (var stat in _statsNames)
+            {
+                if (stat.Key.ToLower() == nameLower)
+                {
+                    if (stat.Value.editable)
+                    {
+                        Highlight(TxtName, true);
+                        return true;
+                    }
+                    else
+                    {
+                        Highlight(TxtName, true, BorderColour.Error);
+                        Notify("Variable name can't be modified", BorderColour.Error);
+
+                        return false;
+                    }
+                }
             }
+
+            Highlight(TxtName, false);
+            DisableNotification();
+            return true;
         }
+
+        //private BorderColour GetStatColour(StatModificationType type) =>
+        //    type switch
+        //    {
+        //        StatModificationType.Remove => BorderColour.Error,
+        //        StatModificationType.Rename => BorderColour.HighlightBorder,
+        //        _ => BorderColour.Approved,
+        //    };
 
         private void ResetValues()
         {
             DDFHeader.SetValueWithoutNotify(_headers.Count > 0 ? _headers[0] : "None");
             TxtHeader.SetValueWithoutNotify("New header value");
-            ButtonAdd.text = "Add basic stat";
-            TxtName.value = "Name";
+            ButtonAddStat.text = "Add basic stat";
+            TxtName.SetValueWithoutNotify("Name");
             EFType.value = VariableType.Int;
+            TglEditStat.value = false;
+            EMStatType.Clear();
         }
 
         private void ShowElements(bool shouldShow = true)
         {
-            ButtonAdd.SetEnabled(!shouldShow);
             EnableContainer(PMoreOptions, shouldShow);
-            //EnableContainer(EFType, shouldShow);
-            //EnableContainer(TxtName, shouldShow);
-            EnableContainer(ButtonCancel, shouldShow);
+        }
+
+        public void RequestEnable_ApplyButton(bool shouldEnable)
+        {
+            if (shouldEnable || newVariables.Count > 0)
+            {
+                OnChange?.Invoke(true);
+            } 
+            else if (!shouldEnable &&  newVariables.Count <= 0)
+            {
+                OnChange?.Invoke(false);
+            }
+
+            _enableApplyRequest = shouldEnable;
+        }
+
+        private void Update_BtnApply()
+        {
+            if (_enableApplyRequest || newVariables.Count > 0)
+            {
+                OnChange?.Invoke(true);
+            }
+            else if (!_enableApplyRequest && newVariables.Count <= 0)
+            {
+                OnChange?.Invoke(false);
+            }
+        }
+
+        public void Clear()
+        {
+            RemoveExtraValues();
+            ResetValues();
+            Update_BtnApply();
         }
     }
 
@@ -230,11 +364,19 @@ namespace Burmuruk.Tesis.Editor
     {
         private T _type;
 
-        public override Enum Type { get; set; }
+        public override Enum Type { get => _type; set => _type = (T)value; }
 
         public override void SetType(string value)
         {
             _type = (T)Enum.Parse(typeof(T), value);
         }
     }
+
+    //public enum StatModificationType
+    //{
+    //    None,
+    //    Add,
+    //    Remove,
+    //    Rename
+    //}
 }

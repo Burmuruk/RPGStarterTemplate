@@ -9,8 +9,8 @@ namespace Burmuruk.Tesis.Editor
         public VisualElement element;
 
         public string Id { get; set; }
-        public Button NameButton { get; private set; }
-        public Button RemoveButton { get; private set; }
+        public Button NameButton { get; protected set; }
+        public Button RemoveButton { get; protected set; }
         public Toggle Toggle { get; private set; }
         public IntegerField IFAmount { get; private set; }
         public EnumField EnumField { get; private set; }

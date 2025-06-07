@@ -9,7 +9,7 @@ namespace Burmuruk.Tesis.Editor
 {
     public static class SavingSystem
     {
-        const string DATA_PATH = "Assets/Proyect/Game/ScriptableObjects/Tool/CharacterTag.asset";
+        const string DATA_PATH = "Assets/RPGStarterTemplate/Tool/Data/CharacterTag.asset";
         public static CharacterTag Data { get; private set; } = null;
         public static event Action<ModificationTypes, ElementType, string, CreationData> OnCreationModified;
 
