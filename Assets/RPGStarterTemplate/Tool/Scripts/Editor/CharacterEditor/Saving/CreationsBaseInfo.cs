@@ -20,7 +20,7 @@ namespace Burmuruk.Tesis.Editor.Controls
         public TextField TxtName { get; private set; }
         public ColorField Colour { get; private set; }
 
-        public CreationsBaseInfo(VisualElement container)
+        public void Initialize(VisualElement container)
         {
             BtnState = container.Q<Button>("btnState");
             TxtName = container.Q<TextField>(TXT_CREATION_NAME);
@@ -86,11 +86,6 @@ namespace Burmuruk.Tesis.Editor.Controls
             Highlight(TxtName, false);
 
             return true;
-        }
-
-        public CreationsBaseInfo(VisualElement container, Vector4 colour) : this(container)
-        {
-            Colour.value = colour;
         }
 
         private void OnValueChanged_CFCreationColour(ChangeEvent<Color> evt)

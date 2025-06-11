@@ -15,18 +15,25 @@ MonoBehaviour:
   initilized: 0
   statsList:
   - characterType: 0
+    applyForAllLevels: 0
     levelData: []
   - characterType: 0
+    applyForAllLevels: 0
     levelData: []
   - characterType: 0
+    applyForAllLevels: 0
     levelData: []
   - characterType: 0
+    applyForAllLevels: 0
     levelData: []
   - characterType: 0
+    applyForAllLevels: 0
     levelData: []
   - characterType: 0
+    applyForAllLevels: 0
     levelData: []
   - characterType: 1
+    applyForAllLevels: 0
     levelData:
     - level: 2
       stats:
@@ -34,8 +41,10 @@ MonoBehaviour:
         damage: 0
         damageRate: 0
         color: {r: 0, g: 0, b: 0, a: 0}
+        Name: 0
         eyesRadious: 0
         earsRadious: 0
         minDistance: 0
   - characterType: 1
+    applyForAllLevels: 0
     levelData: []

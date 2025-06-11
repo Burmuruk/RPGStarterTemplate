@@ -1,4 +1,4 @@
-﻿using Burmuruk.Tesis.Stats;
+using Burmuruk.Tesis.Stats;
 using Burmuruk.Utilities;
 using Newtonsoft.Json.Linq;
 using System;

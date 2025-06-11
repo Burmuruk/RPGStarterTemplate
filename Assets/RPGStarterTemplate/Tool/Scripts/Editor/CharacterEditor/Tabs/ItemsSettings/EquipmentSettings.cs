@@ -26,18 +26,13 @@ namespace Burmuruk.Tesis.Editor.Controls
         public TreeView TVBodyParts { get; private set; }
         public EquipmentSpawnsList UIParts { get; private set; }
 
-        public EquipmentSettings(VisualElement container)
-        {
-            _container = container;
-            _instance = UtilitiesUI.CreateDefaultTab(INFO_EQUIPMENT_SETTINGS_NAME);
-            _container.hierarchy.Add(_instance);
-        }
-
         public override void Initialize(VisualElement container)
         {
-            base.Initialize(container);
+            _instance = UtilitiesUI.CreateDefaultTab(INFO_EQUIPMENT_SETTINGS_NAME);
+            container.hierarchy.Add(_instance);
+            base.Initialize(_instance);
 
-            BTNBackEquipmentSettings = container.Q<Button>();
+            BTNBackEquipmentSettings = _container.Q<Button>();
             BTNBackEquipmentSettings.clicked += () => GoBack?.Invoke();
 
             EMBodyPart = new EnumModifierUI<EquipmentType>(_instance.Q<VisualElement>(EnumModifierUI<EquipmentType>.ContainerName));

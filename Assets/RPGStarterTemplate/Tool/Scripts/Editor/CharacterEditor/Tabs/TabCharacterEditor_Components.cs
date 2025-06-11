@@ -25,7 +25,7 @@ namespace Burmuruk.Tesis.Editor
         private void Setup_Coponents()
         {
             CreationScheduler.creationsNames = GetCreationNames;
-            var generalSettings = new GeneralCharacterSettings();
+            var generalSettings = CreateInstance<GeneralCharacterSettings>();
             CreationControls.Add(ElementType.None, generalSettings);
             generalSettings.Initialize(infoRight, CreationControls);
         }
@@ -49,28 +49,28 @@ namespace Burmuruk.Tesis.Editor
 
         private void Create_ItemTab()
         {
-            var settings = new BaseItemSetting();
+            var settings = CreateInstance<BaseItemSetting>();
             settings.Initialize(infoContainers[INFO_ITEM_SETTINGS_NAME].element, nameSettings);
             CreationControls.Add(ElementType.Item, settings);
         }
 
         private void Create_WeaponSettings()
         {
-            var settings = new WeaponSetting();
+            var settings = CreateInstance<WeaponSetting>();
             settings.Initialize(infoContainers[INFO_WEAPON_SETTINGS_NAME].element, nameSettings);
             CreationControls.Add(ElementType.Weapon, settings);
         }
 
         private void Create_BuffSettings()
         {
-            BuffSettings buffSettings = new BuffSettings();
+            BuffSettings buffSettings = CreateInstance<BuffSettings>();
             buffSettings.Initialize(infoContainers[INFO_BUFF_SETTINGS_NAME].element, nameSettings);
             CreationControls.Add(ElementType.Buff, buffSettings);
         }
 
         private void Create_ConsumableSettings()
         {
-            var settings = new ConsumableSettings();
+            var settings = CreateInstance<ConsumableSettings>();
             settings.Initialize(infoContainers[INFO_CONSUMABLE_SETTINGS_NAME].element, nameSettings);
 
             CreationControls.Add(ElementType.Consumable, settings);
@@ -78,7 +78,7 @@ namespace Burmuruk.Tesis.Editor
 
         private void Create_ArmourSettings()
         {
-            var settings = new ArmourSetting();
+            var settings = CreateInstance<ArmourSetting>();
             settings.Initialize(infoContainers[INFO_ARMOUR_SETTINGS_NAME].element, nameSettings);
             CreationControls.Add(ElementType.Armour, settings);
         }

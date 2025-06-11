@@ -164,7 +164,9 @@ namespace Burmuruk.Tesis.Control
             (player.Inventory as InventoryEquipDecorator).SetInventory((Inventory.Inventory)MainInventory);
 
             //var lastColor = member.stats.color;
-            player.SetStats(progress.GetDataByLevel(CharacterType.Player, 0));
+            var stats = progress.GetDataByLevel(CharacterType.Player, 0);
+            if (stats.HasValue)
+                player.SetStats(stats.Value);
             //member.stats.color = lastColor;
 
             SetColor(player);

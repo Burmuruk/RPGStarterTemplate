@@ -1,12 +1,10 @@
+using Burmuruk.Tesis.Editor.Controls;
 using Burmuruk.Tesis.Stats;
-using Burmuruk.Tesis.Utilities;
+using System;
 using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
-using System;
-using Burmuruk.Tesis.Editor.Controls;
 
 
 namespace Burmuruk.Tesis.Editor
@@ -19,6 +17,7 @@ namespace Burmuruk.Tesis.Editor
         List<StatDataUI> newVariables = new();
         VisualElement target;
         bool _enableApplyRequest = false;
+        bool? isStatEditable = null;
 
         class StatDataUI
         {
@@ -34,7 +33,7 @@ namespace Burmuruk.Tesis.Editor
         }
 
         public event Action<bool> OnChange;
-        
+
         public Button ButtonAddStat { get; private set; }
         public VisualElement PMoreOptions { get; private set; }
         public TextField TxtHeader { get; private set; }
@@ -60,14 +59,14 @@ namespace Burmuruk.Tesis.Editor
             ValuesContainer = container.Q<VisualElement>("componentsConatiner");
             EMStatType = new EnumModifierUI<ModifiableStat>(container.Q<VisualElement>("TypeAdder"));
             VariablesList = new ComponentsList<ElementStatVariable>(container, _elementPath);
-            
+
             Setup_VariablesList();
-            EFType.Init(VariableType.Int);
+            EFType.Init(VariableType.@int);
             Setup_DDFHeader();
 
             EnableContainer(PMoreOptions, false);
             EnableContainer(TxtHeader, false);
-            
+
             TxtHeader.RegisterValueChangedCallback(OnTxtHeaderChanged);
             TxtName.RegisterCallback<KeyUpEvent>(OnKeyUp_TxtName);
             ButtonAddStat.clicked += OnClick_CancelButton;
@@ -93,16 +92,21 @@ namespace Burmuruk.Tesis.Editor
 
         private void SetElementExtraData(ElementStatVariable element)
         {
-            element.LblHeader.text = DDFHeader.value == "New" ? TxtHeader.value : DDFHeader.value;
+            element.LblHeader.text = !IsDisabled(TxtHeader) ? TxtHeader.value : DDFHeader.value;
             element.VariableType = (VariableType)EFType.value;
             element.NameButton.text = TxtName.value;
-            element.LblOldName.text = "sin valor";
             element.Modification.text = EMStatType.Value.ToString();
 
-            //if ((StatModificationType)element.Type == StatModificationType.Rename)
-            //    Highlight(element.NameButton, true);
-            //else
-            //    Highlight(element.NameButton, false);
+            if (!isStatEditable.HasValue)
+            {
+                Highlight(element.NameButton, false);
+            }
+            else if (isStatEditable.Value)
+            {
+                Highlight(element.NameButton, true);
+            }
+            else
+                Highlight(element.NameButton, true, BorderColour.Error);
 
             Enable_AplyButton(VariablesList.Components.Count);
         }
@@ -117,6 +121,8 @@ namespace Burmuruk.Tesis.Editor
             }
             else
             {
+                ButtonAddStat.text = "Add basic stat";
+                ShowElements(false);
                 Clear();
             }
         }
@@ -143,24 +149,33 @@ namespace Burmuruk.Tesis.Editor
 
         private void OnTxtHeaderChanged(ChangeEvent<string> evt)
         {
-            VerifyHeaderName();
+            if (VerifyHeaderName())
+            {
+                DisableNotification();
+            }
         }
 
         private bool VerifyHeaderName()
         {
+            if (TxtHeader.value.Length < 3)
+            {
+                Highlight(TxtHeader, true, BorderColour.Error);
+                Notify("Name must be at least 3 characters long", BorderColour.Error);
+                return false;
+            }
+
             string nameLower = TxtHeader.value.Trim().ToLower();
 
             foreach (var choice in DDFHeader.choices)
             {
                 if (choice.ToLower() == nameLower)
                 {
-                    DDFHeader.SetValueWithoutNotify(choice);
-                    TxtHeader.SetValueWithoutNotify(choice);
-                    EnableContainer(TxtHeader, false);
+                    Highlight(TxtHeader, true);
                     return false;
                 }
             }
 
+            Highlight(TxtHeader, false);
             return true;
         }
 
@@ -208,6 +223,10 @@ namespace Burmuruk.Tesis.Editor
             {
                 Highlight(TxtName, true);
                 Notify("Name already added", BorderColour.Error);
+                return false;
+            }
+            else if (!IsDisabled(TxtHeader) && !VerifyHeaderName())
+            {
                 return false;
             }
 
@@ -269,8 +288,20 @@ namespace Burmuruk.Tesis.Editor
             {
                 if (!result || !AddVariable()) return;
 
-                TxtName.value = "";
-                TxtName.Focus();
+
+                if (!IsDisabled(TxtHeader))
+                {
+                    var lastHeader = TxtHeader.text;
+                    var ddfLastValue = DDFHeader.value;
+                    ResetValues();
+                    TxtHeader.SetValueWithoutNotify(lastHeader);
+                    DDFHeader.SetValueWithoutNotify(ddfLastValue);
+                }
+                else
+                {
+                    ResetValues();
+                    EnableContainer(TxtHeader, false);
+                }
             }
         }
 
@@ -285,13 +316,14 @@ namespace Burmuruk.Tesis.Editor
                     if (stat.Value.editable)
                     {
                         Highlight(TxtName, true);
+                        isStatEditable = true;
                         return true;
                     }
                     else
                     {
                         Highlight(TxtName, true, BorderColour.Error);
                         Notify("Variable name can't be modified", BorderColour.Error);
-
+                        isStatEditable = true;
                         return false;
                     }
                 }
@@ -299,6 +331,7 @@ namespace Burmuruk.Tesis.Editor
 
             Highlight(TxtName, false);
             DisableNotification();
+            isStatEditable = null;
             return true;
         }
 
@@ -316,7 +349,7 @@ namespace Burmuruk.Tesis.Editor
             TxtHeader.SetValueWithoutNotify("New header value");
             ButtonAddStat.text = "Add basic stat";
             TxtName.SetValueWithoutNotify("Name");
-            EFType.value = VariableType.Int;
+            EFType.value = VariableType.@int;
             TglEditStat.value = false;
             EMStatType.Clear();
         }
@@ -331,8 +364,8 @@ namespace Burmuruk.Tesis.Editor
             if (shouldEnable || newVariables.Count > 0)
             {
                 OnChange?.Invoke(true);
-            } 
-            else if (!shouldEnable &&  newVariables.Count <= 0)
+            }
+            else if (!shouldEnable && newVariables.Count <= 0)
             {
                 OnChange?.Invoke(false);
             }
@@ -357,6 +390,7 @@ namespace Burmuruk.Tesis.Editor
             RemoveExtraValues();
             ResetValues();
             Update_BtnApply();
+            EnableContainer(TxtHeader, false);
         }
     }
 
@@ -371,12 +405,4 @@ namespace Burmuruk.Tesis.Editor
             _type = (T)Enum.Parse(typeof(T), value);
         }
     }
-
-    //public enum StatModificationType
-    //{
-    //    None,
-    //    Add,
-    //    Remove,
-    //    Rename
-    //}
 }

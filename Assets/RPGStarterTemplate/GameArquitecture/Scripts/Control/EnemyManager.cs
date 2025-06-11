@@ -53,7 +53,10 @@ namespace Burmuruk.Tesis.Control.AI
             {
                 foreach (var enemy in group.Enemies)
                 {
-                    enemy.SetStats(progress.GetDataByLevel(enemy.CharacterType, 0));
+                    var stats = progress.GetDataByLevel(enemy.CharacterType, 0);
+                    if (stats.HasValue)
+                        enemy.SetStats(stats.Value);
+
                     (enemy.Inventory as InventoryEquipDecorator).SetInventory(inventory);
                     enemy.SetUpMods();
                 }

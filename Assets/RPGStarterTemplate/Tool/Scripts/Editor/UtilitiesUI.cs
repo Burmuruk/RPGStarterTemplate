@@ -166,9 +166,11 @@ namespace Burmuruk.Tesis.Editor.Utilities
 
         public static bool VerifyVariableName(string name)
         {
+            string lower = name.ToLowerInvariant();
+
             for (int i = 0; i < Keywords.Length; i++)
             {
-                if (name.Contains(Keywords[i]))
+                if (lower == Keywords[i])
                     return false;
             }
 

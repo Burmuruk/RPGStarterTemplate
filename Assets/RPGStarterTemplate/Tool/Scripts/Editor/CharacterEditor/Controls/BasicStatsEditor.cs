@@ -18,16 +18,18 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         public static string AddVariables(string scriptText, List<VariableEntry> newVariables)
         {
+            if (newVariables.Count <= 0) return scriptText;
+
             foreach (var group in newVariables.GroupBy(v => v.Header))
             {
-                string headerPattern = $@"(?s)\[.*?Header\s*?\(.*?{Regex.Escape(group.Key)}.*?\).*?\](?-s)(\s*?\[SerializeField\].*?\r\n)+";
+                string headerPattern = $@"(?s)\[.*?Header\s*?\(.*?{Regex.Escape(group.Key)}.*?\).*?\](?-s)(\s*?\[SerializeField\].*?;)+";
                 Match headerMatch = Regex.Match(scriptText, headerPattern);
-
-                string newFields = string.Join("\r\n", group.Select(v => $"[SerializeField] public {v.Type} {v.Name};"));
+                string val = headerMatch.Groups[1].Value;
+                string newFields = string.Join("\r\n        ", group.Select(v => $"[SerializeField] public {v.Type.Replace('_', '.')} {v.Name};"));
 
                 if (headerMatch.Success)
                 {
-                    scriptText = scriptText.Replace(headerMatch.Value, headerMatch.Value + newFields + "\r\n");
+                    scriptText = scriptText.Replace(val, val + "\r\n        " + newFields);
                 }
                 else
                 {
@@ -48,7 +50,9 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         public static string RemoveVariables(string scriptText, List<string> variableNames)
         {
-            var lines = scriptText.Split(new[] { '\n' });
+            //if (variableNames.Count <= 0) return scriptText;
+
+            var lines = scriptText.Split("\r\n");
             var result = new List<string>();
             for (int i = 0; i < lines.Length; i++)
             {
@@ -69,7 +73,7 @@ namespace Burmuruk.Tesis.Editor.Controls
                 }
                 result.Add(lines[i]);
             }
-            return string.Join("\n", result);
+            return string.Join("\r\n", result);
         }
     }
 }

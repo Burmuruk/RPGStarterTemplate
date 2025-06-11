@@ -105,10 +105,13 @@ namespace Burmuruk.Tesis.Editor
     public enum VariableType
     {
         None,
-        String,
-        Int,
-        Float,
-        Double,
-        Enum
+        @string,
+        @int,
+        @float,
+        @double,
+        @bool,
+        @UnityEngine_Color,
+        @UnityEngine_Vector2,
+        @UnityEngine_Vector3,
     }
 }

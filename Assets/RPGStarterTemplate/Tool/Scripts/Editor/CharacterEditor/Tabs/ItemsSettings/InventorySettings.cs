@@ -28,16 +28,11 @@ namespace Burmuruk.Tesis.Editor.Controls
         public Button btnBackInventorySettings { get; private set; }
         public ComponentsListUI<ElementCreation> MClInventoryElements { get; private set; }
 
-        public InventorySettings(VisualElement container)
-        {
-            _container = container;
-            _instance = UtilitiesUI.CreateDefaultTab(INFO_INVENTORY_SETTINGS_NAME);
-            _container.Add(_instance);
-        }
-
         public override void Initialize(VisualElement container)
         {
-            base.Initialize(container);
+            _instance = UtilitiesUI.CreateDefaultTab(INFO_INVENTORY_SETTINGS_NAME);
+            container.Add(_instance);
+            base.Initialize(_instance);
 
             btnBackInventorySettings = _instance.Q<Button>();
             btnBackInventorySettings.clicked += () => GoBack?.Invoke();

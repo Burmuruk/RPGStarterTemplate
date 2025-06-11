@@ -256,7 +256,7 @@ namespace Burmuruk.Tesis.Control.AI
                     {
                         if ((isTargetFar || isTargetClose) &&
                             Vector3.Distance(transform.position, 
-                            GetNearestTarget(eyesPerceibed).position) < stats.MinDistance)
+                            GetNearestTarget(eyesPerceibed).position) < stats.minDistance)
                         {
                             PlayerState = PlayerState.Combat;
                             attackState = AttackState.BasicAttack;
@@ -343,7 +343,7 @@ namespace Burmuruk.Tesis.Control.AI
                     {
                         if (formation == Formation.Protect) break;
 
-                        var dis = stats.MinDistance * .8f;
+                        var dis = stats.minDistance * .8f;
                         if (Vector3.Distance(Target.position, transform.position) > dis)
                         {
                             var destiniy = (transform.position - Target.position).normalized * dis;

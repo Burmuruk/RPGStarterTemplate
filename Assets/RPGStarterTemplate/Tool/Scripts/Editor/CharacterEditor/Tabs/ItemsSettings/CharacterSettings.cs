@@ -1,6 +1,4 @@
-﻿using Burmuruk.Tesis.Control;
-using Burmuruk.Tesis.Stats;
-using Burmuruk.Tesis.Utilities;
+﻿using Burmuruk.Tesis.Stats;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -27,10 +26,13 @@ namespace Burmuruk.Tesis.Editor.Controls
         private string _id;
         private Dictionary<int, StatDataUI> _stats = new();
         private Dictionary<int, StatChange> _statsChanges = new();
+        private Dictionary<int, PropertyField> _statsTypes = new();
         private int? _selectedStat = null;
         private List<ModEntry> allMods;
         private Dictionary<string, StatNameData> _statNames;
         private Dictionary<string, Type> _selectableClasses;
+        private Progression _progression;
+        //private BasicStats basicStats;
 
         CharacterTab _lastTab;
         CharacterTab curTab = CharacterTab.None;
@@ -52,6 +54,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             "Basic stats",
             "Detection",
         };
+        private SerializedObject _serializedStats;
 
         enum CharacterTab
         {
@@ -61,10 +64,44 @@ namespace Burmuruk.Tesis.Editor.Controls
             Health
         }
 
+        private struct ModChanges
+        {
+            public List<string> remove;
+            public List<ModChange> edit;
+            public List<ModEntry> add;
+
+            public void Initialize()
+            {
+                remove = new List<string>();
+                edit = new List<ModChange>();
+                add = new List<ModEntry>();
+            }
+        }
+
+        private struct StatChanges
+        {
+            public List<string> remove;
+            public List<ModChange> edit;
+            public List<BasicStatsEditor.VariableEntry> add;
+
+            public bool HasChanges()
+            {
+                return remove.Count > 0 || edit.Count > 0 || add.Count > 0;
+            }
+
+            public void Initialize()
+            {
+                remove = new List<string>();
+                edit = new List<ModChange>();
+                add = new List<BasicStatsEditor.VariableEntry>();
+            }
+        }
+
         class StatDataUI
         {
             public VisualElement extraSpace;
             public Toggle toggle;
+            public VisualElement editButtons;
             StatData data = new();
 
             public string Name { get => data.name; set => data.name = value; }
@@ -76,10 +113,11 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             public ModifiableStat? type;
             public string name;
+            public bool removed;
 
             public bool HasChanges()
             {
-                return type.HasValue || name != null;
+                return type.HasValue || name != null || removed;
             }
 
             public StatChange(ModifiableStat? type, string name)
@@ -100,11 +138,13 @@ namespace Burmuruk.Tesis.Editor.Controls
         public InventorySettings InventoryS { get => (InventorySettings)subTabs[CharacterTab.Inventory]; }
         private EnumModifierUI<ModifiableStat> EMStatType { get; set; }
         private Button BtnApplyStats { get; set; }
+        public VisualElement StatEditorContainer { get; private set; }
         #endregion
 
-        public CharacterSettings(VisualElement parent)
+        public void Initialize(VisualElement container, CreationsBaseInfo name, VisualElement parent)
         {
             _parent = parent;
+            Initialize(container, name);
         }
 
         #region Initialization
@@ -121,29 +161,117 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             ComponentsList = new ComponentsListUI<ElementComponent>(container);
             Create_StatModifier();
+            Create_StatEditor();
 
             Setup_ComponentsList();
             Setup_EMCharacterType();
             CreateSubTabs();
             Setup_Stats(container);
+            _progression = CreateInstance<Progression>();
+            _progression.Initialize(container,
+                () => basicStats.stats,
+                bs =>
+                {
+                    basicStats.stats = bs;
+                    var so = new SerializedObject(basicStats);
+                    so.Update();
+                });
+        }
+
+        private void Create_StatEditor()
+        {
+            VisualTreeAsset element = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/RPGStarterTemplate/Tool/UIToolkit/CharacterEditor/Elements/StatEditor.uxml");
+            StatEditorContainer = element.Instantiate();
+            TextField textField = StatEditorContainer.Q<TextField>("txtStatName");
+            textField.RegisterCallback<KeyUpEvent>(evt =>
+            {
+                if (evt.keyCode == KeyCode.Return)
+                {
+                    Rename_StatName(textField.text, textField);
+                }
+            });
+        }
+
+        private void Rename_StatName(string name, TextField textField)
+        {
+            if (_selectedStat == null) return;
+
+            DisableNotification();
+            Highlight(textField, false);
+            string lower = name.ToLowerInvariant();
+
+            if (string.IsNullOrEmpty(name) || name.Length < 3)
+            {
+                Delete_NewStatName("The name must be at least 3 characters long", textField);
+                Highlight_StatChange(false);
+                return;
+            }
+
+            if (lower != _stats[_selectedStat.Value].Name.ToLower())
+            {
+                if (VerifyVariableName(name))
+                {
+                    _statsChanges[_selectedStat.Value].name = name;
+
+                    Adder.RequestEnable_ApplyButton(true);
+                    Disable_StatEditor(_selectedStat.Value);
+                    Highlight_StatChange(true);
+                }
+                else
+                {
+                    Notify("Invalid name", BorderColour.Error);
+                    Highlight(textField, true, BorderColour.Error);
+                    return;
+                }
+            }
+            else
+            {
+                Delete_NewStatName("The name must be different", textField);
+                Highlight(textField, false);
+                Highlight_StatChange(false);
+            }
+        }
+
+        private void Highlight_StatChange(bool highlight)
+        {
+            var button = _stats[_selectedStat.Value].editButtons.Q<Button>("btnEditStat");
+            Highlight(button, highlight);
+        }
+
+        private void Delete_NewStatName(string message, TextField textField)
+        {
+            Notify(message, BorderColour.Error);
+            Highlight(textField, true, BorderColour.Error);
+            _statsChanges[_selectedStat.Value].name = null;
+            Verify_ModChanges();
+        }
+
+        private void Disable_StatEditor(int idx)
+        {
+            if (_stats[idx].extraSpace.Contains(StatEditorContainer))
+            {
+                _stats[idx].extraSpace.Remove(StatEditorContainer);
+            }
+
+            if (_stats[idx].extraSpace.Contains(EMStatType.Container))
+                return;
+
+            EnableContainer(_stats[idx].extraSpace, false);
         }
 
         private void OnClick_ApplyStats()
         {
             var classes = GetClasses();
             var newStats = Adder.GetInfo();
-            List<string> removeStats = new();
-            List<ModChange> editStats = new();
-            List<BasicStatsEditor.VariableEntry> addStats = new();
-            List<ModEntry> addMods = new();
+            string updatedText = string.Empty;
+            string path = null;
 
-            Sort_NewStats(newStats, removeStats, editStats, addStats);
-            Get_ModsModifications(removeStats, editStats, addMods);
+            Get_Changes(newStats, out ModChanges mods, out StatChanges stats);
             DisableNotification();
 
             foreach (var name in classes)
             {
-                string path = GetCharacterScriptPath(name);
+                path = GetCharacterScriptPath(name);
 
                 if (string.IsNullOrEmpty(path))
                 {
@@ -153,20 +281,105 @@ namespace Burmuruk.Tesis.Editor.Controls
 
                 var text = File.ReadAllText(path);
 
-                var updatedText = ModSetupEditor.RemoveMods(text, removeStats);
-                updatedText = ModSetupEditor.ApplyModChanges(updatedText, editStats);
-                updatedText = ModSetupEditor.AddMods(updatedText, addMods);
+                updatedText = ModSetupEditor.RemoveMods(text, mods.remove);
+                updatedText = ModSetupEditor.RenameModChanges(updatedText, mods.edit);
+                updatedText = ModSetupEditor.AddMods(updatedText, mods.add);
+                File.WriteAllText(path, updatedText);
+                AssetDatabase.SaveAssets();
             }
 
-            //File.WriteAllText("Character.cs", updatedText);
-            Change_StatsNames(addStats, editStats);
 
-            //Change_StatsNames(newStats);
+            Change_StatsNames(stats);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
         }
 
-        private void Change_StatsNames(List<BasicStatsEditor.VariableEntry> addStats, List<ModChange> editStats)
+        private void Get_Changes(List<ModChange> newStats, out ModChanges mods, out StatChanges stats)
         {
-            if (addStats.Count <= 0 && editStats.Count <= 0) return;
+            mods = new ModChanges();
+            mods.Initialize();
+            stats = new StatChanges();
+            stats.Initialize();
+
+            foreach (var stat in newStats)
+            {
+                if (stat.NewName != null)
+                {
+                    stats.add.Add(new BasicStatsEditor.VariableEntry
+                    {
+                        Name = stat.NewName,
+                        Type = stat.VariableType.ToString(),
+                        Header = stat.Header,
+                    });
+
+                    if (stat.Type != ModifiableStat.None && stat.VariableType == VariableType.@float)
+                    {
+                        mods.add.Add(new ModEntry
+                        {
+                            VariableName = stat.NewName,
+                            ModifiableStat = stat.Type.ToString(),
+                        });
+                    }
+                }
+            }
+
+            foreach (var item in _statsChanges)
+            {
+                if (!item.Value.HasChanges()) continue;
+
+                StatChange change = item.Value;
+
+                if (change.type.HasValue)
+                {
+                    if (_stats[item.Key].Type == ModifiableStat.None)
+                    {
+                        mods.add.Add(new ModEntry
+                        {
+                            VariableName = _stats[item.Key].Name,
+                            ModifiableStat = change.type.Value.ToString(),
+                        });
+                    }
+                    else if (change.type == ModifiableStat.None)
+                    {
+                        mods.remove.Add(_stats[item.Key].Name);
+                    }
+                    else
+                    {
+                        mods.edit.Add(new ModChange
+                        {
+                            OldName = _stats[item.Key].Name,
+                            NewName = change.name == null ? null : change.name,
+                            Type = change.type.Value,
+                        });
+                    }
+                }
+
+                if (change.name != null)
+                {
+                    mods.edit.Add(new ModChange
+                    {
+                        OldName = _stats[item.Key].Name,
+                        NewName = change.name,
+                        Type = _stats[item.Key].Type,
+                    });
+                    stats.edit.Add(new ModChange
+                    {
+                        OldName = _stats[item.Key].Name,
+                        NewName = change.name,
+                        Type = _stats[item.Key].Type,
+                    });
+                }
+
+                if (change.removed)
+                {
+                    stats.remove.Add(_stats[item.Key].Name);
+                }
+            }
+        }
+
+        private void Change_StatsNames(StatChanges changes)
+        {
+            if (!changes.HasChanges()) return;
 
             string className = typeof(BasicStats).Name;
             string[] guids = AssetDatabase.FindAssets($"t:Script {className}");
@@ -187,82 +400,15 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             var text = File.ReadAllText(path);
 
-            var updatedText = BasicStatsEditor.AddVariables(text, addStats);
-            if (editStats.Count > 0)
-                BasicStatsEditor.RenameVariable(updatedText, editStats[0].OldName, editStats[0].NewName);
+            var updatedText = BasicStatsEditor.RemoveVariables(text, changes.remove);
+            updatedText = BasicStatsEditor.AddVariables(updatedText, changes.add);
 
-            //File.WriteAllText(path, text);
-        }
-
-        private void Get_ModsModifications(List<string> removeStats, List<ModChange> editStats, List<ModEntry> addStats)
-        {
-            removeStats ??= new ();
-            editStats ??= new ();
-            addStats ??= new();
-
-            foreach (var item in _statsChanges)
+            foreach (var editedStat in changes.edit)
             {
-                if (!item.Value.HasChanges()) continue;
-
-                StatChange change = item.Value;
-
-                if (change.type.HasValue)
-                {
-                    if (_stats[item.Key].Type == ModifiableStat.None)
-                    {
-                        addStats.Add(new ModEntry
-                        {
-                            VariableName = _stats[item.Key].Name,
-                            ModifiableStat = change.type.Value.ToString(),
-                        });
-                    }
-                    else if (change.type == ModifiableStat.None)
-                    {
-                        removeStats.Add(_stats[item.Key].Name);
-                    }
-                    else
-                    {
-                        editStats.Add(new ModChange
-                        {
-                            OldName = _stats[item.Key].Name,
-                            NewName = null,
-                            Type = change.type.Value,
-                        });
-                    }
-                }
+                updatedText = BasicStatsEditor.RenameVariable(updatedText, editedStat.OldName, editedStat.NewName);
             }
-        }
 
-        private void Sort_NewStats(List<ModChange> newStats, List<string> removeStats, List<ModChange> editStats, List<BasicStatsEditor.VariableEntry> addStats)
-        {
-            removeStats ??= new();
-            editStats ??= new();
-            addStats ??= new();
-
-            foreach (var stat in newStats)
-            {
-                switch ((stat.OldName, stat.NewName))
-                {
-                    case (not null, not null):
-                        editStats.Add(stat);
-                        break;
-
-                    case (not null, null):
-                        removeStats.Add(stat.OldName);
-                        break;
-
-                    case (null, not null):
-                        addStats.Add(new BasicStatsEditor.VariableEntry
-                        {
-                            Name = stat.NewName,
-                            Type = stat.VariableType.ToString(),
-                            Header = stat.Header,
-                        });
-                        break;
-
-                    default: break;
-                }
-            }
+            File.WriteAllText(path, updatedText);
         }
 
         private void Setup_PUBaseClass(VisualElement pBaseClass)
@@ -355,7 +501,7 @@ namespace Burmuruk.Tesis.Editor.Controls
                 VisualElement adderUI = container.Q<VisualElement>("VariblesAdder");
                 Adder = new(adderUI, Get_Headers(), _statNames);
                 Adder.OnChange += value => EnableContainer(BtnApplyStats, value);
-            }).ExecuteLater(100);
+            }).ExecuteLater(200);
         }
 
         private List<string> Get_Headers()
@@ -410,20 +556,20 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             subTabs.Add(CharacterTab.None, this);
 
-            subTabs.Add(CharacterTab.Inventory, new InventorySettings(_parent));
+            subTabs.Add(CharacterTab.Inventory, CreateInstance<InventorySettings>());
             var inventory = (InventorySettings)subTabs[CharacterTab.Inventory];
-            inventory.Initialize(inventory.Instance);
+            inventory.Initialize(_parent);
             inventory.GoBack += () => ChangeWindow(CharacterTab.None);
             inventory.OnElementClicked += ChangeTab;
             EnableContainer(inventory.Instance, false);
 
-            subTabs.Add(CharacterTab.Equipment, new EquipmentSettings(_parent));
+            subTabs.Add(CharacterTab.Equipment, CreateInstance<EquipmentSettings>());
             var equipment = subTabs[CharacterTab.Equipment];
-            equipment.Initialize(equipment.Instance);
+            equipment.Initialize(_parent);
             equipment.GoBack += () => ChangeWindow(CharacterTab.None);
             EnableContainer(equipment.Instance, false);
 
-            subTabs.Add(CharacterTab.Health, new HealthSettings());
+            subTabs.Add(CharacterTab.Health, CreateInstance<HealthSettings>());
             subTabs[CharacterTab.Health].Initialize(_parent);
             subTabs[CharacterTab.Health].GoBack += () => ChangeWindow(CharacterTab.None);
             EnableContainer(subTabs[CharacterTab.Health].Instance, false);
@@ -436,21 +582,22 @@ namespace Burmuruk.Tesis.Editor.Controls
             _statNames = new Dictionary<string, StatNameData>();
             _stats.Clear();
             var members = typeof(BasicStats).GetFields();
-            var so = new SerializedObject(basicStats);
+            _serializedStats = new SerializedObject(basicStats);
 
             foreach (var member in members)
             {
-                var prop = so.FindProperty("stats");
+                var prop = _serializedStats.FindProperty("stats");
 
                 _statNames.Add(member.Name, new StatNameData
                 {
                     variableType = member.GetType().ToString(),
                 });
-
-                AddStatUI(statsContainer, prop.FindPropertyRelative(member.Name), member.Name);
+                Debug.Log($"name: {member.Name} => {member.FieldType}");
+                bool modifiable = member.FieldType == typeof(float) || member.FieldType == typeof(int);
+                AddStatUI(statsContainer, prop.FindPropertyRelative(member.Name), member.Name, modifiable);
             }
 
-            so.ApplyModifiedProperties();
+            _serializedStats.ApplyModifiedProperties();
         }
 
         private void Get_StatsModifications()
@@ -468,7 +615,7 @@ namespace Burmuruk.Tesis.Editor.Controls
                 }
 
                 var text = File.ReadAllText(path);
-                allMods.AddRange(ModSetupEditor.ExtractAllMods(text)); 
+                allMods.AddRange(ModSetupEditor.ExtractAllMods(text));
             }
 
             return;
@@ -595,10 +742,13 @@ namespace Burmuruk.Tesis.Editor.Controls
                 _stats[idx].extraSpace.Remove(EMStatType.Container);
             }
 
+            if (_stats[idx].extraSpace.Contains(StatEditorContainer))
+                return;
+
             EnableContainer(_stats[idx].extraSpace, false);
         }
 
-        void AddStatUI(VisualElement parent, SerializedProperty property, string name)
+        void AddStatUI(VisualElement parent, SerializedProperty property, string name, bool modifiable)
         {
             var row = GetRow();
             var field = new PropertyField(property, name);
@@ -616,7 +766,9 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             int idx = _stats.Count;
             var toggleColumn = Create_Toggle(idx, out Toggle toggle);
-            
+
+            toggle.SetEnabled(modifiable);
+
             row.Add(field);
             row.Add(toggleColumn);
             container.Add(row);
@@ -631,6 +783,7 @@ namespace Burmuruk.Tesis.Editor.Controls
                 Name = name,
                 Type = IsStatModified(name),
             });
+            _statsTypes[idx] = field;
 
             _statsChanges ??= new();
             _statsChanges[idx] = new StatChange(null, null);
@@ -645,6 +798,72 @@ namespace Burmuruk.Tesis.Editor.Controls
             }
 
             _statNames[name].editable = true;
+
+            //Add buttons to edit and remove the stat
+            Add_EditButtons(row, idx);
+        }
+
+        private void Add_EditButtons(VisualElement row, int idx)
+        {
+            VisualTreeAsset editButtons = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/RPGStarterTemplate/Tool/UIToolkit/CharacterEditor/Elements/BtnsEditStat.uxml");
+            VisualElement buttonsContainer = editButtons.Instantiate();
+            buttonsContainer.style.flexGrow = 1;
+            buttonsContainer.style.maxWidth = new Length(45, LengthUnit.Pixel);
+            buttonsContainer.style.flexDirection = FlexDirection.Column;
+
+            row.Add(buttonsContainer);
+            _stats[idx].editButtons = row.Q<VisualElement>("EditButtons");
+            Button edit = _stats[idx].editButtons.Q<Button>("btnEditStat");
+            Button remove = _stats[idx].editButtons.Q<Button>("btnRemoveStat");
+
+            edit.clicked += () => OnClick_EditStat(idx);
+            remove.clicked += () => OnClick_RemoveStat(idx);
+        }
+
+        private void OnClick_RemoveStat(int idx)
+        {
+            bool removed = !_statsChanges[idx].removed;
+            _statsChanges[idx].removed = removed;
+
+            Highlight(_stats[idx].editButtons.Q<Button>("btnRemoveStat"), removed);
+
+            if (removed)
+            {
+                _selectedStat = idx;
+                Highlight_StatChange(false);
+                _statsChanges[_selectedStat.Value].name = null;
+                Adder.RequestEnable_ApplyButton(true);
+            }
+            else
+            {
+                Verify_ModChanges();
+            }
+
+            Disable_StatEditor(idx);
+            _selectedStat = null;
+        }
+
+        private void OnClick_EditStat(int idx)
+        {
+            if (!_stats[idx].extraSpace.Contains(StatEditorContainer))
+            {
+                _stats[idx].extraSpace.Add(StatEditorContainer);
+                EnableContainer(_stats[idx].extraSpace, true);
+                _selectedStat = idx;
+                string name = _statsChanges[idx].name == null ? _stats[idx].Name : _statsChanges[idx].name;
+                StatEditorContainer.Q<TextField>("txtStatName").SetValueWithoutNotify(name);
+            }
+            else
+            {
+                Disable_StatEditor(idx);
+                _selectedStat = null;
+            }
+
+            if (_statsChanges[idx].removed)
+            {
+                _statsChanges[idx].removed = false;
+                Highlight(_stats[idx].editButtons.Q<Button>("btnRemoveStat"), false);
+            }
         }
 
         private ModifiableStat IsStatModified(string name)
@@ -724,6 +943,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             subTabs[CharacterTab.Health].Clear();
             EMCharacterType.Value = CharacterType.None;
 
+            _progression.Clear();
             var instance = ScriptableObject.CreateInstance<StatsVisualizer>();
             statsContainer.Clear();
             statsContainer.Add(new InspectorElement(instance));
@@ -742,11 +962,13 @@ namespace Burmuruk.Tesis.Editor.Controls
 
                 CurModificationType = ModificationTypes.None;
 
+                //Name
                 if ((_nameControl.Check_Changes() & ModificationTypes.None) == 0)
                 {
                     CurModificationType = ModificationTypes.Rename;
                 }
 
+                //Components's data
                 if ((subTabs[CharacterTab.Health].Check_Changes() & ModificationTypes.None) != 0)
                     CurModificationType = ModificationTypes.EditData;
 
@@ -756,6 +978,11 @@ namespace Burmuruk.Tesis.Editor.Controls
                 if ((subTabs[CharacterTab.Equipment].Check_Changes() & ModificationTypes.None) != 0)
                     CurModificationType = ModificationTypes.EditData;
 
+                //Progresssion
+                if ((_progression.Check_Changes() & ModificationTypes.None) != 0)
+                    CurModificationType = ModificationTypes.EditData;
+
+                //Stats
                 if (_characterData.Value.stats.speed != basicStats.stats.speed &&
                     _characterData.Value.stats.damageRate != basicStats.stats.damage &&
                     _characterData.Value.stats.damageRate != basicStats.stats.damageRate &&
@@ -769,6 +996,7 @@ namespace Burmuruk.Tesis.Editor.Controls
                 if (_characterData.Value.characterType != EMCharacterType.Value)
                     CurModificationType = ModificationTypes.EditData;
 
+                //Components
                 if (_characterData.Value.components.Count == ComponentsList.Components.Count)
                 {
                     foreach (var component in ComponentsList.Components)
@@ -783,6 +1011,7 @@ namespace Burmuruk.Tesis.Editor.Controls
                 else
                     CurModificationType = ModificationTypes.EditData;
 
+                //saving
                 if (_characterData.Value.shouldSave != TglSave.value)
                     CurModificationType = ModificationTypes.EditData;
 
@@ -1013,6 +1242,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             newData.stats = basicStats.stats;
             newData.characterName = TxtName.value;
             newData.shouldSave = TglSave.value;
+            newData.progress = _progression.Get_Info();
 
             return newData;
         }
@@ -1021,6 +1251,7 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             _characterData = newData;
             LoadCharacterComponents(in newData);
+            _progression.LoadStats(newData.progress, newData.characterType);
             ComponentsList.DDFElement.value = "None";
             EMCharacterType.Value = _characterData.Value.characterType;
             basicStats.stats = _characterData.Value.stats;

@@ -20,7 +20,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             var methodBody = methodMatch.Groups[1].Value;
 
             var matches = Regex.Matches(methodBody,
-                @"ModsList\.AddVariable\(\(Character\)this,\s*ModifiableStat\.([a-zA-Z0-9_]+),\s*\(\)\s*=>\s*(.*?),\s*\(value",
+                @"ModsList\.AddVariable\(\(Character\)this,\s*ModifiableStat\.([a-zA-Z0-9_]+),\s*\(\)\s*=>\s*(.*?),.*?value\s*?\)?\s*?=>",
                 RegexOptions.Singleline);
 
             foreach (Match match in matches)
@@ -45,18 +45,30 @@ namespace Burmuruk.Tesis.Editor.Controls
             var methodMatch = Regex.Match(scriptText, $@"(void\s+{MethodName}\s*\(\)\s*\{{)(.*?)(?=\}}[^\)])", RegexOptions.Singleline);
             if (!methodMatch.Success) return scriptText;
 
-            var methodStart = methodMatch.Groups[1].Value;
-            var methodBody = methodMatch.Groups[2].Value.TrimEnd();
-            var methodEnd = methodMatch.Groups[3].Value;
+            var methodStart = methodMatch.Groups[1].Value.TrimEnd();
+            var bodyLines = methodMatch.Groups[2].Value.Split("\r\n");
+            var methodBody = string.Join("\r\n", bodyLines.Where(line => !string.IsNullOrWhiteSpace(line)));
+            var methodEnd = methodMatch.Groups[3].Value.TrimStart();
 
             foreach (var entry in newMods)
             {
-                var newLine = $"    ModsList.AddVariable((Character)this, ModifiableStat.{entry.ModifiableStat}, () => {entry.VariableName}, value => {{ {entry.VariableName} = value; }});";
-                if (!methodBody.Contains(entry.VariableName))
-                    methodBody += "\n" + newLine;
+                var newLine = $"            ModsList.AddVariable((Character)this, ModifiableStat.{entry.ModifiableStat}, () => stats.{entry.VariableName}, (value) => {{ stats.{entry.VariableName} = value; }});";
+                bool containsLine = false;
+
+                foreach (var line in bodyLines)
+                {
+                    if (line.Contains(entry.ModifiableStat) && line.Contains(entry.VariableName))
+                    {
+                        containsLine = true;
+                        break;
+                    }
+                }
+
+                if (!containsLine)
+                    methodBody += "\r\n" + newLine;
             }
 
-            return scriptText.Replace(methodMatch.Value, methodStart + "\n" + methodBody + "\n" + methodEnd);
+            return scriptText.Replace(methodMatch.Value, methodStart + "\r\n" + methodBody + "\r\n" + methodEnd);
         }
 
         public static string RemoveMods(string scriptText, List<string> variableNames)
@@ -96,10 +108,10 @@ namespace Burmuruk.Tesis.Editor.Controls
                     filteredLines.Add(line);
             }
 
-            return scriptText.Replace(methodMatch.Value, methodStart + "\n" + string.Join("\n", filteredLines) + "\n" + methodEnd);
+            return scriptText.Replace(methodMatch.Value, methodStart + "\r\n" + string.Join("\r\n", filteredLines) + "\r\n" + methodEnd);
         }
 
-        public static string ApplyModChanges(string scriptText, List<ModChange> changes)
+        public static string RenameModChanges(string scriptText, List<ModChange> changes)
         {
             if (changes.Count == 0) return scriptText;
 
@@ -125,15 +137,15 @@ namespace Burmuruk.Tesis.Editor.Controls
                 bool modified = false;
                 foreach (var change in changes)
                 {
-                    if (change.Type.ToString() == "None")
-                    {
-                        if (Regex.IsMatch(line, $@"\b{Regex.Escape(change.OldName)}\b"))
-                        {
-                            modified = true; // remove line
-                            break;
-                        }
-                    }
-                    else if (Regex.IsMatch(line, $@"\b{Regex.Escape(change.OldName)}\b"))
+                    //if (change.Type.ToString() == "None")
+                    //{
+                    //    if (Regex.IsMatch(line, $@"\b{Regex.Escape(change.OldName)}\b"))
+                    //    {
+                    //        modified = true; // remove line
+                    //        break;
+                    //    }
+                    //}
+                    if (Regex.IsMatch(line, $@"\b{Regex.Escape(change.OldName)}\b"))
                     {
                         var updatedLine = line;
                         if (!string.IsNullOrEmpty(change.NewName))
@@ -151,8 +163,8 @@ namespace Burmuruk.Tesis.Editor.Controls
                     updatedLines.Add(line);
             }
 
-            var updatedBody = string.Join("\n", updatedLines);
-            return scriptText.Replace(methodMatch.Value, methodStart + "\n" + updatedBody + "\n" + methodEnd);
+            var updatedBody = string.Join("\r\n", updatedLines);
+            return scriptText.Replace(methodMatch.Value, methodStart + "\r\n" + updatedBody + "\r\n" + methodEnd);
         }
     }
 

@@ -41,8 +41,9 @@ namespace Burmuruk.Tesis.Editor
         private void Create_CharacterTab()
         {
             ScriptableObject.CreateInstance<CharacterSettings>();
-            CharacterSettings characterSettings = new CharacterSettings(infoSetup.Q<ScrollView>("infoContainer").Q("unity-content-container"));
-            characterSettings.Initialize(infoContainers[INFO_CHARACTER_NAME].element, nameSettings);
+            CharacterSettings characterSettings = CreateInstance<CharacterSettings>();
+            var parent = infoSetup.Q<ScrollView>("infoContainer").Q("unity-content-container");
+            characterSettings.Initialize(infoContainers[INFO_CHARACTER_NAME].element, nameSettings, parent);
 
             CreationControls.Add(ElementType.Character, characterSettings);
         }

@@ -181,7 +181,8 @@ namespace Burmuruk.Tesis.Editor
             infoRight = rightPanel.Q<VisualElement>("elementsContainer");
 
             infoSetup = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"Assets/RPGStarterTemplate/Tool/UIToolkit/CharacterEditor/{INFO_SETUP_NAME}.uxml").Instantiate();
-            nameSettings = new CreationsBaseInfo(infoSetup);
+            nameSettings = CreateInstance<CreationsBaseInfo>();
+            nameSettings.Initialize(infoSetup);
 
             EnableContainer(infoSetup, false);
             infoRight.Add(infoSetup);

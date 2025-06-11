@@ -14,6 +14,7 @@ namespace Burmuruk.Tesis.Editor
         public CharacterType characterType;
         public bool shouldSave;
         public Dictionary<ComponentType, object> components;
+        public CharacterProgress progress;
     }
 
     public struct CharacterComponent

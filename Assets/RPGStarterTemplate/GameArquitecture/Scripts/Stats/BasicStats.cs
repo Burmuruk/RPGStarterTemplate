@@ -1,8 +1,5 @@
-﻿using Burmuruk.Tesis.Inventory;
+using Burmuruk.Tesis.Inventory;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Stats
@@ -34,10 +31,43 @@ namespace Burmuruk.Tesis.Stats
                 this.type = type;
             }
         }
-    }
 
-    //public static class BasicStatsEditor
-    //{
-        
-    //}
+        public static bool operator == (BasicStats a, BasicStats b)
+        {
+            return a.Equals(b);
+        }
+
+        public static bool operator != (BasicStats a, BasicStats b)
+        {
+            return !a.Equals(b);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is BasicStats other)
+            {
+                return speed == other.speed &&
+                       damage == other.damage &&
+                       damageRate == other.damageRate &&
+                       color == other.color &&
+                       eyesRadious == other.eyesRadious &&
+                       earsRadious == other.earsRadious &&
+                       minDistance == other.minDistance;
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            int hashCode = 17;
+            hashCode = hashCode * 31 + speed.GetHashCode();
+            hashCode = hashCode * 31 + damage.GetHashCode();
+            hashCode = hashCode * 31 + damageRate.GetHashCode();
+            hashCode = hashCode * 31 + color.GetHashCode();
+            hashCode = hashCode * 31 + eyesRadious.GetHashCode();
+            hashCode = hashCode * 31 + earsRadious.GetHashCode();
+            hashCode = hashCode * 31 + minDistance.GetHashCode();
+            return hashCode;
+        }
+    }
 }
