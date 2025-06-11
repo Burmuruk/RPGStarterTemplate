@@ -7,7 +7,6 @@ namespace Burmuruk.Tesis.Stats
     [Serializable]
     public struct BasicStats
     {
-        [Header("Status")]
         bool initialized;
 
         [Space(), Header("Basic stats")]
@@ -15,13 +14,21 @@ namespace Burmuruk.Tesis.Stats
         [SerializeField] public int damage;
         [SerializeField] public float damageRate;
         [SerializeField] public Color color;
+        [SerializeField] public float ultimoYaBueno;
+        [SerializeField] public string hihi;
 
         [Space(), Header("Detection")]
         [SerializeField] public float eyesRadious;
         [SerializeField] public float earsRadious;
         [SerializeField] public float minDistance;
 
-        [Serializable]
+        
+        [Space(), Header("new variables")]
+        [SerializeField] public float magicPowerRando;
+        [SerializeField] public bool canFly;
+        [SerializeField] public UnityEngine.Color magicColour;
+
+[Serializable]
         public struct Slot
         {
             public ItemType type;

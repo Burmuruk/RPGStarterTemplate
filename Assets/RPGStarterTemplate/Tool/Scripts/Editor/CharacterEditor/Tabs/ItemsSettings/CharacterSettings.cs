@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using Unity.VisualScripting;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -373,6 +372,7 @@ namespace Burmuruk.Tesis.Editor.Controls
                 if (change.removed)
                 {
                     stats.remove.Add(_stats[item.Key].Name);
+                    mods.remove.Add(_stats[item.Key].Name);
                 }
             }
         }
@@ -592,8 +592,9 @@ namespace Burmuruk.Tesis.Editor.Controls
                 {
                     variableType = member.GetType().ToString(),
                 });
-                Debug.Log($"name: {member.Name} => {member.FieldType}");
+                
                 bool modifiable = member.FieldType == typeof(float) || member.FieldType == typeof(int);
+
                 AddStatUI(statsContainer, prop.FindPropertyRelative(member.Name), member.Name, modifiable);
             }
 

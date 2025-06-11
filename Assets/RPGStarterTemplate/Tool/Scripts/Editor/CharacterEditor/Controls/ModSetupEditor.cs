@@ -114,57 +114,14 @@ namespace Burmuruk.Tesis.Editor.Controls
         public static string RenameModChanges(string scriptText, List<ModChange> changes)
         {
             if (changes.Count == 0) return scriptText;
+            string result = scriptText;
 
-            var methodMatch = Regex.Match(scriptText, $@"(void\s+{MethodName}\s*\(\)\s*\{{)(.*?)(?=\}}[^\)])", RegexOptions.Singleline);
-            if (!methodMatch.Success) return scriptText;
-
-            var methodStart = methodMatch.Groups[1].Value;
-            var methodBody = methodMatch.Groups[2].Value;
-            var methodEnd = methodMatch.Groups[3].Value;
-
-            var lines = methodBody.Split(new[] { '\n', '\r' }, StringSplitOptions.None);
-            var updatedLines = new List<string>();
-
-            foreach (var line in lines)
+            foreach (ModChange change in changes)
             {
-                var trimmed = line.TrimStart();
-                if (trimmed.StartsWith("//"))
-                {
-                    updatedLines.Add(line);
-                    continue;
-                }
-
-                bool modified = false;
-                foreach (var change in changes)
-                {
-                    //if (change.Type.ToString() == "None")
-                    //{
-                    //    if (Regex.IsMatch(line, $@"\b{Regex.Escape(change.OldName)}\b"))
-                    //    {
-                    //        modified = true; // remove line
-                    //        break;
-                    //    }
-                    //}
-                    if (Regex.IsMatch(line, $@"\b{Regex.Escape(change.OldName)}\b"))
-                    {
-                        var updatedLine = line;
-                        if (!string.IsNullOrEmpty(change.NewName))
-                        {
-                            updatedLine = Regex.Replace(updatedLine, $@"\b{Regex.Escape(change.OldName)}\b", change.NewName);
-                        }
-                        updatedLine = Regex.Replace(updatedLine, @"ModifiableStat\.[a-zA-Z0-9_]+", $"ModifiableStat.{change.Type}");
-                        updatedLines.Add(updatedLine);
-                        modified = true;
-                        break;
-                    }
-                }
-
-                if (!modified)
-                    updatedLines.Add(line);
+                result = Regex.Replace(result, $@"\b{Regex.Escape(change.OldName)}\b", change.NewName); 
             }
 
-            var updatedBody = string.Join("\r\n", updatedLines);
-            return scriptText.Replace(methodMatch.Value, methodStart + "\r\n" + updatedBody + "\r\n" + methodEnd);
+            return result;
         }
     }
 

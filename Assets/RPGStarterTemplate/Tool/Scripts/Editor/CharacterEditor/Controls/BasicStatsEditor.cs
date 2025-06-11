@@ -54,25 +54,42 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             var lines = scriptText.Split("\r\n");
             var result = new List<string>();
+            var (headerIdx, headerCount) = (-1, 0);
+
             for (int i = 0; i < lines.Length; i++)
             {
                 string trimmed = lines[i].Trim();
                 if (trimmed.StartsWith("[SerializeField]") && i + 1 < lines.Length)
                 {
-                    string nextLine = lines[i + 1].Trim();
+                    if (headerIdx > 0) ++headerCount;
+                    string nextLine = lines[i].Trim();
                     bool toRemove = variableNames.Any(name => nextLine.Contains($" {name};"));
+
                     if (toRemove)
                     {
-                        i++; // Skip next line too
+                        --headerCount;
                         continue;
                     }
                 }
                 else if (variableNames.Any(name => trimmed.Contains($" {name};")))
                 {
+                    --headerCount;
                     continue;
+                }
+                else if (trimmed.Contains("Header"))
+                {
+                    if (headerIdx > 0 && headerCount <= 0)
+                        result.RemoveAt(headerIdx);
+
+                    headerIdx = result.Count;
+                    headerCount = 0;
                 }
                 result.Add(lines[i]);
             }
+
+            if (headerIdx > 0 && headerCount <= 0)
+                result.RemoveAt(headerIdx);
+
             return string.Join("\r\n", result);
         }
     }

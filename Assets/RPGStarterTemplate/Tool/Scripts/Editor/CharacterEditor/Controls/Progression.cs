@@ -58,6 +58,10 @@ namespace Burmuruk.Tesis.Editor.Controls
             {
                 Highlight(BtnGeneralProgression, false);
                 enable_LevelButtons(true);
+
+                _statsPerLevel[0] = Get_BasicStats();
+                Set_BasicStats(_statsPerLevel[2]);
+
                 Display_LevelInfo(1);
                 _applyForAllLevels = false;
             }
