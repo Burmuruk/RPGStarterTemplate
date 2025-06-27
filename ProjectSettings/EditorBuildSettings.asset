@@ -6,16 +6,16 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/RPGStarterTemplate/Demo/Scenes/MainMenu.unity
+    path: Assets/com.burmuruk.rpg-starter-template/Samples/Scenes/MainMenu.unity
     guid: 58ccb2d51f0b9754f9e1fc2c4233db4f
   - enabled: 1
-    path: Assets/RPGStarterTemplate/Demo/Scenes/MenuCharactersScene.unity
+    path: Assets/com.burmuruk.rpg-starter-template/Samples/Scenes/MenuCharactersScene.unity
     guid: 089057acc94ea3f4d93e8d04f215af34
   - enabled: 1
-    path: Assets/RPGStarterTemplate/Demo/Scenes/OutdoorsScene.unity
+    path: Assets/com.burmuruk.rpg-starter-template/Samples/Scenes/OutdoorsScene.unity
     guid: 8124e5870f4fd4c779e7a5f994e84ad1
   - enabled: 1
-    path: Assets/RPGStarterTemplate/Demo/Scenes/Station.unity
+    path: Assets/com.burmuruk.rpg-starter-template/Samples/Scenes/Station.unity
     guid: 8f9031159d4451b449ea0f69867819ac
   m_configObjects:
     com.unity.input.settings: {fileID: 11400000, guid: 2f8cf6f604ad9db46a33c69dfb0d728c,
