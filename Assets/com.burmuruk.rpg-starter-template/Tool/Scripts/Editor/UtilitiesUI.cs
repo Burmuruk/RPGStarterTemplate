@@ -39,18 +39,6 @@ namespace Burmuruk.Tesis.Editor.Utilities
             "record", "init", "with", "not"
         };
 
-
-        private static StyleSheet Border_Colours
-        {
-            get
-            {
-                if (_hightlight_Colours == null)
-                    _hightlight_Colours = AssetDatabase.LoadAssetAtPath<StyleSheet>($"Assets/com.burmuruk.rpg-starter-template/Tool/UIToolkit/Styles/{BORDER_COLOURS_STYLESHEET_NAME}.uss");
-
-                return _hightlight_Colours;
-            }
-        }
-
         public static void Notify(string message, BorderColour colour)
         {
             pNotificationTimeout?.Pause();
@@ -97,9 +85,6 @@ namespace Burmuruk.Tesis.Editor.Utilities
 
         public static void Highlight(VisualElement element, bool shouldHighlight, BorderColour colour = BorderColour.HighlightBorder)
         {
-            if (!element.styleSheets.Contains(Border_Colours))
-                element.styleSheets.Add(Border_Colours);
-
             string colourText = colour.ToString();
             RemoveStyleClass(element, colourText);
 

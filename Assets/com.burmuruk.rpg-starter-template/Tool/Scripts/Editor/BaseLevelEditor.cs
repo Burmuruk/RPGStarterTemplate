@@ -43,6 +43,15 @@ namespace Burmuruk.Tesis.Editor
         protected virtual void GetTabButtons() { }
         protected virtual void GetInfoContainers() { }
 
+        public List<StyleSheet> BaseStyleSheets =>
+            new List<StyleSheet>()
+            {
+                AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/com.burmuruk.rpg-starter-template/Tool/UIToolkit/Styles/BasicSS.uss"),
+                AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/com.burmuruk.rpg-starter-template/Tool/UIToolkit/Styles/TagSystem.uss"),
+                AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/com.burmuruk.rpg-starter-template/Tool/UIToolkit/Styles/BorderColours.uss"),
+                AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/com.burmuruk.rpg-starter-template/Tool/UIToolkit/Styles/LineTags.uss"),
+            };
+
         protected void GetNotificationSection()
         {
             pNotification = container.Q<VisualElement>("notifications");

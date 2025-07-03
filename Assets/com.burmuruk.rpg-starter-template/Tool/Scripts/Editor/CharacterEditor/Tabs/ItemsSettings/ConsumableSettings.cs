@@ -119,14 +119,11 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         public override bool Save()
         {
-            if (!VerifyData())
-            {
-                Utilities.UtilitiesUI.Notify("Invalid Data", BorderColour.Error);
-                return false;
-            }
-
             try
             {
+                if (!VerifyData())
+                    throw new InvalidDataExeption("Invalid Data");
+
                 if (_creationsState == CreationsState.Editing && Check_Changes() == ModificationTypes.None)
                 {
                     Notify("No changes were found", BorderColour.HighlightBorder);
@@ -136,10 +133,10 @@ namespace Burmuruk.Tesis.Editor.Controls
                     CurModificationType = ModificationTypes.Add;
 
                 DisableNotification();
-                var data = GetBuffsIds();
-                var creationData = new CreationData(TxtName.text.Trim(), data);
+                var (item, args) = GetBuffsIds();
+                var creationData = new BuffUserCreationData(TxtName.text.Trim(), item, args);
 
-                return SavingSystem.SaveCreation(ElementType.Consumable, in _id, in creationData, CurModificationType);
+                return SavingSystem.SaveCreation(ElementType.Consumable, in _id, creationData, CurModificationType);
             }
             catch (InvalidDataExeption e)
             {
@@ -149,16 +146,17 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         public override CreationData Load(ElementType type, string id)
         {
-            CreationData? result = SavingSystem.Load(type, id);
+            var result = SavingSystem.Load(type, id);
 
-            if (!result.HasValue) return default;
+            if (result == null) return default;
 
+            var data = result as BuffUserCreationData;
             _id = id;
-            (var item, var args) = ((InventoryItem, BuffsNamesDataArgs))result.Value.data;
+            var (item, args) = (data, data.Names);
             Set_CreationState(CreationsState.Editing);
-            UpdateInfo(item, args);
+            UpdateInfo(data.Data, args);
 
-            return result.Value;
+            return result;
         }
         #endregion
     }

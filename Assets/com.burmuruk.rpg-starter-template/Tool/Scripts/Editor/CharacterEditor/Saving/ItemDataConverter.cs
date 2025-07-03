@@ -15,12 +15,13 @@ namespace Burmuruk.Tesis.Editor
             {
                 case ElementType.Item:
                 case ElementType.Armour:
-                    var (item, _) = ((InventoryItem, ItemDataArgs))creation.data;
+                    var item = (creation as ItemCreationData).Data;
                     return item;
 
                 case ElementType.Weapon:
                 case ElementType.Consumable:
-                    var (buffUser, cArgs) = ((InventoryItem, BuffsNamesDataArgs))creation.data;
+                    var buffUserData = creation as BuffUserCreationData;
+                    var (buffUser, cArgs) = (buffUserData.Data, buffUserData.Names);
                     Update_BuffsInfo(buffUser as IBuffUser, cArgs);
 
                     return buffUser;
@@ -30,23 +31,27 @@ namespace Burmuruk.Tesis.Editor
             }
         }
 
-        private static void Update_BuffsInfo(IBuffUser buffUser, BuffsNamesDataArgs args)
+        public static void Update_BuffsInfo(IBuffUser buffUser, BuffsNamesDataArgs args)
         {
             List<BuffData> newBuffs = new();
             int idx = 0;
 
-            foreach (var name in args.BuffsNames)
+            if (args != null)
             {
-                if (name == "")
+                foreach (var name in args.BuffsNames)
                 {
-                    BuffData newBuff = buffUser.Buffs[idx];
-                    newBuff.name = "Custom";
-                    newBuffs.Add(newBuff);
-                    ++idx;
-                }
-                else
-                {
-                    newBuffs.Add((BuffData)SavingSystem.Data.creations[ElementType.Buff][name].data);
+                    if (name == "")
+                    {
+                        BuffData newBuff = buffUser.Buffs[idx];
+                        newBuff.name = "Custom";
+                        newBuffs.Add(newBuff);
+                        ++idx;
+                    }
+                    else
+                    {
+                        var buffCreation = SavingSystem.Data.creations[ElementType.Buff][name] as BuffCreationData;
+                        newBuffs.Add(buffCreation.Data);
+                    }
                 }
             }
 

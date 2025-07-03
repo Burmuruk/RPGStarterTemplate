@@ -7,7 +7,6 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.Media;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
@@ -32,11 +31,6 @@ namespace Burmuruk.Tesis.Control
 
         //public static List<Coroutine> activeCoroutines = new();
         public event Action OnNavmeshLoaded;
-        public event Action<GameManager.State> OnGameStateChange;
-        public event Action OnExitUI;
-        public event Action OnRemoveUI;
-        public event Action OnChangeMenu;
-        public event Action<bool> OnPause;
 
         private void Awake()
         {
@@ -59,7 +53,8 @@ namespace Burmuruk.Tesis.Control
             SceneManager.sceneUnloaded += RestoreScene;
 
             gameManager.onStateChange += UpdateGameState;
-            OnNavmeshLoaded += () => { 
+            OnNavmeshLoaded += () =>
+            {
                 gameManager.NotifyLevelLoaded();
                 Resume();
             };
@@ -92,7 +87,7 @@ namespace Burmuruk.Tesis.Control
 
             if (Input.GetKeyUp(KeyCode.L))
             {
-                
+
 
                 TemporalSaver.RemoveAllData();
                 savingWrapper.Load(GetSlotData().Id);
@@ -102,7 +97,7 @@ namespace Burmuruk.Tesis.Control
                 string path = System.IO.Path.Combine(Application.persistentDataPath, "Capture one.png");
                 ScreenCapture.CaptureScreenshot(path);
             }
-            
+
         }
 
         public void SetPaths()
@@ -119,7 +114,7 @@ namespace Burmuruk.Tesis.Control
 
             OnNavmeshLoaded?.Invoke();
         }
-        
+
         public void SetPathToPlayer(Character character)
         {
             if (NavSaver.NodeList == null) return;
@@ -212,7 +207,6 @@ namespace Burmuruk.Tesis.Control
         public void ToggleSavingOptions()
         {
             FindObjectOfType<SavingUI>().ToggleSlots();
-            OnPause?.Invoke(true);
         }
 
         public void HideSavingOptions()
@@ -229,7 +223,6 @@ namespace Burmuruk.Tesis.Control
                     pauseMenu.gameObject.SetActive(false);
                     Time.timeScale = 1;
                     HideSavingOptions();
-                    OnPause?.Invoke(false);
                 }
             }
             else if (gameManager.GameState == GameManager.State.Playing)
@@ -250,7 +243,6 @@ namespace Burmuruk.Tesis.Control
                 Time.timeScale = 1;
 
                 HideSavingOptions();
-                OnPause?.Invoke(false);
             }
             else if (pauseMenu.gameObject.activeSelf)
             {
@@ -258,7 +250,6 @@ namespace Burmuruk.Tesis.Control
                 Time.timeScale = 1;
 
                 HideSavingOptions();
-                OnPause?.Invoke(false);
             }
 
             if (gameManager.GameState == GameManager.State.Pause)
@@ -268,7 +259,6 @@ namespace Burmuruk.Tesis.Control
 
         public void ExitUI()
         {
-            OnExitUI?.Invoke();
             if (menuCharacters.curState != UIMenuCharacters.State.None) return;
 
             menuCharacters.UnloadMenu();
@@ -332,8 +322,6 @@ namespace Burmuruk.Tesis.Control
                 default:
                     break;
             }
-
-            OnGameStateChange?.Invoke(state);
         }
 
         private JObject CaptureLevelData()
@@ -364,5 +352,5 @@ namespace Burmuruk.Tesis.Control
                 FindObjectOfType<JsonSavingWrapper>().Save(0, data);
             }
         }
-    } 
+    }
 }

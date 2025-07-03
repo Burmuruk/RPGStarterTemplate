@@ -1,4 +1,5 @@
 using Burmuruk.Tesis.Editor.Controls;
+using Burmuruk.Tesis.Inventory;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,6 +46,16 @@ namespace Burmuruk.Tesis.Editor
             currentWindow = window;
         }
 
+        private void OnDisable()
+        {
+            //if (currentWindow == this)
+            //{
+            //    currentWindow = null;
+            //}
+            SavingSystem.Data.changes.Clear();
+            SavingSystem.Data.mainElementChange = ElementType.None;
+        }
+
         public void CreateGUI()
         {
             container = rootVisualElement;
@@ -53,28 +64,21 @@ namespace Burmuruk.Tesis.Editor
             container.Add(rootTab);
             //rootTab.style.height = new StyleLength(StyleKeyword.;
 
-            var styleSheets = new List<StyleSheet>()
-            {
-                AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/com.burmuruk.rpg-starter-template/Tool/UIToolkit/Styles/BasicSS.uss"),
-                AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/com.burmuruk.rpg-starter-template/Tool/UIToolkit/Styles/TagSystem.uss"),
-                AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/com.burmuruk.rpg-starter-template/Tool/UIToolkit/Styles/BorderColours.uss"),
-                AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/com.burmuruk.rpg-starter-template/Tool/UIToolkit/Styles/LineTags.uss"),
-            };
-
-            styleSheets.ForEach(styleSheet => { container.styleSheets.Add(styleSheet); });
+            BaseStyleSheets.ForEach(styleSheet => { container.styleSheets.Add(styleSheet); });
 
             GetTabButtons();
             GetNotificationSection();
 
             SavingSystem.Initialize();
-            Load_CreatedAssets();
-            Load_UnsavedChanges();
+            //Load_CreatedAssets();
             CreateTagsContainer();
             GetInfoContainers();
             CreateSettingTabs();
 
+            SavingSystem.LoadCreations();
             searchBar.SearchAllElements();
-            ChangeTab(INFO_GENERAL_SETTINGS_CHARACTER_NAME);
+            Load_UnsavedChanges();
+            //ChangeTab(INFO_GENERAL_SETTINGS_CHARACTER_NAME);
         }
 
         private void Load_UnsavedChanges()
@@ -82,26 +86,115 @@ namespace Burmuruk.Tesis.Editor
             var changes = SavingSystem.Data.changes;
             foreach (var change in changes)
             {
-                string id = change.Value.Keys.FirstOrDefault();
+                var data = change.Value.FirstOrDefault();
 
-                if (string.IsNullOrEmpty(id))
+                if (string.IsNullOrEmpty(data.Key)) continue;
+                
+                switch (change.Key)
                 {
-                    continue;
-                }
-                // load the creation data based on the type and id
-                //switch (change.Key)
-                //{
-                //    case ElementType.Weapon:
-                //        var data = ItemDataConverter.GetItem(change.Key, id);
-                //        CreationControls[change.Key].lo
-                //}
+                    case ElementType.Weapon:
+                        var weaponData = data.Value as BuffUserCreationData;
+                        var (weapon, weBuffsNames) = (weaponData.Data, weaponData.Names);
+                        
+                        (CreationControls[change.Key] as WeaponSetting).UpdateInfo(weapon, weBuffsNames); 
+                        break;
 
+                    case ElementType.Consumable:
+                        var consumableData = data.Value as BuffUserCreationData;
+                        var (consumable, consuBuffsNames) = (consumableData.Data, consumableData.Names);
+
+                        (CreationControls[change.Key] as ConsumableSettings).UpdateInfo(consumable, consuBuffsNames);
+                        break;
+
+                    case ElementType.Armour:
+                        var armour = (data.Value as ItemCreationData).Data;
+
+                        (CreationControls[change.Key] as ArmourSetting).UpdateInfo(armour, null);
+                        break;
+
+                    case ElementType.Item:
+                        var item = (data.Value as ItemCreationData).Data;
+
+                        (CreationControls[change.Key] as BaseItemSetting).UpdateInfo(item, null);
+                        break;
+
+                    case ElementType.Buff:
+                        var buff = (data.Value as BuffCreationData).Data;
+
+                        (CreationControls[change.Key] as BuffSettings).UpdateInfo(buff);
+                        break;
+
+                    case ElementType.Character:
+                        var characterData = (data.Value as CharacterCreationData).Data;
+
+                        (CreationControls[change.Key] as CharacterSettings).LoadInfo(characterData, null);
+                        break;
+                }
             }
+
+            string tabName = null;
+            foreach (var tab in infoContainers)
+            {
+                if (tab.Value.type == SavingSystem.Data.mainElementChange)
+                {
+                    tabName = tab.Key;
+                    break;
+                }
+            }
+            if (tabName != null && infoContainers.ContainsKey(tabName))
+            {
+                ChangeTab(tabName);
+            }
+            else
+            {
+                ChangeTab(INFO_GENERAL_SETTINGS_CHARACTER_NAME);
+            }
+
+            SavingSystem.Data.changes.Clear();
+            SavingSystem.Data.mainElementChange = ElementType.None;
         }
 
         private void Load_CreatedAssets()
         {
-            var assets = AssetDatabase.LoadAllAssetsAtPath("Assets/com.burmuruk.rpg-starter-template/Results");
+            var assets = AssetDatabase.LoadAllAssetsAtPath("Assets/RPG-Results");
+            bool noAssets = true;
+
+            //foreach (var asset in assets)
+            //{
+            //    switch (asset)
+            //    {
+            //        case Tesis.Combat.Weapon weapon:
+            //            noAssets &= !SavingSystem.SaveCreation(ElementType.Weapon, null, new CreationData(weapon.Name, weapon), ModificationTypes.Add);
+            //            break;
+
+            //        case Tesis.Stats.ConsumableItem consumable:
+            //            noAssets &= !SavingSystem.SaveCreation(ElementType.Consumable, null, new CreationData(consumable.Name, consumable), ModificationTypes.Add);
+            //            break;
+
+            //        case Tesis.Inventory.ArmourElement armour:
+            //            noAssets &= !SavingSystem.SaveCreation(ElementType.Armour, null, new ItemCreationData(armour.Name, armour), ModificationTypes.Add);
+            //            break;
+
+            //        case Tesis.Inventory.InventoryItem item:
+            //            noAssets &= !SavingSystem.SaveCreation(ElementType.Item, null, new ItemCreationData(item.Name, item), ModificationTypes.Add);
+            //            break;
+
+            //        case Tesis.Control.Character character:
+            //            noAssets &= !SavingSystem.SaveCreation(ElementType.Character, null, new CharacterCreationData(asset.name, character), ModificationTypes.Add);
+            //            break;
+
+            //        default: break;
+            //    }
+            //}
+
+            if (!noAssets)
+            {
+                Notify("Assets loaded successfully", BorderColour.Success);
+            }
+            else
+            {
+                Notify("No assets were found", BorderColour.Success);
+            }
         }
 
         private void CreateSettingTabs()
@@ -192,7 +285,8 @@ namespace Burmuruk.Tesis.Editor
 
             EnableContainer(infoSetup, false);
             ChangeTab(INFO_GENERAL_SETTINGS_CHARACTER_NAME);
-            Highlight(btnsRight_Tag[currentSettingTag.idx].element, false);
+            if (currentSettingTag.idx >= 0)
+                Highlight(btnsRight_Tag[currentSettingTag.idx].element, false);
             currentSettingTag = (ElementType.None, -1);
             editingElement = (ElementType.None, "", -1);
         }

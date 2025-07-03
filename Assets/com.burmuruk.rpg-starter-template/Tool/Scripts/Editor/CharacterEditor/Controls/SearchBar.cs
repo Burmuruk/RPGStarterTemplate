@@ -421,7 +421,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             return enabled;
 
             string GetName(int i, int j) =>
-                SavingSystem.Data.creations[elements[i].type][elements[i].ids[j]].Name;
+                SavingSystem.Data.creations[elements[i].type][elements[i].ids[j]]?.Name;
         }
         #endregion
 

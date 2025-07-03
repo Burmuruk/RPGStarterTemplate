@@ -9,9 +9,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a4cb13b230a5a664298f5325155c81e8, type: 3}
-  m_Name: GeneralItemsList
+  m_Script: {fileID: 11500000, guid: f733031752a68064f97a591c9fd1fd19, type: 3}
+  m_Name: com.burmuruk
   m_EditorClassIdentifier: 
-  _items:
-  - {fileID: 11400000, guid: 9ce57592872090a4c9c32f4eb1a902b5, type: 2}
-  - {fileID: 11400000, guid: 14aee8a735e8d8d42b14c21923c57bc0, type: 2}
+  characters: []
+  mainElementChange: 0
+  defaultElements: 030000000200000009000000070000000800000004000000
+  serializedCreations: []

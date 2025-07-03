@@ -118,14 +118,11 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         public virtual bool Save()
         {
-            if (!VerifyData())
-            {
-                Utilities.UtilitiesUI.Notify("Invalid Data", BorderColour.Error);
-                return false;
-            }
-
             try
             {
+                if (!VerifyData())
+                    throw new InvalidDataExeption("Invalid Data");
+
                 CurModificationType = Check_Changes();
                 if (_creationsState == CreationsState.Editing && Check_Changes() == ModificationTypes.None)
                 {
@@ -136,10 +133,10 @@ namespace Burmuruk.Tesis.Editor.Controls
                     CurModificationType = ModificationTypes.Add;
 
                 Utilities.UtilitiesUI.DisableNotification();
-                var data = GetInfo(null);
-                var creationData = new CreationData(_nameControl.TxtName.value, data);
+                var (data, _) = GetInfo(null);
+                var creationData = new ItemCreationData(_nameControl.TxtName.value, data);
 
-                return SavingSystem.SaveCreation(ElementType.Item, in _id, in creationData, CurModificationType);
+                return SavingSystem.SaveCreation(ElementType.Item, in _id, creationData, CurModificationType);
             }
             catch (InvalidDataExeption e)
             {
@@ -149,17 +146,16 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         public virtual CreationData Load(ElementType type, string id)
         {
-            CreationData? result = SavingSystem.Load(type, id);
+            var result = SavingSystem.Load(type, id);
 
-            if (result.HasValue)
-            {
-                _id = id;
-                (var item, var args) = ((InventoryItem, ItemDataArgs))result.Value.data;
-                Set_CreationState(CreationsState.Editing);
-                UpdateInfo(item, args);
-            }
+            if (result == null) return null;
+            
+            _id = id;
+            var item = (result as ItemCreationData).Data;
+            Set_CreationState(CreationsState.Editing);
+            UpdateInfo(item, null);
 
-            return result.Value;
+            return result;
         }
 
         public override void Load_Changes()

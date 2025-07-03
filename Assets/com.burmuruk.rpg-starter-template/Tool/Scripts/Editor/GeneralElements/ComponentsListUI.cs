@@ -38,9 +38,8 @@ namespace Burmuruk.Tesis.Editor.Controls
         protected override T CreateNewComponent(string value, string type, out int idx)
         {
             var component = base.CreateNewComponent(value, type, out idx);
-            int newIdx = idx;
 
-            component.IFAmount.RegisterValueChangedCallback((evt) => UpdateTxtAmount(newIdx, evt.newValue));
+            component.IFAmount.RegisterValueChangedCallback((evt) => UpdateTxtAmount(component.idx, evt.newValue));
 
             return component;
         }

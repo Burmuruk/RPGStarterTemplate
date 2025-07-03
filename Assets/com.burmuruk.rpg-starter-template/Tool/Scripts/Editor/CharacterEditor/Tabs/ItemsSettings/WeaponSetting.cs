@@ -187,14 +187,11 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         public override bool Save()
         {
-            if (!VerifyData())
-            {
-                Utilities.UtilitiesUI.Notify("Invalid Data", BorderColour.Error);
-                return false;
-            }
-
             try
             {
+                if (!VerifyData())
+                    throw new InvalidDataExeption("Invalid Data");
+
                 if (_creationsState == CreationsState.Editing && Check_Changes() == ModificationTypes.None)
                 {
                     Notify("No changes were found", BorderColour.HighlightBorder);
@@ -204,10 +201,10 @@ namespace Burmuruk.Tesis.Editor.Controls
                     CurModificationType = ModificationTypes.Add;
 
                 DisableNotification();
-                var data = GetBuffsIds();
-                var creationData = new CreationData(_nameControl.TxtName.text.Trim(), data);
+                var (item, args) = GetBuffsIds();
+                var creationData = new BuffUserCreationData(_nameControl.TxtName.text.Trim(), item, args);
 
-                return SavingSystem.SaveCreation(ElementType.Weapon, in _id, in creationData, CurModificationType);
+                return SavingSystem.SaveCreation(ElementType.Weapon, in _id, creationData, CurModificationType);
             }
             catch (InvalidDataExeption e)
             {
@@ -217,17 +214,17 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         public override CreationData Load(ElementType type, string id)
         {
-            CreationData? result = SavingSystem.Load(type, id);
+            var result = SavingSystem.Load(type, id);
 
-            if (result.HasValue)
-            {
-                _id = id;
-                (var item, var args) = ((InventoryItem, BuffsNamesDataArgs))result.Value.data;
-                Set_CreationState(CreationsState.Editing);
-                UpdateInfo(item, args);
-            }
+            if (result == null) return null;
+            
+            var weapon = result as BuffUserCreationData;
+            _id = id;
+            (var item, var args) = (weapon.Data, weapon.Names);
+            Set_CreationState(CreationsState.Editing);
+            UpdateInfo(item, args);
 
-            return result.Value;
+            return weapon;
         }
 
         public override void Load_Changes()

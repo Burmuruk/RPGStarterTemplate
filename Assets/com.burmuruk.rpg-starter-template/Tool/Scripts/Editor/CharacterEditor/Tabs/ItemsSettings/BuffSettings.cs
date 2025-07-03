@@ -160,7 +160,7 @@ namespace Burmuruk.Tesis.Editor.Controls
                     CurModificationType = ModificationTypes.Add;
 
                 Utilities.UtilitiesUI.DisableNotification();
-                var data = new CreationData(_nameControl.TxtName.value.Trim(), GetInfo());
+                var data = new BuffCreationData(_nameControl.TxtName.value.Trim(), GetInfo());
 
                 return SavingSystem.SaveCreation(ElementType.Buff, _id, data, CurModificationType);
             }
@@ -174,18 +174,13 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             var data = SavingSystem.Load(type, id);
 
-            if (data == null)
-            {
-                return default;
-            }
-            else
-            {
-                BuffData newData = (BuffData)data.Value.data;
-                _id = id;
-                Set_CreationState(CreationsState.Editing);
-                UpdateInfo(newData);
-                return data.Value;
-            }
+            if (data == null) return default;
+
+            BuffData newData = (data as BuffCreationData).Data;
+            _id = id;
+            Set_CreationState(CreationsState.Editing);
+            UpdateInfo(newData);
+            return data;
         }
 
         public override void Remove_Changes()

@@ -37,8 +37,8 @@
         <ui:VisualElement name="Progression" style="flex-grow: 1; flex-direction: row; margin-top: 26px;">
             <ui:Label tabindex="-1" text="Level" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-right: 6px;" />
             <ui:VisualElement style="flex-grow: 1; flex-direction: row;">
-                <ui:Button text="Base" parse-escape-sequences="true" display-tooltip-when-elided="true" name="btnBaseInfo" class="LineExtraButton" style="min-width: 36px;" />
-                <ui:Button text="All" parse-escape-sequences="true" display-tooltip-when-elided="true" name="btnGeneralProgression" class="LineExtraButton" />
+                <ui:Button text="Base" parse-escape-sequences="true" display-tooltip-when-elided="true" name="btnBaseInfo" tooltip="Set the starting stats of the character" class="LineExtraButton" style="min-width: 36px;" />
+                <ui:Button text="All" parse-escape-sequences="true" display-tooltip-when-elided="true" name="btnGeneralProgression" tooltip="Define a constant increment value for all levels" class="LineExtraButton" />
                 <ui:VisualElement name="levelButtons" style="flex-grow: 1; flex-direction: row;" />
             </ui:VisualElement>
             <ui:VisualElement style="flex-grow: 0; flex-direction: row;">

@@ -81,10 +81,10 @@ namespace Burmuruk.Tesis.Editor.Controls
                     CurModificationType = ModificationTypes.Add;
 
                 DisableNotification();
-                var data = GetInfo(null);
-                var creationData = new CreationData(_nameControl.TxtName.value.Trim(), data);
+                var (data, _) = GetInfo(null);
+                var creationData = new ItemCreationData(_nameControl.TxtName.value.Trim(), data as ArmourElement);
 
-                return SavingSystem.SaveCreation(ElementType.Armour, in _id, in creationData, CurModificationType);
+                return SavingSystem.SaveCreation(ElementType.Armour, in _id, creationData, CurModificationType);
             }
             catch (InvalidDataExeption e)
             {

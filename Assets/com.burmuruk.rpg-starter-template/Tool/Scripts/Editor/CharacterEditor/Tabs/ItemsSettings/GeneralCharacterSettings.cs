@@ -18,6 +18,7 @@ namespace Burmuruk.Tesis.Editor.Controls
         CreationSaver _creationSaver;
 
         public TextField TxtLocation { get; private set; }
+        public Button BtnRest { get; private set; }
         public Button BtnGenerate { get; private set; }
         public Toggle TglTypeColour { get; private set; }
         public Toggle TglCustomColour { get; private set; }
@@ -27,13 +28,20 @@ namespace Burmuruk.Tesis.Editor.Controls
             _creationControls = CreationControls;
             _container = container;
             TxtLocation = container.Q<TextField>("txtLocation");
+            BtnRest = container.Q<Button>("btnReset");
             BtnGenerate = container.Q<Button>("btnGenerateElements");
             TglTypeColour = container.Q<Toggle>("tglShowTypeColour");
             TglCustomColour = container.Q<Toggle>("ShowCustomColours");
 
             TxtLocation.RegisterValueChangedCallback(OnTxtLocation_Changed);
+            BtnRest.clicked += ResetPath;
             BtnGenerate.clicked += CreatePrefabs;
             _creationSaver = new CreationSaver();
+        }
+
+        private void ResetPath()
+        {
+            TxtLocation.value = "Assets/RPG-Results";
         }
 
         private void OnTxtLocation_Changed(ChangeEvent<string> evt)
@@ -70,7 +78,17 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         private void CreatePrefabs()
         {
-            if (string.IsNullOrEmpty(SavingSystem.Data.CreationPath))
+            if (TxtLocation.value == "Assets/RPG-Results")
+            {
+                if (!AssetDatabase.IsValidFolder("Assets/RPG-Results"))
+                {
+                    AssetDatabase.CreateFolder("Assets", "RPG-Results");
+                    AssetDatabase.Refresh();
+                    if (!VerifyPath(TxtLocation.value))
+                        return;
+                }
+            }
+            else if (string.IsNullOrEmpty(SavingSystem.Data.CreationPath))
             {
                 if (string.IsNullOrEmpty(TxtLocation.value))
                 {
@@ -92,6 +110,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             }
 
             ElementType[] types = GetTypesInOrder();
+            bool elementCreated = false;
 
             foreach (var creationType in types)
             {
@@ -101,20 +120,25 @@ namespace Burmuruk.Tesis.Editor.Controls
                     {
                         case ElementType.Item:
                         case ElementType.Armour:
-                            var (item, _) = ((InventoryItem, ItemDataArgs))creation.Value.data;
+                            var item = (creation.Value as ItemCreationData).Data;
                             _creationSaver.SavetItem(item);
+                            elementCreated = true;
                             break;
 
                         case ElementType.Weapon:
                         case ElementType.Consumable:
-                            var (buffUser, cArgs) = ((InventoryItem, BuffsNamesDataArgs))creation.Value.data;
+                            var buffUserData = creation.Value as BuffUserCreationData;
+                            var (buffUser, cArgs) = (buffUserData.Data, buffUserData.Names);
                             InventoryItem newBuff = ScriptableObject.Instantiate(buffUser);
-                            Update_BuffsInfo(buffUser as IBuffUser, cArgs);
+                            ItemDataConverter.Update_BuffsInfo(buffUser as IBuffUser, cArgs);
+                            
                             _creationSaver.SavetItem(buffUser);
+                            elementCreated = true;
                             break;
 
                         case ElementType.Character:
-                            _creationSaver.SavePlayer((CharacterData)creation.Value.data);
+                            _creationSaver.SavePlayer((creation.Value as CharacterCreationData).Data);
+                            elementCreated = true;
                             break;
 
                         default:
@@ -125,29 +149,11 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-        }
 
-        private void Update_BuffsInfo(IBuffUser buffUser, BuffsNamesDataArgs args)
-        {
-            List<BuffData> newBuffs = new();
-            int idx = 0;
-
-            foreach (var name in args.BuffsNames)
-            {
-                if (name == "")
-                {
-                    BuffData newBuff = buffUser.Buffs[idx];
-                    newBuff.name = "Custom";
-                    newBuffs.Add(newBuff);
-                    ++idx;
-                }
-                else
-                {
-                    newBuffs.Add((BuffData)SavingSystem.Data.creations[ElementType.Buff][name].data);
-                }
-            }
-
-            buffUser.UpdateBuffData(newBuffs.ToArray());
+            if (elementCreated)
+                Notify("Elements created", BorderColour.Success);
+            else
+                Notify("There were no elements to create", BorderColour.HighlightBorder);
         }
 
         private ElementType[] GetTypesInOrder()

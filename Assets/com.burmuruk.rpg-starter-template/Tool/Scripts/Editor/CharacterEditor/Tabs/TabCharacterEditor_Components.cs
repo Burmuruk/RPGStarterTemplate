@@ -41,6 +41,8 @@ namespace Burmuruk.Tesis.Editor
 
             foreach (var name in SavingSystem.Data.creations[type])
             {
+                if (name.Value == null) continue;
+
                 names.Add(name.Key, name.Value.Name);
             }
 

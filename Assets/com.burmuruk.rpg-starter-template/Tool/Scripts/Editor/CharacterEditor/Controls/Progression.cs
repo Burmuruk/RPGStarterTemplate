@@ -2,8 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
 
@@ -34,7 +32,7 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             get
             {
-                if (_selectedButton ==  null) return null;
+                if (_selectedButton == null) return null;
 
                 if (_selectedButton == BtnBaseInfo)
                 {
@@ -99,7 +97,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             EnableContainer(StatsContainer, true);
         }
 
-        public void Set_CharacterType (CharacterType type) => _characterType = type;
+        public void Set_CharacterType(CharacterType type) => _characterType = type;
 
         private void SwitchView(Button newButton)
         {
@@ -147,6 +145,8 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         private void SaveCurrentStats()
         {
+            if (_selectedButton == null) return;
+
             if (_selectedButton == BtnBaseInfo)
             {
                 _baseInfo = _getStats();
@@ -216,8 +216,11 @@ namespace Burmuruk.Tesis.Editor.Controls
             _changesBaseInfo = baseInfo;
             _characterType = type;
             _changesCharacterType = type;
+            _selectedButton = null;
 
             _statsPerLevel.Clear();
+            LevelButtonsContainer.Clear();
+            LevelButtonsContainer.Add(BtnGeneralProgression);
             _levelButtons.RemoveRange(1, _levelButtons.Count - 1);
 
             if (progress.ApplyForAll(type))
@@ -229,6 +232,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             else
             {
                 _applyForAllLevels = false;
+                _statsPerLevel.Add(new BasicStats());
                 int i = 1;
                 BasicStats? data;
                 do
@@ -236,14 +240,14 @@ namespace Burmuruk.Tesis.Editor.Controls
                     data = progress.GetDataByLevel(type, i);
                     if (data.HasValue)
                     {
-                        _statsPerLevel.Add(data.Value);
                         AddLevel();
+                        _statsPerLevel[_statsPerLevel.Count - 1] = data.Value;
                     }
                     i++;
                 } while (data.HasValue);
 
                 _currentLevel = 1;
-                SwitchView(_levelButtons[_currentLevel]);
+                SwitchView(BtnBaseInfo);
             }
         }
 
@@ -295,7 +299,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             }
         }
 
-        public void Get_Info(CharacterProgress progress, BasicStats baseInfo)
+        public void Get_Info(out CharacterProgress progress, out BasicStats baseInfo)
         {
             baseInfo = _baseInfo;
             progress = new CharacterProgress();
@@ -331,7 +335,8 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             Highlight(BtnBaseInfo, false);
             Highlight(BtnGeneralProgression, false);
-            Highlight(_selectedButton, false);
+            if (_selectedButton != null)
+                Highlight(_selectedButton, false);
 
             _selectedButton = null;
             _currentLevel = 1;

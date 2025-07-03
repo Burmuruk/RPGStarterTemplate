@@ -12,6 +12,7 @@ namespace Burmuruk.Tesis.Editor.Controls
         Inventory _changes = default;
         Dictionary<(string name, string type), string> _DropDownIds = new();
         string _selectedType;
+        private Label _warning;
 
         ElementType[] inventoryChoices = new ElementType[]
         {
@@ -26,6 +27,7 @@ namespace Burmuruk.Tesis.Editor.Controls
         public event Action<ComponentType> OnElementClicked;
 
         public Button btnBackInventorySettings { get; private set; }
+        public Toggle TglAddInventory { get; private set; }
         public ComponentsListUI<ElementCreation> MClInventoryElements { get; private set; }
 
         public override void Initialize(VisualElement container)
@@ -34,6 +36,8 @@ namespace Burmuruk.Tesis.Editor.Controls
             container.Add(_instance);
             base.Initialize(_instance);
 
+            _warning = _instance.Q<Label>("lblWarning");
+            TglAddInventory = _instance.Q<Toggle>("tglAddInventory");
             btnBackInventorySettings = _instance.Q<Button>();
             btnBackInventorySettings.clicked += () => GoBack?.Invoke();
             _instance.Q<VisualElement>(ComponentsList.CONTAINER_NAME);
@@ -43,6 +47,10 @@ namespace Burmuruk.Tesis.Editor.Controls
             Populate_DDFType();
             Populate_DDFElement();
             RegisterToChanges();
+            TglAddInventory.RegisterValueChangedCallback((evt) =>
+            {
+                EnableContainer(_warning, !evt.newValue);
+            });
             //MultiColumnListView lstInventory = new MultiColumnListView();
         }
 
@@ -154,10 +162,11 @@ namespace Burmuruk.Tesis.Editor.Controls
             if (elementIdx.HasValue)
             {
                 MClInventoryElements.IncrementElement(elementIdx.Value);
-                return;
             }
+            else
+                MClInventoryElements.AddElement(name, MClInventoryElements.DDFType.value);
 
-            MClInventoryElements.AddElement(name, MClInventoryElements.DDFType.value);
+            MClInventoryElements.DDFElement.SetValueWithoutNotify("None");
         }
 
         private void Populate_DDFType()
@@ -176,6 +185,8 @@ namespace Burmuruk.Tesis.Editor.Controls
 
                 foreach (var creation in SavingSystem.Data.creations[type])
                 {
+                    if (creation.Value == null) continue;
+
                     _DropDownIds.Add((creation.Value.Name, typeName), creation.Key);
                 }
             }
@@ -268,6 +279,8 @@ namespace Burmuruk.Tesis.Editor.Controls
                 inventory.items[id] = MClInventoryElements.Amounts[i];
             }
 
+            inventory.addInventory = TglAddInventory.value;
+
             return inventory;
         }
 
@@ -304,11 +317,14 @@ namespace Burmuruk.Tesis.Editor.Controls
             _changes.items = null;
             MClInventoryElements.Clear();
             _selectedType = null;
+            TglAddInventory.SetValueWithoutNotify(false);
+            EnableContainer(_warning, false);
         }
 
         public override void Remove_Changes()
         {
             _changes.items = null;
+            _changes.addInventory = false;
         }
 
         public override bool VerifyData() => true;
@@ -324,6 +340,9 @@ namespace Burmuruk.Tesis.Editor.Controls
                 if (!_changes.items.ContainsKey(item.Key) || _changes.items[item.Key] != item.Value)
                     return ModificationTypes.EditData;
             }
+
+            if (_changes.addInventory != TglAddInventory.value)
+                return ModificationTypes.EditData;
 
             return ModificationTypes.None;
         }

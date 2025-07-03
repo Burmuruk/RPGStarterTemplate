@@ -36,7 +36,8 @@ namespace Burmuruk.Tesis.Editor.Controls
             BTNBackEquipmentSettings.clicked += () => GoBack?.Invoke();
 
             EMBodyPart = new EnumModifierUI<EquipmentType>(_instance.Q<VisualElement>(EnumModifierUI<EquipmentType>.ContainerName));
-            
+            EMBodyPart.Name.text = "Body Part";
+
             InfoBodyPlacement = _instance.Q<VisualElement>("infoBodySplit");
             CreateSplitViewEquipment(InfoBodyPlacement);
 
@@ -393,6 +394,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             OFBody.value = null;
             UIParts.Clear();
             EMBodyPart.Clear();
+            TVBodyParts.Clear();
 
             foreach (var item in MClEquipmentElements.Components)
             {

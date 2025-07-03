@@ -9,35 +9,56 @@ namespace Burmuruk.Tesis.Editor
 {
     public static class SavingSystem
     {
-        const string DATA_PATH = "Assets/com.burmuruk.rpg-starter-template/Tool/Data/CharacterTag.asset";
-        public static CharacterTag Data { get; private set; } = null;
+        //const string DATA_PATH = "Assets/com.burmuruk.rpg-starter-template/Tool/Data";
+        const string DATA_PATH = "Assets/com.burmuruk.rpg-starter-template/Tool/Data";
+        public static CreationDatabase Data { get; private set; } = null;
         public static event Action<ModificationTypes, ElementType, string, CreationData> OnCreationModified;
 
         public static void Initialize()
         {
-            Data = (AssetDatabase.FindAssets(typeof(CharacterTag).ToString(), new[] { DATA_PATH })
-                .Select(guid => AssetDatabase.LoadAssetAtPath<CharacterTag>(AssetDatabase.GUIDToAssetPath(guid)))
-                .ToList()).FirstOrDefault();
+            Data = (AssetDatabase.FindAssets("t:" + typeof(CreationDatabase).ToString(), new[] { DATA_PATH })
+                .Select(guid => AssetDatabase.LoadAssetAtPath<CreationDatabase>(AssetDatabase.GUIDToAssetPath(guid)))
+                .ToList().FirstOrDefault());
 
             if (Data == null)
             {
-                Notify("No labels found.", BorderColour.Error);
+                Notify("No creation found", BorderColour.Error);
 
-                Data = ScriptableObject.CreateInstance<CharacterTag>();
+                Data = ScriptableObject.CreateInstance<CreationDatabase>();
                 AssetDatabase.CreateAsset(Data, DATA_PATH);
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
             }
-            else
-            {
-                Notify("Labels found.", BorderColour.Success);
-            }
 
             OnCreationModified += (modification, type, id, data) =>
             {
-                var info = new BaseCreationInfo(id, data.Name, data);
+                var info = new BaseCreationInfo(id, data?.Name, data);
                 CreationScheduler.ChangeData(modification, type, id, info);
             };
+        }
+
+        private static bool TryLoadCreations()
+        {
+            bool result = false;
+
+            foreach (var elements in Data.creations)
+            {
+                foreach (var creation in elements.Value)
+                {
+                    OnCreationModified?.Invoke(ModificationTypes.Add, elements.Key, creation.Key, creation.Value);
+                    result = true;
+                }
+            }
+
+            return result;
+        }
+
+        public static void LoadCreations()
+        {
+            Data.SyncFromSerialized();
+
+            if (TryLoadCreations())
+                Notify("Creations loaded", BorderColour.Success);
         }
 
         public static CreationData GetCreation(ElementType type, string id)
@@ -50,7 +71,8 @@ namespace Burmuruk.Tesis.Editor
             string newId = id;
             bool saved = Save_CreationData(type, ref newId, data);
 
-            OnCreationModified?.Invoke(modificationType, type, newId, data);
+            if (saved)
+                OnCreationModified?.Invoke(modificationType, type, newId, data);
             return saved;
         }
 
@@ -91,12 +113,15 @@ namespace Burmuruk.Tesis.Editor
             else
                 id = Guid.NewGuid().ToString();
 
-            var creation = new CreationData(newName, creationData.data);
-            Data.creations[type].TryAdd(id, creation);
+            //var creation = new CreationData(newName, creationData.data);
+            bool result = Data.creations[type].TryAdd(id, creationData);
 
-            //EditorUtility.SetDirty(Data);
-            //AssetDatabase.SaveAssets();
-            //AssetDatabase.Refresh();
+            if (!result) return false;
+
+            Data.SyncToSerialized();
+            EditorUtility.SetDirty(Data);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
 
             return true;
         }
@@ -106,9 +131,10 @@ namespace Burmuruk.Tesis.Editor
             var lastData = Data.creations[type][id];
             Data.creations[type].Remove(id);
 
-            //EditorUtility.SetDirty(Data);
-            //AssetDatabase.SaveAssets();
-            //AssetDatabase.Refresh();
+            Data.SyncToSerialized();
+            EditorUtility.SetDirty(Data);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
 
             OnCreationModified?.Invoke(ModificationTypes.Remove, type, id, lastData);
 

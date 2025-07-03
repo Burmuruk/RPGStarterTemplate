@@ -18,7 +18,7 @@ namespace Burmuruk.Tesis.Editor
         const string ITEMSList_NAME = "GeneralItemsList.asset";
         const string PROGRESS_NAME = "CharactersProgress.asset";
         const string ASSET_EXTENSION = ".asset";
-        const string RESULT_PATH = "Results";
+        const string RESULT_PATH = "RPG-Results";
         const string ITEMS_FOLDER = "Items";
         const string Armour_FOLDER = "Armour";
         const string CHARACTERS_FOLDER = "Characters";
@@ -76,7 +76,7 @@ namespace Burmuruk.Tesis.Editor
                     string basePath = SavingSystem.Data.CreationPath;
                     if (!AssetDatabase.IsValidFolder(basePath))
                     {
-                        string defaultPath = "Assets/com.burmuruk.rpg-starter-template";
+                        string defaultPath = "Assets/";
                         resultsPath = AssetDatabase.CreateFolder(defaultPath, RESULT_PATH);
                         AssetDatabase.Refresh();
                     }
@@ -143,7 +143,7 @@ namespace Burmuruk.Tesis.Editor
 
             player.GetComponent<Rigidbody>().freezeRotation = true;
             Setup_Character(player, in data);
-            Set_ProgressionPoints(in data);
+            Set_Progression(in data);
 
             GameObject instance = PrefabUtility.SaveAsPrefabAsset(player, Path + "/" + CHARACTERS_FOLDER + "/" + data.characterName + ".prefab");
             AssetDatabase.SaveAssets();
@@ -151,12 +151,20 @@ namespace Burmuruk.Tesis.Editor
             RemoveGarbage();
         }
 
-        private void Set_ProgressionPoints(in CharacterData data)
+        private void Set_Progression(in CharacterData data)
         {
             var levelsF = typeof(CharacterProgress).GetField("statsList", BindingFlags.Instance | BindingFlags.NonPublic);
 
             if (levelsF == null) return;
-            var oldProgress = ((CharacterProgress.CharacterData[])levelsF.GetValue(Progress)).ToList();
+
+            var stats = levelsF.GetValue(Progress);
+            List<CharacterProgress.CharacterData> oldProgress = null;
+
+            if (stats == null)
+                oldProgress = new();
+            else
+                oldProgress = ((CharacterProgress.CharacterData[])stats).ToList();
+
             var newProgress = (CharacterProgress.CharacterData[])levelsF.GetValue(data.progress);
 
             if (newProgress == null) return;
@@ -182,6 +190,9 @@ namespace Burmuruk.Tesis.Editor
             }
 
             levelsF.SetValue(Progress, oldProgress.ToArray());
+            EditorUtility.SetDirty(Progress);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
         }
 
         private void Setup_Character(GameObject player, in CharacterData characterData)
@@ -192,17 +203,14 @@ namespace Burmuruk.Tesis.Editor
             if (typeF != null)
                 typeF.SetValue(player.GetComponent<Tesis.Control.Character>(), characterData.characterType);
             
+            Setup_BasicStats(player, characterData);
             Set_DetectionPoints(player, characterData);
             Set_Enemy(player, characterData.enemyTag);
-            Setup_BasicStats(player, characterData);
         }
 
         private void Setup_BasicStats(GameObject player, CharacterData characterData)
         {
-            var statsF = typeof(Tesis.Stats.BasicStats).GetField("stats", BindingFlags.Static | BindingFlags.NonPublic);
-
-            if (statsF == null) return;
-            statsF.SetValue(player, characterData.basicStats);
+            player.GetComponent<Tesis.Control.Character>().stats = characterData.basicStats;
         }
 
         private void Set_Enemy(GameObject player, in string enemyTag)
@@ -235,32 +243,44 @@ namespace Burmuruk.Tesis.Editor
 
         private void Set_DetectionPoints(GameObject player, CharacterData characterData)
         {
-            var (earsDetection, eyesDetection) = (false, false);
+            var (hasEars, hasEyes) = (false, false);
             int i = 0;
-            while (characterData.progress.GetDataByLevel(characterData.characterType, i++) is var data && data != null)
+            //while (characterData.progress.GetDataByLevel(characterData.characterType, i++) is var data && data != null)
+            //{
+            //    if (data.Value.eyesRadious != 0)
+            //        hasEyes = true;
+            //    if (data.Value.earsRadious != 0)
+            //        hasEars = true;
+            //}
+            if (characterData.basicStats.eyesRadious != 0)
+                hasEyes = true;
+            if (characterData.basicStats.earsRadious != 0)
+                hasEars = true;
+
+            var eyesF = typeof(Tesis.Control.Character).GetField("farPercept", BindingFlags.Instance | BindingFlags.NonPublic);
+            var earsF = typeof(Tesis.Control.Character).GetField("closePercept", BindingFlags.Instance | BindingFlags.NonPublic);
+            var hasEyesF = typeof(Tesis.Control.Character).GetField("hasFarPerception", BindingFlags.Instance | BindingFlags.NonPublic);
+            var hasEarsF = typeof(Tesis.Control.Character).GetField("hasClosePerception", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            var character = player.GetComponent<Tesis.Control.Character>();
+            hasEyesF?.SetValue(character, hasEyes);
+            hasEarsF?.SetValue(character, hasEars);
+
+            if (hasEyes)
             {
-                if (data.Value.eyesRadious != 0)
-                    eyesDetection &= true;
-                if (data.Value.earsRadious != 0)
-                    earsDetection = true;
+                Add_DetectionPoint(player, "EyesDetection", out var eyesPoint);
+                eyesF?.SetValue(character, eyesPoint.transform);
             }
-
-            var eyesF = typeof(Tesis.Control.Character).GetField("eyesDetection", BindingFlags.Instance | BindingFlags.NonPublic);
-            var earsF = typeof(Tesis.Control.Character).GetField("earsDetection", BindingFlags.Instance | BindingFlags.NonPublic);
-            if (eyesF != null)
-                eyesF.SetValue(player.GetComponent<Tesis.Control.Character>(), eyesDetection);
-            if (earsF != null)
-                earsF.SetValue(player.GetComponent<Tesis.Control.Character>(), earsDetection);
-
-            if (eyesDetection)
-                Add_DetectionPoint(player, "EyesDetection");
-            if (earsDetection)
-                Add_DetectionPoint(player, "EarsDetection");
+            if (hasEars)
+            {
+                Add_DetectionPoint(player, "EarsDetection", out var earsPoint);
+                earsF?.SetValue(character, earsPoint.transform);
+            }
         }
 
-        private void Add_DetectionPoint(GameObject player, string name)
+        private void Add_DetectionPoint(GameObject player, string name, out GameObject detectionPoint)
         {
-            GameObject detectionPoint = new GameObject(name);
+            detectionPoint = new GameObject(name);
             detectionPoint.transform.parent = player.transform;
             garbage.Add(detectionPoint);
         }
@@ -298,23 +318,21 @@ namespace Burmuruk.Tesis.Editor
             switch (type)
             {
                 case ComponentType.Health:
-                    Setup_Health(player, (float)data);
-                    break;
-
-                case ComponentType.Fighter:
-                    Setup_Fighter(player);
-                    break;
-
-                case ComponentType.Mover:
-                    Setup_Movement(player);
+                    Setup_Health(player, (Health)data);
                     break;
 
                 case ComponentType.Inventory:
+                    if (character.components.ContainsKey(ComponentType.Equipment))
+                        return; // Equipment already handled in Setup_Equipment
+
                     var inventory = (Inventory)character.components[ComponentType.Inventory];
                     Setup_Inventory(player, inventory);
                     break;
 
                 case ComponentType.Equipment:
+                    var inventory2 = (Inventory)character.components[ComponentType.Inventory];
+                    Setup_Inventory(player, inventory2);
+
                     var equipment = (Equipment)character.components[ComponentType.Equipment];
                     Setup_Equipment(player, equipment);
                     break;
@@ -344,14 +362,14 @@ namespace Burmuruk.Tesis.Editor
                 _ => null
             };
 
-        private void Setup_Health(GameObject instance, float health)
+        private void Setup_Health(GameObject instance, Health health)
         {
             var inventory = instance.GetComponent<Tesis.Stats.Health>();
 
             FieldInfo maxHealthF = typeof(Tesis.Stats.Health).GetField("_maxHp", BindingFlags.Instance | BindingFlags.NonPublic);
-            maxHealthF.SetValue(inventory, health);
+            maxHealthF.SetValue(inventory, health.MaxHP);
             FieldInfo healthF = typeof(Tesis.Stats.Health).GetField("_hp", BindingFlags.Instance | BindingFlags.NonPublic);
-            healthF.SetValue(inventory, health);
+            healthF.SetValue(inventory, health.HP);
             //var character = instance.GetComponents<Tesis.Control.Character>();
 
             //FieldInfo characterHealthF = typeof(Tesis.Control.Character).GetField("maxHp", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -360,7 +378,10 @@ namespace Burmuruk.Tesis.Editor
 
         private void Setup_Inventory(GameObject instance, Inventory inventory)
         {
-            var inventoryComp = instance.GetComponent<Tesis.Inventory.Inventory>();
+            if (!inventory.addInventory) return;
+            
+            if (!instance.TryGetComponent<Tesis.Inventory.Inventory>(out var inventoryComp))
+                inventoryComp = instance.AddComponent<Tesis.Inventory.Inventory>();
 
             FieldInfo initialItemsF = typeof(Tesis.Inventory.Inventory).GetField("startingItems", BindingFlags.Instance | BindingFlags.NonPublic);
             var initalItems = new List<InventoryItem>();
@@ -422,24 +443,9 @@ namespace Burmuruk.Tesis.Editor
             SetPlayerModel(instance, equipper, in equipment);
         }
 
-        private void Setup_Movement(GameObject instance)
-        {
-
-        }
-
-        private void Setup_Fighter(GameObject instance)
-        {
-
-        }
-
 
         private void SetPlayerModel(GameObject player, InventoryEquipDecorator inventory, in Equipment equipment)
         {
-            var eyes = new GameObject("Eyes");
-            eyes.transform.parent = player.transform;
-            var ears = new GameObject("Ears");
-            eyes.transform.parent = player.transform;
-
             var body = GameObject.Instantiate(equipment.model, Vector3.zero, Quaternion.identity, player.transform);
             garbage.Add(body);
 
@@ -451,11 +457,14 @@ namespace Burmuruk.Tesis.Editor
 
             var spawnPoints = GetSpawnPoints(body, ref names);
 
-            FieldInfo bodyF = typeof(InventoryEquipDecorator).GetField("body", BindingFlags.Instance | BindingFlags.NonPublic);
-            FieldInfo spawnPointsF = typeof(InventoryEquipDecorator).GetField("spawnPoints", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo bodyF = typeof(Tesis.Inventory.Equipment).GetField("body", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo spawnPointsF = typeof(Tesis.Inventory.Equipment).GetField("spawnPoints", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo equipmentF = typeof(InventoryEquipDecorator).GetField("_equipment", BindingFlags.Instance | BindingFlags.NonPublic);
+            Tesis.Inventory.Equipment newEquipment = new();
 
-            bodyF.SetValue(inventory, body);
-            spawnPointsF.SetValue(inventory, spawnPoints.ToArray());
+            bodyF.SetValue(newEquipment, body);
+            spawnPointsF.SetValue(newEquipment, spawnPoints.ToArray());
+            equipmentF.SetValue(inventory, newEquipment);
         }
 
         private List<SpawnPointData> GetSpawnPoints(GameObject model, ref Dictionary<(string cur, string parent), EquipmentType> names)

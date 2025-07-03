@@ -1112,6 +1112,7 @@ namespace Burmuruk.Tesis.Editor.Controls
                 if (_progression.Check_Changes() != ModificationTypes.None)
                     CurModificationType = ModificationTypes.EditData;
 
+                //Type
                 if (_characterData.Value.characterType != EMCharacterType.Value)
                     CurModificationType = ModificationTypes.EditData;
 
@@ -1134,6 +1135,10 @@ namespace Burmuruk.Tesis.Editor.Controls
                 if (_characterData.Value.shouldSave != TglSave.value)
                     CurModificationType = ModificationTypes.EditData;
 
+                //Enemy
+                if (DDFEnemyTag.value != _characterData.Value.enemyTag)
+                    CurModificationType = ModificationTypes.EditData;
+
                 return CurModificationType;
             }
             catch (InvalidDataExeption e)
@@ -1147,10 +1152,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             try
             {
                 if (!VerifyData())
-                {
-                    Notify("Invalid data", BorderColour.Error);
-                    return false;
-                }
+                    throw new InvalidDataExeption("Invalid data");
 
                 if (_creationsState == CreationsState.Editing && Check_Changes() == ModificationTypes.None)
                 {
@@ -1162,7 +1164,7 @@ namespace Burmuruk.Tesis.Editor.Controls
 
                 DisableNotification();
                 var newData = GetInfo();
-                return SavingSystem.SaveCreation(ElementType.Character, _id, new CreationData(newData.characterName, newData), CurModificationType);
+                return SavingSystem.SaveCreation(ElementType.Character, _id, new CharacterCreationData(newData.characterName, newData), CurModificationType);
             }
             catch (InvalidDataExeption e)
             {
@@ -1172,17 +1174,15 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         public CreationData Load(ElementType type, string id)
         {
-            CreationData? data = SavingSystem.Load(ElementType.Character, id);
+            var result = SavingSystem.Load(ElementType.Character, id);
 
-            if (!data.HasValue)
-            {
-                return default;
-            }
+            if (result == null) return null;
 
+            var data = (CharacterCreationData)result;
             Set_CreationState(CreationsState.Editing);
-            LoadInfo((CharacterData)data.Value.data, id);
+            LoadInfo(data.Data, id);
 
-            return data.Value;
+            return data;
         }
 
         public override void Load_Changes()
@@ -1366,18 +1366,19 @@ namespace Burmuruk.Tesis.Editor.Controls
         private CharacterData GetInfo()
         {
             CharacterData newData = new();
+            newData.characterName = TxtName.value;
+            newData.shouldSave = TglSave.value;
+            newData.className = _selectableClasses[PUBaseClass.value];
             newData.components ??= new();
             AddCharacterComponents(ref newData);
             newData.characterType = (CharacterType)EMCharacterType.EnumField.value;
-            newData.characterName = TxtName.value;
-            newData.shouldSave = TglSave.value;
-            _progression.Get_Info(newData.progress, newData.basicStats);
-            newData.className = _selectableClasses[PUBaseClass.value];
+            newData.enemyTag = DDFEnemyTag.value;
+            _progression.Get_Info(out newData.progress, out newData.basicStats);
 
             return newData;
         }
 
-        private void LoadInfo(in CharacterData newData, string id)
+        public void LoadInfo(in CharacterData newData, string id)
         {
             _characterData = newData;
             LoadCharacterComponents(in newData);
@@ -1403,7 +1404,7 @@ namespace Burmuruk.Tesis.Editor.Controls
                 switch ((ComponentType)component.Type)
                 {
                     case ComponentType.Health:
-                        float health = ((HealthSettings)subTabs[CharacterTab.Health]).FFHealth.value;
+                        Health health = ((HealthSettings)subTabs[CharacterTab.Health]).GetInfo();
 
                         characterData.components[ComponentType.Health] = health;
                         break;
@@ -1445,6 +1446,23 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             ComponentsList.Clear();
 
+            //if (data.health !=null && data.health.Count > 0)
+            //{
+            //    ((HealthSettings)subTabs[CharacterTab.Health]).LoadInfo(data.health[0]);
+            //    ComponentsList.AddElement(ComponentType.Health.ToString());
+            //}
+            //if (data.inventory != null && data.inventory.Count > 0)
+            //{
+            //    ((InventorySettings)subTabs[CharacterTab.Inventory]).LoadInventoryItems(data.inventory[0]);
+            //    ComponentsList.AddElement(ComponentType.Inventory.ToString());
+            //}
+            //if (data.equipment != null && data.equipment.Count > 0)
+            //{
+            //    ((EquipmentSettings)subTabs[CharacterTab.Equipment]).LoadEquipment(data.equipment[0]);
+            //    ComponentsList.AddElement(ComponentType.Equipment.ToString());
+            //}
+            if (data.components == null) return;
+
             foreach (var component in data.components)
             {
                 switch (component.Key)
@@ -1453,7 +1471,7 @@ namespace Burmuruk.Tesis.Editor.Controls
                         continue;
 
                     case ComponentType.Health:
-                        ((HealthSettings)subTabs[CharacterTab.Health]).LoadInfo((float)component.Value);
+                        ((HealthSettings)subTabs[CharacterTab.Health]).LoadInfo((Health)component.Value);
                         break;
 
                     case ComponentType.Inventory:

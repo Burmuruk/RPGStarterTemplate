@@ -6,9 +6,10 @@ namespace Burmuruk.Tesis.Editor.Controls
     public class HealthSettings : SubWindow
     {
         const string INFO_HEALTH_SETTINGS_NAME = "HealthSettings";
-        private float? _health = null;
+        private Health? _changes = null;
 
-        public FloatField FFHealth { get; private set; }
+        public IntegerField IFMaxHealth { get; set; }
+        public IntegerField IFHealth { get; private set; }
         public Button btnBackHealthSettings { get; private set; }
 
         public override void Initialize(VisualElement container)
@@ -17,22 +18,29 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             _instance = UtilitiesUI.CreateDefaultTab(INFO_HEALTH_SETTINGS_NAME);
             container.hierarchy.Add(_instance);
-            FFHealth = container.Q<FloatField>();
-            FFHealth.value = 0;
+            IFMaxHealth = container.Q<IntegerField>("maxHealth");
+            IFHealth = container.Q<IntegerField>("health");
+            IFHealth.value = 0;
             btnBackHealthSettings = _instance.Q<Button>();
 
-            FFHealth.RegisterValueChangedCallback(OnValueChanged_FFHealthValue);
+            IFHealth.RegisterValueChangedCallback(OnValueChanged_FFHealthValue);
             btnBackHealthSettings.clicked += () => GoBack?.Invoke();
         }
 
-        public void UpdateHealth(float value)
+        public void UpdateHealth(in Health value)
         {
-            FFHealth.value = value;
-            _health = value;
+            IFHealth.value = value.HP;
+            IFMaxHealth.value = value.MaxHP;
+            _changes = value;
         }
 
-        private void OnValueChanged_FFHealthValue(ChangeEvent<float> evt)
+        private void OnValueChanged_FFHealthValue(ChangeEvent<int> evt)
         {
+            if (evt.newValue > IFMaxHealth.value)
+            {
+                IFHealth.SetValueWithoutNotify(IFMaxHealth.value);
+            }
+
             AddComponentData(ComponentType.Health);
         }
 
@@ -44,7 +52,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             {
                 ComponentType.Health => new Health()
                 {
-                    HP = (int)FFHealth.value
+                    HP = (int)IFHealth.value
                 },
                 _ => null
             };
@@ -52,16 +60,25 @@ namespace Burmuruk.Tesis.Editor.Controls
             //characterData.components.TryAdd(type, item);
         }
 
-        public void LoadInfo(float value)
+        public void LoadInfo(in Health value)
         {
-            _health = value;
-            FFHealth.value = _health.Value;
+            UpdateHealth(value);
+        }
+
+        public Health GetInfo()
+        {
+            return new Health
+            {
+                HP = IFHealth.value,
+                MaxHP = IFMaxHealth.value
+            };
         }
 
         public override void Clear()
         {
-            _health = 0;
-            FFHealth.value = 0;
+            _changes = null;
+            IFHealth.value = 0;
+            IFMaxHealth.value = 100;
         }
 
         public override bool VerifyData() => true;
@@ -70,9 +87,12 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             var modificationType = ModificationTypes.None;
 
-            if (!_health.HasValue) return ModificationTypes.None;
+            if (!_changes.HasValue) return ModificationTypes.None;
 
-            if (FFHealth.value != _health)
+            if (IFHealth.value != _changes.Value.HP)
+                modificationType = ModificationTypes.EditData;
+
+            if (IFMaxHealth.value != _changes.Value.MaxHP)
                 modificationType = ModificationTypes.EditData;
 
             return modificationType;
@@ -80,12 +100,13 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         public override void Load_Changes()
         {
-            FFHealth.value = _health.Value;
+            IFHealth.value = _changes.Value.HP;
+            IFMaxHealth.value = _changes.Value.MaxHP;
         }
 
         public override void Remove_Changes()
         {
-            _health = null;
+            _changes = null;
         }
     }
 }

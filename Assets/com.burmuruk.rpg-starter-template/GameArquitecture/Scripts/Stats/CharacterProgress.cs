@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Burmuruk.Tesis.Stats
@@ -72,18 +73,46 @@ namespace Burmuruk.Tesis.Stats
 
         public void SetData(CharacterType characterType, bool applyForAllLevels, List<LevelData> list)
         {
-            levelStatsDic ??= new Dictionary<CharacterType, (bool forAll, Dictionary<int, BasicStats> levels)>();
-            
-            if (levelStatsDic.ContainsKey(characterType)) return;
+            levelStatsDic = null;
+            //levelStatsDic ??= new Dictionary<CharacterType, (bool forAll, Dictionary<int, BasicStats> levels)>();
 
-            var stats = new Dictionary<int, BasicStats>();
+            //if (levelStatsDic.ContainsKey(characterType)) return;
 
-            foreach (var level in list)
+            //var stats = new Dictionary<int, BasicStats>();
+
+            //foreach (LevelData progression in list)
+            //{
+            //    stats.TryAdd(progression.level, progression.stats);
+            //}
+
+            //levelStatsDic[characterType] = (applyForAllLevels, stats);
+
+            if (statsList != null)
             {
-                stats.TryAdd(level.level, level.stats);
+                for (int i = 0; i < statsList.Length; i++)
+                {
+                    if (statsList[i].characterType == characterType)
+                    {
+                        statsList[i].applyForAllLevels = applyForAllLevels;
+                        statsList[i].levelData = list;
+                        return;
+                    }
+                } 
             }
 
-            levelStatsDic[characterType] = (applyForAllLevels, stats);
+            List<CharacterData> newStats = new();
+
+            if (statsList != null)
+                newStats.AddRange(statsList.ToList());
+
+            newStats.Add(new CharacterData
+            {
+                characterType = characterType,
+                applyForAllLevels = applyForAllLevels,
+                levelData = list
+            });
+
+            statsList = newStats.ToArray();
         }
     }
 }

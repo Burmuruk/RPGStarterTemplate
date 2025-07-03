@@ -114,7 +114,11 @@ namespace Burmuruk.Tesis.Editor.Controls
 
             foreach (var item in _enabledElements)
             {
-                var transform = (item.transform.value as GameObject).transform;
+                Transform transform = null;
+                if ((item.transform.value as GameObject) != null)
+                    transform = (item.transform.value as GameObject).transform;
+                else
+                    transform = (item.transform.value as Transform).transform;
                 spawnPoints.Add((transform, (EquipmentType)item.place.value));
             }
 
@@ -171,7 +175,7 @@ namespace Burmuruk.Tesis.Editor.Controls
         {
             Clear();
             _changes = new();
-
+            Debug.Log("hi");
             foreach (var item in newData)
             {
                 Add();
@@ -236,7 +240,7 @@ namespace Burmuruk.Tesis.Editor.Controls
             {
                 if (_changes.ContainsKey(element.transform.value.name))
                 {
-                    if (_changes[element.transform.name].place != (EquipmentType)element.place.value)
+                    if (_changes[element.transform.value.name].place != (EquipmentType)element.place.value)
                         return ModificationTypes.EditData;
                 }
                 else

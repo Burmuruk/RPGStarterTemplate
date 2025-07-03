@@ -218,7 +218,6 @@ namespace Burmuruk.Tesis.Editor.Controls
             Container.Add(Components[idx].element);
             Amounts.Add(idx);
 
-            int newIdx = idx;
             if (component.NameButton != null)
             {
                 component.OnNameClicked = _ => OnComponentClicked(component.idx);

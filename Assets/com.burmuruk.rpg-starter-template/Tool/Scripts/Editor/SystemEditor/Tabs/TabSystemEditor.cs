@@ -1,5 +1,6 @@
 using Burmuruk.AI;
 using Burmuruk.Tesis.Saving;
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -37,9 +38,7 @@ namespace Burmuruk.Tesis.Editor
             container = rootVisualElement;
             VisualTreeAsset visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/com.burmuruk.rpg-starter-template/Tool/UIToolkit/SystemEditor/SystemTab.uxml");
             container.Add(visualTree.Instantiate());
-
-            StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/com.burmuruk.rpg-starter-template/Tool/UIToolkit/Styles/BasicSS.uss");
-            container.styleSheets.Add(styleSheet);
+            BaseStyleSheets.ForEach(styleSheet => { container.styleSheets.Add(styleSheet); });
 
             GetTabButtons();
             GetInfoContainers();
