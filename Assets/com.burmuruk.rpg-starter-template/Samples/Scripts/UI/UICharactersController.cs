@@ -1,8 +1,8 @@
-﻿using Burmuruk.Tesis.Control;
+﻿using Burmuruk.RPGStarterTemplate.Control;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace Burmuruk.Tesis.UI
+namespace Burmuruk.RPGStarterTemplate.UI
 {
     public class UICharactersController : MonoBehaviour
     {

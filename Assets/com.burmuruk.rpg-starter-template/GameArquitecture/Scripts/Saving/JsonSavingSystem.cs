@@ -8,9 +8,9 @@ using UnityEngine.SceneManagement;
 using System;
 using System.Text;
 using System.Linq;
-using static Burmuruk.Tesis.Stats.BasicStats;
+using static Burmuruk.RPGStarterTemplate.Stats.BasicStats;
 
-namespace Burmuruk.Tesis.Saving
+namespace Burmuruk.RPGStarterTemplate.Saving
 {
     public class JsonSavingSystem : MonoBehaviour
     {

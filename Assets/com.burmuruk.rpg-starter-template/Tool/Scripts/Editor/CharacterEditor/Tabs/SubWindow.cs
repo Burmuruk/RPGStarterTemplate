@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine.UIElements;
 
-namespace Burmuruk.Tesis.Editor.Controls
+namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 {
     public abstract class SubWindow : UnityEditor.Editor, IClearable, IChangesObserver, IEnableable
     {

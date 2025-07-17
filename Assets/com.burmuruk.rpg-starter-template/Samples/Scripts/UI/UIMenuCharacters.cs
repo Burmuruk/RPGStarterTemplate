@@ -1,8 +1,8 @@
-using Burmuruk.Tesis.Combat;
-using Burmuruk.Tesis.Control;
-using Burmuruk.Tesis.Control.AI;
-using Burmuruk.Tesis.Inventory;
-using Burmuruk.Tesis.Stats;
+using Burmuruk.RPGStarterTemplate.Combat;
+using Burmuruk.RPGStarterTemplate.Control;
+using Burmuruk.RPGStarterTemplate.Control.AI;
+using Burmuruk.RPGStarterTemplate.Inventory;
+using Burmuruk.RPGStarterTemplate.Stats;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +10,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Burmuruk.Tesis.UI
+namespace Burmuruk.RPGStarterTemplate.UI
 {
     public class UIMenuCharacters : MonoBehaviour
     {

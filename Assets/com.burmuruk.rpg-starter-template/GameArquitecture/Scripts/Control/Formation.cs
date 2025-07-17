@@ -1,4 +1,4 @@
-﻿namespace Burmuruk.Tesis.Control
+﻿namespace Burmuruk.RPGStarterTemplate.Control
 {
     public enum Formation
     {

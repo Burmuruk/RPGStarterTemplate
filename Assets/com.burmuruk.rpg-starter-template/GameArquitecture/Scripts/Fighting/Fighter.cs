@@ -1,10 +1,10 @@
-﻿using Burmuruk.Tesis.Inventory;
-using Burmuruk.Tesis.Stats;
+﻿using Burmuruk.RPGStarterTemplate.Inventory;
+using Burmuruk.RPGStarterTemplate.Stats;
 using Burmuruk.Utilities;
 using System;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Combat
+namespace Burmuruk.RPGStarterTemplate.Combat
 {
     public class Fighter : MonoBehaviour
     {

@@ -1,5 +1,5 @@
-using Burmuruk.Tesis.Saving;
-using Burmuruk.Tesis.UI;
+using Burmuruk.RPGStarterTemplate.Saving;
+using Burmuruk.RPGStarterTemplate.UI;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using static Burmuruk.Tesis.Stats.BasicStats;
+using static Burmuruk.RPGStarterTemplate.Stats.BasicStats;
 
 public class SavingUI : MonoBehaviour
 {

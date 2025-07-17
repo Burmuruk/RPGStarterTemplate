@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Dialogue
+namespace Burmuruk.RPGStarterTemplate.Dialogue
 {
     public class DialogueNode : ScriptableObject
     {

@@ -4,7 +4,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Burmuruk.Tesis.Saving
+namespace Burmuruk.RPGStarterTemplate.Saving
 {
     public static class Encrypter
     {

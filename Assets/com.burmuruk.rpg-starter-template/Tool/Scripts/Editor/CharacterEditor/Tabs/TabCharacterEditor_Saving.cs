@@ -1,6 +1,6 @@
-using Burmuruk.Tesis.Editor.Utilities;
+using Burmuruk.RPGStarterTemplate.Editor.Utilities;
 
-namespace Burmuruk.Tesis.Editor
+namespace Burmuruk.RPGStarterTemplate.Editor
 {
     public partial class TabCharacterEditor : BaseLevelEditor
     {

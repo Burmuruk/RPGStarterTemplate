@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Burmuruk.Tesis.Interaction
+namespace Burmuruk.RPGStarterTemplate.Interaction
 {
     public interface IKey
     {

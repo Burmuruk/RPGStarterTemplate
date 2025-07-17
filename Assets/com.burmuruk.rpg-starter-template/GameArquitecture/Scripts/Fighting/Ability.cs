@@ -1,10 +1,10 @@
-﻿using Burmuruk.Tesis.Control;
-using Burmuruk.Tesis.Inventory;
+﻿using Burmuruk.RPGStarterTemplate.Control;
+using Burmuruk.RPGStarterTemplate.Inventory;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Combat
+namespace Burmuruk.RPGStarterTemplate.Combat
 {
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Ability", order = 2)]
     public class Ability : EquipeableItem, IUsable

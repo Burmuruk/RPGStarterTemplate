@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
 
-namespace Burmuruk.Tesis.Dialogue
+namespace Burmuruk.RPGStarterTemplate.Dialogue
 {
     public class DialogueTrigger : MonoBehaviour
     {

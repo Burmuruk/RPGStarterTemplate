@@ -1,8 +1,8 @@
-﻿using Burmuruk.Tesis.Saving;
+﻿using Burmuruk.RPGStarterTemplate.Saving;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Utilities
+namespace Burmuruk.RPGStarterTemplate.Utilities
 {
     public class ActivationObject : MonoBehaviour, IJsonSaveable, ISerializationCallbackReceiver
     {

@@ -1,6 +1,6 @@
-﻿using Burmuruk.Tesis.Control;
-using Burmuruk.Tesis.Stats;
-using Burmuruk.Tesis.UI;
+﻿using Burmuruk.RPGStarterTemplate.Control;
+using Burmuruk.RPGStarterTemplate.Stats;
+using Burmuruk.RPGStarterTemplate.UI;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -10,7 +10,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
-namespace Burmuruk.Tesis.Saving
+namespace Burmuruk.RPGStarterTemplate.Saving
 {
     public class JsonSavingWrapper : MonoBehaviour
     {

@@ -1,15 +1,15 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Burmuruk.Tesis.Stats;
-using Burmuruk.Tesis.Inventory;
-using Burmuruk.Tesis.Combat;
-using Burmuruk.Tesis.Utilities;
-using Burmuruk.Tesis.Saving;
+using Burmuruk.RPGStarterTemplate.Stats;
+using Burmuruk.RPGStarterTemplate.Inventory;
+using Burmuruk.RPGStarterTemplate.Combat;
+using Burmuruk.RPGStarterTemplate.Utilities;
+using Burmuruk.RPGStarterTemplate.Saving;
 using Newtonsoft.Json.Linq;
 using System.Linq;
 
-namespace Burmuruk.Tesis.Control
+namespace Burmuruk.RPGStarterTemplate.Control
 {
     public class Character : MonoBehaviour, IJsonSaveable, ISelectable
     {

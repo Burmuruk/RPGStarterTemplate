@@ -2,7 +2,7 @@
 using System.Linq;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Inventory
+namespace Burmuruk.RPGStarterTemplate.Inventory
 {
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/IntemsList", order = 1)]
     public class ItemsList : ScriptableObject

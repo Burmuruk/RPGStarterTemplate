@@ -1,18 +1,32 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+using UnityEngine.UIElements;
 
-public class TabSavingEditor : MonoBehaviour
+namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 {
-    // Start is called before the first frame update
-    void Start()
+    public class TabSavingEditor : SubWindow
     {
-        
-    }
+        public override void Initialize(VisualElement container)
+        {
+            base.Initialize(container);
+        }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+        public override ModificationTypes Check_Changes()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override void Clear()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override void Load_Changes()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override bool VerifyData()
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

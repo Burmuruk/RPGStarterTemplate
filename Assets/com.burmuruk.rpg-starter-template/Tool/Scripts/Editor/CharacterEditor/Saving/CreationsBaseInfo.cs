@@ -2,9 +2,9 @@
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
-using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
+using static Burmuruk.RPGStarterTemplate.Editor.Utilities.UtilitiesUI;
 
-namespace Burmuruk.Tesis.Editor.Controls
+namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 {
     public class CreationsBaseInfo : UnityEditor.Editor, IChangesObserver, IClearable
     {

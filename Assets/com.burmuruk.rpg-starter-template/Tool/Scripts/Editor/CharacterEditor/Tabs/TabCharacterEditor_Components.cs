@@ -1,10 +1,10 @@
-using Burmuruk.Tesis.Editor.Controls;
-using Burmuruk.Tesis.Stats;
+using Burmuruk.RPGStarterTemplate.Editor.Controls;
+using Burmuruk.RPGStarterTemplate.Stats;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Burmuruk.Tesis.Editor
+namespace Burmuruk.RPGStarterTemplate.Editor
 {
     public partial class TabCharacterEditor : BaseLevelEditor
     {

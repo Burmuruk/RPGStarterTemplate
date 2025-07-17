@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Saving
+namespace Burmuruk.RPGStarterTemplate.Saving
 {
     public static class VectorToJToken
     {

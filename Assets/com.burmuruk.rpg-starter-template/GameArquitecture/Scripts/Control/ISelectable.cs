@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Burmuruk.Tesis.Control
+namespace Burmuruk.RPGStarterTemplate.Control
 {
     public interface ISelectable
     {

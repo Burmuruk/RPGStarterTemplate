@@ -1,7 +1,7 @@
-﻿using Burmuruk.Tesis.Control;
+﻿using Burmuruk.RPGStarterTemplate.Control;
 using System;
 
-namespace Burmuruk.Tesis.Inventory
+namespace Burmuruk.RPGStarterTemplate.Inventory
 {
     public interface IUsable
     {

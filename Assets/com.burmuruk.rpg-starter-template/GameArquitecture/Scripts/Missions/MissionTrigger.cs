@@ -1,8 +1,8 @@
-﻿using Burmuruk.Tesis.Control.AI;
-using Burmuruk.Tesis.Utilities;
+﻿using Burmuruk.RPGStarterTemplate.Control.AI;
+using Burmuruk.RPGStarterTemplate.Utilities;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Missions
+namespace Burmuruk.RPGStarterTemplate.Missions
 {
     public class MissionTrigger : ActivationObject
     {

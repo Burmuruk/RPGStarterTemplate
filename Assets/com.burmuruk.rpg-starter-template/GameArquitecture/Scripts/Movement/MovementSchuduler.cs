@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Burmuruk.Tesis.Movement
+namespace Burmuruk.RPGStarterTemplate.Movement
 {
     class MovementSchuduler
     {

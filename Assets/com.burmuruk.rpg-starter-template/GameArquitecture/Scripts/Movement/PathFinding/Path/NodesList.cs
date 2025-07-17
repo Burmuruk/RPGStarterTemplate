@@ -1,6 +1,6 @@
 ﻿using Burmuruk.AI.PathFinding;
 using Burmuruk.Collections;
-using Burmuruk.Tesis.Movement.PathFindig;
+using Burmuruk.RPGStarterTemplate.Movement.PathFindig;
 using Burmuruk.WorldG.Patrol;
 using System;
 using System.Collections.Generic;
@@ -23,33 +23,33 @@ namespace Burmuruk.AI
         #region Variables
         [Header("Nodes Settings")]
         [Space]
-        [SerializeField] float nodDistance = 3;
-        [SerializeField] float pRadious = .5f;
+        [SerializeField] float nodeDistance = 3;
+        [SerializeField] float playerRadious = .5f;
         [SerializeField] float maxAngle = 45;
-        [SerializeField] bool showChanges = false;
+        [HideInInspector] bool showChanges = false; //hidded due to optimization issues
 
         [Header("Mesh Settings")]
         [Space]
-        [SerializeField] GameObject debugNode;
-        [SerializeField] GameObject x1;
-        [SerializeField] GameObject x2;
-        [SerializeField] bool canCreateMesh = false;
-        [SerializeField] bool addDynamicObjs = true;
-        [SerializeField] bool showMeshZone = false;
-        [SerializeField] bool phisicNodes = false;
-        [SerializeField] int layer;
+        [SerializeField] public GameObject debugNode;
+        [HideInInspector] public GameObject x1;
+        [HideInInspector] public GameObject x2;
+        [SerializeField] public bool showMeshZone = false;
+        [SerializeField] bool debugNodes = false;
+        bool canCreateMesh = false;
+        bool addDynamicObjs = true;
+        int layer;
 
         [Header("Saving Settings"), Space()]
         IPathNode[][][] connections;
 
-        [Header("Status"), Space()]
-        [SerializeField, Space()] uint nodeCount = 0;
-        public pState meshState = pState.None;
-        public pState connectionsState = pState.None;
-        public pState memoryFreed = pState.None;
+        uint nodeCount = 0;
+        pState meshState = pState.None;
+        pState connectionsState = pState.None;
+        pState memoryFreed = pState.None;
 
         List<(IPathNode node, IPathNode hitPos)> edgesToFix;
         private LinkedGrid<IPathNode> nodes;
+        private Func<bool, Vector3> _areaDetector;
         #endregion
 
         #region Properties
@@ -88,8 +88,8 @@ namespace Burmuruk.AI
                 return nodes;
             }
         }
-        public float NodeDistance => nodDistance;
-        public float PlayerRadious => pRadious;
+        public float NodeDistance => nodeDistance;
+        public float PlayerRadious => playerRadious;
         public float MaxAngle => maxAngle;
         #endregion
 
@@ -114,6 +114,9 @@ namespace Burmuruk.AI
         #endregion
 
         #region Public methods
+        public void SetAvailableAreaDetector(Func<bool, Vector3> detector) => 
+            _areaDetector = detector;
+
         public void Calculate_PathMesh()
         {
             if (!canCreateMesh || AreProcessRunning || AreProcessDeleting) return;
@@ -183,7 +186,7 @@ namespace Burmuruk.AI
         #region Connections
         private void CalculateConnections()
         {
-            var maxVerticalDis = nodDistance * Mathf.Sin(maxAngle * Mathf.PI / 180);
+            var maxVerticalDis = nodeDistance * Mathf.Sin(maxAngle * Mathf.PI / 180);
             edgesToFix = new List<(IPathNode node, IPathNode hitPos)>();
 
             var enumerator = (LinkedGridEnumerator<IPathNode>)nodes.GetEnumerator();
@@ -251,14 +254,14 @@ namespace Burmuruk.AI
                     IPathNode curRef = cur;
                     IPathNode nextRef = next;
                     cur.NodeConnections.Add(
-                        new NodeConnection(ref curRef, ref nextRef, nodDistance, types.a));
+                        new NodeConnection(ref curRef, ref nextRef, nodeDistance, types.a));
                 }
                 if (!hitted2)
                 {
                     IPathNode curRef = cur;
                     IPathNode nextRef = next;
                     next.NodeConnections.Add(
-                        new NodeConnection(ref nextRef, ref curRef, nodDistance, types.b));
+                        new NodeConnection(ref nextRef, ref curRef, nodeDistance, types.b));
                 }
             }
 
@@ -352,13 +355,13 @@ namespace Burmuruk.AI
         {
             groundNormal = 0;
             RaycastHit[] hit;
-            var pointA = nodeA.Position + new Vector3(0, pRadious + .01f, 0);
-            var pointB = nodeA.Position + new Vector3(0, 2 * pRadious + 1 + .01f, 0);
+            var pointA = nodeA.Position + new Vector3(0, playerRadious + .01f, 0);
+            var pointB = nodeA.Position + new Vector3(0, 2 * playerRadious + 1 + .01f, 0);
 
             var dir = (nodeB.Position - nodeA.Position);
 
             bool hitted = false;
-            hit = Physics.CapsuleCastAll(pointA, pointB, pRadious, dir.normalized, Vector3.Distance(nodeA.Position, nodeB.Position), 1 << layer);
+            hit = Physics.CapsuleCastAll(pointA, pointB, playerRadious, dir.normalized, Vector3.Distance(nodeA.Position, nodeB.Position), 1 << layer);
             //Debug.DrawLine(pointA, pointB);
             //Debug.DrawRay(pointA, nextDir.normalized * Vector3.Distance(nodeA.Position, nodeB.Position));
 
@@ -385,12 +388,12 @@ namespace Burmuruk.AI
         {
             Vector3 distances = Fix_InvertedPositions();
 
-            int rows = (int)(distances.z / nodDistance);
+            int rows = (int)(distances.z / nodeDistance);
 
             nodes = new LinkedGrid<IPathNode>(rows);
 
-            int xIndex = (int)(distances.x / nodDistance);
-            int zIndex = (int)(distances.z / nodDistance);
+            int xIndex = (int)(distances.x / nodeDistance);
+            int zIndex = (int)(distances.z / nodeDistance);
             int height = (int)(distances.y);
             int columnIdx = 0;
 
@@ -401,9 +404,9 @@ namespace Burmuruk.AI
                 {
                     var curPosA = new Vector3()
                     {
-                        x = x1.transform.position.x + nodDistance * i,
+                        x = x1.transform.position.x + nodeDistance * i,
                         y = x2.transform.position.y,
-                        z = x1.transform.position.z - nodDistance * j
+                        z = x1.transform.position.z - nodeDistance * j
                     };
 
                     Ray detectionRay = new Ray(curPosA, Vector3.down);
@@ -528,7 +531,7 @@ namespace Burmuruk.AI
         {
             node = new NodeData(nodeCount++, position);
 
-            if (!phisicNodes) return;
+            if (!debugNodes) return;
 
             //var newNode = Instantiate(debugNode, transform);
             //newNode.transform.position = position;
@@ -653,7 +656,7 @@ namespace Burmuruk.AI
             //nodeList.SetTarget(pRadious, nodDistance, MaxAngle);
 
             //myList.managedReferenceValue = nodeList;
-            NavSaver.SaveExtraData(pRadious, nodDistance, MaxAngle);
+            NavSaver.SaveExtraData(playerRadious, nodeDistance, MaxAngle);
             NavSaver.SaveList(connections, length);
         }
 

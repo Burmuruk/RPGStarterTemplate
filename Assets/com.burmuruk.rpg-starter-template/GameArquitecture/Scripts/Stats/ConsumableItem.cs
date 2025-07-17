@@ -1,9 +1,9 @@
-﻿using Burmuruk.Tesis.Inventory;
+﻿using Burmuruk.RPGStarterTemplate.Inventory;
 using System;
 using UnityEngine;
-using Character = Burmuruk.Tesis.Control.Character;
+using Character = Burmuruk.RPGStarterTemplate.Control.Character;
 
-namespace Burmuruk.Tesis.Stats
+namespace Burmuruk.RPGStarterTemplate.Stats
 {
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Consumable", order = 3)]
     public class ConsumableItem : EquipeableItem, IUsable, IBuffUser

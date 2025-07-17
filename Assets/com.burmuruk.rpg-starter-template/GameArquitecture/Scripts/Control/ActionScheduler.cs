@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Burmuruk.Tesis.Utilities
+namespace Burmuruk.RPGStarterTemplate.Utilities
 {
     public enum ActionPriority
     {

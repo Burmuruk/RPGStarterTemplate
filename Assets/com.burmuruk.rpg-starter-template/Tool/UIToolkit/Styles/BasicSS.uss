@@ -30,7 +30,6 @@ Button {
     -unity-font-style: bold;
     color: rgb(200, 199, 199);
     -unity-text-align: lower-left;
-    margin-top: 16px;
 }
 
 .InfoContainer {
@@ -270,4 +269,12 @@ Button {
     transition-property: translate;
     transition-duration: 0.25s;
     transition-timing-function: ease;
+}
+
+Button.Tabs:hover {
+    background-color: rgb(86, 85, 85);
+}
+
+Button.Tabs:active {
+    background-color: rgb(103, 101, 101);
 }

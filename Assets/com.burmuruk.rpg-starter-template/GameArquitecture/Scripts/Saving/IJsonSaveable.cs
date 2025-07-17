@@ -1,7 +1,7 @@
 ﻿
 using Newtonsoft.Json.Linq;
 
-namespace Burmuruk.Tesis.Saving
+namespace Burmuruk.RPGStarterTemplate.Saving
 {
     public interface IJsonSaveable
     {

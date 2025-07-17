@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Burmuruk.Tesis.Missions
+namespace Burmuruk.RPGStarterTemplate.Missions
 {
     public class MissionSecuence : Mission
     {

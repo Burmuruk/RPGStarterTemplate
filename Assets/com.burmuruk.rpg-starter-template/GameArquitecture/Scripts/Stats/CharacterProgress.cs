@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Stats
+namespace Burmuruk.RPGStarterTemplate.Stats
 {
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/CharacterProgress", order = 1)]
     public class CharacterProgress : ScriptableObject

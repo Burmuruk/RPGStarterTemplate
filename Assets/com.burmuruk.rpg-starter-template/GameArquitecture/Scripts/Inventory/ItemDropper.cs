@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Burmuruk.Tesis.Inventory
+namespace Burmuruk.RPGStarterTemplate.Inventory
 {
     [Serializable]
     public class ItemDropper

@@ -1,6 +1,6 @@
 ﻿using UnityEngine.UIElements;
 
-namespace Burmuruk.Tesis.Editor.Controls
+namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 {
     public class MyCustomList : IClearable
     {

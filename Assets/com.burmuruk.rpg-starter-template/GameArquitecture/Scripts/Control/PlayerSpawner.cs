@@ -1,8 +1,8 @@
-﻿using Burmuruk.Tesis.Saving;
-using Burmuruk.Tesis.Utilities;
+﻿using Burmuruk.RPGStarterTemplate.Saving;
+using Burmuruk.RPGStarterTemplate.Utilities;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Control
+namespace Burmuruk.RPGStarterTemplate.Control
 {
     public class PlayerSpawner : ActivationObject
     {

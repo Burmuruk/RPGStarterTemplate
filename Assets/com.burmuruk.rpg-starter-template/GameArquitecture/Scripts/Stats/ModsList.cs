@@ -1,8 +1,8 @@
-﻿using Burmuruk.Tesis.Control;
+﻿using Burmuruk.RPGStarterTemplate.Control;
 using System;
 using System.Collections.Generic;
 
-namespace Burmuruk.Tesis.Stats
+namespace Burmuruk.RPGStarterTemplate.Stats
 {
     public static class ModsList
     {

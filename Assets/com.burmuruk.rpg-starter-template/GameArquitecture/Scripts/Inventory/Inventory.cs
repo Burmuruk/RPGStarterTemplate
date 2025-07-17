@@ -1,10 +1,10 @@
-﻿using Burmuruk.Tesis.Saving;
+﻿using Burmuruk.RPGStarterTemplate.Saving;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Inventory
+namespace Burmuruk.RPGStarterTemplate.Inventory
 {
     public class Inventory : MonoBehaviour, IInventory, ISaveable
     {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Burmuruk.Tesis.Editor
+namespace Burmuruk.RPGStarterTemplate.Editor
 {
     internal static class EnumScheduler
     {

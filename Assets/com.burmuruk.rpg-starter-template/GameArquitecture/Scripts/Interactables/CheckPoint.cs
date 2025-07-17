@@ -1,9 +1,9 @@
-using Burmuruk.Tesis.Control;
-using Burmuruk.Tesis.Stats;
+using Burmuruk.RPGStarterTemplate.Control;
+using Burmuruk.RPGStarterTemplate.Stats;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace Burmuruk.Tesis.Interaction
+namespace Burmuruk.RPGStarterTemplate.Interaction
 {
     public class CheckPoint : MonoBehaviour, IInteractable
     {

@@ -1,9 +1,9 @@
 ﻿using System;
 using UnityEngine.UIElements;
-using Burmuruk.Tesis.Editor.Utilities;
-using Burmuruk.Tesis.Stats;
+using Burmuruk.RPGStarterTemplate.Editor.Utilities;
+using Burmuruk.RPGStarterTemplate.Stats;
 
-namespace Burmuruk.Tesis.Editor.Controls
+namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 {
     public class ElementStatVariable : ElementCreation<ModifiableStat>
     {

@@ -1,4 +1,4 @@
-﻿namespace Burmuruk.Tesis.Movement
+﻿namespace Burmuruk.RPGStarterTemplate.Movement
 {
     public class FormationController
     {

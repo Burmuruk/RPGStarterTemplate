@@ -1,4 +1,4 @@
-﻿using Burmuruk.Tesis.Stats;
+﻿using Burmuruk.RPGStarterTemplate.Stats;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,10 +10,10 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
-using static Burmuruk.Tesis.Editor.TabCharacterEditor;
-using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
+using static Burmuruk.RPGStarterTemplate.Editor.TabCharacterEditor;
+using static Burmuruk.RPGStarterTemplate.Editor.Utilities.UtilitiesUI;
 
-namespace Burmuruk.Tesis.Editor.Controls
+namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 {
     public class CharacterSettings : BaseInfoTracker, ISaveable, ISubWindowsContainer
     {
@@ -485,7 +485,7 @@ namespace Burmuruk.Tesis.Editor.Controls
 
         private void Setup_PUBaseClass(VisualElement pBaseClass)
         {
-            var derivedTypes = TypeCache.GetTypesDerivedFrom<Tesis.Control.Character>();
+            var derivedTypes = TypeCache.GetTypesDerivedFrom<RPGStarterTemplate.Control.Character>();
             var baseClasses = derivedTypes.Select(t => t.FullName).ToList();
             var shortNames = baseClasses.Select(name => name.Split(".").Last()).ToList();
 

@@ -1,14 +1,14 @@
-﻿using Burmuruk.Tesis.Combat;
-using Burmuruk.Tesis.Interaction;
-using Burmuruk.Tesis.Inventory;
-using Burmuruk.Tesis.Stats;
+﻿using Burmuruk.RPGStarterTemplate.Combat;
+using Burmuruk.RPGStarterTemplate.Interaction;
+using Burmuruk.RPGStarterTemplate.Inventory;
+using Burmuruk.RPGStarterTemplate.Stats;
 using Burmuruk.Utilities;
 using Burmuruk.WorldG.Patrol;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Control.AI
+namespace Burmuruk.RPGStarterTemplate.Control.AI
 {
     public class AIEnemyController : Character
     {

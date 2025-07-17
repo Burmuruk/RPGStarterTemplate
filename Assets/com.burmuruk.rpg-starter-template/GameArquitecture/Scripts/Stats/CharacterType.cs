@@ -1,4 +1,4 @@
-namespace Burmuruk.Tesis.Stats
+namespace Burmuruk.RPGStarterTemplate.Stats
 {
     public enum CharacterType
     {

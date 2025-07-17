@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Burmuruk.Tesis.Control
+namespace Burmuruk.RPGStarterTemplate.Control
 {
     public class MissionsManager : MonoBehaviour
     {

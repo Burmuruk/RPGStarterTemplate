@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,25 +7,25 @@ public class Octree
     public List<OctreeNode> emptyLeaves = new();
     public Graph navigationGraph;
 
-    public Octree(GameObject[] worldObjects, float minNodeSize, Graph navGraph)
+    public Octree(GameObject[] worldObjects, float minNodeSize, Graph navGraph, int maxDepth)
     {
         Bounds bounds = new Bounds();
         navigationGraph = navGraph;
+        OctreeNode.max_depth = maxDepth;
 
         foreach (var go in worldObjects)
         {
             bounds.Encapsulate(go.GetComponent<Collider>().bounds);
         }
 
-        float maxSize = Mathf.Max(new float[] { bounds.size.x, bounds.size.y, bounds.size.z});
-        Vector3 sizeVector = Vector3.one * maxSize * 1f;
-        bounds.SetMinMax(bounds.center - sizeVector, bounds.center  + sizeVector);
+        float maxSize = Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z);
+        Vector3 sizeVector = Vector3.one * maxSize * 1.1f;
+        bounds.SetMinMax(bounds.center - sizeVector, bounds.center + sizeVector);
 
-        rootNode = new OctreeNode(bounds, minNodeSize, null);
+        rootNode = new OctreeNode(bounds, minNodeSize, null, 0);
         AddObjects(worldObjects);
         GetEmptyLeaves(rootNode);
         ConnectLeafNodeNeighbours();
-        //ProcessExtraConnections();
     }
 
     public void AddObjects(GameObject[] worldObjects)
@@ -37,121 +36,50 @@ public class Octree
         }
     }
 
-    public int FindBindingNode(OctreeNode node, Vector3 position)
-    {
-        int found = -1;
-        
-        if (node == null) return -1;
-
-        if (node.children == null)
-        {
-            if (node.nodeBounds.Contains(position) && node.containedObjects.Count == 0)
-            {
-                return node.id; 
-            }
-        }
-        else
-        {
-            for (int i = 0; i < 8; i++)
-            {
-                found = FindBindingNode(node.children[i], position);
-
-                if (found != -1) break;
-            }
-        }
-
-        return found;
-    }
-
     public void GetEmptyLeaves(OctreeNode node)
     {
-        if (node == null) return;
-
-        if (node.children == null)
+        if (node.children == null && node.containedObjects.Count == 0)
         {
-            if (node.containedObjects.Count == 0)
-            {
-                emptyLeaves.Add(node);
-                navigationGraph.AddNode(node);
-            }
+            emptyLeaves.Add(node);
+            navigationGraph.AddNode(node);
         }
-        else
+        else if (node.children != null)
         {
-            for (int i = 0; i < 8; i++)
+            foreach (var child in node.children)
             {
-                GetEmptyLeaves(node.children[i]);
-
-                //for (int s = 0; s < 8; s++)
-                //{
-                //    if (s != i)
-                //    {
-                //        navigationGraph.AddEdge(node.children[i], node.children[s]);
-                //    }
-                //}
-            }
-        }
-    }
-
-    void ProcessExtraConnections()
-    {
-        Dictionary<int, int> subGraphConnections = new Dictionary<int, int>();
-
-        foreach (OctreeNode i in emptyLeaves)
-        {
-            foreach (OctreeNode j in emptyLeaves)
-            {
-                if (i.id != j.id && i.parent.id != j.parent.id)
-                {
-                    RaycastHit hitInfo;
-                    Vector3 direction = j.nodeBounds.center - i.nodeBounds.center;
-                    float accuracy = 1;
-                    if (!Physics.SphereCast(i.nodeBounds.center, accuracy, direction, out hitInfo))
-                    {
-                        if (subGraphConnections.TryAdd(i.parent.id, j.parent.id))
-                            navigationGraph.AddEdge(i, j);
-                    }
-                }
+                if (child != null)
+                    GetEmptyLeaves(child);
             }
         }
     }
 
     void ConnectLeafNodeNeighbours()
     {
-        List<Vector3> rays = new List<Vector3>()
+        var nodeMap = new Dictionary<Vector3Int, OctreeNode>();
+
+        foreach (var node in emptyLeaves)
         {
-            new Vector3(1, 0, 0),
-            new Vector3(-1, 0, 0),
-            new Vector3(1, 1, 0),
-            new Vector3(1, -1, 0),
-            new Vector3(1, 0, 1),
-            new Vector3(1, 0, -1),
+            Vector3Int gridPos = Vector3Int.RoundToInt(node.nodeBounds.center / node.nodeBounds.size.y);
+            nodeMap[gridPos] = node;
+        }
+
+        Vector3Int[] directions =
+        {
+            Vector3Int.right, Vector3Int.left,
+            Vector3Int.up, Vector3Int.down,
+            Vector3Int.forward, Vector3Int.back
         };
 
-        for (int i = 0; i < emptyLeaves.Count; i++)
+        foreach (var node in emptyLeaves)
         {
-            List<OctreeNode> neighbours = new List<OctreeNode>();
+            Vector3Int current = Vector3Int.RoundToInt(node.nodeBounds.center / node.nodeBounds.size.y);
 
-            for (int j = 0; j < emptyLeaves.Count; j++)
+            foreach (var dir in directions)
             {
-                if (i != j)
+                if (nodeMap.TryGetValue(current + dir, out var neighbor))
                 {
-                    for (int k = 0; k < 6; k++)
-                    {
-                        Ray ray = new Ray(emptyLeaves[i].nodeBounds.center, rays[k]);
-                        float maxLenght = emptyLeaves[i].nodeBounds.size.y / 2 + 0.01f;
-
-                        if (emptyLeaves[j].nodeBounds.IntersectRay(ray, out float hitLength))
-                        {
-                            if (hitLength < maxLenght)
-                                neighbours.Add(emptyLeaves[j]);
-                        }
-                    }
+                    navigationGraph.AddEdge(node, neighbor);
                 }
-            }
-
-            foreach (var octreeNode in neighbours)
-            {
-                navigationGraph.AddEdge(emptyLeaves[i], octreeNode);
             }
         }
     }

@@ -1,7 +1,7 @@
-﻿using Burmuruk.Tesis.Editor.Utilities;
+﻿using Burmuruk.RPGStarterTemplate.Editor.Utilities;
 using UnityEngine.UIElements;
 
-namespace Burmuruk.Tesis.Editor.Controls
+namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 {
     public class HealthSettings : SubWindow
     {

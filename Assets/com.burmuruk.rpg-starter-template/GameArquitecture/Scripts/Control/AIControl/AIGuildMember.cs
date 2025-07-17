@@ -1,11 +1,11 @@
-using Burmuruk.Tesis.Stats;
+using Burmuruk.RPGStarterTemplate.Stats;
 using Burmuruk.Utilities;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Control.AI
+namespace Burmuruk.RPGStarterTemplate.Control.AI
 {
     public class AIGuildMember : Character, IPlayable
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Stats
+namespace Burmuruk.RPGStarterTemplate.Stats
 {
     [Serializable]
     public struct BuffData

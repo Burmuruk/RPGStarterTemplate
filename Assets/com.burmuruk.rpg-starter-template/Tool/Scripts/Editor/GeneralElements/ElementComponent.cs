@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine.UIElements;
 
-namespace Burmuruk.Tesis.Editor
+namespace Burmuruk.RPGStarterTemplate.Editor
 {
     public class ElementComponent : ElementCreationUI
     {

@@ -1,4 +1,4 @@
-﻿namespace Burmuruk.Tesis.Editor
+﻿namespace Burmuruk.RPGStarterTemplate.Editor
 {
     public struct BaseCreationInfo
     {

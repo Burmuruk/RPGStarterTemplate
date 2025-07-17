@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
 
-namespace Burmuruk.Tesis.UI
+namespace Burmuruk.RPGStarterTemplate.UI
 {
     [Serializable]
     public record StackableLabel

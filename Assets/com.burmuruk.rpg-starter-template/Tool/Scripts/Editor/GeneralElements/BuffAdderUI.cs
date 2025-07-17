@@ -1,9 +1,9 @@
-﻿using Burmuruk.Tesis.Stats;
+﻿using Burmuruk.RPGStarterTemplate.Stats;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Burmuruk.Tesis.Editor.Controls
+namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 {
     public class BuffAdderUI : MyCustomList, IUIListContainer<BaseCreationInfo>, IChangesObserver
     {

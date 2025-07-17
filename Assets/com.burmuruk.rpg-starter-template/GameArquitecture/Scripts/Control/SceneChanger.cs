@@ -1,8 +1,8 @@
-﻿using Burmuruk.Tesis.Control.AI;
+﻿using Burmuruk.RPGStarterTemplate.Control.AI;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Burmuruk.Tesis.Control
+namespace Burmuruk.RPGStarterTemplate.Control
 {
     public class SceneChanger : MonoBehaviour
     {

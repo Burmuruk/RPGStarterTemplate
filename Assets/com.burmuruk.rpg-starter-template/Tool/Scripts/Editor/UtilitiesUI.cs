@@ -1,10 +1,10 @@
-﻿using Burmuruk.Tesis.Utilities;
+﻿using Burmuruk.RPGStarterTemplate.Utilities;
 using System;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine.UIElements;
 
-namespace Burmuruk.Tesis.Editor.Utilities
+namespace Burmuruk.RPGStarterTemplate.Editor.Utilities
 {
     public static class UtilitiesUI
     {

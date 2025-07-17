@@ -1,14 +1,14 @@
-using Burmuruk.Tesis.Editor.Controls;
-using Burmuruk.Tesis.Inventory;
+using Burmuruk.RPGStarterTemplate.Editor.Controls;
+using Burmuruk.RPGStarterTemplate.Inventory;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
+using static Burmuruk.RPGStarterTemplate.Editor.Utilities.UtilitiesUI;
 
-namespace Burmuruk.Tesis.Editor
+namespace Burmuruk.RPGStarterTemplate.Editor
 {
     public partial class TabCharacterEditor : BaseLevelEditor
     {
@@ -37,7 +37,7 @@ namespace Burmuruk.Tesis.Editor
         SearchBar searchBar;
         (ElementType type, int idx) currentSettingTag = (ElementType.None, -1);
 
-        [MenuItem("LevelEditor/CharacterCreator")]
+        [MenuItem("RGPTemplate/CharacterCreator")]
         public static void ShowWindow()
         {
             TabCharacterEditor window = GetWindow<TabCharacterEditor>();

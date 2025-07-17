@@ -1,5 +1,5 @@
-﻿using Burmuruk.Tesis.Editor.Utilities;
-using Burmuruk.Tesis.Inventory;
+﻿using Burmuruk.RPGStarterTemplate.Editor.Utilities;
+using Burmuruk.RPGStarterTemplate.Inventory;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,9 +7,9 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
-using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
+using static Burmuruk.RPGStarterTemplate.Editor.Utilities.UtilitiesUI;
 
-namespace Burmuruk.Tesis.Editor.Controls
+namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 {
     public class EquipmentSettings : SubWindow, IUIListContainer<BaseCreationInfo>
     {

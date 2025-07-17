@@ -1,8 +1,8 @@
-using Burmuruk.Tesis.Control.AI;
-using Burmuruk.Tesis.Interaction;
-using Burmuruk.Tesis.Movement.PathFindig;
-using Burmuruk.Tesis.Saving;
-using Burmuruk.Tesis.UI;
+using Burmuruk.RPGStarterTemplate.Control.AI;
+using Burmuruk.RPGStarterTemplate.Interaction;
+using Burmuruk.RPGStarterTemplate.Movement.PathFindig;
+using Burmuruk.RPGStarterTemplate.Saving;
+using Burmuruk.RPGStarterTemplate.UI;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
@@ -11,7 +11,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
-namespace Burmuruk.Tesis.Control
+namespace Burmuruk.RPGStarterTemplate.Control
 {
     public class LevelManager : MonoBehaviour, ISlotDataProvider, IslotDataSaver
     {

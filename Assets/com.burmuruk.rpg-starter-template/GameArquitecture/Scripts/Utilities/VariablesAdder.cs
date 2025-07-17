@@ -2,7 +2,7 @@
 using System.Linq;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Editor
+namespace Burmuruk.RPGStarterTemplate.Editor
 {
     public class VariablesAdder
     {

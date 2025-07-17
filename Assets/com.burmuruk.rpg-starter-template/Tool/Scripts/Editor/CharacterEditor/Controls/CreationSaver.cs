@@ -1,17 +1,17 @@
-﻿using Burmuruk.Tesis.Combat;
-using Burmuruk.Tesis.Inventory;
-using Burmuruk.Tesis.Saving;
-using Burmuruk.Tesis.Stats;
+﻿using Burmuruk.RPGStarterTemplate.Combat;
+using Burmuruk.RPGStarterTemplate.Inventory;
+using Burmuruk.RPGStarterTemplate.Saving;
+using Burmuruk.RPGStarterTemplate.Stats;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
-using static Burmuruk.Tesis.Inventory.Equipment;
-using static Burmuruk.Tesis.Inventory.InventoryEquipDecorator;
+using static Burmuruk.RPGStarterTemplate.Inventory.Equipment;
+using static Burmuruk.RPGStarterTemplate.Inventory.InventoryEquipDecorator;
 
-namespace Burmuruk.Tesis.Editor
+namespace Burmuruk.RPGStarterTemplate.Editor
 {
     public class CreationSaver
     {
@@ -197,11 +197,11 @@ namespace Burmuruk.Tesis.Editor
 
         private void Setup_Character(GameObject player, in CharacterData characterData)
         {
-            player.GetComponent<Tesis.Control.Character>();
+            player.GetComponent<RPGStarterTemplate.Control.Character>();
 
-            var typeF = typeof(Tesis.Control.Character).GetField("characterType", BindingFlags.Instance | BindingFlags.NonPublic);
+            var typeF = typeof(RPGStarterTemplate.Control.Character).GetField("characterType", BindingFlags.Instance | BindingFlags.NonPublic);
             if (typeF != null)
-                typeF.SetValue(player.GetComponent<Tesis.Control.Character>(), characterData.characterType);
+                typeF.SetValue(player.GetComponent<RPGStarterTemplate.Control.Character>(), characterData.characterType);
             
             Setup_BasicStats(player, characterData);
             Set_DetectionPoints(player, characterData);
@@ -210,7 +210,7 @@ namespace Burmuruk.Tesis.Editor
 
         private void Setup_BasicStats(GameObject player, CharacterData characterData)
         {
-            player.GetComponent<Tesis.Control.Character>().stats = characterData.basicStats;
+            player.GetComponent<RPGStarterTemplate.Control.Character>().stats = characterData.basicStats;
         }
 
         private void Set_Enemy(GameObject player, in string enemyTag)
@@ -226,14 +226,14 @@ namespace Burmuruk.Tesis.Editor
             SerializedObject tagManager = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
             SerializedProperty tagsProp = tagManager.FindProperty("tags");
 
-            // Revisa si el tag ya existe
+            // Checks if tag already exists
             for (int i = 0; i < tagsProp.arraySize; i++)
             {
                 SerializedProperty t = tagsProp.GetArrayElementAtIndex(i);
                 if (t.stringValue.Equals(newTag)) return; // Ya existe
             }
 
-            // Añade el nuevo tag
+            // Adds new tag
             tagsProp.InsertArrayElementAtIndex(tagsProp.arraySize);
             tagsProp.GetArrayElementAtIndex(tagsProp.arraySize - 1).stringValue = newTag;
 
@@ -257,12 +257,12 @@ namespace Burmuruk.Tesis.Editor
             if (characterData.basicStats.earsRadious != 0)
                 hasEars = true;
 
-            var eyesF = typeof(Tesis.Control.Character).GetField("farPercept", BindingFlags.Instance | BindingFlags.NonPublic);
-            var earsF = typeof(Tesis.Control.Character).GetField("closePercept", BindingFlags.Instance | BindingFlags.NonPublic);
-            var hasEyesF = typeof(Tesis.Control.Character).GetField("hasFarPerception", BindingFlags.Instance | BindingFlags.NonPublic);
-            var hasEarsF = typeof(Tesis.Control.Character).GetField("hasClosePerception", BindingFlags.Instance | BindingFlags.NonPublic);
+            var eyesF = typeof(RPGStarterTemplate.Control.Character).GetField("farPercept", BindingFlags.Instance | BindingFlags.NonPublic);
+            var earsF = typeof(RPGStarterTemplate.Control.Character).GetField("closePercept", BindingFlags.Instance | BindingFlags.NonPublic);
+            var hasEyesF = typeof(RPGStarterTemplate.Control.Character).GetField("hasFarPerception", BindingFlags.Instance | BindingFlags.NonPublic);
+            var hasEarsF = typeof(RPGStarterTemplate.Control.Character).GetField("hasClosePerception", BindingFlags.Instance | BindingFlags.NonPublic);
 
-            var character = player.GetComponent<Tesis.Control.Character>();
+            var character = player.GetComponent<RPGStarterTemplate.Control.Character>();
             hasEyesF?.SetValue(character, hasEyes);
             hasEarsF?.SetValue(character, hasEars);
 
@@ -356,19 +356,19 @@ namespace Burmuruk.Tesis.Editor
             {
                 ComponentType.Mover => typeof(Movement.Movement),
                 ComponentType.Fighter => typeof(Fighter),
-                ComponentType.Inventory => typeof(Tesis.Inventory.Inventory),
-                ComponentType.Equipment => typeof(Tesis.Inventory.InventoryEquipDecorator),
-                ComponentType.Health => typeof(Tesis.Stats.Health),
+                ComponentType.Inventory => typeof(RPGStarterTemplate.Inventory.Inventory),
+                ComponentType.Equipment => typeof(RPGStarterTemplate.Inventory.InventoryEquipDecorator),
+                ComponentType.Health => typeof(RPGStarterTemplate.Stats.Health),
                 _ => null
             };
 
         private void Setup_Health(GameObject instance, Health health)
         {
-            var inventory = instance.GetComponent<Tesis.Stats.Health>();
+            var inventory = instance.GetComponent<RPGStarterTemplate.Stats.Health>();
 
-            FieldInfo maxHealthF = typeof(Tesis.Stats.Health).GetField("_maxHp", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo maxHealthF = typeof(RPGStarterTemplate.Stats.Health).GetField("_maxHp", BindingFlags.Instance | BindingFlags.NonPublic);
             maxHealthF.SetValue(inventory, health.MaxHP);
-            FieldInfo healthF = typeof(Tesis.Stats.Health).GetField("_hp", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo healthF = typeof(RPGStarterTemplate.Stats.Health).GetField("_hp", BindingFlags.Instance | BindingFlags.NonPublic);
             healthF.SetValue(inventory, health.HP);
             //var character = instance.GetComponents<Tesis.Control.Character>();
 
@@ -380,10 +380,10 @@ namespace Burmuruk.Tesis.Editor
         {
             if (!inventory.addInventory) return;
             
-            if (!instance.TryGetComponent<Tesis.Inventory.Inventory>(out var inventoryComp))
-                inventoryComp = instance.AddComponent<Tesis.Inventory.Inventory>();
+            if (!instance.TryGetComponent<RPGStarterTemplate.Inventory.Inventory>(out var inventoryComp))
+                inventoryComp = instance.AddComponent<RPGStarterTemplate.Inventory.Inventory>();
 
-            FieldInfo initialItemsF = typeof(Tesis.Inventory.Inventory).GetField("startingItems", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo initialItemsF = typeof(RPGStarterTemplate.Inventory.Inventory).GetField("startingItems", BindingFlags.Instance | BindingFlags.NonPublic);
             var initalItems = new List<InventoryItem>();
 
             FieldInfo itemsF = typeof(ItemsList).GetField("_items", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -457,10 +457,10 @@ namespace Burmuruk.Tesis.Editor
 
             var spawnPoints = GetSpawnPoints(body, ref names);
 
-            FieldInfo bodyF = typeof(Tesis.Inventory.Equipment).GetField("body", BindingFlags.Instance | BindingFlags.NonPublic);
-            FieldInfo spawnPointsF = typeof(Tesis.Inventory.Equipment).GetField("spawnPoints", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo bodyF = typeof(RPGStarterTemplate.Inventory.Equipment).GetField("body", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo spawnPointsF = typeof(RPGStarterTemplate.Inventory.Equipment).GetField("spawnPoints", BindingFlags.Instance | BindingFlags.NonPublic);
             FieldInfo equipmentF = typeof(InventoryEquipDecorator).GetField("_equipment", BindingFlags.Instance | BindingFlags.NonPublic);
-            Tesis.Inventory.Equipment newEquipment = new();
+            RPGStarterTemplate.Inventory.Equipment newEquipment = new();
 
             bodyF.SetValue(newEquipment, body);
             spawnPointsF.SetValue(newEquipment, spawnPoints.ToArray());

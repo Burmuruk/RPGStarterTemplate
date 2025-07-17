@@ -9,7 +9,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace Burmuruk.Tesis.Movement.PathFindig
+namespace Burmuruk.RPGStarterTemplate.Movement.PathFindig
 {
     public static class NavSaver
     {

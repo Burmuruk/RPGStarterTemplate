@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Dialogue
+namespace Burmuruk.RPGStarterTemplate.Dialogue
 {
     public class PlayerConversant : MonoBehaviour
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Missions
+namespace Burmuruk.RPGStarterTemplate.Missions
 {
     [Serializable]
     public abstract class Mission

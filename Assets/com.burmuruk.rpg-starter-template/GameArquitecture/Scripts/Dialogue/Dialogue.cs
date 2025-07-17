@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Dialogue
+namespace Burmuruk.RPGStarterTemplate.Dialogue
 {
     [CreateAssetMenu(fileName = "New Dialogue", menuName = "Dialogue", order = 0)]
     public class Dialogue : ScriptableObject, ISerializationCallbackReceiver

@@ -1,9 +1,9 @@
-﻿using Burmuruk.Tesis.Control;
+﻿using Burmuruk.RPGStarterTemplate.Control;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Inventory
+namespace Burmuruk.RPGStarterTemplate.Inventory
 {
     [RequireComponent(typeof(MeshRenderer))]
     public class InventoryEquipDecorator : MonoBehaviour, IInventory

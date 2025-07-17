@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Burmuruk.Tesis.Inventory
+namespace Burmuruk.RPGStarterTemplate.Inventory
 {
     public interface IInventory
     {

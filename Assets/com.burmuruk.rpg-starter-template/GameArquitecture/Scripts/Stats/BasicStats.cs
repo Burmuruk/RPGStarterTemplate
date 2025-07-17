@@ -1,8 +1,8 @@
-using Burmuruk.Tesis.Inventory;
+using Burmuruk.RPGStarterTemplate.Inventory;
 using System;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Stats
+namespace Burmuruk.RPGStarterTemplate.Stats
 {
     [Serializable]
     public struct BasicStats

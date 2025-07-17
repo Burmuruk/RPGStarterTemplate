@@ -1,12 +1,12 @@
-﻿using Burmuruk.Tesis.Inventory;
+﻿using Burmuruk.RPGStarterTemplate.Inventory;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
-using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
+using static Burmuruk.RPGStarterTemplate.Editor.Utilities.UtilitiesUI;
 
-namespace Burmuruk.Tesis.Editor.Controls
+namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 {
     public class EquipmentSpawnsList : MyCustomList, IChangesObserver
     {

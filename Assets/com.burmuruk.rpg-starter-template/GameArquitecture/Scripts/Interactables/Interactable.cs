@@ -1,12 +1,12 @@
-﻿using Burmuruk.Tesis.Control;
-using Burmuruk.Tesis.Control.AI;
-using Burmuruk.Tesis.Saving;
-using Burmuruk.Tesis.Utilities;
+﻿using Burmuruk.RPGStarterTemplate.Control;
+using Burmuruk.RPGStarterTemplate.Control.AI;
+using Burmuruk.RPGStarterTemplate.Saving;
+using Burmuruk.RPGStarterTemplate.Utilities;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Burmuruk.Tesis.Interaction
+namespace Burmuruk.RPGStarterTemplate.Interaction
 {
     public class Interactable : MonoBehaviour, IJsonSaveable, IInteractable
     {

@@ -1,4 +1,4 @@
-﻿namespace Burmuruk.Tesis.Editor
+﻿namespace Burmuruk.RPGStarterTemplate.Editor
 {
     internal class InvalidExeption : System.Exception
     {

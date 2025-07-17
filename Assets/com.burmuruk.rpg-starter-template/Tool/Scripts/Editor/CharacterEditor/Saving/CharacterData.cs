@@ -1,10 +1,10 @@
-using Burmuruk.Tesis.Inventory;
-using Burmuruk.Tesis.Stats;
+using Burmuruk.RPGStarterTemplate.Inventory;
+using Burmuruk.RPGStarterTemplate.Stats;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Editor
+namespace Burmuruk.RPGStarterTemplate.Editor
 {
     public struct CharacterData
     {

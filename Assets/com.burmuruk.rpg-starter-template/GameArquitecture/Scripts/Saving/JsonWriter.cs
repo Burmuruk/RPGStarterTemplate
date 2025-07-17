@@ -4,7 +4,7 @@ using System.IO;
 using UnityEngine;
 using System;
 
-namespace Burmuruk.Tesis.Saving
+namespace Burmuruk.RPGStarterTemplate.Saving
 {
     public class JsonWriter
     {

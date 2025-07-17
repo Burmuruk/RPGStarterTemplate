@@ -1,9 +1,9 @@
-﻿using Burmuruk.Tesis.Inventory;
-using Burmuruk.Tesis.Stats;
+﻿using Burmuruk.RPGStarterTemplate.Inventory;
+using Burmuruk.RPGStarterTemplate.Stats;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Burmuruk.Tesis.Editor.Controls
+namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 {
     public class ItemBuffReader : BaseItemSetting
     {

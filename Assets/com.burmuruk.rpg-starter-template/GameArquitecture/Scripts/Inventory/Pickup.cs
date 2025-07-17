@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Inventory
+namespace Burmuruk.RPGStarterTemplate.Inventory
 {
     public class Pickup : MonoBehaviour
     {

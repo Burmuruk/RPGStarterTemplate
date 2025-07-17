@@ -1,9 +1,9 @@
-﻿using Burmuruk.Tesis.Saving;
+﻿using Burmuruk.RPGStarterTemplate.Saving;
 using Newtonsoft.Json.Linq;
 using System;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Stats
+namespace Burmuruk.RPGStarterTemplate.Stats
 {
     public class Health : MonoBehaviour, IJsonSaveable
     {

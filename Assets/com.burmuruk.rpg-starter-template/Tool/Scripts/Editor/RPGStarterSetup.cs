@@ -2,7 +2,7 @@
 using UnityEngine;
 using System.IO;
 
-namespace Burmuruk.Tesis.Editor
+namespace Burmuruk.RPGStarterTemplate.Editor
 {
     [InitializeOnLoad]
     public static class RPGStarterSetup

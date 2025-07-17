@@ -1,4 +1,4 @@
-﻿namespace Burmuruk.Tesis.Inventory
+﻿namespace Burmuruk.RPGStarterTemplate.Inventory
 {
     public enum WeaponsModPlacement
     {

@@ -1,5 +1,6 @@
 using Burmuruk.AI;
-using Burmuruk.Tesis.Saving;
+using Burmuruk.RPGStarterTemplate.Editor.Controls;
+using Burmuruk.RPGStarterTemplate.Saving;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
@@ -7,9 +8,9 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
-using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
+using static Burmuruk.RPGStarterTemplate.Editor.Utilities.UtilitiesUI;
 
-namespace Burmuruk.Tesis.Editor
+namespace Burmuruk.RPGStarterTemplate.Editor
 {
     public partial class TabSystemEditor : BaseLevelEditor
     {
@@ -24,8 +25,14 @@ namespace Burmuruk.Tesis.Editor
         const string infoSavingName = "savingContainer";
 
         const string defaultSaveFile = "miGuardado-";
+        NavGenerator navGenerator;
 
-        [MenuItem("LevelEditor/System")]
+        class NavvGeneratorVisualizer : ScriptableObject
+        {
+            [SerializeField] public Controls.NavGenerator navGenerator;
+        }
+
+        [MenuItem("RGPTemplate/System")]
         public static void ShowWindow()
         {
             TabSystemEditor window = GetWindow<TabSystemEditor>();
@@ -99,9 +106,9 @@ namespace Burmuruk.Tesis.Editor
         private void Show_NavMesh()
         {
             if (CheckNavFileStatus())
-                Notify("Navigation map found.", BorderColour.Success);
+                Notify("Navigation data found.", BorderColour.Success);
             else
-                Notify("The Navigation map wasn't found.", BorderColour.Error);
+                Notify("The Navigation data wasn't found.", BorderColour.Error);
 
             ChangeTab(infoContainers[infoNavName].element);
             SelectTabBtn(btnNavName);
@@ -109,10 +116,12 @@ namespace Burmuruk.Tesis.Editor
 
             if (navInfo.childCount == 0)
             {
-                var nodesInsta = ScriptableObject.CreateInstance<NodesList>();
+                navGenerator = new NavGenerator();
+                navGenerator.Initialize(navInfo, container.Q<VisualElement>("navContainer"));
+                //var nodesInsta = ScriptableObject.CreateInstance<Controls.NavGenerator>();
                 //var nodesEditor = NodeListEditor.CreateEditor(nodesInsta, typeof(NodesList));
 
-                navInfo.Add(new InspectorElement(nodesInsta));
+                //navInfo.Add(new InspectorElement(navGenerator));
             }
         }
 

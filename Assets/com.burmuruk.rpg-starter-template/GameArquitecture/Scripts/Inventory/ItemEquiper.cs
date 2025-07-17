@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Burmuruk.Tesis.Inventory
+namespace Burmuruk.RPGStarterTemplate.Inventory
 {
     public static class ItemEquiper
     {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Missions
+namespace Burmuruk.RPGStarterTemplate.Missions
 {
     public class MissionManager : MonoBehaviour
     {

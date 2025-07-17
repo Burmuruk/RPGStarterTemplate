@@ -1,9 +1,9 @@
-﻿using Burmuruk.Tesis.Inventory;
-using Burmuruk.Tesis.Saving;
+﻿using Burmuruk.RPGStarterTemplate.Inventory;
+using Burmuruk.RPGStarterTemplate.Saving;
 using System;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Interaction
+namespace Burmuruk.RPGStarterTemplate.Interaction
 {
     public class PickableItem : MonoBehaviour
     {

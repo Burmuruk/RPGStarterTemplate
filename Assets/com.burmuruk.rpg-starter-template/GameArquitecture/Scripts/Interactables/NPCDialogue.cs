@@ -1,7 +1,7 @@
-﻿using Burmuruk.Tesis.Control;
-using Burmuruk.Tesis.Control.AI;
+﻿using Burmuruk.RPGStarterTemplate.Control;
+using Burmuruk.RPGStarterTemplate.Control.AI;
 
-namespace Burmuruk.Tesis.Interaction
+namespace Burmuruk.RPGStarterTemplate.Interaction
 {
     public class NPCDialogue : Interactable
     {

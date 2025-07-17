@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Inventory
+namespace Burmuruk.RPGStarterTemplate.Inventory
 {
     [CreateAssetMenu(fileName = "New Item", menuName = "ScriptableObjects/Inventory/IntemsList", order = 1)]
     public class InventoryItem : ScriptableObject, ISerializationCallbackReceiver

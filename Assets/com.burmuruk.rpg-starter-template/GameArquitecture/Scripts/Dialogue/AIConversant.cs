@@ -1,7 +1,7 @@
-using Burmuruk.Tesis.Control;
+using Burmuruk.RPGStarterTemplate.Control;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Dialogue
+namespace Burmuruk.RPGStarterTemplate.Dialogue
 {
     public class AIConversant : MonoBehaviour
     {

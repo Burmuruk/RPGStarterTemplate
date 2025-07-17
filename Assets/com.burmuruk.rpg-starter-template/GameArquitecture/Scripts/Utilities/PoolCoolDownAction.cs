@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Utilities
+namespace Burmuruk.RPGStarterTemplate.Utilities
 {
     public class PoolCoolDownAction<T>
     {

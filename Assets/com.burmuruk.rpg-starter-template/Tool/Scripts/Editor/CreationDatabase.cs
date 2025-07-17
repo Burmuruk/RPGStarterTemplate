@@ -1,9 +1,9 @@
-using Burmuruk.Tesis.Editor.Controls;
+using Burmuruk.RPGStarterTemplate.Editor.Controls;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Editor
+namespace Burmuruk.RPGStarterTemplate.Editor
 {
     public class CreationDatabase : ScriptableObject
     {
@@ -160,9 +160,9 @@ namespace Burmuruk.Tesis.Editor
     [Serializable]
     public class ItemCreationData : CreationData
     {
-        public Tesis.Inventory.InventoryItem Data;
+        public RPGStarterTemplate.Inventory.InventoryItem Data;
 
-        public ItemCreationData(string name, Tesis.Inventory.InventoryItem data) : base(name)
+        public ItemCreationData(string name, RPGStarterTemplate.Inventory.InventoryItem data) : base(name)
         {
             Data = data;
         }
@@ -184,10 +184,10 @@ namespace Burmuruk.Tesis.Editor
     [Serializable]
     public class BuffUserCreationData : CreationData
     {
-        public Tesis.Inventory.InventoryItem Data;
+        public RPGStarterTemplate.Inventory.InventoryItem Data;
         public BuffsNamesDataArgs Names;
 
-        public BuffUserCreationData(string name, Tesis.Inventory.InventoryItem item, BuffsNamesDataArgs args) : base(name)
+        public BuffUserCreationData(string name, RPGStarterTemplate.Inventory.InventoryItem item, BuffsNamesDataArgs args) : base(name)
         {
             Data = item;
             Names = args;

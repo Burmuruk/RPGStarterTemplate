@@ -1,10 +1,10 @@
-﻿using Burmuruk.Tesis.Editor.Utilities;
+﻿using Burmuruk.RPGStarterTemplate.Editor.Utilities;
 using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
-using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
+using static Burmuruk.RPGStarterTemplate.Editor.Utilities.UtilitiesUI;
 
-namespace Burmuruk.Tesis.Editor.Controls
+namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 {
     public class InventorySettings : SubWindow, IUIListContainer<BaseCreationInfo>
     {

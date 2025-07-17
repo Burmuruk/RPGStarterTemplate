@@ -1,10 +1,10 @@
-﻿using Burmuruk.Tesis.Control;
-using Burmuruk.Tesis.Stats;
+﻿using Burmuruk.RPGStarterTemplate.Control;
+using Burmuruk.RPGStarterTemplate.Stats;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Inventory
+namespace Burmuruk.RPGStarterTemplate.Inventory
 {
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/Armor", order = 1)]
     public class ArmourElement : EquipeableItem

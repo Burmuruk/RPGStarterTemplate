@@ -1,14 +1,14 @@
 ﻿using Burmuruk.AI.PathFinding;
-using Burmuruk.Tesis.Control;
-using Burmuruk.Tesis.Inventory;
-using Burmuruk.Tesis.Stats;
-using Burmuruk.Tesis.Utilities;
+using Burmuruk.RPGStarterTemplate.Control;
+using Burmuruk.RPGStarterTemplate.Inventory;
+using Burmuruk.RPGStarterTemplate.Stats;
+using Burmuruk.RPGStarterTemplate.Utilities;
 using Burmuruk.WorldG.Patrol;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Movement
+namespace Burmuruk.RPGStarterTemplate.Movement
 {
     public enum MovementState
     {

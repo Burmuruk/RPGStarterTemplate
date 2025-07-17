@@ -1,11 +1,11 @@
-﻿using Burmuruk.Tesis.Control;
+﻿using Burmuruk.RPGStarterTemplate.Control;
 using Burmuruk.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Stats
+namespace Burmuruk.RPGStarterTemplate.Stats
 {
     public class BuffsManager : MonoBehaviour
     {

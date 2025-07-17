@@ -1,10 +1,10 @@
-﻿using Burmuruk.Tesis.Inventory;
-using Burmuruk.Tesis.Stats;
+﻿using Burmuruk.RPGStarterTemplate.Inventory;
+using Burmuruk.RPGStarterTemplate.Stats;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Control.AI
+namespace Burmuruk.RPGStarterTemplate.Control.AI
 {
     public class EnemyManager : MonoBehaviour
     {

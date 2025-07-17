@@ -1,12 +1,12 @@
-using Burmuruk.Tesis.Stats;
-using Burmuruk.Tesis.Utilities;
+using Burmuruk.RPGStarterTemplate.Stats;
+using Burmuruk.RPGStarterTemplate.Utilities;
 using System;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
+using static Burmuruk.RPGStarterTemplate.Editor.Utilities.UtilitiesUI;
 
-namespace Burmuruk.Tesis.Editor.Controls
+namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 {
     public class EnumModifierUI<T> : IClearable, IUIListContainer<EnumModificationData> where T : Enum
     {

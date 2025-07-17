@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 using UnityEditor.Compilation;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Utilities
+namespace Burmuruk.RPGStarterTemplate.Utilities
 {
     public class EnumEditor
     {

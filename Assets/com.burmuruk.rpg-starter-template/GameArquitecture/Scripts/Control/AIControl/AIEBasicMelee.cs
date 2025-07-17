@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Burmuruk.Tesis.Control.AI
+namespace Burmuruk.RPGStarterTemplate.Control.AI
 {
     public class AIEBasicMelee : AIEnemyController
     {

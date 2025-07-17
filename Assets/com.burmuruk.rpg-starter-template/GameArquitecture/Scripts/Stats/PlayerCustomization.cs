@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Stats
+namespace Burmuruk.RPGStarterTemplate.Stats
 {
     [CreateAssetMenu(fileName = "Customization", menuName = "ScriptableObjects/Customization", order = 5)]
     public class PlayerCustomization : ScriptableObject

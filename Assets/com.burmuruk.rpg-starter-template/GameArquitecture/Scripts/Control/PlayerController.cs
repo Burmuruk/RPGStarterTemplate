@@ -1,15 +1,15 @@
-﻿using Burmuruk.Tesis.Combat;
-using Burmuruk.Tesis.Control.AI;
-using Burmuruk.Tesis.Interaction;
-using Burmuruk.Tesis.Inventory;
-using Burmuruk.Tesis.Stats;
+﻿using Burmuruk.RPGStarterTemplate.Combat;
+using Burmuruk.RPGStarterTemplate.Control.AI;
+using Burmuruk.RPGStarterTemplate.Interaction;
+using Burmuruk.RPGStarterTemplate.Inventory;
+using Burmuruk.RPGStarterTemplate.Stats;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace Burmuruk.Tesis.Control
+namespace Burmuruk.RPGStarterTemplate.Control
 {
     class PlayerController : MonoBehaviour
     {

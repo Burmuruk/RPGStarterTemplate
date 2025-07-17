@@ -1,12 +1,12 @@
-using Burmuruk.Tesis.Editor.Controls;
+using Burmuruk.RPGStarterTemplate.Editor.Controls;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine.UIElements;
-using static Burmuruk.Tesis.Editor.Utilities.UtilitiesUI;
+using static Burmuruk.RPGStarterTemplate.Editor.Utilities.UtilitiesUI;
 
-namespace Burmuruk.Tesis.Editor
+namespace Burmuruk.RPGStarterTemplate.Editor
 {
     public enum BorderColour
     {

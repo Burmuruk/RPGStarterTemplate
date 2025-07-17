@@ -1,7 +1,7 @@
-using Burmuruk.Tesis.Control;
+using Burmuruk.RPGStarterTemplate.Control;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Movement
+namespace Burmuruk.RPGStarterTemplate.Movement
 {
     public class SteeringBehaviours
     {

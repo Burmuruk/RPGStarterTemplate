@@ -1,4 +1,4 @@
-﻿namespace Burmuruk.Tesis.Saving
+﻿namespace Burmuruk.RPGStarterTemplate.Saving
 {
     public record SlotData (int Id, int BuildIdx, float PlayedTime)
     {

@@ -1,10 +1,10 @@
-﻿using Burmuruk.Tesis.Control;
+﻿using Burmuruk.RPGStarterTemplate.Control;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Inventory
+namespace Burmuruk.RPGStarterTemplate.Inventory
 {
     public abstract class EquipeableItem : InventoryItem
     {

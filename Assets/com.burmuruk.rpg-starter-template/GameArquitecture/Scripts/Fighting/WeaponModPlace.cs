@@ -1,4 +1,4 @@
-﻿namespace Burmuruk.Tesis.Combat
+﻿namespace Burmuruk.RPGStarterTemplate.Combat
 {
     public enum WeaponModPlace
     {

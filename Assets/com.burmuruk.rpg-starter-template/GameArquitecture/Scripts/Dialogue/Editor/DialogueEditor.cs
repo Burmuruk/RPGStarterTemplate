@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Dialogue.Editor
+namespace Burmuruk.RPGStarterTemplate.Dialogue.Editor
 {
     public class DialogueEditor : EditorWindow
     {

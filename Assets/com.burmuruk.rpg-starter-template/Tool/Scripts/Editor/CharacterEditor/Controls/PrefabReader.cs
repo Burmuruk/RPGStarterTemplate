@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace Burmuruk.Tesis.Editor
+namespace Burmuruk.RPGStarterTemplate.Editor
 {
     public class PrefabReader
     {

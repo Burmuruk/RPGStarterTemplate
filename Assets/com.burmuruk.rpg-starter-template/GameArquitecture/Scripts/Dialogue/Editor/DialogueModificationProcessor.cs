@@ -1,7 +1,7 @@
 using System.IO;
 using UnityEditor;
 
-namespace Burmuruk.Tesis.Dialogue.Editor
+namespace Burmuruk.RPGStarterTemplate.Dialogue.Editor
 {
     public class DialogueModificationProcessor : UnityEditor.AssetModificationProcessor
     {

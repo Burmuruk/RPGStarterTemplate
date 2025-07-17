@@ -1,10 +1,10 @@
-﻿using Burmuruk.Tesis.Control;
+﻿using Burmuruk.RPGStarterTemplate.Control;
 using Burmuruk.Utilities;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Combat
+namespace Burmuruk.RPGStarterTemplate.Combat
 {
      public class AbilitiesManager : MonoBehaviour
      {

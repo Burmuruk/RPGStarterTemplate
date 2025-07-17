@@ -1,7 +1,7 @@
-﻿using Burmuruk.Tesis.Stats;
+﻿using Burmuruk.RPGStarterTemplate.Stats;
 using UnityEngine.UIElements;
 
-namespace Burmuruk.Tesis.Editor.Controls
+namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 {
     public class BuffSettings : BaseInfoTracker, ISaveable
     {

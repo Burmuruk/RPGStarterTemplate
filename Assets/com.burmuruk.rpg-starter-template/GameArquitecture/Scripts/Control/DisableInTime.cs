@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Burmuruk.Tesis.Utilities
+namespace Burmuruk.RPGStarterTemplate.Utilities
 {
     public class DisableInTime<T>
     {

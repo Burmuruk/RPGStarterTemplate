@@ -1,6 +1,6 @@
-﻿using Burmuruk.Tesis.Saving;
+﻿using Burmuruk.RPGStarterTemplate.Saving;
 
-namespace Burmuruk.Tesis.Saving
+namespace Burmuruk.RPGStarterTemplate.Saving
 {
     public interface IslotDataSaver
     {

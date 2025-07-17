@@ -1,11 +1,11 @@
-﻿using Burmuruk.Tesis.Control.AI;
+﻿using Burmuruk.RPGStarterTemplate.Control.AI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Burmuruk.Tesis.Control
+namespace Burmuruk.RPGStarterTemplate.Control
 {
     public class AIGuildMemberComparer : IEqualityComparer<AIGuildMember>
     {

@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.UI
+namespace Burmuruk.RPGStarterTemplate.UI
 {
     public class CreditsExit : MonoBehaviour
     {

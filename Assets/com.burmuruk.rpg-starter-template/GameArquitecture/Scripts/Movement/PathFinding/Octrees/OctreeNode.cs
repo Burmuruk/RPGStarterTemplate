@@ -1,13 +1,10 @@
-﻿using Assets.Octrees;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Assertions.Must;
 
 public struct OctreeObject
 {
-    public readonly GameObject gameObject;
-    public readonly Bounds bounds;
+    public GameObject gameObject;
+    public Bounds bounds;
 
     public OctreeObject(GameObject obj)
     {
@@ -20,79 +17,81 @@ public class OctreeNode
 {
     public int id;
     public Bounds nodeBounds;
-    Bounds[] childBounds;
-    public OctreeNode[] children = null;
-    float minSize;
-    public List<OctreeObject> containedObjects = new List<OctreeObject>();
+    public OctreeNode[] children;
+    public List<OctreeObject> containedObjects = new();
     public OctreeNode parent;
+    public float minSize;
+    public int depth;
+    public static int max_depth = 16;
 
-    public OctreeNode(Bounds nodeBounds, float minNodeSize, OctreeNode parent)
+    private static int idCounter = 0;
+
+    public OctreeNode(Bounds bounds, float minSize, OctreeNode parent, int depth)
     {
-        this.nodeBounds = nodeBounds;
-        minSize = minNodeSize;
-        id = Utils.idNumber++;
+        this.nodeBounds = bounds;
+        this.minSize = minSize;
         this.parent = parent;
-
-        float quarter = nodeBounds.extents.y / 2;
-        float childLength = nodeBounds.extents.y;
-
-        Vector3 childSize = Vector3.one * childLength;
-        childBounds = new Bounds[8];
-        childBounds[0] = new Bounds(nodeBounds.center + new Vector3(-quarter, quarter, -quarter), childSize);
-        childBounds[1] = new Bounds(nodeBounds.center + new Vector3(quarter, quarter, -quarter), childSize);
-        childBounds[2] = new Bounds(nodeBounds.center + new Vector3(-quarter, quarter, quarter), childSize);
-        childBounds[3] = new Bounds(nodeBounds.center + new Vector3(quarter, quarter, quarter), childSize);
-        childBounds[4] = new Bounds(nodeBounds.center + new Vector3(-quarter, -quarter, -quarter), childSize);
-        childBounds[5] = new Bounds(nodeBounds.center + new Vector3(quarter, -quarter, -quarter), childSize);
-        childBounds[6] = new Bounds(nodeBounds.center + new Vector3(-quarter, -quarter, quarter), childSize);
-        childBounds[7] = new Bounds(nodeBounds.center + new Vector3(quarter, -quarter, quarter), childSize);
-        this.parent = parent;
+        this.depth = depth;
+        this.id = idCounter++;
     }
 
     public void AddObject(GameObject go)
     {
-        DivideAndAdd(go);
+        DivideAndAdd(new OctreeObject(go));
     }
 
-    public void DivideAndAdd(GameObject go)
+    public void DivideAndAdd(OctreeObject octObj)
     {
-        OctreeObject octObj = new OctreeObject(go);
-        if (nodeBounds.size.y <= minSize)
+        if (depth >= max_depth || nodeBounds.size.y <= minSize)
         {
             containedObjects.Add(octObj);
             return;
         }
-        
+
         if (children == null)
+        {
             children = new OctreeNode[8];
-        bool dividing = false;
+        }
+
+        bool addedToChild = false;
+        float quarter = nodeBounds.extents.y / 2;
+        float childLength = nodeBounds.extents.y;
+        Vector3 childSize = Vector3.one * childLength;
 
         for (int i = 0; i < 8; i++)
         {
-            if (children[i] == null)
-                children[i] = new OctreeNode(childBounds[i], minSize, this);
-
-            //if (childBounds[i].Contains(octObj.bounds.min) && childBounds[i].Contains(octObj.bounds.max))
-            if (childBounds[i].Intersects(octObj.bounds))
+            Vector3 offset = new Vector3(
+                ((i & 1) == 0 ? -1 : 1) * quarter,
+                ((i & 2) == 0 ? 1 : -1) * quarter,
+                ((i & 4) == 0 ? -1 : 1) * quarter
+            );
+            Vector3 childCenter = nodeBounds.center + offset;
+            Bounds childBounds = new(childCenter, childSize);
+            
+            if (Physics.CheckBox(childCenter + Vector3.up * .1f, childBounds.extents))
+            //if (childBounds.Intersects(octObj.bounds))
             {
-                dividing = true;
-                children[i].DivideAndAdd(go);
+                if (children[i] == null)
+                {
+                    children[i] = new OctreeNode(childBounds, minSize, this, depth + 1);
+                }
+
+                children[i].DivideAndAdd(octObj);
+                addedToChild = true;
             }
+            //Debug.DrawRay(nodeBounds.center, offset, Color.yellow, 5f);
+            //Debug.DrawRay(childCenter, Vector3.down * childBounds.extents.y, Color.cyan, 5f);
         }
 
-        if (!dividing)
+        if (!addedToChild)
         {
             containedObjects.Add(octObj);
-            children = null;
         }
     }
 
     public void Draw()
     {
-        //Gizmos.color = Color.green;
-        //Gizmos.DrawWireCube(nodeBounds.center, nodeBounds.size);
-
-        Gizmos.color = Color.red;
+            Gizmos.color = Color.red;
         foreach (var obj in containedObjects)
         {
             Gizmos.DrawWireCube(obj.bounds.center, obj.bounds.size);
@@ -100,17 +99,15 @@ public class OctreeNode
 
         if (children != null)
         {
-            for (int i = 0; i < 8; i++)
+            foreach (var child in children)
             {
-                if (children[i] != null)
-                {
-                    children[i].Draw();
-                }
+                if (child != null)
+                    child.Draw();
             }
         }
         else if (containedObjects.Count != 0)
         {
-            Gizmos.color = new Color(0, 0, 1, .25f);
+            Gizmos.color = new Color(0, 0, 1, 0.25f);
             Gizmos.DrawCube(nodeBounds.center, nodeBounds.size);
         }
     }

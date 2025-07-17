@@ -1,10 +1,10 @@
-﻿using Burmuruk.Tesis.Control;
-using Burmuruk.Tesis.Inventory;
-using Burmuruk.Tesis.Stats;
+﻿using Burmuruk.RPGStarterTemplate.Control;
+using Burmuruk.RPGStarterTemplate.Inventory;
+using Burmuruk.RPGStarterTemplate.Stats;
 using System;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Combat
+namespace Burmuruk.RPGStarterTemplate.Combat
 {
     [CreateAssetMenu(fileName = "Stats", menuName = "ScriptableObjects/WeaponMod", order = 3)]
     public class Modification : EquipeableItem

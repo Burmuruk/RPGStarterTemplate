@@ -7,11 +7,12 @@ public class CreateOctree : MonoBehaviour
     public int nodeMinSize = 5;
     public Octree ot;
     public Graph waypoints;
+    public int maxDepth = 16;
 
     void Start()
     {
         waypoints = new Graph();
-        ot = new Octree(worldObjects, nodeMinSize, waypoints);
+        ot = new Octree(worldObjects, nodeMinSize, waypoints, maxDepth);
     }
 
     // Update is called once per frame

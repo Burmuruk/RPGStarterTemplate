@@ -1,9 +1,9 @@
-﻿using Burmuruk.Tesis.Combat;
-using Burmuruk.Tesis.Control.AI;
-using Burmuruk.Tesis.Inventory;
-using Burmuruk.Tesis.Movement.PathFindig;
-using Burmuruk.Tesis.Saving;
-using Burmuruk.Tesis.Stats;
+﻿using Burmuruk.RPGStarterTemplate.Combat;
+using Burmuruk.RPGStarterTemplate.Control.AI;
+using Burmuruk.RPGStarterTemplate.Inventory;
+using Burmuruk.RPGStarterTemplate.Movement.PathFindig;
+using Burmuruk.RPGStarterTemplate.Saving;
+using Burmuruk.RPGStarterTemplate.Stats;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -11,7 +11,7 @@ using System.Linq;
 using System.Runtime.ConstrainedExecution;
 using UnityEngine;
 
-namespace Burmuruk.Tesis.Control
+namespace Burmuruk.RPGStarterTemplate.Control
 {
     public class PlayerManager : MonoBehaviour, IJsonSaveable
     {
