@@ -6,7 +6,7 @@
   "unity": "2022.3",
   "author": {
     "name": "Burmuruk",
-    "url": "https://github.com/Burmuruk/Tesis"
+    "url": "https://github.com/Burmuruk/RPGStarterTemplate.git"
   },
   "dependencies": {
     "com.unity.nuget.newtonsoft-json": "3.2.1",

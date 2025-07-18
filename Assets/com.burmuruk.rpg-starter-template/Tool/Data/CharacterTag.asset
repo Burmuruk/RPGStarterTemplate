@@ -23,13 +23,45 @@ MonoBehaviour:
   - type: 9
     items: []
   - type: 7
-    items: []
+    items:
+    - name: d3988f97-2904-4453-868f-f0d33fa7fec6
+      data:
+        rid: 7365450685227991044
   - type: 8
     items: []
   - type: 3
-    items: []
+    items:
+    - name: 914155b9-9846-494b-98c8-1f8fa14629c7
+      data:
+        rid: 7365450685227991045
   - type: 4
-    items: []
+    items:
+    - name: df6c22ff-3ffc-4ded-be8d-dfcf7f005d4e
+      data:
+        rid: 7365450685227991043
   references:
     version: 2
-    RefIds: []
+    RefIds:
+    - rid: 7365450685227991043
+      type: {class: BuffCreationData, ns: Burmuruk.RPGStarterTemplate.Editor, asm: Assembly-CSharp-Editor}
+      data:
+        Name: Quemadura
+        Data:
+          name: Quemadura
+          stat: 1
+          value: 234
+          duration: 0
+          rate: 0
+          percentage: 0
+          probability: 0
+    - rid: 7365450685227991044
+      type: {class: BuffUserCreationData, ns: Burmuruk.RPGStarterTemplate.Editor,
+        asm: Assembly-CSharp-Editor}
+      data:
+        Name: Espada
+        Data: {fileID: 0}
+    - rid: 7365450685227991045
+      type: {class: CharacterCreationData, ns: Burmuruk.RPGStarterTemplate.Editor,
+        asm: Assembly-CSharp-Editor}
+      data:
+        Name: Mago

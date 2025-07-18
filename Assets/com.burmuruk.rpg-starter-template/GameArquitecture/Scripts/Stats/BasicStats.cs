@@ -21,7 +21,12 @@ namespace Burmuruk.RPGStarterTemplate.Stats
         [SerializeField] public float earsRadious;
         [SerializeField] public float minDistance;
 
-        [Serializable]
+        
+        [Space(), Header("Mis variables")]
+        [SerializeField] public float magia;
+        [SerializeField] public int poder;
+
+[Serializable]
         public struct Slot
         {
             public ItemType type;
