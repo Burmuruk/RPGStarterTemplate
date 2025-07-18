@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Burmuruk.RPGStarterTemplate.Dialogue
 {
-    [CreateAssetMenu(fileName = "New Dialogue", menuName = "Dialogue", order = 0)]
+    [CreateAssetMenu(fileName = "New Dialogue", menuName = "ScriptableObjects/Dialogue", order = 0)]
     public class Dialogue : ScriptableObject, ISerializationCallbackReceiver
     {
         [SerializeField]

@@ -1,5 +1,6 @@
 ﻿using Burmuruk.RPGStarterTemplate.Utilities;
 using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine.UIElements;
@@ -15,6 +16,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Utilities
         public static VisualElement pNotification = null;
         public static Label lblNotification;
         static IVisualElementScheduledItem pNotificationTimeout = null;
+        static Dictionary<VisualElement, IVisualElementScheduledItem> highlightTimeouts = null;
         public static readonly string[] Keywords = new[]
         {
             // base
@@ -81,6 +83,32 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Utilities
         {
             if (!pNotification.ClassListContains("Disable"))
                 pNotification.AddToClassList("Disable");
+        }
+
+        public static void Highlight(VisualElement element, long time = 3000, BorderColour colour = BorderColour.HighlightBorder)
+        {
+            Highlight(element, true, colour);
+
+            if (highlightTimeouts != null && highlightTimeouts.ContainsKey(element))
+                highlightTimeouts[element].Pause();
+            else
+                highlightTimeouts ??= new();
+
+            highlightTimeouts[element] = element.schedule.Execute(() =>
+            {
+                RemoveHighlightTimeOut(element);
+                Highlight(element, false, colour);
+            });
+
+            highlightTimeouts[element].ExecuteLater(time);
+        }
+
+        static void RemoveHighlightTimeOut(VisualElement element)
+        {
+            if (highlightTimeouts.ContainsKey(element))
+            {
+                highlightTimeouts.Remove(element);
+            }
         }
 
         public static void Highlight(VisualElement element, bool shouldHighlight, BorderColour colour = BorderColour.HighlightBorder)

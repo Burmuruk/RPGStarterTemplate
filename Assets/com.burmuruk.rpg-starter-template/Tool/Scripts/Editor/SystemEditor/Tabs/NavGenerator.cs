@@ -1,6 +1,8 @@
 using Burmuruk.AI;
+using Burmuruk.RPGStarterTemplate.Movement.PathFindig;
 using Burmuruk.RPGStarterTemplate.Saving;
 using System;
+using System.Collections;
 using System.IO;
 using System.Linq;
 using UnityEditor;
@@ -18,24 +20,21 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         [Header("General Settings")]
         [Space]
         [SerializeField] bool detectSize = false;
-        [SerializeField] GameObject p1;
-        [SerializeField] GameObject p2;
-        [SerializeField] int layer;
+        [SerializeField] int layer = 9;
         [SerializeField] bool is3d;
-
-        [Header("Octree Settings")]
-        [SerializeField] float nodeMinSize = 5;
-        [SerializeField] int maxDepth = 16;
 
         private Octree octree;
         private Graph waypoints;
         NodesList nodesList;
+        IVisualElementScheduledItem drawingTimeOut = null;
         #endregion
 
         public VisualElement StatusContainer { get; private set; }
         public Label LblSceneName { get; private set; }
         public Label LblOctreeState{ get; private set; }
         public Label LblMeshState { get; private set; }
+        public Label LblSaved { get; private set; }
+        public UnsignedIntegerField UILayer { get; private set; }
         public Toggle TglDetectSize { get; private set; }
         public VisualElement PointsContainer { get; private set; }
         public Toggle TglShowArea { get; private set; }
@@ -49,6 +48,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         public VisualElement MeshControls { get; private set; }
         public Button BtnGenerate { get; private set; }
         public Button BtnDelete{ get; private set; }
+        public Button BtnSave { get; private set; }
 
         public void Initialize(VisualElement container, VisualElement buttonsContainer)
         {
@@ -57,9 +57,11 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             Initialize(container);
 
             StatusContainer = container.Q<VisualElement>("StatusContainer");
-            LblSceneName = container.Q<VisualElement>("LblSceneName").Q<Label>();
-            LblMeshState = container.Q<VisualElement>("LblMeshState").Q<Label>();
-            LblOctreeState = container.Q<VisualElement>("LblOctreeState").Q<Label>();
+            LblSceneName = container.Q<Label>("LblSceneName");
+            LblMeshState = container.Q<Label>("LblMeshState");
+            LblOctreeState = container.Q<Label>("LblOctreeState");
+            LblSaved = container.Q<Label>("LblSaved");
+            UILayer = container.Q<UnsignedIntegerField>("UILayer");
             TglDetectSize = container.Q<Toggle>("TglDetectSize");
             TglShowArea = container.Q<Toggle>("TglShowArea");
             PointsContainer = container.Q<VisualElement>("PointsContainer");
@@ -71,6 +73,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             MeshControls = container.Q<VisualElement>("MeshControls");
             BtnGenerate = buttonsContainer.parent.Q<Button>("BtnGenerate");
             BtnDelete = buttonsContainer.parent.Q<Button>("BtnDelete");
+            BtnSave = buttonsContainer.parent.Q<Button>("BtnSaveNavigation");
 
             P1 = new ObjectField("Corner 1");
             P1.objectType = typeof(GameObject);
@@ -79,15 +82,27 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             P2.objectType = typeof(GameObject);
             PointsContainer.Add(P2);
 
+            UILayer.RegisterValueChangedCallback(CheckLayer);
             TglDetectSize.RegisterValueChangedCallback(EnableSizeDetection);
             TglOctree.RegisterValueChangedCallback(EnableOctreeControls);
             TglMesh.RegisterValueChangedCallback(EnableMeshControls);
             TglShowArea.RegisterValueChangedCallback(EnableShowArea);
             BtnDelete.clicked += RemoveData;
             BtnGenerate.clicked += GenerateNavigation;
+            BtnSave.clicked += SaveInfo;
 
             Clear();
             LoadInfo();
+        }
+
+        private void CheckLayer(ChangeEvent<uint> evt)
+        {
+            if (evt.newValue > 31)
+            {
+                UILayer.SetValueWithoutNotify(evt.previousValue);
+            }
+
+            layer = unchecked((int)UILayer.value);
         }
 
         private void EnableShowArea(ChangeEvent<bool> evt)
@@ -98,15 +113,18 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 Highlight(P2, false);
                 bool isValid = true;
 
-                if (P1.value == null)
+                if (!TglDetectSize.value)
                 {
-                    isValid = false;
-                    Highlight(P1, true, BorderColour.Error);
-                }
-                if (P2.value == null)
-                {
-                    isValid = false;
-                    Highlight(P2, true, BorderColour.Error);
+                    if (P1.value == null)
+                    {
+                        isValid = false;
+                        Highlight(P1, true, BorderColour.Error);
+                    }
+                    if (P2.value == null)
+                    {
+                        isValid = false;
+                        Highlight(P2, true, BorderColour.Error);
+                    } 
                 }
 
                 if (!isValid)
@@ -114,33 +132,55 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                     TglShowArea.SetValueWithoutNotify(false);
                     return;
                 }
+
+                Draw();
             }
 
             if (nodesList != null)
                 nodesList.showMeshZone = evt.newValue;
         }
 
-        private void LoadInfo()
+        public bool LoadInfo()
         {
             LblSceneName.text = SceneManager.GetActiveScene().name;
 
             bool found = CheckNavFileStatus();
 
-            LblMeshState.text = found ? "Saved" : "None";
+            LblMeshState.text = found ? "Generated" : "None";
+            LblSaved.text = found ? "True" : "False";
             var colour = found ? BorderColour.Success : BorderColour.LightBorder;
             Highlight(StatusContainer, true, colour);
 
             BtnDelete.SetEnabled(found);
+            return found;
+        }
+
+        private void SaveInfo()
+        {
+            try
+            {
+                nodesList.SaveList();
+            }
+            catch (Exception e)
+            {
+                Notify("The information couldn't be saved", BorderColour.Error);
+                throw e;
+            }
+
+            Notify("Navigation saved", BorderColour.Success);
+        }
+
+        private void RemoveData()
+        {
+            NavSaver.RemoveFile(SceneManager.GetActiveScene().name);
+
+            LoadInfo();
+            Notify("Data removed", BorderColour.Success);
         }
 
         bool CheckNavFileStatus()
         {
-            int sceneIdx = SceneManager.GetActiveScene().buildIndex;
-
-            JsonWriter jsonWriter = new();
-            var path = jsonWriter.GetPathFromSaveFile("Saving" + sceneIdx);
-
-            return File.Exists(path);
+            return NavSaver.Exists(SceneManager.GetActiveScene().name);
         }
 
         private void GenerateNavigation()
@@ -150,11 +190,64 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 Notify("Invalid data", BorderColour.Error);
                 return;
             }
+
+            if (TglOctree.value)
+            {
+                Notify("Generating", BorderColour.Success);
+                CreateOctree();
+
+                bool finished = octree.emptyLeaves.Count > 0;
+                LblOctreeState.text = finished.ToString();
+                Highlight(LblOctreeState);
+                //BtnSave.SetEnabled(finished);
+                //Highlight(BtnSave);
+            }
+            if (TglMesh.value)
+            {
+                Notify("Generating", BorderColour.Success);
+
+                SetMeshAreaPoints();
+                nodesList.layer = layer;
+                CreateNavMesh();
+
+                bool finished = nodesList.NodeCount > 0;
+                LblMeshState.text = finished.ToString();
+                Highlight(LblMeshState);
+                BtnSave.SetEnabled(finished);
+                Highlight(BtnSave);
+            }
+
+            Notify("Generated", BorderColour.Success);
         }
 
-        private void RemoveData()
+        private void SetMeshAreaPoints()
         {
-            throw new NotImplementedException();
+            if (TglDetectSize.value)
+            {
+                DectecInitialSize(out Vector3 center, out Vector3 size);
+                Vector3 x1 = new Vector3
+                {
+                    x = center.x - size.x * .5f - nodesList.NodeDistance,
+                    y = center.y - size.y,
+                    z = center.z - size.z * .5f - nodesList.NodeDistance
+                };
+                Vector3 x2 = new Vector3
+                {
+                    x = center.x + size.x * .5f + nodesList.NodeDistance,
+                    y = center.y + size.y,
+                    z = center.z + size.z * .5f + nodesList.NodeDistance
+                };
+
+                nodesList.x1 = x1;
+                nodesList.x2 = x2;
+                Debug.DrawRay(x1, Vector3.up * 20, Color.red, 10);
+                Debug.DrawRay(x2, Vector3.up * 20, Color.red, 10);
+            }
+            else
+            {
+                nodesList.x1 = (P1.value as GameObject).transform.position;
+                nodesList.x2 = (P2.value as GameObject).transform.position; 
+            }
         }
 
         private void EnableMeshControls(ChangeEvent<bool> evt)
@@ -165,20 +258,32 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
                 MeshControls.Add(new InspectorElement(nodesList));
                 EnableContainer(MeshControls, true);
-                var asset = AssetDatabase.LoadAllAssetsAtPath("Assets/com.burmuruk.rpg-starter-template/Tool/Prefabs/Editor/Navigation/Node.prefab");
+                var assets = AssetDatabase.LoadAllAssetsAtPath("Assets/com.burmuruk.rpg-starter-template/Tool/Prefabs/Editor/Navigation/Node.prefab");
 
-                if (asset == null)
+                if (assets == null)
                     Debug.Log("Object not found");
-                else if (asset.Length > 0)
+                else if (assets.Length > 0)
                 {
-                    if ((asset[0] as GameObject) != null)
-                        nodesList.debugNode = asset[0] as GameObject;
+                    foreach (var node in assets)
+                    {
+                        if ((node as GameObject) != null)
+                        {
+                            nodesList.debugNode = node as GameObject;
+                        }
+                    }
+                }
+
+                if (nodesList.debugNode == null)
+                {
+                    Notify("Node prefab is missing!", BorderColour.Error);
+                    return;
                 }
             }
             else
                 MeshControls.Clear();
 
-            BtnGenerate.SetEnabled(evt.newValue || BtnGenerate.enabledSelf);
+            BtnGenerate.SetEnabled(evt.newValue || TglOctree.value);
+            if (BtnGenerate.enabledSelf) Highlight(BtnGenerate);
         }
 
         private void EnableSizeDetection(ChangeEvent<bool> evt)
@@ -215,11 +320,40 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             EnableContainer(MaxDepth.parent, evt.newValue);
             EnableContainer(NodeMinSize.parent, evt.newValue);
             BtnGenerate.SetEnabled(evt.newValue || BtnDelete.enabledSelf);
+            if (evt.newValue) Highlight(BtnGenerate);
         }
 
         public override bool VerifyData()
         {
-            return true;
+            bool isValid = true;
+            bool value = false;
+
+            if (!TglDetectSize.value)
+            {
+                isValid &= value = P1.value != null;
+                Highlight(P1, !value, BorderColour.Error);
+                isValid &= value = P2.value != null;
+                Highlight(P2, !value, BorderColour.Error);
+            }
+            if (TglOctree.value)
+            {
+                isValid &= value = NodeMinSize.value > 0;
+                Highlight(NodeMinSize, !value, BorderColour.Error);
+                isValid &= value = MaxDepth.value > 0;
+                Highlight(MaxDepth, !value, BorderColour.Error); 
+            }
+            if (TglMesh.value)
+            {
+                if (nodesList == null)
+                {
+                    nodesList = ScriptableObject.CreateInstance<NodesList>();
+                }
+
+                isValid &= value = nodesList.debugNode != null;
+                //Highlight(nodesList, !isValue, BorderColour.Error);
+            }
+
+            return isValid;
         }
 
         public override ModificationTypes Check_Changes()
@@ -240,9 +374,12 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             TglDetectSize.SetValueWithoutNotify(true);
             BtnDelete.SetEnabled(false);
             BtnGenerate.SetEnabled(false);
+            BtnSave.SetEnabled(false);
+            LblSaved.text = "False";
 
             NodeMinSize.value = 5;
             MaxDepth.value = 16;
+            layer = unchecked((int)UILayer.value);
         }
 
         public override void Load_Changes()
@@ -251,11 +388,6 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         }
 
         #region Unity methods
-        void Start()
-        {
-            CreateOctree();
-            CreateNavMesh();
-        }
 
         private void OnDrawGizmos()
         {
@@ -270,24 +402,22 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         #region Creation
         private void CreateOctree()
         {
-            System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-            sw.Start();
             waypoints = new Graph();
             GetInitialSize(out Vector3 center, out Vector3 size, out float maxSize);
 
-            Debug.Log("start time: " + sw.ElapsedMilliseconds + " ms");
-            octree = new Octree(GetObjectsInArea(center, size), nodeMinSize, waypoints, maxDepth);
-            Debug.Log("total time: " + sw.ElapsedMilliseconds + " ms");
-            sw.Stop();
+            OctreeNode.layer = layer;
+            octree = new Octree(GetObjectsInArea(center, size), NodeMinSize.value, waypoints, MaxDepth.value);
         }
 
         private void CreateNavMesh()
         {
-            nodesList ??= ScriptableObject.CreateInstance<NodesList>();
             //nodesList.SetAvailableAreaDetector();
+            nodesList.ResetState();
             nodesList.Calculate_PathMesh();
             nodesList.CalculateNodesConnections();
-            nodesList.SaveList();
+
+            nodesList.Draw_Mesh();
+            //nodesList.SaveList();
         }
         #endregion
 
@@ -339,7 +469,8 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             Debug.DrawRay(bounds.center, Vector3.down * bounds.extents.y, Color.yellow, 5f);
             Debug.DrawRay(bounds.center, Vector3.right * bounds.extents.x, Color.yellow, 5f);
             Debug.DrawRay(bounds.center, Vector3.left * bounds.extents.x, Color.yellow, 5f);
-            Debug.Log("Initial size detected: " + size + " at center: " + bounds.center);
+            //Debug.Log("Initial size detected: " + size + " at center: " + bounds.center);
+            center = bounds.center;
         }
 
         private GameObject[] GetObjectsInArea(in Vector3 center, in Vector3 size)
@@ -355,9 +486,9 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             float x, y, z;
             float px, py, pz;
 
-            (x, px) = GetSizeAndCenter(p1.transform.position.x, p2.transform.position.x);
-            (y, py) = GetSizeAndCenter(p1.transform.position.y, p2.transform.position.y);
-            (z, pz) = GetSizeAndCenter(p1.transform.position.z, p2.transform.position.z);
+            (x, px) = GetSizeAndCenter(P1.transform.position.x, P2.transform.position.x);
+            (y, py) = GetSizeAndCenter(P1.transform.position.y, P2.transform.position.y);
+            (z, pz) = GetSizeAndCenter(P1.transform.position.z, P2.transform.position.z);
 
             center = new Vector3(px, py, pz);
             return new Vector3(x, y, z);
@@ -375,6 +506,97 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
             (float distance, float center) GetCenterFromSize(in float start, in float distance) =>
                 (distance, start + distance * .5f);
+        }
+        #endregion
+
+        #region Drawing
+
+        private void Draw()
+        {
+            drawingTimeOut?.Pause();
+            drawingTimeOut = Container.schedule.Execute(() =>
+            {
+                DrawArea();
+
+                if (TglShowArea.value)
+                    Draw();
+            });
+            drawingTimeOut.ExecuteLater(1900);
+        }
+
+        void DrawArea()
+        {
+            if (!TglDetectSize.value)
+            {
+                if (nodesList != null && P1 != null && P2 != null)
+                {
+                    nodesList.x1 = (P1.value as GameObject).transform.position;
+                    nodesList.x2 = (P2.value as GameObject).transform.position;
+
+                    Draw_Cube(P1.value as GameObject, P2.value as GameObject);
+                } 
+            }
+            else
+            {
+                DectecInitialSize(out Vector3 center, out Vector3 size);
+                Vector3 x1 = new Vector3
+                {
+                    x = center.x - size.x * .5f,
+                    y = center.y - size.y * .5f,
+                    z = center.z - size.z * .5f
+                };
+                Vector3 x2 = new Vector3
+                {
+                    x = center.x + size.x * .5f,
+                    y = center.y + size.y * .5f,
+                    z = center.z + size.z * .5f
+                };
+                Draw_Cube(x1, x2);
+            }
+        }
+
+        public void Draw_Cube(GameObject x1, GameObject x2)
+        {
+            Vector3 dis = x2.transform.position - x1.transform.position;
+            Debug.DrawLine(x1.transform.position, x1.transform.position + Vector3.right * dis.x, Color.red, 2);
+            Debug.DrawLine(x1.transform.position, x1.transform.position + Vector3.forward * dis.z, Color.red, 2);
+            Debug.DrawLine(x1.transform.position, x1.transform.position + Vector3.up * dis.y, Color.red, 2);
+
+            Debug.DrawLine(x2.transform.position, x2.transform.position + Vector3.left * dis.x, Color.red, 2);
+            Debug.DrawLine(x2.transform.position, x2.transform.position + Vector3.back * dis.z, Color.red, 2);
+            Debug.DrawLine(x2.transform.position, x2.transform.position + Vector3.down * dis.y, Color.red, 2);
+
+            var rd = x2.transform.position + Vector3.down * dis.y + Vector3.left * dis.x;
+            Debug.DrawLine(rd, rd + Vector3.up * dis.y, Color.red, 2);
+            Debug.DrawLine(rd, rd + Vector3.right * dis.x, Color.red, 2);
+            Debug.DrawLine(rd + Vector3.up * dis.y, rd + Vector3.up * dis.y + Vector3.back * dis.z, Color.red, 2);
+
+            var ld = x1.transform.position + Vector3.up * dis.y + Vector3.right * dis.x;
+            Debug.DrawLine(ld, ld + Vector3.down * dis.y, Color.red, 2);
+            Debug.DrawLine(ld, ld + Vector3.left * dis.x, Color.red, 2);
+            Debug.DrawLine(ld + Vector3.down * dis.y, ld + Vector3.down * dis.y + Vector3.forward * dis.z, Color.red, 2);
+        }
+
+        public void Draw_Cube(Vector3 x1, Vector3 x2)
+        {
+            Vector3 dis = x2 - x1;
+            Debug.DrawLine(x1, x1 + Vector3.right * dis.x, Color.red, 2);
+            Debug.DrawLine(x1, x1 + Vector3.forward * dis.z, Color.red, 2);
+            Debug.DrawLine(x1, x1 + Vector3.up * dis.y, Color.red, 2);
+
+            Debug.DrawLine(x2, x2 + Vector3.left * dis.x, Color.red, 2);
+            Debug.DrawLine(x2, x2 + Vector3.back * dis.z, Color.red, 2);
+            Debug.DrawLine(x2, x2 + Vector3.down * dis.y, Color.red, 2);
+
+            var rd = x2 + Vector3.down * dis.y + Vector3.left * dis.x;
+            Debug.DrawLine(rd, rd + Vector3.up * dis.y, Color.red, 2);
+            Debug.DrawLine(rd, rd + Vector3.right * dis.x, Color.red, 2);
+            Debug.DrawLine(rd + Vector3.up * dis.y, rd + Vector3.up * dis.y + Vector3.back * dis.z, Color.red, 2);
+
+            var ld = x1 + Vector3.up * dis.y + Vector3.right * dis.x;
+            Debug.DrawLine(ld, ld + Vector3.down * dis.y, Color.red, 2);
+            Debug.DrawLine(ld, ld + Vector3.left * dis.x, Color.red, 2);
+            Debug.DrawLine(ld + Vector3.down * dis.y, ld + Vector3.down * dis.y + Vector3.forward * dis.z, Color.red, 2);
         }
         #endregion
     }

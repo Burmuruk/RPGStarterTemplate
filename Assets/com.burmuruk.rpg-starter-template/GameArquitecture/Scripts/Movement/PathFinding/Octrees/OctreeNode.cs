@@ -23,6 +23,7 @@ public class OctreeNode
     public float minSize;
     public int depth;
     public static int max_depth = 16;
+    public static int layer = 9;
 
     private static int idCounter = 0;
 
@@ -68,7 +69,7 @@ public class OctreeNode
             Vector3 childCenter = nodeBounds.center + offset;
             Bounds childBounds = new(childCenter, childSize);
             
-            if (Physics.CheckBox(childCenter + Vector3.up * .1f, childBounds.extents))
+            if (Physics.CheckBox(childCenter + Vector3.up * .1f, childBounds.extents, Quaternion.identity, layer))
             //if (childBounds.Intersects(octObj.bounds))
             {
                 if (children[i] == null)

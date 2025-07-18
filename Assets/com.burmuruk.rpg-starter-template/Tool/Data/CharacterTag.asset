@@ -19,71 +19,17 @@ MonoBehaviour:
   - type: 0
     items: []
   - type: 2
-    items:
-    - name: 24f4ed0a-c05d-4023-a406-fe6ce76a2b1f
-      data:
-        rid: 7365450356071596032
+    items: []
   - type: 9
-    items:
-    - name: 442335d5-a863-4352-ba5f-e7e7e35c7f4c
-      data:
-        rid: 7365450356071596033
+    items: []
   - type: 7
-    items:
-    - name: 9dcb7cbc-5b6d-4b0e-ac7b-133504eedfd1
-      data:
-        rid: 7365450356071596034
+    items: []
   - type: 8
-    items:
-    - name: 5e44dbf4-01b4-44a0-87f1-544faa7eb329
-      data:
-        rid: 7365450356071596035
+    items: []
   - type: 3
-    items:
-    - name: 169d3e5e-c162-4a99-a7fa-d98172c85438
-      data:
-        rid: 7365450356071596048
+    items: []
   - type: 4
-    items:
-    - name: d1030363-868b-4110-9e0d-eb419e47b68f
-      data:
-        rid: 7365450356071596036
+    items: []
   references:
     version: 2
-    RefIds:
-    - rid: 7365450356071596032
-      type: {class: ItemCreationData, ns: Burmuruk.Tesis.Editor, asm: Assembly-CSharp-Editor}
-      data:
-        Name: item
-        Data: {fileID: 0}
-    - rid: 7365450356071596033
-      type: {class: BuffUserCreationData, ns: Burmuruk.Tesis.Editor, asm: Assembly-CSharp-Editor}
-      data:
-        Name: consu
-        Data: {fileID: 0}
-    - rid: 7365450356071596034
-      type: {class: BuffUserCreationData, ns: Burmuruk.Tesis.Editor, asm: Assembly-CSharp-Editor}
-      data:
-        Name: wea
-        Data: {fileID: 0}
-    - rid: 7365450356071596035
-      type: {class: ItemCreationData, ns: Burmuruk.Tesis.Editor, asm: Assembly-CSharp-Editor}
-      data:
-        Name: arm
-        Data: {fileID: 0}
-    - rid: 7365450356071596036
-      type: {class: BuffCreationData, ns: Burmuruk.Tesis.Editor, asm: Assembly-CSharp-Editor}
-      data:
-        Name: buf
-        Data:
-          name: buf
-          stat: 0
-          value: 0
-          duration: 0
-          rate: 0
-          percentage: 0
-          probability: 0
-    - rid: 7365450356071596048
-      type: {class: CharacterCreationData, ns: Burmuruk.Tesis.Editor, asm: Assembly-CSharp-Editor}
-      data:
-        Name: knight
+    RefIds: []

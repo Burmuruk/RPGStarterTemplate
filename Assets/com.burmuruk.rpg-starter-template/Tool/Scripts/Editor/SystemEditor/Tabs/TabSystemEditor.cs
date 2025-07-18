@@ -1,5 +1,6 @@
 using Burmuruk.AI;
 using Burmuruk.RPGStarterTemplate.Editor.Controls;
+using Burmuruk.RPGStarterTemplate.Movement.PathFindig;
 using Burmuruk.RPGStarterTemplate.Saving;
 using System.Collections.Generic;
 using System.IO;
@@ -32,7 +33,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             [SerializeField] public Controls.NavGenerator navGenerator;
         }
 
-        [MenuItem("RGPTemplate/System")]
+        [MenuItem("RPGTemplate/System")]
         public static void ShowWindow()
         {
             TabSystemEditor window = GetWindow<TabSystemEditor>();
@@ -105,11 +106,6 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         #region Navigation
         private void Show_NavMesh()
         {
-            if (CheckNavFileStatus())
-                Notify("Navigation data found.", BorderColour.Success);
-            else
-                Notify("The Navigation data wasn't found.", BorderColour.Error);
-
             ChangeTab(infoContainers[infoNavName].element);
             SelectTabBtn(btnNavName);
             VisualElement navInfo = container.Q<VisualElement>("navInfoContainer");
@@ -123,16 +119,11 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 
                 //navInfo.Add(new InspectorElement(navGenerator));
             }
-        }
 
-        bool CheckNavFileStatus()
-        {
-            int sceneIdx = SceneManager.GetActiveScene().buildIndex;
-
-            JsonWriter jsonWriter = new();
-            var path = jsonWriter.GetPathFromSaveFile("Saving" + sceneIdx);
-
-            return File.Exists(path);
+            if (navGenerator.LoadInfo())
+                Notify("Navigation data found.", BorderColour.Success);
+            else
+                Notify("The Navigation data wasn't found.", BorderColour.Error);
         }
         #endregion
     } 

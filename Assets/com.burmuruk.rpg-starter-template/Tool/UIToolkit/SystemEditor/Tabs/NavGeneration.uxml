@@ -16,30 +16,37 @@
                 <ui:Label tabindex="-1" text="NavMesh:" parse-escape-sequences="true" display-tooltip-when-elided="true" name="Label" style="flex-basis: 120px;" />
                 <ui:Label tabindex="-1" text="None" parse-escape-sequences="true" display-tooltip-when-elided="true" name="LblMeshState" style="flex-grow: 1;" />
             </ui:VisualElement>
+            <ui:VisualElement class="LineElements" style="margin-top: 6px;">
+                <ui:Label tabindex="-1" text="Saved:" parse-escape-sequences="true" display-tooltip-when-elided="true" name="Label" style="flex-basis: 120px;" />
+                <ui:Label tabindex="-1" text="False" parse-escape-sequences="true" display-tooltip-when-elided="true" name="LblSaved" style="flex-grow: 1;" />
+            </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement style="margin-bottom: 10px;">
             <ui:Label tabindex="-1" text="General Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" class="Title" style="margin-bottom: 6px;" />
+            <ui:VisualElement name="layer" class="LineElements" style="flex-grow: 1; flex-direction: row;">
+                <ui:Label tabindex="-1" text="Layer" parse-escape-sequences="true" display-tooltip-when-elided="true" style="width: 120px; flex-basis: 118px;" />
+                <ui:UnsignedIntegerField value="9" name="UILayer" style="flex-grow: 1; flex-shrink: 1;" />
+            </ui:VisualElement>
             <ui:VisualElement name="checkBox" class="LineElements" style="flex-grow: 1; flex-direction: row;">
                 <ui:Label tabindex="-1" text="Auto detect size" parse-escape-sequences="true" display-tooltip-when-elided="true" style="width: 120px;" />
                 <ui:Toggle name="TglDetectSize" value="true" />
             </ui:VisualElement>
-            <ui:VisualElement name="PointsContainer" style="flex-grow: 1;">
-                <ui:VisualElement name="ShowArea" class="LineElements" style="flex-grow: 1; flex-direction: row;">
-                    <ui:Label tabindex="-1" text="Show area" parse-escape-sequences="true" display-tooltip-when-elided="true" tooltip="Enable if there are agents that can fly." style="width: 120px;" />
-                    <ui:Toggle name="TglShowArea" />
-                </ui:VisualElement>
+            <ui:VisualElement name="ShowArea" class="LineElements" style="flex-grow: 1; flex-direction: row;">
+                <ui:Label tabindex="-1" text="Show area" parse-escape-sequences="true" display-tooltip-when-elided="true" tooltip="Enable if there are agents that can fly." style="width: 120px;" />
+                <ui:Toggle name="TglShowArea" />
             </ui:VisualElement>
+            <ui:VisualElement name="PointsContainer" style="flex-grow: 1;" />
             <ui:VisualElement name="checkBox" class="LineElements" style="flex-grow: 1; flex-direction: row;">
                 <ui:Label tabindex="-1" text="Octree" parse-escape-sequences="true" display-tooltip-when-elided="true" tooltip="Enable if there are agents that can fly." style="width: 120px;" />
                 <ui:Toggle name="TglIs3D" />
             </ui:VisualElement>
             <ui:VisualElement style="flex-grow: 1; margin-bottom: 10px;">
                 <ui:VisualElement class="LineElements" style="flex-grow: 1;">
-                    <ui:Label tabindex="-1" text="Min node size" parse-escape-sequences="true" display-tooltip-when-elided="true" tooltip="Limit the subdivitions when this size is reached." style="flex-basis: 120px;" />
+                    <ui:Label tabindex="-1" text="Min node size" parse-escape-sequences="true" display-tooltip-when-elided="true" tooltip="Limit the subdivitions when this size is reached." style="flex-basis: 118px;" />
                     <ui:FloatField value="5" name="FFMinSize" style="flex-grow: 1;" />
                 </ui:VisualElement>
                 <ui:VisualElement class="LineElements" style="flex-grow: 1;">
-                    <ui:Label tabindex="-1" text="Max depth" parse-escape-sequences="true" display-tooltip-when-elided="true" tooltip="Number of subdivitions. The greater the value the greater the precision." style="flex-basis: 120px;" />
+                    <ui:Label tabindex="-1" text="Max depth" parse-escape-sequences="true" display-tooltip-when-elided="true" tooltip="Number of subdivitions. The greater the value the greater the precision." style="flex-basis: 118px;" />
                     <ui:IntegerField value="16" name="IFMaxDepth" style="flex-grow: 1;" />
                 </ui:VisualElement>
             </ui:VisualElement>

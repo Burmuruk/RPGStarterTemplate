@@ -67,10 +67,29 @@ namespace Burmuruk.RPGStarterTemplate.Movement.PathFindig
             saved = true;
         }
 
+        public static bool Exists(string sceneName)
+        {
+            string path = Path.Combine(Application.streamingAssetsPath, FILE_NAME + "_" + sceneName + ".txt");
+            return File.Exists(path);
+        }
+
+        public static void RemoveFile(string sceneName)
+        {
+            string path = Path.Combine(Application.streamingAssetsPath, FILE_NAME + "_" + sceneName + ".txt");
+
+            File.Delete(path);
+            AssetDatabase.Refresh();
+        }
+
         private static void Write(LinkedList<string> text)
         {
-            string path = Path.Combine(Application.streamingAssetsPath, FILE_NAME + ".txt");
-            //string path = UnityEngine.Application.persistentDataPath + FILE_NAME + SceneManager.GetActiveScene().buildIndex + ".txt";
+            string sceneName = SceneManager.GetActiveScene().name;
+            string path = Path.Combine(Application.streamingAssetsPath, FILE_NAME + "_" + sceneName + ".txt");
+
+            if (!Directory.Exists(Application.streamingAssetsPath))
+            {
+                Directory.CreateDirectory(Application.streamingAssetsPath);
+            }
 
             using (Stream stream = new FileStream(path, FileMode.Create))
             {
@@ -80,6 +99,8 @@ namespace Burmuruk.RPGStarterTemplate.Movement.PathFindig
                     stream.Write(bytes, 0, item.Length);
                 }
             }
+
+            AssetDatabase.Refresh();
         }
 
         private static string GetNodeConnections(IPathNode node)
@@ -291,8 +312,9 @@ namespace Burmuruk.RPGStarterTemplate.Movement.PathFindig
 
         private static LinkedList<char[]> LoadFromFile()
         {
-            string path = Path.Combine(Application.streamingAssetsPath, FILE_NAME + ".txt");
-            //string path = UnityEngine.Application.persistentDataPath + FILE_NAME + SceneManager.GetActiveScene().buildIndex + ".txt";
+            string sceneName = SceneManager.GetActiveScene().name;
+            string path = Path.Combine(Application.streamingAssetsPath, FILE_NAME + "_" + sceneName + ".txt");
+            
             var text = new LinkedList<char[]>();
 
             using (Stream stream = new FileStream(path, FileMode.Open))

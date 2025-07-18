@@ -28,16 +28,17 @@ namespace Burmuruk.AI
         [SerializeField] float maxAngle = 45;
         [HideInInspector] bool showChanges = false; //hidded due to optimization issues
 
-        [Header("Mesh Settings")]
+        [Header("Debug Settings")]
         [Space]
         [SerializeField] public GameObject debugNode;
-        [HideInInspector] public GameObject x1;
-        [HideInInspector] public GameObject x2;
-        [SerializeField] public bool showMeshZone = false;
         [SerializeField] bool debugNodes = false;
-        bool canCreateMesh = false;
+        [SerializeField] bool drawMesh = false;
+        [HideInInspector] public Vector3 x1;
+        [HideInInspector] public Vector3 x2;
+        [HideInInspector] public bool showMeshZone = false;
+        [HideInInspector] public int layer = 9;
+        bool canCreateMesh = true;
         bool addDynamicObjs = true;
-        int layer;
 
         [Header("Saving Settings"), Space()]
         IPathNode[][][] connections;
@@ -50,6 +51,7 @@ namespace Burmuruk.AI
         List<(IPathNode node, IPathNode hitPos)> edgesToFix;
         private LinkedGrid<IPathNode> nodes;
         private Func<bool, Vector3> _areaDetector;
+        private GameObject _nodesParent;
         #endregion
 
         #region Properties
@@ -91,26 +93,7 @@ namespace Burmuruk.AI
         public float NodeDistance => nodeDistance;
         public float PlayerRadious => playerRadious;
         public float MaxAngle => maxAngle;
-        #endregion
-
-        #region Unity methods
-        private void Start()
-        {
-            if (!x1 || !x2)
-            {
-                Debug.LogError("All start nodes are not settled.");
-                return;
-            }
-        }
-
-        private void OnDrawGizmos()
-        {
-            if (showChanges)
-                Draw_Mesh();
-
-            if (showMeshZone)
-                Draw_MeshZone();
-        }
+        public uint NodeCount { get => nodeCount; }
         #endregion
 
         #region Public methods
@@ -121,21 +104,57 @@ namespace Burmuruk.AI
         {
             if (!canCreateMesh || AreProcessRunning || AreProcessDeleting) return;
 
-            Destroy_Nodes();
-            meshState = pState.running;
-            Create_PathMesh();
+            try
+            {
+                Destroy_Nodes();
+                meshState = pState.running;
+                if (debugNodes) 
+                    _nodesParent = new GameObject("Nodes");
+                Create_PathMesh();
 
-            if (addDynamicObjs)
-                DisableDynamicObjects();
+                //if (addDynamicObjs)
+                //    DisableDynamicObjects();
+            }
+            catch (Exception e)
+            {
+                meshState = pState.None;
+                throw e;
+            }
+            finally
+            {
+                meshState = pState.None;
+            }
+        }
+
+        public void ResetState()
+        {
+            if (AreProcessRunning || AreProcessDeleting) return;
+
+            canCreateMesh = true;
+            meshState = pState.None;
+            connectionsState = pState.None;
+            memoryFreed = pState.None;
+            Destroy_Nodes();
         }
 
         public void CalculateNodesConnections()
         {
             if (AreProcessRunning || AreProcessDeleting) return;
 
-            ClearNodeConnections();
-            connectionsState = pState.running;
-            CalculateConnections();
+            try
+            {
+                ClearNodeConnections();
+                connectionsState = pState.running;
+                CalculateConnections();
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+            finally
+            {
+                connectionsState = pState.None;
+            }
         }
 
         public void Destroy_Nodes()
@@ -143,19 +162,20 @@ namespace Burmuruk.AI
             if (AreProcessRunning || AreProcessDeleting || meshState != pState.finished) return;
 
             meshState = pState.deleting;
-//            var nodes = transform.GetComponentsInChildren<DebugNode>();
-//            nodeCount = 0;
-//            this.nodes.Clear();
+            if (_nodesParent != null)
+            {
+                var nodes = _nodesParent.GetComponentsInChildren<DebugNode>();
+                nodeCount = 0;
+                this.nodes.Clear();
 
-//            foreach (DebugNode node in nodes)
-//            {
-//#if UNITY_EDITOR
-//                DestroyImmediate(node.gameObject);
-//                continue;
-//#endif
+                foreach (DebugNode node in nodes)
+                {
+                    DestroyImmediate(node.gameObject);
+                    continue;
+                }
 
-//                Destroy(node.gameObject);
-//            }
+                Destroy(_nodesParent);
+            }
 
             CanCreateMesh = true;
             meshState = pState.None;
@@ -165,11 +185,14 @@ namespace Burmuruk.AI
         {
             if (AreProcessRunning || AreProcessDeleting || connectionsState != pState.finished) return;
 
-            //connectionsState = pState.deleting;
-            //var nodes = transform.GetComponentsInChildren<IPathNode>();
+            connectionsState = pState.deleting;
+            if (_nodesParent != null)
+            {
+                var nodes = _nodesParent.GetComponentsInChildren<IPathNode>();
 
-            //foreach (var node in nodes)
-            //    node.ClearConnections();
+                foreach (var node in nodes)
+                    node.ClearConnections(); 
+            }
 
             connectionsState = pState.None;
         }
@@ -387,14 +410,15 @@ namespace Burmuruk.AI
         private void Create_PathMesh()
         {
             Vector3 distances = Fix_InvertedPositions();
+            Vector3 refPoint = Get_FirstPoint();
 
             int rows = (int)(distances.z / nodeDistance);
 
             nodes = new LinkedGrid<IPathNode>(rows);
 
-            int xIndex = (int)(distances.x / nodeDistance);
-            int zIndex = (int)(distances.z / nodeDistance);
-            int height = (int)(distances.y);
+            int xIndex = Mathf.RoundToInt(distances.x / nodeDistance);
+            int zIndex = Mathf.RoundToInt(distances.z / nodeDistance);
+            int height = Mathf.RoundToInt(distances.y);
             int columnIdx = 0;
 
             for (int i = 0; i < Mathf.Abs(xIndex); i++, columnIdx++)
@@ -404,9 +428,9 @@ namespace Burmuruk.AI
                 {
                     var curPosA = new Vector3()
                     {
-                        x = x1.transform.position.x + nodeDistance * i,
-                        y = x2.transform.position.y,
-                        z = x1.transform.position.z - nodeDistance * j
+                        x = refPoint.x + nodeDistance * i,
+                        y = refPoint.y,
+                        z = refPoint.z - nodeDistance * j
                     };
 
                     Ray detectionRay = new Ray(curPosA, Vector3.down);
@@ -425,8 +449,8 @@ namespace Burmuruk.AI
                                 NodeData newNode;
                                 Create_Node(verticalHits[k], out newNode);
 
-                                if (hittedCols[k].gameObject.TryGetComponent(out DynamicNavObject dObj))
-                                    dObj.Nodes.Add(newNode.ID);
+                                //if (hittedCols[k].gameObject.TryGetComponent(out DynamicNavObject dObj))
+                                //    dObj.Nodes.Add(newNode.ID);
 
                                 if (added == true)
                                 {
@@ -450,21 +474,29 @@ namespace Burmuruk.AI
             meshState = pState.finished;
         }
 
+        private Vector3 Get_FirstPoint() =>
+            new Vector3
+            {
+                x = x1.x < x2.x ? x1.x : x2.x,
+                y = x1.y > x2.y ? x1.y : x2.y,
+                z = x1.z > x2.z ? x1.z : x2.z,
+            };
+
         private Vector3 Fix_InvertedPositions()
         {
             return new Vector3()
             {
-                x = GetSize(x1.transform.position.x, x2.transform.position.x),
-                y = GetSize(x1.transform.position.y, x2.transform.position.y),
-                z = GetSize(x1.transform.position.z, x2.transform.position.z),
+                x = GetSize(x1.x, x2.x),
+                y = GetSize(x1.y, x2.y),
+                z = GetSize(x1.z, x2.z),
             };
 
 
-            //if (x2.transform.position.z < x1.transform.position.z)
+            //if (x2.z < x1.z)
             //{
-            //    var newPos = x1.transform.position;
-            //    x1.transform.position = x2.transform.position;
-            //    x2.transform.position = newPos;
+            //    var newPos = x1;
+            //    x1 = x2;
+            //    x2 = newPos;
             //}
             float GetSize(float x1, float x2)
             {
@@ -521,7 +553,9 @@ namespace Burmuruk.AI
         {
             var start = position + new Vector3(0, .7f, 0);
 
-            if (!Physics.CapsuleCast(start, (start + new Vector3(0, 1, 0)), .5f, new Vector3(0, 1, 0), .1f, 1 << layer))
+            //if (!Physics.CapsuleCast(start, (start + new Vector3(0, 1, 0)), .5f, new Vector3(0, 1, 0), .1f, 1 << layer))
+            //    return true;
+            if (!Physics.CheckCapsule(start, start + new Vector3(0, 1, 0), playerRadious, 1 << layer))
                 return true;
 
             return false;
@@ -533,55 +567,35 @@ namespace Burmuruk.AI
 
             if (!debugNodes) return;
 
-            //var newNode = Instantiate(debugNode, transform);
-            //newNode.transform.position = position;
-            //newNode.transform.name = "Node " + node.ID.ToString();
-            //var nodeCs = newNode.GetComponent<DebugNode>();
-            //nodeCs.SetNode(in node);
+            var newNode = GameObject.Instantiate(debugNode, position, Quaternion.identity, _nodesParent.transform);
+            newNode.transform.position = position;
+            newNode.transform.name = "Node " + node.ID.ToString();
+            var nodeCs = newNode.GetComponent<DebugNode>();
+            nodeCs.SetNode(in node);
         }
 
-        private void Draw_MeshZone()
+        public void Draw_Mesh()
         {
-            Vector3 dis = x2.transform.position - x1.transform.position;
-            Debug.DrawLine(x1.transform.position, x1.transform.position + Vector3.right * dis.x, Color.red, 2);
-            Debug.DrawLine(x1.transform.position, x1.transform.position + Vector3.forward * dis.z, Color.red, 2);
-            Debug.DrawLine(x1.transform.position, x1.transform.position + Vector3.up * dis.y, Color.red, 2);
+            if (_nodesParent == null || !drawMesh) return;
 
-            Debug.DrawLine(x2.transform.position, x2.transform.position + Vector3.left * dis.x, Color.red, 2);
-            Debug.DrawLine(x2.transform.position, x2.transform.position + Vector3.back * dis.z, Color.red, 2);
-            Debug.DrawLine(x2.transform.position, x2.transform.position + Vector3.down * dis.y, Color.red, 2);
+            var nodes = _nodesParent.GetComponentsInChildren<IPathNode>();
 
-            var rd = x2.transform.position + Vector3.down * dis.y + Vector3.left * dis.x;
-            Debug.DrawLine(rd, rd + Vector3.up * dis.y, Color.red, 2);
-            Debug.DrawLine(rd, rd + Vector3.right * dis.x, Color.red, 2);
-            Debug.DrawLine(rd + Vector3.up * dis.y, rd + Vector3.up * dis.y + Vector3.back * dis.z, Color.red, 2);
+            for (int i = 0; i < nodes.Length; i++)
+            {
+                var cur = nodes[i];
 
-            var ld = x1.transform.position + Vector3.up * dis.y + Vector3.right * dis.x;
-            Debug.DrawLine(ld, ld + Vector3.down * dis.y, Color.red, 2);
-            Debug.DrawLine(ld, ld + Vector3.left * dis.x, Color.red, 2);
-            Debug.DrawLine(ld + Vector3.down * dis.y, ld + Vector3.down * dis.y + Vector3.forward * dis.z, Color.red, 2);
-        }
+                for (int j = i + 1; j < nodes.Length; j++)
+                {
+                    if (Get_Magnitud(cur, nodes[j]) is var m && m <= nodeDistance)
+                    {
+                        bool hitted1 = Detect_OjbstaclesBetween(cur, nodes[j], out _);
+                        bool hitted2 = Detect_OjbstaclesBetween(nodes[j], cur, out _);
 
-        private void Draw_Mesh()
-        {
-            //var nodes = transform.GetComponentsInChildren<IPathNode>();
-
-            //for (int i = 0; i < nodes.Length; i++)
-            //{
-            //    var cur = nodes[i];
-
-            //    for (int j = i + 1; j < nodes.Length; j++)
-            //    {
-            //        if (Get_Magnitud(cur, nodes[j]) is var m && m <= nodDistance)
-            //        {
-            //            bool hitted1 = Detect_OjbstaclesBetween(cur, nodes[j], out _);
-            //            bool hitted2 = Detect_OjbstaclesBetween(nodes[j], cur, out _);
-
-            //            if (!hitted1 && !hitted2)
-            //                Debug.DrawLine(cur.Position + new Vector3(0, 1.5f, 0), (nodes[j].Position) + new Vector3(0, 1.5f, 0), Color.red);
-            //        }
-            //    }
-            //}
+                        if (!hitted1 && !hitted2)
+                            Debug.DrawLine(cur.Position + new Vector3(0, 1.5f, 0), (nodes[j].Position) + new Vector3(0, 1.5f, 0), Color.red, 10);
+                    }
+                }
+            }
         }
 
         private void DisableDynamicObjects()
