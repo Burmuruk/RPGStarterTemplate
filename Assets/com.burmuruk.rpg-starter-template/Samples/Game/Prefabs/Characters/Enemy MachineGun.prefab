@@ -113,25 +113,32 @@ MonoBehaviour:
   - {fileID: 2100000, guid: f68d266fb92ffd04597989926c400e58, type: 2}
   hasFarPerception: 1
   hasClosePerception: 1
-  characterType: 3
-  equipment:
-    Body: {fileID: 0}
-    spawnPoints: []
   enemyTag: Player
+  characterType: 3
+  stats:
+    speed: 7
+    damage: 1
+    damageRate: 1.5
+    color: {r: 0, g: 0, b: 0, a: 0}
+    Name: 0
+    eyesRadious: 4
+    earsRadious: 3
+    minDistance: 4
+    poder: 0
   mover: {fileID: 0}
   fighter: {fileID: 0}
-  stats:
-    initialized: 0
-    speed: 0
-    damage: 0
-    damageRate: 0
-    color: {r: 0, g: 0, b: 0, a: 0}
-    eyesRadious: 0
-    earsRadious: 0
-    minDistance: 0
-    m_slots: []
-  itemsToDrop: []
+  itemsToDrop:
+  - {fileID: 11400000, guid: 75619ae22d649fa48a3f533efd8bce31, type: 2}
+  - {fileID: 11400000, guid: d10504a0fbc69c741867b7fe641e0eef, type: 2}
+  - {fileID: 11400000, guid: 1d4668583dbdb284c89aed484e05052e, type: 2}
   patrolController: {fileID: 0}
+  playerAction: 0
+  attackState: 0
+  playerDistance: 0
+  playerState: 0
+  rageState: 0
+  awareness: 0
+  curOrder: 0
 --- !u!4 &2327318175012354995 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2785978298475701983, guid: 8309bf9444a004e4b854038f1c57a905,

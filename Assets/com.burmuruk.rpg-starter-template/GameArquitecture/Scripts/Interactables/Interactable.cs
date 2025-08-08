@@ -3,6 +3,9 @@ using Burmuruk.RPGStarterTemplate.Control.AI;
 using Burmuruk.RPGStarterTemplate.Saving;
 using Burmuruk.RPGStarterTemplate.Utilities;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -14,11 +17,25 @@ namespace Burmuruk.RPGStarterTemplate.Interaction
         [SerializeField] bool triggerOnCollition = false;
         [SerializeField] GameObject itemToDisable;
         [SerializeField] bool shouldDisable;
+
+        [SerializeField] public UnityEvent OnInteract;
+        [SerializeField] public List<DelayedAction> delayedActions;
+
         private bool disabled;
-
         DisableInTime<GameObject> disabler;
+        List<ActionScheduler> actionSchedulers = new List<ActionScheduler>();
 
-        public UnityEvent OnInteract;
+        [Serializable]
+        public struct DelayedAction
+        {
+            [SerializeField] public UnityEvent Action;
+            [SerializeField] public float Delay;
+            public DelayedAction(UnityEvent action, float delay)
+            {
+                Action = action;
+                Delay = delay;
+            }
+        }
 
         private void OnTriggerEnter(Collider other)
         {
@@ -48,6 +65,7 @@ namespace Burmuruk.RPGStarterTemplate.Interaction
             if (disabled) return;
 
             OnInteract?.Invoke();
+            delayedActions.ForEach(action => StartCoroutine(DelayedActionsCoroutine(action)));
 
             SetDisabled(true);
         }
@@ -64,14 +82,9 @@ namespace Burmuruk.RPGStarterTemplate.Interaction
             SetDisabled(state["Disabled"].ToObject<bool>());
         }
 
-        public void StopPlayer()
+        public void StopPlayer(bool pause)
         {
-            FindObjectOfType<Character>().StopActions(true);
-        }
-
-        public void UnpausePlayer()
-        {
-            FindObjectOfType<Character>().StopActions(false);
+            FindObjectOfType<Character>().StopActions(pause);
         }
 
         private void SetDisabled(bool value)
@@ -82,7 +95,15 @@ namespace Burmuruk.RPGStarterTemplate.Interaction
         public void DisableByTime(float time)
         {
             disabler ??= new(time, itemToDisable);
-            disabler.EnableInTime(shouldDisable);
+
+            if (disabler.IsDisabled != shouldDisable)
+                StartCoroutine(disabler.EnableInTime(shouldDisable));
+        }
+
+        IEnumerator DelayedActionsCoroutine(DelayedAction action)
+        {
+            yield return new WaitForSeconds(action.Delay);
+            action.Action?.Invoke();
         }
     }
 }

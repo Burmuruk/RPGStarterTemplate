@@ -167,6 +167,8 @@ namespace Burmuruk.RPGStarterTemplate.Control
             var stats = progress.GetDataByLevel(CharacterType.Player, 0);
             if (stats.HasValue)
                 player.SetStats(stats.Value);
+            else
+                player.SetDefaultStats();
             //member.stats.color = lastColor;
 
             SetColor(player);

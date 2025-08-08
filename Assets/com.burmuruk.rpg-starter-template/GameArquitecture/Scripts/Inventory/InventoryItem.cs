@@ -57,13 +57,7 @@ namespace Burmuruk.RPGStarterTemplate.Inventory
         public int Capacity { get => m_capacity; }
         public GameObject Prefab { get => pickup.Prefab; }
         public GameObject PrefabInst { get => Instantiate(Prefab); }
-        public Pickup Pickup
-        {
-            get
-            {
-                return pickup;
-            }
-        }
+        public Pickup Pickup { get => pickup; set => pickup = value; }
 
         public virtual object GetSubType()
         {

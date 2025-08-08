@@ -1,6 +1,4 @@
 using Burmuruk.RPGStarterTemplate.Editor.Controls;
-using Burmuruk.RPGStarterTemplate.Inventory;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -87,16 +85,18 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             foreach (var change in changes)
             {
                 var data = change.Value.FirstOrDefault();
+                ItemCreationData creationData = null;
+                string modelPath = null;
 
                 if (string.IsNullOrEmpty(data.Key)) continue;
-                
+
                 switch (change.Key)
                 {
                     case ElementType.Weapon:
                         var weaponData = data.Value as BuffUserCreationData;
                         var (weapon, weBuffsNames) = (weaponData.Data, weaponData.Names);
-                        
-                        (CreationControls[change.Key] as WeaponSetting).UpdateInfo(weapon, weBuffsNames); 
+
+                        (CreationControls[change.Key] as WeaponSetting).UpdateInfo(weapon, weBuffsNames);
                         break;
 
                     case ElementType.Consumable:
@@ -107,15 +107,19 @@ namespace Burmuruk.RPGStarterTemplate.Editor
                         break;
 
                     case ElementType.Armour:
-                        var armour = (data.Value as ItemCreationData).Data;
+                        creationData = data.Value as ItemCreationData;
+                        var armour = creationData.Data;
+                        modelPath = creationData.args.pickupPath;
 
-                        (CreationControls[change.Key] as ArmourSetting).UpdateInfo(armour, null);
+                        (CreationControls[change.Key] as ArmourSetting).UpdateInfo(armour, new ItemDataArgs(modelPath));
                         break;
 
                     case ElementType.Item:
-                        var item = (data.Value as ItemCreationData).Data;
+                        creationData = data.Value as ItemCreationData;
+                        var item = creationData.Data;
+                        modelPath = creationData.args.pickupPath;
 
-                        (CreationControls[change.Key] as BaseItemSetting).UpdateInfo(item, null);
+                        (CreationControls[change.Key] as BaseItemSetting).UpdateInfo(item, new ItemDataArgs(modelPath));
                         break;
 
                     case ElementType.Buff:

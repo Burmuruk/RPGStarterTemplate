@@ -16,7 +16,7 @@ namespace Burmuruk.WorldG.Patrol
         public static bool operator true(ISplineNode p) => p != null;
 
         public static bool operator false(ISplineNode p) => p == null;
-        public event Action<MyNode, MyNode> OnNodeAdded;
-        public event Action<MyNode> OnNodeRemoved;
+        public event Action<PatrolNode, PatrolNode> OnNodeAdded;
+        public event Action<PatrolNode> OnNodeRemoved;
     }
 }

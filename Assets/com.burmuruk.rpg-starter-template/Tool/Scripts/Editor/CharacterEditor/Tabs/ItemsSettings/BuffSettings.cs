@@ -189,14 +189,4 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             _id = null;
         }
     }
-
-    public record BuffDataArgs : ItemDataArgs
-    {
-        public readonly BuffData Buff;
-
-        public BuffDataArgs(BuffData buff)
-        {
-            Buff = buff;
-        }
-    }
 }

@@ -166,20 +166,16 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
         {
             if (playerAction == PlayerAction.Dead) return;
 
-            try
-            {
-
-                CheckLeader();
-                CheckOwnState();
-                FindEnemies();
-                ChooseAttack();
-                TryTakeCover();
-                CheckPatrolPath();
+            if (CheckLeader() ||
+                CheckOwnState() ||
+                FindEnemies() ||
+                ChooseAttack() ||
+                TryTakeCover() ||
+                CheckPatrolPath())
+            { 
+                ActionManager();
+                MovementManager();
             }
-            catch (NotImplementedException) { }
-            
-            ActionManager();
-            MovementManager();
         }
 
         protected override void ActionManager()
@@ -187,18 +183,19 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
             base.ActionManager();
         }
 
-        protected virtual void CheckPatrolPath()
+        protected virtual bool CheckPatrolPath()
         {
-            if (!patrolController) return;
-            if (mover == null || mover.nodeList == null) return;
+            if (!patrolController) return false;
+            if (mover == null || mover.nodeList == null) return false;
 
             playerAction = PlayerAction.Patrol;
             patrolController.StartPatrolling();
+            return true;
         }
 
-        protected virtual void CheckLeader()
+        protected virtual bool CheckLeader()
         {
-            if (!leader) return;
+            if (!leader) return false;
 
             switch (curOrder)
             {
@@ -211,18 +208,18 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
                     break;
 
                 default:
-                    return;
+                    return false;
             }
 
-            throw new NotImplementedException();
+            return true;
         }
 
-        protected virtual void CheckOwnState()
+        protected virtual bool CheckOwnState()
         {
             if (health.HP < health.MaxHp * .4f)
             {
                 TryHeal();
-                throw new NotImplementedException();
+                return true;
             }
             //else if (Inventory.EquipedWeapon.Ammo <= 0)
             //{
@@ -230,33 +227,33 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
             //    throw new NotImplementedException();
             //}
 
-            return;
+            return false;
         }
 
-        protected virtual void FindEnemies()
+        protected virtual bool FindEnemies()
         {
             if (IsTargetClose || IsTargetFar)
             {
                 playerAction = PlayerAction.Combat;
-                throw new NotImplementedException();
+                return true;
             }
 
-            return;
+            return false;
         }
 
-        protected virtual void ChooseAttack()
+        protected virtual bool ChooseAttack()
         {
-            
+            return false;
         }
 
-        protected virtual void TryTakeCover()
+        protected virtual bool TryTakeCover()
         {
-            return;
+            return false;
         }
 
-        protected virtual void TryHeal()
+        protected virtual bool TryHeal()
         {
-            return;
+            return false;
         }
 
         protected virtual void ChooseAbility()

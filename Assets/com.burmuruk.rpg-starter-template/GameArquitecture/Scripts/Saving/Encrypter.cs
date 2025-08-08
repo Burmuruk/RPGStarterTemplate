@@ -49,27 +49,19 @@ namespace Burmuruk.RPGStarterTemplate.Saving
 
         public static string EncryptString(JObject data)
         {
-            //SetKeys();
-
-            return Convert.ToBase64String(Encrypt(Encoding.UTF8.GetBytes(data.ToString())));
+            var json = data.ToString();
+            var jsonBytes = Encoding.UTF8.GetBytes(json);
+            var encryptedBytes = Encrypt(jsonBytes);
+            return Convert.ToBase64String(encryptedBytes);
         }
 
         public static string DecryptString(string data)
         {
-            return Encoding.UTF8.GetString(Decrypt(Convert.FromBase64String(data)));
+            var encryptedBytes = Convert.FromBase64String(data);
+            var decryptedBytes = Decrypt(encryptedBytes);
+            return Encoding.UTF8.GetString(decryptedBytes);
         }
 
-        private static void SetKeys()
-        {
-            //if (key != null || iv != null) return;
-
-            //key = new byte[16];
-            //iv = new byte[16];
-
-            //var cryptToAEs = RandomNumberGenerator.Create();
-            //cryptToAEs.GetBytes(key);
-            //cryptToAEs.GetBytes(iv);
-        }
 
         public static byte[] Encrypt(byte[] data)
         {
@@ -97,10 +89,14 @@ namespace Burmuruk.RPGStarterTemplate.Saving
 
         private static byte[] Crypt(byte[] data, ICryptoTransform cryptoTransform)
         {
-            MemoryStream ms = new MemoryStream();
-            using (Stream stream = new CryptoStream(ms, cryptoTransform, CryptoStreamMode.Write))
+            using (MemoryStream ms = new MemoryStream())
             {
-                stream.Write(data, 0, data.Length);
+                using (CryptoStream stream = new CryptoStream(ms, cryptoTransform, CryptoStreamMode.Write))
+                {
+                    stream.Write(data, 0, data.Length);
+                    stream.FlushFinalBlock();
+                }
+
                 return ms.ToArray();
             }
         }

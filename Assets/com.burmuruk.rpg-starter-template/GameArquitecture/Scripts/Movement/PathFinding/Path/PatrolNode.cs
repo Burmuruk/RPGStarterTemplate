@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Burmuruk.WorldG.Patrol
@@ -11,6 +13,7 @@ namespace Burmuruk.WorldG.Patrol
         A_TO_B,
         B_TO_A
     }
+
     [System.Serializable]
     public struct NodeConnection
     {
@@ -54,20 +57,26 @@ namespace Burmuruk.WorldG.Patrol
     }
 
     [ExecuteInEditMode]
-    public class MyNode : MonoBehaviour, IPathNode, ISplineNode
+    public class PatrolNode : MonoBehaviour, IPathNode, ISplineNode
     {
         [SerializeField]
         public List<NodeConnection> nodeConnections = new List<NodeConnection>();
         [SerializeField] bool updateData = false;
-        [HideInInspector]
-        public uint idx = 0;
+
         public NodeData nodeData = null;
+        [HideInInspector] public uint idx = 0;
         public static CopyData copyData;
+
         private bool isSelected = false;
         private PatrolController patrol;
+        private float selectionTime = 2f;
+        private Task selectionTask = null;
+        private CancellationTokenSource cancellationToken;
+        private PatrolNode lastNode = null;
 
-        public event Action<MyNode, MyNode> OnNodeAdded;
-        public event Action<MyNode> OnNodeRemoved;
+        public event Action<PatrolNode, PatrolNode> OnNodeAdded;
+        public event Action<PatrolNode> OnNodeRemoved;
+        public event Action<PatrolNode, PatrolNode> OnNodeMoved;
 
         public uint ID => idx;
         public Transform Transform { get => transform; }
@@ -81,18 +90,13 @@ namespace Burmuruk.WorldG.Patrol
         public bool IsEnabled { get; private set; } = true;
 
         #region Unity methods
-        private void Awake()
-        {
-            if (!copyData.point) return;
-            
-            copyData.point.OnNodeAdded?.Invoke(copyData.point, this);
-        }
 
         private void OnEnable()
         {
             if (!copyData.point) return;
-            
+
             copyData.point.OnNodeAdded?.Invoke(copyData.point, this);
+            lastNode = copyData.point;
         }
 
         private void OnDisable()
@@ -102,8 +106,12 @@ namespace Burmuruk.WorldG.Patrol
 
         private void OnDrawGizmosSelected()
         {
-            Select();
+            if (lastNode != null && selectionTask != null)
+            {
+                OnNodeMoved?.Invoke(lastNode, this);
+            }
 
+            Select();
 
             foreach (var item in nodeConnections)
             {
@@ -141,8 +149,55 @@ namespace Burmuruk.WorldG.Patrol
         {
             if (!gameObject.activeSelf) return;
 
+            if (copyData.point != null)
+                copyData.point.Deselect();
+
             copyData = new CopyData(true, this);
             isSelected = true;
+
+            if (lastNode == null) return;
+
+            if (selectionTask != null)
+            {
+                return;
+                //cancellationToken.Cancel();
+            }
+
+            StartTimer();
+        }
+
+        public void Deselect()
+        {
+            if (copyData.point != this) return;
+
+            copyData.point = null;
+            copyData.wasSelected = false;
+            isSelected = false;
+        }
+
+        private void StartTimer()
+        {
+            SynchronizationContext context = SynchronizationContext.Current;
+            cancellationToken ??= new CancellationTokenSource();
+            var token = cancellationToken.Token;
+
+            selectionTask = Task.Run(async () =>
+            {
+                await Task.Delay(TimeSpan.FromSeconds(selectionTime));
+
+                if (token.IsCancellationRequested)
+                {
+                    cancellationToken = null;
+                    return;
+                }
+
+                context.Post(_ => 
+                {
+                    OnNodeMoved = null;
+                    lastNode = null;
+                    selectionTask = null;
+                }, null);
+            }, token);
         }
 
         public void Enable(bool shouldEnable = true)

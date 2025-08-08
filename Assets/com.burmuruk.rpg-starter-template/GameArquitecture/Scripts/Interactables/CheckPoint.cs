@@ -21,7 +21,6 @@ namespace Burmuruk.RPGStarterTemplate.Interaction
             if (!gameManager.ShowCharactersMenu()) return;
 
             levelManager.ChangeMenu();
-            SceneManager.LoadSceneAsync(1, LoadSceneMode.Additive);
         }
     }
 }

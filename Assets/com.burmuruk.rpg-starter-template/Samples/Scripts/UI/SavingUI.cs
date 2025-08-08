@@ -2,12 +2,10 @@ using Burmuruk.RPGStarterTemplate.Saving;
 using Burmuruk.RPGStarterTemplate.UI;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using static Burmuruk.RPGStarterTemplate.Stats.BasicStats;
 
 public class SavingUI : MonoBehaviour
 {
@@ -68,21 +66,6 @@ public class SavingUI : MonoBehaviour
         SetSlotColour(Color.white);
     }
 
-    private void Update()
-    {
-        if (Input.GetKeyUp(KeyCode.O))
-        {
-            string path = System.IO.Path.Combine(Application.persistentDataPath, "Capture one.png");
-            var data = System.IO.File.ReadAllBytes(path);
-
-            Texture2D tex = new Texture2D(2, 2);
-            ImageConversion.LoadImage(tex, data);
-
-            Sprite screenshotSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(.5f, .5f));
-            testImage.sprite = screenshotSprite;
-        }
-    }
-
     public void ToggleSlots()
     {
         ShowSlots(!slotsContainer.activeSelf);
@@ -122,7 +105,7 @@ public class SavingUI : MonoBehaviour
     {
         DisableSlots();
         EnableSlots(slots, images, out int slotsCount);
-        
+
         curSlots = slotsCount;
 
         if (slotsCount >= 3)
@@ -214,7 +197,7 @@ public class SavingUI : MonoBehaviour
             SlotUI curSlot = default;
             if (slot.id < 0)
             {
-                curSlot = autoSaves[slot.id * -1];
+                curSlot = autoSaves[(slot.id * -1) - 1];
             }
             else
             {
@@ -222,12 +205,12 @@ public class SavingUI : MonoBehaviour
                 ++slotsCount;
             }
 
-            curSlot.Title = "Guardado " + slot.id;
+            curSlot.Title = slot.id > 0 ? "Guardado " + slot.id : "Autoguardado";
             curSlot.PlayedTime = slot.slotData["TimePlayed"].ToString();
             curSlot.MembersCount = slot.slotData["MembersCount"].ToObject<int>();
             curSlot.GameObject.SetActive(true);
 
-            
+
             curSlot.Sprite = GetImage(slot.id);
 
             Sprite GetImage(int id)

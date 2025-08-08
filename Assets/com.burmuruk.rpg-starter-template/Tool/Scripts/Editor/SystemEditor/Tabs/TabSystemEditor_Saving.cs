@@ -3,7 +3,7 @@ using Burmuruk.RPGStarterTemplate.Utilities;
 using System;
 using System.Collections.Generic;
 using UnityEditor;
-using UnityEditor.PackageManager;
+using UnityEngine;
 using UnityEngine.UIElements;
 using static Burmuruk.RPGStarterTemplate.Editor.Utilities.UtilitiesUI;
 
@@ -13,12 +13,19 @@ namespace Burmuruk.RPGStarterTemplate.Editor
     {
         TextField[] savingTxtFields;
         string[] enumValues;
-        const int systemEnumValues = 3;
+        const int SYSTEM_ENUM_VALUES = 3;
+        const string ECRYPT_PREF_KEY = "RPGTemplate_EncryptSaving";
         private string _path;
+
+        public Toggle TglEncrypt { get; private set; }
 
         private void InitializeSaving()
         {
             var savingButtons = container.Q<VisualElement>("SavingButtons");
+
+            TglEncrypt = container.Q<Toggle>("TglEncryptSaving");
+            TglEncrypt.RegisterValueChangedCallback(OnTglEcryptClicked);
+
 
             GetAceptButton(savingButtons).clicked += OnAccept_SavingBtn;
             GetCancelButton(savingButtons).clicked += OnCanceled_SavingBtn;
@@ -27,6 +34,11 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             {
                 _path = AssetDatabase.GUIDToAssetPath(guids[0]);
             }
+        }
+
+        private void OnTglEcryptClicked(ChangeEvent<bool> evt)
+        {
+            PlayerPrefs.SetInt(ECRYPT_PREF_KEY, evt.newValue ? 1 : 0);
         }
 
         private void Show_Saving()
@@ -58,7 +70,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
                     textField.value = ((SavingExecution)i).ToString();
                     enumValues[i] = textField.value;
 
-                    if (i >= systemEnumValues)
+                    if (i >= SYSTEM_ENUM_VALUES)
                     {
                         textField.RegisterCallback<KeyUpEvent>(AddEnumSavingStep);
                     }

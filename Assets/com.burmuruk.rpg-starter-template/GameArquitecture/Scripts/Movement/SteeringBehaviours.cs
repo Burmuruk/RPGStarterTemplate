@@ -126,8 +126,24 @@ namespace Burmuruk.RPGStarterTemplate.Movement
         /// Rotates the agent to look at the given m_direction.
         /// </summary>
         /// <param name="agent"></param>
-        /// <param name="direction"></param>
-        public static void LookAt(Transform agent, Vector3 direction)
+        /// <param name="rotationSpeed"></param>
+        public static void LookAt(Transform agent, in Vector3 velocity, in float rotationSpeed)
+        {
+            //agent.transform.LookAt(agent.position + direction);
+            Vector3 moveDir = velocity;
+
+            if (moveDir.sqrMagnitude > 0.01f)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(moveDir.normalized);
+                agent.rotation = Quaternion.Slerp(
+                    agent.rotation,
+                    targetRotation,
+                    Time.deltaTime * rotationSpeed
+                );
+            }
+        }
+
+        public static void LookAt(Transform agent, in Vector3 direction)
         {
             agent.transform.LookAt(agent.position + direction);
         }

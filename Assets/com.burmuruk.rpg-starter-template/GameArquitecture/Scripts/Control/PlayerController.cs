@@ -155,16 +155,24 @@ namespace Burmuruk.RPGStarterTemplate.Control
                 if (enemy)
                 {
                     var newTarget = enemy.GetComponent<AIEnemyController>();
-                    ((AIGuildMember)player).SetTarget(newTarget);
+                    var playerRef = (AIGuildMember)player;
 
                     if (Target != null && Target == newTarget)
+                    {
                         Target.Deselect();
-
-                    Target = newTarget;
-                    Target.Select();
-                    //print(enemy.itemName);
-                    (player as AIGuildMember).AttackEnemy(Target);
-                    detachRotation = true;
+                        Target = null;
+                        detachRotation = false;
+                        playerRef.Retreat();
+                    }
+                    else
+                    {
+                        Target = newTarget;
+                        Target.Select();
+                        //print(enemy.itemName);
+                        playerRef.AutoAttackEnemy(Target);
+                        //playerRef.AttackEnemy(Target);
+                        detachRotation = true;
+                    }
                 }
             }
         }

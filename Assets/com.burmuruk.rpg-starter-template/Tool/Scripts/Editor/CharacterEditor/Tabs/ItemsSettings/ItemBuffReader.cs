@@ -11,23 +11,18 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         public BuffAdderUI BuffAdder { get; protected set; }
 
-        public (InventoryItem, BuffsNamesDataArgs) GetBuffsIds()
+        public BuffsNamesDataArgs GetCreatedEnums(ElementType type)
         {
-            return ((InventoryItem, BuffsNamesDataArgs))GetInfo(GetCreatedEnums(ElementType.Buff));
-        }
-
-        public CreatedBuffsDataArgs GetCreatedEnums(ElementType type)
-        {
-            var creations = new List<CreationData>();
-
-            if (!SavingSystem.Data.creations.ContainsKey(type)) return new(null);
+            var names = new List<string>();
+            
+            if (!SavingSystem.Data.creations.ContainsKey(type)) return new(null, null);
 
             foreach (var creation in SavingSystem.Data.creations[type])
             {
-                creations.Add(creation.Value);
+                names.Add(creation.Value.Name);
             }
 
-            return new CreatedBuffsDataArgs(creations.ToArray());
+            return new BuffsNamesDataArgs(names, null);
         }
 
         protected void UpdateBuffs(in BuffData[] buffs, BuffsNamesDataArgs buffArgs)
@@ -87,7 +82,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             List<NamedBuff> curBuffs = BuffAdder.GetBuffsData();
             List<BuffData> buffs = SelectCustomBuffs(curBuffs);
 
-            return ((buffs, new BuffsNamesDataArgs((from n in curBuffs select n.Name).ToList())));
+            return (buffs, new BuffsNamesDataArgs((from n in curBuffs select n.Name).ToList(), null));
         }
     }
 }

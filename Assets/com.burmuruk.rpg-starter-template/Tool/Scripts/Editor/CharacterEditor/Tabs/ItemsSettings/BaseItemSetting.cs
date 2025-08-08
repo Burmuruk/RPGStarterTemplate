@@ -1,4 +1,5 @@
 using Burmuruk.RPGStarterTemplate.Inventory;
+using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -9,6 +10,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
     {
         protected string _id = null;
         protected InventoryItem _changes;
+        protected ItemDataArgs _args = null;
 
         public TextField TxtDescription { get; private set; }
         public ObjectField OfSprite { get; private set; }
@@ -25,7 +27,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             UfCapacity = container.Q<UnsignedIntegerField>("txtCapacity");
 
             OfSprite.objectType = typeof(Sprite);
-            OfPickup.objectType = typeof(Pickup);
+            OfPickup.objectType = typeof(GameObject);
             _nameControl.TxtName.RegisterValueChangedCallback((evt) => 
             {
                 if (IsActive)
@@ -40,27 +42,34 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             UpdateName();
             TxtDescription.value = data.Description;
             OfSprite.value = data.Sprite;
-            OfPickup.value = data.Pickup;
+            OfPickup.value = args?.GetPickupPrefab();
             UfCapacity.value = (uint)data.Capacity;
 
             _changes ??= new InventoryItem();
-            _changes.UpdateInfo(data.Name, data.Description, type, (Sprite)OfSprite.value, (Pickup)OfPickup.value, unchecked((int)UfCapacity.value));
+            _changes.UpdateInfo(data.Name, data.Description, type, (Sprite)OfSprite.value, null, unchecked((int)UfCapacity.value));
+            _args = args;
         }
 
         public virtual (InventoryItem item, ItemDataArgs args) GetInfo(ItemDataArgs args)
         {
             var data = new InventoryItem();
+            ItemDataArgs newArgs;
+
+            if (OfPickup.value == null)
+                newArgs = null;
+            else
+                newArgs = new ItemDataArgs(AssetDatabase.GetAssetPath(OfPickup.value as GameObject));
 
             data.UpdateInfo(
                 _nameControl.TxtName.value,
                 TxtDescription.value,
                 ItemType.None,
                 (Sprite)OfSprite.value,
-                (Pickup)OfPickup.value,
+                null,
                 unchecked((int)UfCapacity.value)
                 );
 
-            return (data, null);
+            return (data, newArgs);
         }
 
         public override void Clear()
@@ -71,6 +80,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             UfCapacity.value = 0;
             CurModificationType = ModificationTypes.None;
             _changes = null;
+            _args = null;
             _id = null;
             base.Clear();
         }
@@ -102,7 +112,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 if (OfSprite.value != _changes.Sprite)
                     CurModificationType = ModificationTypes.EditData;
 
-                if (OfPickup.value != _changes.Pickup)
+                if (OfPickup.value != _args?.GetPickupPrefab())
                     CurModificationType = ModificationTypes.EditData;
 
                 if (UfCapacity.value != _changes.Capacity)
@@ -133,8 +143,8 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                     CurModificationType = ModificationTypes.Add;
 
                 Utilities.UtilitiesUI.DisableNotification();
-                var (data, _) = GetInfo(null);
-                var creationData = new ItemCreationData(_nameControl.TxtName.value, data);
+                var (data, args) = GetInfo(null);
+                var creationData = new ItemCreationData(_nameControl.TxtName.value, data, args);
 
                 return SavingSystem.SaveCreation(ElementType.Item, in _id, creationData, CurModificationType);
             }
@@ -151,9 +161,9 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             if (result == null) return null;
             
             _id = id;
-            var item = (result as ItemCreationData).Data;
+            var item = (result as ItemCreationData);
             Set_CreationState(CreationsState.Editing);
-            UpdateInfo(item, null);
+            UpdateInfo(item.Data, item.args);
 
             return result;
         }
@@ -164,7 +174,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             UpdateName();
             TxtDescription.value = _changes.Description;
             OfSprite.value = _changes.Sprite;
-            OfPickup.value = _changes.Pickup;
+            OfPickup.value = _args?.GetPickupPrefab();
             UfCapacity.value = (uint)_changes.Capacity;
             CurModificationType = ModificationTypes.None;
         }
@@ -172,6 +182,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         public override void Remove_Changes()
         {
             _changes = null;
+            _args = null;
             _id = null;
         }
     }
@@ -181,5 +192,19 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         public abstract void Clear();
     }
 
-    public record ItemDataArgs { }
+    public record ItemDataArgs 
+    {
+        public string pickupPath;
+
+        public ItemDataArgs(string pickupPath)
+        {
+            this.pickupPath = pickupPath;
+        }
+
+        public GameObject GetPickupPrefab()
+        {
+            if (string.IsNullOrEmpty(pickupPath)) return null;
+            return UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(pickupPath);
+        }
+    }
 }

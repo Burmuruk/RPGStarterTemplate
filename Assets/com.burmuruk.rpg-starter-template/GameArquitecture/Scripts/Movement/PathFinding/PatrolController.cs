@@ -150,7 +150,7 @@ namespace Burmuruk.WorldG.Patrol
 
             for (int i = 0; i < route.Length; i++)
             {
-                var go = new GameObject("Node " + i, typeof(MyNode));
+                var go = new GameObject("Node " + i, typeof(PatrolNode));
                 go.transform.parent = splineGO.transform;
                 go.transform.position = route[i].Position;
             }

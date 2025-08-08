@@ -46,6 +46,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         public override void UpdateInfo(InventoryItem data, ItemDataArgs args, ItemType type = ItemType.Weapon)
         {
             _changes = new Weapon();
+            _args = args;
             base.UpdateInfo(data, args, type);
 
             var weapon = data as Weapon;
@@ -71,14 +72,12 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         public override (InventoryItem item, ItemDataArgs args) GetInfo(ItemDataArgs args)
         {
-            //var createdBuffs = args as CreatedBuffsDataArgs;
-
-            //if (createdBuffs == null) return default;
-
             Weapon weapon = new Weapon();
-            weapon.Copy(base.GetInfo(args).item);
+            var (baseInfo, baseArgs) = base.GetInfo(args);
+            weapon.Copy(baseInfo);
 
             (var buffs, var buffsNames) = GetBuffsInfo();
+            buffsNames.pickupPath = baseArgs?.pickupPath;
 
             weapon.UpdateInfo(
                 (EquipmentType)EFBodyPart.value,
@@ -109,6 +108,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             BuffAdder.Clear();
 
             _changes = null;
+            _args = null;
         }
 
         public override void Remove_Changes()
@@ -201,7 +201,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                     CurModificationType = ModificationTypes.Add;
 
                 DisableNotification();
-                var (item, args) = GetBuffsIds();
+                var (item, args) = ((InventoryItem, BuffsNamesDataArgs))GetInfo(GetCreatedEnums(ElementType.Buff));
                 var creationData = new BuffUserCreationData(_nameControl.TxtName.text.Trim(), item, args);
 
                 return SavingSystem.SaveCreation(ElementType.Weapon, in _id, creationData, CurModificationType);

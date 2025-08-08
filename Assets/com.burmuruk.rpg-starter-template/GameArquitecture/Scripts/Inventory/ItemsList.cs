@@ -45,7 +45,7 @@ namespace Burmuruk.RPGStarterTemplate.Inventory
 
             foreach (var item in _items)
             {
-                _mainList.Add(item.ID, item);
+                _mainList.TryAdd(item.ID, item);
             }
         }
     }

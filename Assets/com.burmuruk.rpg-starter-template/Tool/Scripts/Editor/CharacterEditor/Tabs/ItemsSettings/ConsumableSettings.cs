@@ -23,6 +23,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         public override void UpdateInfo(InventoryItem data, ItemDataArgs args, ItemType type = ItemType.Consumable)
         {
             _changes = new ConsumableItem();
+            _args = args;
             base.UpdateInfo(data, args, type);
             var consumable = data as ConsumableItem;
             var buffArgs = args as BuffsNamesDataArgs;
@@ -39,9 +40,11 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         public override (InventoryItem item, ItemDataArgs args) GetInfo(ItemDataArgs args)
         {
             ConsumableItem newItem = new();
-            newItem.Copy(base.GetInfo(null).item);
+            var (baseInfo, baseArgs) = base.GetInfo(args);
+            newItem.Copy(baseInfo);
 
             (var buffs, var buffsNames) = GetBuffsInfo();
+            buffsNames.pickupPath = baseArgs?.pickupPath;
 
             newItem.UpdateInfo(
                 buffs.ToArray(),
@@ -60,6 +63,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             AreaRadious.value = 0;
 
             _changes = null;
+            _args = null;
         }
 
         public override void Remove_Changes()
@@ -133,7 +137,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                     CurModificationType = ModificationTypes.Add;
 
                 DisableNotification();
-                var (item, args) = GetBuffsIds();
+                var (item, args) = ((InventoryItem, BuffsNamesDataArgs))GetInfo(GetCreatedEnums(ElementType.Buff));
                 var creationData = new BuffUserCreationData(TxtName.text.Trim(), item, args);
 
                 return SavingSystem.SaveCreation(ElementType.Consumable, in _id, creationData, CurModificationType);
@@ -165,17 +169,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
     {
         public List<string> BuffsNames { get; private set; }
 
-        public BuffsNamesDataArgs(List<string> buffs)
-        {
-            BuffsNames = buffs;
-        }
-    }
-
-    public record BuffsIdsDataArgs : ItemDataArgs
-    {
-        public List<(string name, string id)> BuffsNames { get; private set; }
-
-        public BuffsIdsDataArgs(List<(string, string)> buffs)
+        public BuffsNamesDataArgs(List<string> buffs, string modelPath) : base(modelPath)
         {
             BuffsNames = buffs;
         }
@@ -185,7 +179,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
     {
         public CreationData[] Buffs { get; private set; }
 
-        public CreatedBuffsDataArgs(CreationData[] buffs)
+        public CreatedBuffsDataArgs(CreationData[] buffs, string modelPath) : base(modelPath)
         {
             Buffs = buffs;
         }

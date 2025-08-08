@@ -7,6 +7,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
@@ -92,19 +93,12 @@ namespace Burmuruk.RPGStarterTemplate.Control
                 TemporalSaver.RemoveAllData();
                 savingWrapper.Load(GetSlotData().Id);
             }
-            if (Input.GetKeyUp(KeyCode.P))
-            {
-                string path = System.IO.Path.Combine(Application.persistentDataPath, "Capture one.png");
-                ScreenCapture.CaptureScreenshot(path);
-            }
-
         }
 
         public void SetPaths()
         {
             if (NavSaver.NodeList == null) return;
 
-            //print("Valor encontrado");
             var movers = FindObjectsOfType<Movement.Movement>(true);
 
             foreach (var mover in movers)
@@ -140,16 +134,16 @@ namespace Burmuruk.RPGStarterTemplate.Control
 
         public void GoToMainMenu()
         {
-            itemsToDestroy.ForEach(obj => Destroy(obj));
+            savingWrapper.AddNewAutoSaveSlot(CaptureLevelData(), true);
 
-            //SaveGame(slotIdx);
+            itemsToDestroy.ForEach(obj => Destroy(obj));
             gameManager.GoToMainMenu();
             Destroy(gameObject);
         }
 
         public void ExitGame()
         {
-            //SaveGame(slotIdx);
+            savingWrapper.AddNewAutoSaveSlot(CaptureLevelData(), true);
             gameManager.ExitGame();
         }
 
@@ -172,7 +166,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
                         var pm = FindObjectOfType<PlayerManager>();
                         menuCharacters.SetPlayers(pm.Players);
                         menuCharacters.SetInventory(pm.MainInventory);
-                        menuCharacters.SetPlayerManager(FindObjectOfType<PlayerManager>());
+                        menuCharacters.SetPlayerManager(pm);
 
                         menuCharacters.OnMainPlayerChanged += playerManager.SetPlayerControl;
                         break;
@@ -235,6 +229,28 @@ namespace Burmuruk.RPGStarterTemplate.Control
             }
         }
 
+        public void Die()
+        {
+            Task.Delay(1000).GetAwaiter().OnCompleted(LoadLastPoint);
+        }
+
+        private void LoadLastPoint()
+        {
+            var slots = savingWrapper.FindAvailableSlots(out _);
+            (int idx, float time) max = (0, float.MinValue);
+
+            foreach (var slot in slots)
+            {
+                if (slot.id == -1 || slot.id == 1)
+                {
+                    if (slot.slotData["TimePlayed"].ToObject<float>() is var t && t > max.time)
+                        max = (slot.id, t);
+                }
+            }
+
+            savingWrapper.Load(max.idx == 0 ? slotIdx : max.idx);
+        }
+
         public void Resume()
         {
             if (gameManager.Continue())
@@ -265,6 +281,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
             GetComponentInChildren<Camera>(true).gameObject.SetActive(true);
 
             gameManager.ExitUI();
+            Task.Delay(200).GetAwaiter().OnCompleted(() => savingWrapper.AddNewAutoSaveSlot(CaptureLevelData(), false));
         }
 
         public void Remove()
@@ -276,10 +293,10 @@ namespace Burmuruk.RPGStarterTemplate.Control
 
         public void ChangeMenu()
         {
-            if (!menuCharacters) return;
+            savingWrapper.AddNewAutoSaveSlot(CaptureLevelData(), true);
 
             gameManager.EnableUI(true);
-            menuCharacters.ChangeMenu();
+            SceneManager.LoadSceneAsync(1, LoadSceneMode.Additive);
         }
 
         public void RestoreFromJToken(JToken state)

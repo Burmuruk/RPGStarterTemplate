@@ -1,14 +1,13 @@
-﻿using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using System;
-using System.Text;
-using System.Linq;
-using static Burmuruk.RPGStarterTemplate.Stats.BasicStats;
 
 namespace Burmuruk.RPGStarterTemplate.Saving
 {
@@ -44,11 +43,11 @@ namespace Burmuruk.RPGStarterTemplate.Saving
             }
 
             yield return SceneManager.LoadSceneAsync(nextScene);
-            
+
             onSceneLoaded?.Invoke();
 
             RestoreFromToken(slotState);
-            
+
             callback?.Invoke(slotData);
             //yield return SceneManager.UnloadSceneAsync(curScene);
             //Debug.Log("Scene Unloaded");
@@ -59,6 +58,23 @@ namespace Burmuruk.RPGStarterTemplate.Saving
             JObject state = LoadJsonFromFile(saveFile);
             CaptureAsToken(ref state, slotData, slot);
             SaveFileAsJson(saveFile, state);
+        }
+
+        public void OverwriteSave(string saveFile, JObject data)
+        {
+            SaveFileAsJson(saveFile, data);
+        }
+
+        public JObject LoadSave(string saveFile)
+        {
+            return LoadJsonFromFile(saveFile);
+        }
+
+        public JObject LoadCurrentSlot(string saveFile, JObject slotData)
+        {
+            JObject state = new();
+            CaptureAsToken(ref state, slotData, 1);
+            return state;
         }
 
         public void DeleteSlot(string fileName, int slot)
@@ -100,53 +116,18 @@ namespace Burmuruk.RPGStarterTemplate.Saving
                 return new JObject();
             }
 
-            //using (Stream stream = new FileStream(path, FileMode.Open))
-            //{
-            //    //List<byte[]> text = new();
-            //    //int result = 0;
-            //    //do
-            //    //{
-            //    //    byte[] buffer = new byte[64];
-            //    //    result = stream.Read(buffer, 0, 64); 
+            string total = File.ReadAllText(path);
+            string json = Encrypter.DecryptString(total);
+            JObject decrypted = JObject.Parse(json);
 
-            //    //} while (result != 0);
-
-            //    //var total = text.ToArray();
-
-            //    //JObject hi = new JObject(Encrypter.Decrypt());
-
-            //    //return hi;
-            //}
-            using (var textReader = File.OpenText(path))
-            {
-                using (var reader = new JsonTextReader(textReader))
-                {
-                    reader.FloatParseHandling = FloatParseHandling.Double;
-
-                    return JObject.Load(reader);
-                }
-            }
+            return decrypted;
         }
 
         private void SaveFileAsJson(string saveFile, JObject state)
         {
             string path = GetPathFromSaveFile(saveFile);
-            
-            //using (Stream textWriter = new FileStream (path, FileMode.Create))
-            //{
-            //    //var buffer = Encoding.UTF8.GetBytes(Encrypter.EncryptString(state));
-            //    //textWriter.Write(buffer, 0, buffer.Length);
 
-            //}
-
-            using (var textWriter = File.CreateText(path))
-            {
-                using (var writer = new JsonTextWriter(textWriter))
-                {
-                    writer.Formatting = Formatting.Indented;
-                    state.WriteTo(writer);
-                }
-            }
+            File.WriteAllText(path, Encrypter.EncryptString(state));
         }
 
         private void CaptureAsToken(ref JObject state, JObject slotData, int slot)
@@ -237,14 +218,14 @@ namespace Burmuruk.RPGStarterTemplate.Saving
                 if (stateDict.ContainsKey(id))
                 {
                     saveables[i].RestoreFromJToken(stateDict[id], SavingExecution.General);
-                } 
+                }
             }
 
             OnLoadingStateFinished?.Invoke((int)SavingExecution.General);
         }
 
         private string GetPathFromSaveFile(string saveFile)
-        { 
+        {
             //return Path.Combine( Application.persistentDataPath, saveFile + ".sav");
             return Path.Combine(Application.persistentDataPath, saveFile + extension);
         }

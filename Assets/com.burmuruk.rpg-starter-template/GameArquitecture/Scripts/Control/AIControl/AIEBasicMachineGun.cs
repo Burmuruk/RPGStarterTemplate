@@ -4,12 +4,13 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
 {
     public class AIEBasicMachineGun : AIEnemyController
     {
-        protected override void FindEnemies()
+        protected override bool FindEnemies()
         {
-            if (!IsTargetClose && !IsTargetFar) return;
+            if (!IsTargetClose && !IsTargetFar) return false;
 
             playerAction = PlayerAction.Combat;
             attackState = AttackState.BasicAttack;
+            return true;
         }
 
         protected override void ActionManager()

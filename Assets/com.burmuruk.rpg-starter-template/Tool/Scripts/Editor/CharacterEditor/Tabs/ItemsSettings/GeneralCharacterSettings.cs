@@ -121,7 +121,8 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                         case ElementType.Item:
                         case ElementType.Armour:
                             var item = (creation.Value as ItemCreationData).Data;
-                            _creationSaver.SavetItem(item);
+                            var args = (creation.Value as ItemCreationData).args;
+                            _creationSaver.SavetItem(item, args);
                             elementCreated = true;
                             break;
 
@@ -132,7 +133,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                             InventoryItem newBuff = ScriptableObject.Instantiate(buffUser);
                             ItemDataConverter.Update_BuffsInfo(buffUser as IBuffUser, cArgs);
                             
-                            _creationSaver.SavetItem(buffUser);
+                            _creationSaver.SavetItem(buffUser, cArgs);
                             elementCreated = true;
                             break;
 

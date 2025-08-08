@@ -1,0 +1,7 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <ui:VisualElement class="dialogue-node">
+        <ui:TextField name="title" label="Texto" />
+        <ui:Button text=" + " name="add" />
+        <ui:Button text=" - " name="delete" />
+    </ui:VisualElement>
+</ui:UXML>

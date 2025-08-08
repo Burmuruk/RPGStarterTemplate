@@ -23,7 +23,6 @@ namespace Burmuruk.RPGStarterTemplate.Stats
 
         
         [Space(), Header("Mis variables")]
-        [SerializeField] public float magia;
         [SerializeField] public int poder;
 
 [Serializable]

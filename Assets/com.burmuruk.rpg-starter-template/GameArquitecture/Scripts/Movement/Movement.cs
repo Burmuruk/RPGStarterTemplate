@@ -192,8 +192,11 @@ namespace Burmuruk.RPGStarterTemplate.Movement
 
             try
             {
-                curNodePosition ??= nodeList.FindNearestNode(transform.position);
-
+                curNodePosition = nodeList.FindNearestNode(transform.position);
+                Debug.DrawRay(curNodePosition.Position, Vector3.up * 10, Color.green);
+                Debug.DrawRay(point, Vector3.up * 10, Color.cyan);
+                Debug.DrawRay(transform.position, Vector3.up * 10, Color.black);
+                
                 m_scheduler.AddAction(this, ActionPriority.Low, () =>
                     m_pathFinder.Find_BestRoute<AStar>((curNodePosition, point)));
             }
@@ -416,7 +419,10 @@ namespace Burmuruk.RPGStarterTemplate.Movement
                 if (m_state == MovementState.FollowingPath)
                 {
                     if (!GetNextNode())
+                    {
                         FinishAction();
+                        return;
+                    }
                     else
                         curNodePosition = m_pathNodeTarget;
                 }
@@ -424,6 +430,7 @@ namespace Burmuruk.RPGStarterTemplate.Movement
                 {
                     curNodePosition = m_pathNodeTarget;
                     FinishAction();
+                    return;
                 }
             }
             else if (d <= SlowingRadious &&
@@ -447,12 +454,8 @@ namespace Burmuruk.RPGStarterTemplate.Movement
             }
 
             if (!detachRotation)
-                SteeringBehaviours.LookAt(transform, new(m_rb.velocity.x, 0, m_rb.velocity.z));
-            else
             {
-                //Vector3 dir = target - transform.position;
-
-                //SteeringBehaviours.LookAt(transform, new Vector3(0, dir.y, 0));
+                SteeringBehaviours.LookAt(transform, m_rb.velocity, m_maxSteerForce);
             }
         }
 

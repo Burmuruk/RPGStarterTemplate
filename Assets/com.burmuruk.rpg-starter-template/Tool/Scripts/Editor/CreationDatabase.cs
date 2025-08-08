@@ -131,10 +131,6 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         public CreationData data;
     }
 
-
-
-
-
     [Serializable]
     public class CreationData
     {
@@ -161,25 +157,14 @@ namespace Burmuruk.RPGStarterTemplate.Editor
     public class ItemCreationData : CreationData
     {
         public RPGStarterTemplate.Inventory.InventoryItem Data;
+        public ItemDataArgs args;
 
-        public ItemCreationData(string name, RPGStarterTemplate.Inventory.InventoryItem data) : base(name)
+        public ItemCreationData(string name, RPGStarterTemplate.Inventory.InventoryItem data, ItemDataArgs args) : base(name)
         {
             Data = data;
+            this.args = args;
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     [Serializable]
     public class BuffUserCreationData : CreationData

@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Burmuruk.WorldG.Patrol
 {
-    //[ExecuteInEditMode]
+    [ExecuteInEditMode]
     public class Spline : MonoBehaviour
     {
         #region variables
@@ -23,7 +23,7 @@ namespace Burmuruk.WorldG.Patrol
         [SerializeField] bool initialized = false;
         bool isAlive = true;
 
-        public PatrolPath<MyNode> path { get; private set; }
+        public PatrolPath<PatrolNode> path { get; private set; }
         private bool isAdded = true;
         #endregion
 
@@ -67,6 +67,14 @@ namespace Burmuruk.WorldG.Patrol
             isAlive = false;
         }
 
+        private void OnDrawGizmosSelected()
+        {
+            if (nodesCount != 0) return;
+
+            initialized = false;
+            Initialize();
+        }
+
         [DrawGizmo(GizmoType.InSelectionHierarchy)]
         private void OnDrawGizmos()
         {
@@ -85,7 +93,7 @@ namespace Burmuruk.WorldG.Patrol
             //List<int> hello;
             if (!shouldDraw) return;
 
-            LinkedListNode<MyNode> node = path.FirstNode;
+            LinkedListNode<PatrolNode> node = path.FirstNode;
 
             for (int i = 0; i < path.Count; i++)
             {
@@ -108,10 +116,10 @@ namespace Burmuruk.WorldG.Patrol
         {
             if (initialized) return;
             
-            var points = transform.GetComponentsInChildren<MyNode>();
+            var points = transform.GetComponentsInChildren<PatrolNode>();
             Set_NodeSettings(points);
 
-            path = new PatrolPath<MyNode>(cyclicType, points);
+            path = new PatrolPath<PatrolNode>(cyclicType, points);
             nodesCount = path.Count;
             initialized = true;
         }
@@ -119,36 +127,101 @@ namespace Burmuruk.WorldG.Patrol
 
         #region private methods
 
-        private void AddNode(MyNode current, MyNode newPoint)
+        private void AddNode(PatrolNode current, PatrolNode newPoint)
         {
-            if (current == path.Last)
+            if (current == newPoint) return;
+
+            bool containsNode = false;
+            var enumerator = path.GetEnumerator();
+
+            for (int i = 0; i < path.Count; i++)
             {
-                path.Add(newPoint);
+                if (enumerator.Current == newPoint)
+                {
+                    containsNode = true;
+                    break;
+                }
+
+                enumerator.MoveNext();
+            }
+
+            if (!containsNode)
+            {
+                path.AddAfter(current, newPoint);
+                newPoint.OnNodeMoved += AddNode;
             }
             else
             {
-                var prev = path.Prev(current);
-                var next = path.Next(current);
-
-                if (prev == null)
-                    path.AddAfter(current, newPoint);
-
-                var prevDirection = prev.Position - current.Position;
-                var nextDirection = next.Position - current.Position;
-                var newDirection = newPoint.Position - current.Position;
-
-                var prevAngle = Vector3.Angle(prevDirection, newDirection);
-                var nextAngle = Vector3.Angle(nextDirection, newDirection);
-                if (prevAngle > nextAngle)
-                    path.AddAfter(current, newPoint);
-                else /*if (nextAngle > prevAngle)*/
-                    path.AddBefore(current, newPoint);
+                SetNodePosition(current, newPoint);
             }
 
             Set_NodeSettings(newPoint);
         }
 
-        private void Set_NodeSettings(params MyNode[] points)
+        public void SetNodePosition(PatrolNode current, PatrolNode newPoint)
+        {
+            RemoveNode(newPoint);
+
+            var prev = path.Prev(current);
+            var next = path.Next(current);
+
+            if (prev == null)
+                path.AddAfter(current, newPoint);
+
+            var prevDirection = prev.Position - current.Position;
+            var nextDirection = next.Position - current.Position;
+            var newDirection = newPoint.Position - current.Position;
+
+            var prevAngle = Vector3.Angle(prevDirection, newDirection);
+            var nextAngle = Vector3.Angle(nextDirection, newDirection);
+            int idx = GetNodeIdx(current).Value;
+
+            if (prevAngle > nextAngle)
+            {
+                path.AddAfter(current, newPoint);
+                newPoint.gameObject.transform.SetSiblingIndex(idx + 1);
+            }
+            else /*if (nextAngle > prevAngle)*/
+            {
+                path.AddBefore(current, newPoint);
+                newPoint.gameObject.transform.SetSiblingIndex(idx);
+            }
+        }
+
+        private void RemoveNode(PatrolNode node)
+        {
+            var enumerator = path.GetEnumerator();
+
+            for (int i = 0; i < path.Count; i++)
+            {
+                enumerator.MoveNext();
+
+                if (enumerator.Current == node)
+                {
+                    path.Remove(node);
+                    break;
+                }
+            }
+        }
+
+        private int? GetNodeIdx(PatrolNode node)
+        {
+            var enumerator = path.GetEnumerator();
+
+            for (int i = 0; i < path.Count; i++)
+            {
+                enumerator.MoveNext();
+
+                if (enumerator.Current == node)
+                {
+                    return i;
+                }
+            }
+
+            return null;
+        }
+
+        private void Set_NodeSettings(params PatrolNode[] points)
         {
             foreach (var point in points)
             {

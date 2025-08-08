@@ -5,7 +5,7 @@ namespace Burmuruk.RPGStarterTemplate.Inventory
 {
     public class Pickup : MonoBehaviour
     {
-        [SerializeField] InventoryItem inventoryItem;
+        [SerializeField] public InventoryItem inventoryItem;
         [SerializeField] public GameObject prefab;
 
         public event Action<GameObject> OnPickedUp;

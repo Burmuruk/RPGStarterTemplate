@@ -18,6 +18,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         public override void UpdateInfo(InventoryItem data, ItemDataArgs args, ItemType type = ItemType.Armor)
         {
             _changes = new ArmourElement();
+            _args = args;
             base.UpdateInfo(data, args, type);
             var armour = data as ArmourElement;
 
@@ -81,8 +82,8 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                     CurModificationType = ModificationTypes.Add;
 
                 DisableNotification();
-                var (data, _) = GetInfo(null);
-                var creationData = new ItemCreationData(_nameControl.TxtName.value.Trim(), data as ArmourElement);
+                var (data, args) = GetInfo(null);
+                var creationData = new ItemCreationData(_nameControl.TxtName.value.Trim(), data as ArmourElement, args);
 
                 return SavingSystem.SaveCreation(ElementType.Armour, in _id, creationData, CurModificationType);
             }
@@ -98,6 +99,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
             EquipmentPlace.Value = EquipmentType.None;
             _changes = null;
+            _args = null;
         }
 
         public override void Load_Changes()
@@ -113,7 +115,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
     {
         public EquipmentType EquipmentPlace { get; private set; }
 
-        public ArmourDataArgs(EquipmentType equipmentPlace)
+        public ArmourDataArgs(EquipmentType equipmentPlace, string modelPath): base(modelPath)
         {
             EquipmentPlace = equipmentPlace;
         }

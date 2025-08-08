@@ -188,8 +188,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8efe2cad4cc5cfc41af02844ae6093d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  initialItems: []
-  inventory: {fileID: 0}
+  _initialItems: []
+  _inventory: {fileID: 0}
+  _equipment:
+    body: {fileID: 0}
+    spawnPoints: []
 --- !u!114 &4417388710563994346
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -202,8 +205,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b9f4b1d081e12a4eb3dd11289027551, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hp: 10
-  maxHp: 2
+  _hp: 10
+  _maxHp: 10
 --- !u!114 &4881003949534948866
 MonoBehaviour:
   m_ObjectHideFlags: 0

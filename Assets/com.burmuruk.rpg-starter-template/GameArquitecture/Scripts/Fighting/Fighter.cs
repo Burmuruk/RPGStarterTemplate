@@ -2,6 +2,7 @@
 using Burmuruk.RPGStarterTemplate.Stats;
 using Burmuruk.Utilities;
 using System;
+using System.Collections;
 using UnityEngine;
 
 namespace Burmuruk.RPGStarterTemplate.Combat
@@ -18,8 +19,11 @@ namespace Burmuruk.RPGStarterTemplate.Combat
 
         Transform m_target;
         CoolDownAction cdBasicAttack;
+        Coroutine basicAttackC;
+        Coroutine autoBACoroutine;
         public bool shouldGetClose = false;
         bool canAttack = true;
+        bool inAutoAttack = false;
 
         BasicStats Stats { get => m_Stats.Invoke(); }
 
@@ -56,6 +60,7 @@ namespace Burmuruk.RPGStarterTemplate.Combat
 
             float rate = m_Stats.Invoke().damageRate;
             cdBasicAttack = new CoolDownAction(in rate);
+            inAutoAttack = false;
         }
 
         public void Pause(bool shouldPause)
@@ -66,7 +71,7 @@ namespace Burmuruk.RPGStarterTemplate.Combat
         public void SetTarget(Transform target)
         {
             m_target = target;
-            m_targetHealth = target.GetComponent<Health>();
+            m_targetHealth = target?.GetComponent<Health>();
         }
 
         /// <summary>
@@ -97,6 +102,26 @@ namespace Burmuruk.RPGStarterTemplate.Combat
             }
         }
 
+        public void StartAutoBasicAttack(bool start)
+        {
+            if (start)
+            {
+                if (autoBACoroutine != null)
+                    StopCoroutine(autoBACoroutine);
+
+                if (inAutoAttack) return;
+
+                autoBACoroutine = StartCoroutine(AutoBasicAttackCoroutine()); 
+            }
+            else
+            {
+                if (autoBACoroutine != null)
+                    StopCoroutine(autoBACoroutine);
+
+                autoBACoroutine = null;
+            }
+        }
+
         public void SpecialAttack(AbilityType type)
         {
             var habilities = m_inventory.GetList(ItemType.Ability);
@@ -119,5 +144,39 @@ namespace Burmuruk.RPGStarterTemplate.Combat
                 AbilityType.StealHealth => m_target,
                 _ => null
             };
+
+        private IEnumerator AutoBasicAttackCoroutine()
+        {
+            if (m_target == null) goto EndAutoAttack;
+
+            inAutoAttack = true;
+
+            while (m_target != null)
+            {
+                while (Vector3.Distance(m_target.position, transform.position) > Stats.minDistance)
+                {
+                    yield return new WaitForSeconds(.5f);
+
+                    if (m_target == null) goto EndAutoAttack;
+                }
+
+                m_targetHealth.ApplyDamage(Stats.damage);
+
+                EquipeableItem weapon = m_inventory.Equipped[(int)Inventory.EquipmentType.WeaponR];
+
+                if (weapon != null && (weapon as Weapon).TryGetBuff(out BuffData? buff))
+                {
+                    if (buff.HasValue)
+                        BuffsManager.Instance.AddBuff(transform.GetComponent<Control.Character>(), buff.Value, () => m_targetHealth.ApplyDamage(Stats.damage));
+                }
+
+                if (!gameObject.activeSelf) goto EndAutoAttack;
+
+                yield return new WaitForSeconds(Stats.damageRate);
+            }
+
+        EndAutoAttack:
+            inAutoAttack = false;
+        }
     }
 }

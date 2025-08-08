@@ -74,7 +74,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
                 {
                     if (value != m_target)
                     {
-                        m_target.GetComponent<Health>().OnDied -= VerifyTargetsHealth;
+                        m_target.GetComponent<Health>().OnDied -= GetNextTarget;
                     }
                     else
                     {
@@ -86,7 +86,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
                 fighter.SetTarget(value);
 
                 if (value != null)
-                    m_target.GetComponent<Health>().OnDied += VerifyTargetsHealth;
+                    m_target.GetComponent<Health>().OnDied += GetNextTarget;
             }
         }
         #endregion
@@ -134,7 +134,8 @@ namespace Burmuruk.RPGStarterTemplate.Control
             ModsList.AddVariable((Character)this, ModifiableStat.BaseDamage, () => stats.damage, (value) => { stats.damage = (int)value; });
             ModsList.AddVariable((Character)this, ModifiableStat.GunFireRate, () => stats.damageRate, (value) => { stats.damageRate = value; });
             ModsList.AddVariable((Character)this, ModifiableStat.MinDistance, () => stats.minDistance, (value) => { stats.minDistance = value; });
-        }
+        
+}
 
         public virtual void SetStats(BasicStats newStats)
         {
@@ -144,6 +145,11 @@ namespace Burmuruk.RPGStarterTemplate.Control
                 GetComponents();
             fighter.Initilize(invent, () => stats);
             mover.Initialize(invent, actionScheduler, () => stats);
+        }
+
+        public virtual void SetDefaultStats()
+        {
+            SetStats(stats);
         }
 
         public void SetPosition(Vector3 position)
@@ -224,7 +230,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
             return closest.enemy;
         }
 
-        protected virtual void VerifyTargetsHealth(Transform target)
+        protected virtual void GetNextTarget(Transform target)
         {
             var nearEnemies = (from enemy in Physics.OverlapSphere(transform.position, 12, 1 << 10)
                                  where enemy.TryGetComponent<Character>(out _) && enemy.transform.CompareTag(enemyTag)

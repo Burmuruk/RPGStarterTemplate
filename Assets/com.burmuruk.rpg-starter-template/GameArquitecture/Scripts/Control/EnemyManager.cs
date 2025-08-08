@@ -56,6 +56,8 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
                     var stats = progress.GetDataByLevel(enemy.CharacterType, 0);
                     if (stats.HasValue)
                         enemy.SetStats(stats.Value);
+                    else
+                        enemy.SetDefaultStats();
 
                     (enemy.Inventory as InventoryEquipDecorator).SetInventory(inventory);
                     enemy.SetUpMods();

@@ -1,4 +1,5 @@
 ﻿using Burmuruk.RPGStarterTemplate.Combat;
+using Burmuruk.RPGStarterTemplate.Editor.Controls;
 using Burmuruk.RPGStarterTemplate.Inventory;
 using Burmuruk.RPGStarterTemplate.Saving;
 using Burmuruk.RPGStarterTemplate.Stats;
@@ -15,12 +16,14 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 {
     public class CreationSaver
     {
-        const string ITEMSList_NAME = "GeneralItemsList.asset";
+        const string BASE_PICKUP_PATH = "Assets/com.burmuruk.rpg-starter-template/GameArquitecture/Game/Prefabs/Pickables/PickUpBase.prefab";
+        const string ITEMS_LIST_NAME = "GeneralItemsList.asset";
         const string PROGRESS_NAME = "CharactersProgress.asset";
         const string ASSET_EXTENSION = ".asset";
         const string RESULT_PATH = "RPG-Results";
         const string ITEMS_FOLDER = "Items";
-        const string Armour_FOLDER = "Armour";
+        const string ARMOUR_FOLDER = "Armour";
+        const string PICKUPS_FOLDER = "Pickups";
         const string CHARACTERS_FOLDER = "Characters";
         const string WEAPONS_FOLDER = "Weapons";
         ItemsList _itemsList;
@@ -54,13 +57,13 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             {
                 if (_itemsList == null)
                 {
-                    _itemsList = AssetDatabase.LoadAssetAtPath<ItemsList>(Path + "/" + ITEMSList_NAME);
+                    _itemsList = AssetDatabase.LoadAssetAtPath<ItemsList>(Path + "/" + ITEMS_LIST_NAME);
 
                     if (_itemsList == null)
                     {
-                        AssetDatabase.CreateAsset(ScriptableObject.CreateInstance<ItemsList>(), Path + "/" + ITEMSList_NAME);
+                        AssetDatabase.CreateAsset(ScriptableObject.CreateInstance<ItemsList>(), Path + "/" + ITEMS_LIST_NAME);
                         AssetDatabase.Refresh();
-                        _itemsList = AssetDatabase.LoadAssetAtPath<ItemsList>(Path + "/" + ITEMSList_NAME);
+                        _itemsList = AssetDatabase.LoadAssetAtPath<ItemsList>(Path + "/" + ITEMS_LIST_NAME);
                     }
                 }
 
@@ -102,7 +105,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             return AssetDatabase.IsValidFolder(Path + "/" + path);
         }
 
-        public void SavetItem(InventoryItem item)
+        public void SavetItem(InventoryItem item, ItemDataArgs args)
         {
             string subFolder = Get_ItemSubFolder(item);
             if (!VerifyFolder(subFolder)) return;
@@ -112,6 +115,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
                 AssetDatabase.DeleteAsset(itemPath);
 
             var copy = ScriptableObject.Instantiate(item);
+            copy.Pickup = CreatePickUp(item, args, subFolder);
             AssetDatabase.CreateAsset(copy, itemPath);
             AssetDatabase.Refresh();
             var newItem = AssetDatabase.LoadAssetAtPath<InventoryItem>(itemPath);
@@ -120,14 +124,55 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             EditorUtility.SetDirty(ItemsList);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+
+            var createdItem = AssetDatabase.LoadAssetAtPath<InventoryItem>(itemPath);
+            copy.Pickup.inventoryItem = newItem;
+            EditorUtility.SetDirty(copy.Pickup);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            RemoveGarbage();
             return;
+        }
+
+        private Pickup CreatePickUp(InventoryItem item, ItemDataArgs args, string subFolder)
+        {
+            if (!VerifyFolder(PICKUPS_FOLDER)) return null;
+
+            string pickupPath = Path + "/" + PICKUPS_FOLDER + "/" + item.Name + "PickUp" + ".prefab";
+            if (AssetDatabase.LoadAssetAtPath<Pickup>(pickupPath) != null)
+                AssetDatabase.DeleteAsset(pickupPath);
+
+            var basePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(BASE_PICKUP_PATH);
+            GameObject baseInstance = (GameObject)PrefabUtility.InstantiatePrefab(basePrefab);
+            garbage.Add(baseInstance);
+
+            SetPickUpModel(in args, baseInstance);
+            GameObject variant = PrefabUtility.SaveAsPrefabAsset(baseInstance, pickupPath);
+
+            PrefabUtility.SetPropertyModifications(variant, PrefabUtility.GetPropertyModifications(baseInstance));
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            return variant.GetComponent<Pickup>();
+        }
+
+        private void SetPickUpModel(in ItemDataArgs args, GameObject parent)
+        {
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(args.pickupPath);
+            GameObject modelInstance = GameObject.Instantiate(model, parent.transform);
+            garbage.Add(modelInstance);
+
+            var pickup = parent.GetComponent<Pickup>();
+            pickup.prefab = model;
         }
 
         private string Get_ItemSubFolder(InventoryItem item) =>
             item switch
             {
                 Weapon => WEAPONS_FOLDER,
-                ArmourElement => Armour_FOLDER,
+                ArmourElement => ARMOUR_FOLDER,
                 _ => ITEMS_FOLDER,
             };
 
@@ -285,7 +330,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             garbage.Add(detectionPoint);
         }
 
-        private void RemoveGarbage() => garbage.ForEach(e => GameObject.DestroyImmediate(e));
+        public void RemoveGarbage() => garbage.ForEach(e => GameObject.DestroyImmediate(e));
 
         private Type[] Get_Components(in CharacterData characterData)
         {

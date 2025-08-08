@@ -21,12 +21,13 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
             GetDissolveShader();
         }
 
-        protected override void FindEnemies()
+        protected override bool FindEnemies()
         {
-            if (!IsTargetClose && !IsTargetFar) return;
+            if (!IsTargetClose && !IsTargetFar) return false;
 
             playerAction = PlayerAction.Combat;
             attackState = AttackState.BasicAttack;
+            return true;
         }
 
         protected override void ActionManager()
@@ -44,15 +45,15 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
             }
         }
 
-        protected override void CheckLeader()
+        protected override bool CheckLeader()
         {
-            if (!leader) return;
+            if (!leader) return false;
 
             switch (curOrder)
             {
                 case LeaderOrder.Attack:
                     
-                    if (!cd_Appear.CanUse) return;
+                    if (!cd_Appear.CanUse) return false;
 
                     if (!visible)
                     {
@@ -74,10 +75,10 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
                     break;
 
                 default:
-                    return;
+                    return false;
             }
 
-            throw new NotImplementedException();
+            return true;
         }
 
         private void Attack()

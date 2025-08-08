@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEngine;
 
 namespace Burmuruk.RPGStarterTemplate.Dialogue.Editor
 {
-    public class DialogueEditor : EditorWindow
+    public class DialogueEditorIMGUI : EditorWindow
     {
         Dialogue selectedDialogue;
         [NonSerialized] GUIStyle nodeStyle;
@@ -22,10 +22,10 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue.Editor
         const float canvasSize = 4000;
         const float backgroundSize = 50;
 
-        [MenuItem("RPGTemplate/Dialogue Editor")]
+        [MenuItem("RPGTemplate/Dialogue Editor (IMGUI)")]
         public static void ShowEditorWindow()
         {
-            GetWindow(typeof(DialogueEditor), false, "Dialogue Editor");
+            GetWindow(typeof(DialogueEditorIMGUI), false, "Dialogue Editor");
         }
 
         [OnOpenAsset(1)]

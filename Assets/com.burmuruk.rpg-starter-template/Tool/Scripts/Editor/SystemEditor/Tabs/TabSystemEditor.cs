@@ -1,13 +1,6 @@
-using Burmuruk.AI;
 using Burmuruk.RPGStarterTemplate.Editor.Controls;
-using Burmuruk.RPGStarterTemplate.Movement.PathFindig;
-using Burmuruk.RPGStarterTemplate.Saving;
-using System.Collections.Generic;
-using System.IO;
 using UnityEditor;
-using UnityEditor.UIElements;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 using static Burmuruk.RPGStarterTemplate.Editor.Utilities.UtilitiesUI;
 
@@ -126,5 +119,5 @@ namespace Burmuruk.RPGStarterTemplate.Editor
                 Notify("The Navigation data wasn't found.", BorderColour.Error);
         }
         #endregion
-    } 
+    }
 }

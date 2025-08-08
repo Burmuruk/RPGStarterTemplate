@@ -1362,6 +1362,7 @@ MonoBehaviour:
   OnInteract:
     m_PersistentCalls:
       m_Calls: []
+  delayedActions: []
 --- !u!1 &188308626
 GameObject:
   m_ObjectHideFlags: 0
@@ -2960,16 +2961,29 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 517795589}
-        m_TargetAssemblyTypeName: Burmuruk.Tesis.Interaction.Interactable, Assembly-CSharp
+        m_TargetAssemblyTypeName: Burmuruk.RPGStarterTemplate.Interaction.Interactable,
+          Assembly-CSharp
         m_MethodName: StopPlayer
-        m_Mode: 1
+        m_Mode: 6
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
-          m_BoolArgument: 0
+          m_BoolArgument: 1
+        m_CallState: 2
+      - m_Target: {fileID: 1252970456}
+        m_TargetAssemblyTypeName: Cinemachine.CinemachineVirtualCameraBase, Cinemachine
+        m_MethodName: set_Priority
+        m_Mode: 3
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 30
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
         m_CallState: 2
       - m_Target: {fileID: 517795594}
         m_TargetAssemblyTypeName: UnityEngine.Behaviour, UnityEngine
@@ -2983,18 +2997,52 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
-      - m_Target: {fileID: 517795589}
-        m_TargetAssemblyTypeName: Burmuruk.Tesis.Interaction.Interactable, Assembly-CSharp
-        m_MethodName: DisableByTime
-        m_Mode: 4
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 1
-        m_CallState: 2
+  delayedActions:
+  - Action:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 517795589}
+          m_TargetAssemblyTypeName: Burmuruk.RPGStarterTemplate.Interaction.Interactable,
+            Assembly-CSharp
+          m_MethodName: StopPlayer
+          m_Mode: 6
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+    Delay: 7.2
+  - Action:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 517795594}
+          m_TargetAssemblyTypeName: UnityEngine.Behaviour, UnityEngine
+          m_MethodName: set_enabled
+          m_Mode: 6
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+        - m_Target: {fileID: 1252970455}
+          m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+          m_MethodName: SetActive
+          m_Mode: 6
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+    Delay: 5.2
 --- !u!65 &517795590
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4383,7 +4431,7 @@ MonoBehaviour:
   findOnStart: 1
   shouldDraw: 1
   cyclicType: 2
-  nodesCount: 0
+  nodesCount: 8
   lineColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   initialized: 1
 --- !u!1 &817183278
@@ -5118,6 +5166,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+  delayedActions: []
 --- !u!65 &996863185
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5409,6 +5458,7 @@ GameObject:
   - component: {fileID: 1127965459}
   - component: {fileID: 1127965460}
   - component: {fileID: 1127965461}
+  - component: {fileID: 1127965462}
   m_Layer: 0
   m_Name: cm
   m_TagString: Untagged
@@ -5467,10 +5517,22 @@ MonoBehaviour:
   m_YawDamping: 0
   m_RollDamping: 0
   m_AutoDolly:
-    m_Enabled: 0
+    m_Enabled: 1
     m_PositionOffset: 0
     m_SearchRadius: 2
     m_SearchResolution: 5
+--- !u!114 &1127965462
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1127965458}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e8b78ac948f05a46a6d8339a503172b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1159523547
 GameObject:
   m_ObjectHideFlags: 0
@@ -9824,6 +9886,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+  delayedActions: []
 --- !u!65 &1916829562
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -11307,6 +11370,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2370757275715202751, guid: 5b1195fea8aff92478fc6e922cf62f9e,
         type: 3}
+      propertyPath: usePathFinding
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2370757275715202751, guid: 5b1195fea8aff92478fc6e922cf62f9e,
+        type: 3}
       propertyPath: m_slowingRadious
       value: 1
       objectReference: {fileID: 0}
@@ -12274,6 +12342,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_threshold
       value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2370757275715202751, guid: 5b1195fea8aff92478fc6e922cf62f9e,
+        type: 3}
+      propertyPath: usePathFinding
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2370757275715202751, guid: 5b1195fea8aff92478fc6e922cf62f9e,
         type: 3}

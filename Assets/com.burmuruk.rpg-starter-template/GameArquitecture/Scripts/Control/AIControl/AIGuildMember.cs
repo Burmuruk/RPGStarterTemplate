@@ -72,7 +72,8 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
         protected virtual void Start()
         {
             cdTeleport = new CoolDownAction(1.5f);
-            
+            //if (TryGetComponent<Health>(out var health))
+            //    health.OnDied +
         }
 
         protected override void FixedUpdate()
@@ -119,6 +120,14 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
             {
                 Debug.DrawRay(Target.transform.position, Vector3.up * 5, Color.red);
             }
+        }
+
+        protected override void Dead()
+        {
+            base.Dead();
+
+            if (IsControlled)
+                FindObjectOfType<LevelManager>().Die();
         }
 
         public void DisableControll()
@@ -176,6 +185,22 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
             fighter.BasicAttack();
         }
 
+        public void AutoAttackEnemy(AIEnemyController enemy)
+        {
+            Target = enemy.transform;
+            PlayerState = PlayerState.Combat;
+            OnCombatStarted?.Invoke(true);
+
+            fighter.StartAutoBasicAttack(true);
+        }
+
+        public void Retreat()
+        {
+            Target = null;
+            PlayerState = PlayerState.None;
+            OnCombatStarted?.Invoke(false);
+        }
+
         public void AnalizeDamage()
         {
             if (PlayerState == PlayerState.Dead) return;
@@ -183,15 +208,17 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
             PlayerState = PlayerState.Combat;
         }
 
-        protected override void VerifyTargetsHealth(Transform target)
+        protected override void GetNextTarget(Transform target)
         {
-            base.VerifyTargetsHealth(target);
+            base.GetNextTarget(target);
 
             if (IsControlled)
             {
                 target.GetComponent<Character>().Deselect();
                 if (Target)
                     Target.GetComponent<Character>().Select();
+                else
+                    PlayerState = PlayerState.None;
             }
         }
 

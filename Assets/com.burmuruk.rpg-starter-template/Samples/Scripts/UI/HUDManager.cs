@@ -165,7 +165,6 @@ namespace Burmuruk.RPGStarterTemplate.UI
 
         private void LateUpdate()
         {
-            return;
             if (gameManager.GameState == GameManager.State.Playing)
             {
                 UpdateHealthPosition();
@@ -470,7 +469,9 @@ namespace Burmuruk.RPGStarterTemplate.UI
 
         private void ShowSavingIcon(float progress)
         {
-            if (savingNotification != null && progress < 1)
+            if (!gameObject.activeSelf) return;
+
+            if (savingNotification != null && progress < 0)
                 return;
             else if (progress >= 1)
             {
@@ -483,6 +484,8 @@ namespace Burmuruk.RPGStarterTemplate.UI
 
         private void StopSavingNotification()
         {
+            if (savingNotification == null) return;
+
             StopCoroutine(savingNotification);
             imgSaving.gameObject.SetActive(false);
             imgSaving.transform.rotation = Quaternion.identity;

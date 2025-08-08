@@ -6,9 +6,9 @@ namespace Burmuruk.WorldG.Patrol
     public struct CopyData
     {
         public bool wasSelected;
-        public MyNode point;
+        public PatrolNode point;
 
-        public CopyData(bool wasSelected, MyNode node)
+        public CopyData(bool wasSelected, PatrolNode node)
         {
             this.wasSelected = wasSelected;
             point = node;
