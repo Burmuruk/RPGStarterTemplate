@@ -64,33 +64,25 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         public override bool Save()
         {
-            if (!VerifyData())
+            if (!VerifyData(out var errors))
             {
-                Utilities.UtilitiesUI.Notify("Invalid Data", BorderColour.Error);
+                Notify(errors.Count > 1 ? "Invalid Data" : errors[0], BorderColour.Error);
                 return false;
             }
-            if (!VerifyData()) return false;
 
-            try
+            if (_creationsState == CreationsState.Editing && Check_Changes() == ModificationTypes.None)
             {
-                if (_creationsState == CreationsState.Editing && Check_Changes() == ModificationTypes.None)
-                {
-                    Notify("No changes were found", BorderColour.HighlightBorder);
-                    return false;
-                }
-                else
-                    CurModificationType = ModificationTypes.Add;
-
-                DisableNotification();
-                var (data, args) = GetInfo(null);
-                var creationData = new ItemCreationData(_nameControl.TxtName.value.Trim(), data as ArmourElement, args);
-
-                return SavingSystem.SaveCreation(ElementType.Armour, in _id, creationData, CurModificationType);
+                Notify("No changes were found", BorderColour.HighlightBorder);
+                return false;
             }
-            catch (InvalidDataExeption e)
-            {
-                throw e;
-            }
+            else
+                CurModificationType = ModificationTypes.Add;
+
+            DisableNotification();
+            var (data, args) = GetInfo(null);
+            var creationData = new ItemCreationData(_nameControl.TxtName.value.Trim(), data as ArmourElement, args);
+
+            return SavingSystem.SaveCreation(ElementType.Armour, in _id, creationData, CurModificationType);
         }
 
         public override void Clear()

@@ -22,7 +22,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         public ComponentsListUI<ElementCreation> MClEquipmentElements { get; private set; }
         public EnumModifierUI<EquipmentType> EMBodyPart { get; private set; }
         public VisualElement InfoBodyPlacement { get; private set; }
-        public ObjectField OFBody { get; private set; }
+        public ObjectField OFModel { get; private set; }
         public TreeView TVBodyParts { get; private set; }
         public EquipmentSpawnsList UIParts { get; private set; }
 
@@ -168,7 +168,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             var leftSide = bodVis.Instantiate();
             var spawnFile = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/com.burmuruk.rpg-starter-template/Tool/UIToolkit/CharacterEditor/Elements/BodySpawnPoint.uxml");
             UIParts = new EquipmentSpawnsList(spawnFile.Instantiate());
-            OFBody = leftSide.Q<ObjectField>();
+            OFModel = leftSide.Q<ObjectField>();
             TVBodyParts = leftSide.Q<TreeView>();
             Setup_LeftSide(leftSide);
             Setup_TreeView();
@@ -180,11 +180,19 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         private void Setup_LeftSide(VisualElement side)
         {
-            OFBody.objectType = typeof(GameObject);
-            OFBody.RegisterValueChangedCallback(ShowBodyTree);
+            OFModel.objectType = typeof(GameObject);
+            OFModel.RegisterValueChangedCallback(evt => ShowBodyTree(evt.newValue));
+            OFModel.SetEnabled(false);
 
             var scroll = side.Q<ScrollView>();
             scroll.RegisterCallback<WheelEvent>(evt => evt.StopPropagation());
+        }
+
+        public void Set_Model(GameObject model)
+        {
+            if (model == OFModel.value) return;
+
+            OFModel.value = model;
         }
 
         //private void StopScroll(WheelEvent evt, ScrollView scroll)
@@ -239,9 +247,9 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             DragAndDrop.StartDrag($"Dragging {go.name}");
         }
 
-        private void ShowBodyTree(ChangeEvent<UnityEngine.Object> evt)
+        private void ShowBodyTree(UnityEngine.Object evt)
         {
-            GameObject selected = evt.newValue as GameObject;
+            GameObject selected = evt as GameObject;
             if (selected == null) return;
 
             int idCounter = 0;
@@ -329,7 +337,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         {
             var equipment = new Equipment(inventory)
             {
-                model = OFBody.value as GameObject,
+                model = OFModel.value as GameObject,
                 spawnPoints = UIParts.GetInfo(),
             };
 
@@ -386,12 +394,12 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             }
 
             UIParts.LoadInfo(equipment.spawnPoints);
-            OFBody.value = equipment.model;
+            OFModel.value = equipment.model;
         }
 
         public override void Clear()
         {
-            OFBody.value = null;
+            OFModel.value = null;
             UIParts.Clear();
             EMBodyPart.Clear();
             TVBodyParts.Clear();
@@ -413,12 +421,16 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             _changes = null;
         }
 
-        public override bool VerifyData()
+        public override bool VerifyData(out List<string> errors)
         {
-            bool result = OFBody.value != null;
-            Highlight(OFBody, !result, BorderColour.Error);
+            errors = new();
+            bool result = OFModel.value != null;
 
-            result &= UIParts.VerifyData();
+            Highlight(OFModel, !result, BorderColour.Error);
+            Set_ErrorTooltip(OFModel, "There must to be a model to equip items on", ref errors, result);
+
+            result &= UIParts.VerifyData(out var partsErrors);
+            errors.AddRange(partsErrors);
 
             return result;
         }
@@ -429,7 +441,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
             if (!_changes.HasValue) return ModificationTypes.None;
 
-            if (OFBody.value != _changes.Value.model) 
+            if (OFModel.value != _changes.Value.model) 
                 return ModificationTypes.EditData;
 
             CurModificationType = UIParts.Check_Changes();

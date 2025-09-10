@@ -1,4 +1,5 @@
 ﻿using Burmuruk.RPGStarterTemplate.Stats;
+using System.Collections.Generic;
 using UnityEngine.UIElements;
 
 namespace Burmuruk.RPGStarterTemplate.Editor.Controls
@@ -17,8 +18,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         public override void Initialize(VisualElement container, CreationsBaseInfo name)
         {
-            _container = container;
-            _nameControl = name;
+            base.Initialize(container, name);
 
             Value = container.Q<FloatField>("ffValue");
             Duration = container.Q<FloatField>("ffDuration");
@@ -136,16 +136,31 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             }
         }
 
-        public override bool VerifyData()
+        public override bool VerifyData(out List<string> errors)
         {
-            return _nameControl.VerifyData();
+            errors = new();
+            bool isValid = true;
+            bool result = true;
+
+            result &= _nameControl.VerifyData(out errors);
+
+            result &= isValid = Value.value == 0;
+            Utilities.UtilitiesUI.Set_ErrorTooltip(Value, "The number can't be zero.", ref errors, isValid);
+
+            result &= isValid = (ModifiableStat)Stat.value != ModifiableStat.None;
+            Utilities.UtilitiesUI.Set_ErrorTooltip(Stat, "The stat can't be none", ref errors, isValid);
+
+            return result;
         }
 
         public bool Save()
         {
-            if (!VerifyData())
+            if (!VerifyData(out var errors))
             {
-                Utilities.UtilitiesUI.Notify("Invalid Data", BorderColour.Error);
+                if (errors.Count > 1)
+                    Utilities.UtilitiesUI.Notify("Invalid Data", BorderColour.Error);
+                else
+                    Utilities.UtilitiesUI.Notify(errors[0], BorderColour.Error);
                 return false;
             }
 

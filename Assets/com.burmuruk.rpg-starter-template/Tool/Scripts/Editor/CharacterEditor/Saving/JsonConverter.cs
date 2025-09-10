@@ -3,7 +3,7 @@ using System.IO;
 
 namespace Burmuruk.RPGStarterTemplate.Editor
 {
-    public class PrefabReader
+    public class JsonConverter
     {
         public Span<string> FindBlock(string path, params string[] names)
         {

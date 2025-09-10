@@ -50,6 +50,8 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         public virtual void Set_CreationState(CreationsState state)
         {
+            if (!IsActive) return;
+
             if (state == CreationsState.Creating)
                 Remove_Changes();
 

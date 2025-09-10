@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using UnityEditor.PackageManager;
 using UnityEngine.UIElements;
 
 namespace Burmuruk.RPGStarterTemplate.Editor.Controls
@@ -45,7 +47,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             _container = container;
         }
 
-        public abstract bool VerifyData();
+        public abstract bool VerifyData(out List<string> errors);
 
         public abstract ModificationTypes Check_Changes();
 

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using UnityEditor;
 using UnityEngine.UIElements;
 
@@ -76,6 +77,21 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Utilities
                         pNotification.RemoveFromClassList(colourText);
                     }
                 }
+            }
+        }
+
+        public static void Set_ErrorTooltip(VisualElement element, string message, ref List<string> errors, bool isValid = true, BorderColour colour = BorderColour.Error)
+        {
+            Highlight(element, !isValid, colour);
+
+            if (!isValid)
+            {
+                element.tooltip = message;
+                (errors ??= new()).Add(message);
+            }
+            else
+            {
+                element.tooltip = null;
             }
         }
 
@@ -214,6 +230,24 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Utilities
                 return false;
             }
 
+            return true;
+        }
+
+        public static bool VerifyName(this string name, out string error)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                error = "Name can't be empty.";
+                return false;
+            }
+
+            if (!regName.IsMatch(name))
+            {
+                error = "Invalid name";
+                return false;
+            }
+
+            error = null;
             return true;
         }
 

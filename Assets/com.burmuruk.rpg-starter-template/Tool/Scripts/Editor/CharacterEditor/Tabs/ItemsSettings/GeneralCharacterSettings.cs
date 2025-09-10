@@ -190,7 +190,11 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             }
         }
 
-        public override bool VerifyData() => true;
+        public override bool VerifyData(out List<string> errors)
+        {
+            errors = new();
+            return true;
+        }
 
         public bool Save()
         {

@@ -1,4 +1,6 @@
 using Burmuruk.RPGStarterTemplate.Inventory;
+using Burmuruk.RPGStarterTemplate.Stats;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -19,7 +21,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         public override void Initialize(VisualElement container, CreationsBaseInfo nameControl)
         {
-            _nameControl = nameControl;
+            base.Initialize(container, nameControl);
 
             TxtDescription = container.Q<TextField>("txtDescription");
             OfSprite = container.Q<ObjectField>("opSprite");
@@ -90,9 +92,14 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             _changes.UpdateInfo("", "", _changes.Type, null, null, 0);
         }
 
-        public override bool VerifyData()
+        public override bool VerifyData(out List<string> errors)
         {
-            return _nameControl.VerifyData();
+            errors = new();
+            bool result = true;
+
+            result &= _nameControl.VerifyData(out errors);
+
+            return result;
         }
 
         public override ModificationTypes Check_Changes()
@@ -128,30 +135,26 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         public virtual bool Save()
         {
-            try
+            if (!VerifyData(out var errors))
             {
-                if (!VerifyData())
-                    throw new InvalidDataExeption("Invalid Data");
-
-                CurModificationType = Check_Changes();
-                if (_creationsState == CreationsState.Editing && Check_Changes() == ModificationTypes.None)
-                {
-                    Utilities.UtilitiesUI.Notify("No changes were found", BorderColour.HighlightBorder);
-                    return false;
-                }
-                else
-                    CurModificationType = ModificationTypes.Add;
-
-                Utilities.UtilitiesUI.DisableNotification();
-                var (data, args) = GetInfo(null);
-                var creationData = new ItemCreationData(_nameControl.TxtName.value, data, args);
-
-                return SavingSystem.SaveCreation(ElementType.Item, in _id, creationData, CurModificationType);
+                Utilities.UtilitiesUI.Notify(errors.Count > 1 ? "Invalid Data" : errors[0], BorderColour.Error);
+                return false;
             }
-            catch (InvalidDataExeption e)
+
+            CurModificationType = Check_Changes();
+            if (_creationsState == CreationsState.Editing && Check_Changes() == ModificationTypes.None)
             {
-                throw e;
+                Utilities.UtilitiesUI.Notify("No changes were found", BorderColour.HighlightBorder);
+                return false;
             }
+            else
+                CurModificationType = ModificationTypes.Add;
+
+            Utilities.UtilitiesUI.DisableNotification();
+            var (data, args) = GetInfo(null);
+            var creationData = new ItemCreationData(_nameControl.TxtName.value, data, args);
+
+            return SavingSystem.SaveCreation(ElementType.Item, in _id, creationData, CurModificationType);
         }
 
         public virtual CreationData Load(ElementType type, string id)

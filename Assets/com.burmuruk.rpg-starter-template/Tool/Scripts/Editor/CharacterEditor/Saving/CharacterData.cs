@@ -17,6 +17,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         public Dictionary<ComponentType, object> components;
         public CharacterProgress progress;
         public BasicStats basicStats;
+        public GameObject model;
     }
 
     public struct CharacterComponent

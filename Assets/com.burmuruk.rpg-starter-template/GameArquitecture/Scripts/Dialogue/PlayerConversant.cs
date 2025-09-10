@@ -8,8 +8,8 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
     public class PlayerConversant : MonoBehaviour
     {
         [SerializeField] string playerName;
-        Dialogue currentDialogue;
-        DialogueNode currentNode = null;
+        DialogueOld currentDialogue;
+        DialogueNodeOld currentNode = null;
         AIConversant currentConversant = null;
 
         public bool IsChoosing { get; private set; }
@@ -22,7 +22,7 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
         //    currentNode = currentDialogue.GetRootNode();
         //}
 
-        public void StartDialogue(AIConversant newConversant, Dialogue newDialogue)
+        public void StartDialogue(AIConversant newConversant, DialogueOld newDialogue)
         {
             currentConversant = newConversant;
             currentDialogue = newDialogue;
@@ -51,7 +51,7 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
             return currentNode.Text;
         }
 
-        public IEnumerable<DialogueNode> GetChoices()
+        public IEnumerable<DialogueNodeOld> GetChoices()
         {
             return currentDialogue.GetPlayerChildren(currentNode);
         }
@@ -68,7 +68,7 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
             }
         }
 
-        public void SelectChoice(DialogueNode chosenNode)
+        public void SelectChoice(DialogueNodeOld chosenNode)
         {
             currentNode = chosenNode;
             TriggerEnterAction();

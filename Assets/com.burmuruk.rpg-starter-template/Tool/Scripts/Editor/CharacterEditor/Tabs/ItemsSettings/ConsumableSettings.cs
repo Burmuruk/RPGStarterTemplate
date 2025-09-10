@@ -123,29 +123,25 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         public override bool Save()
         {
-            try
+            if (!VerifyData(out var errors))
             {
-                if (!VerifyData())
-                    throw new InvalidDataExeption("Invalid Data");
-
-                if (_creationsState == CreationsState.Editing && Check_Changes() == ModificationTypes.None)
-                {
-                    Notify("No changes were found", BorderColour.HighlightBorder);
-                    return false;
-                }
-                else
-                    CurModificationType = ModificationTypes.Add;
-
-                DisableNotification();
-                var (item, args) = ((InventoryItem, BuffsNamesDataArgs))GetInfo(GetCreatedEnums(ElementType.Buff));
-                var creationData = new BuffUserCreationData(TxtName.text.Trim(), item, args);
-
-                return SavingSystem.SaveCreation(ElementType.Consumable, in _id, creationData, CurModificationType);
+                Notify(errors.Count > 1 ? "Invalid Data" : errors[0], BorderColour.Error);
+                return false;
             }
-            catch (InvalidDataExeption e)
+
+            if (_creationsState == CreationsState.Editing && Check_Changes() == ModificationTypes.None)
             {
-                throw e;
+                Notify("No changes were found", BorderColour.HighlightBorder);
+                return false;
             }
+            else
+                CurModificationType = ModificationTypes.Add;
+
+            DisableNotification();
+            var (item, args) = ((InventoryItem, BuffsNamesDataArgs))GetInfo(GetCreatedEnums(ElementType.Buff));
+            var creationData = new BuffUserCreationData(TxtName.text.Trim(), item, args);
+
+            return SavingSystem.SaveCreation(ElementType.Consumable, in _id, creationData, CurModificationType);
         }
 
         public override CreationData Load(ElementType type, string id)

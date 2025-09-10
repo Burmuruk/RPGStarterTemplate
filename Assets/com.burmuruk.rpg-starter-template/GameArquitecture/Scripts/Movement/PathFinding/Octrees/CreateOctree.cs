@@ -1,32 +1,35 @@
 ﻿using System.Collections;
 using UnityEngine;
 
-public class CreateOctree : MonoBehaviour
+namespace Burmuruk.RPGStarterTemplate.Movement.PathFindig
 {
-    public GameObject[] worldObjects;
-    public int nodeMinSize = 5;
-    public Octree ot;
-    public Graph waypoints;
-    public int maxDepth = 16;
-
-    void Start()
+    public class CreateOctree : MonoBehaviour
     {
-        waypoints = new Graph();
-        ot = new Octree(worldObjects, nodeMinSize, waypoints, maxDepth);
-    }
+        public GameObject[] worldObjects;
+        public int nodeMinSize = 5;
+        public Octree ot;
+        public Graph waypoints;
+        public int maxDepth = 16;
 
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
-
-    private void OnDrawGizmos()
-    {
-        if (Application.isPlaying)
+        void Start()
         {
-            Gizmos.color = Color.green;
-            ot.rootNode.Draw();
+            waypoints = new Graph();
+            ot = new Octree(worldObjects, nodeMinSize, waypoints, maxDepth);
         }
-    }
+
+        // Update is called once per frame
+        void Update()
+        {
+
+        }
+
+        private void OnDrawGizmos()
+        {
+            if (Application.isPlaying)
+            {
+                Gizmos.color = Color.green;
+                ot.rootNode.Draw();
+            }
+        }
+    } 
 }

@@ -7,14 +7,14 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue.Editor
 {
     public class DialogueEditorIMGUI : EditorWindow
     {
-        Dialogue selectedDialogue;
+        DialogueOld selectedDialogue;
         [NonSerialized] GUIStyle nodeStyle;
         [NonSerialized] GUIStyle playerNodeStyle;
-        [NonSerialized] DialogueNode draggingNode = null;
+        [NonSerialized] DialogueNodeOld draggingNode = null;
         [NonSerialized] Vector2 draggingOffset;
-        [NonSerialized] DialogueNode creatingNode = null;
-        [NonSerialized] DialogueNode deleatingNode;
-        [NonSerialized] DialogueNode linkingParentNode = null;
+        [NonSerialized] DialogueNodeOld creatingNode = null;
+        [NonSerialized] DialogueNodeOld deleatingNode;
+        [NonSerialized] DialogueNodeOld linkingParentNode = null;
         Vector2 scrollPosition;
         [NonSerialized] bool draggingCanvas = false;
         Vector2 draggingCanvasOffset;
@@ -31,7 +31,7 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue.Editor
         [OnOpenAsset(1)]
         public static bool OnOpenAsset(int instanceID, int line)
         {
-            var dialogue = EditorUtility.InstanceIDToObject(instanceID) as Dialogue;
+            var dialogue = EditorUtility.InstanceIDToObject(instanceID) as DialogueOld;
 
             if (dialogue != null)
             {
@@ -59,7 +59,7 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue.Editor
 
         private void OnSelectionChanged()
         {
-            Dialogue newDialogue = Selection.activeObject as Dialogue;
+            DialogueOld newDialogue = Selection.activeObject as DialogueOld;
 
             if (newDialogue != null)
             {
@@ -149,7 +149,7 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue.Editor
             }
         }
 
-        private void DrawNode(DialogueNode node)
+        private void DrawNode(DialogueNodeOld node)
         {
             GUIStyle style = node.IsPlayerSpeaking ? playerNodeStyle : nodeStyle;
 
@@ -175,7 +175,7 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue.Editor
             GUILayout.EndArea();
         }
 
-        private void DrawLinkMethods(DialogueNode node)
+        private void DrawLinkMethods(DialogueNodeOld node)
         {
             if (linkingParentNode == null)
             {
@@ -210,7 +210,7 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue.Editor
             }
         }
 
-        private void DrawConnections(DialogueNode node)
+        private void DrawConnections(DialogueNodeOld node)
         {
             Vector3 startPosition = new Vector2(node.GetRect().max.x, node.GetRect().center.y);
 
@@ -230,9 +230,9 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue.Editor
             }
         }
 
-        private DialogueNode GetNodeAtPoint(Vector2 point)
+        private DialogueNodeOld GetNodeAtPoint(Vector2 point)
         {
-            DialogueNode foundNode = null;
+            DialogueNodeOld foundNode = null;
 
             foreach (var node in selectedDialogue.GetAllNodes())
             {

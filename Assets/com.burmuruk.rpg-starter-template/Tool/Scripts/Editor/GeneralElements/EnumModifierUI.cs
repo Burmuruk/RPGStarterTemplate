@@ -176,7 +176,6 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
                 EnumScheduler.ChangeData(ModificationTypes.EditData, typeof(T));
                 Notify("Chages made", BorderColour.Success);
-                Debug.Log("finished");
                 ShowElements(false);
                 EnumField.SetValueWithoutNotify(CharacterType.None);
                 CurrentState = State.None;
@@ -218,7 +217,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
             if (button == null) return;
 
-            Highlight(button, shouldHighlight);
+            Highlight(button, shouldHighlight, BorderColour.SpecialChange);
         }
 
         public virtual void Clear()

@@ -1,4 +1,5 @@
 using Burmuruk.RPGStarterTemplate.Editor.Controls;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -132,28 +133,6 @@ namespace Burmuruk.RPGStarterTemplate.Editor
     }
 
     [Serializable]
-    public class CreationData
-    {
-        public string Name;
-
-        public CreationData(string name)
-        {
-            Name = name;
-        }
-    }
-
-    [Serializable]
-    public class BuffCreationData : CreationData
-    {
-        public Stats.BuffData Data;
-
-        public BuffCreationData(string name, Stats.BuffData data) : base(name)
-        {
-            Data = data;
-        }
-    }
-
-    [Serializable]
     public class ItemCreationData : CreationData
     {
         public RPGStarterTemplate.Inventory.InventoryItem Data;
@@ -163,6 +142,20 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         {
             Data = data;
             this.args = args;
+        }
+
+        public override JObject GetJson()
+        {
+            var status = base.GetJson();
+            status["itemData"] = ConvertDynamicDataToJson(Data);
+
+            return status;
+        }
+
+        public override void RestoreFromJson(JObject json)
+        {
+            base.RestoreFromJson(json);
+            Data = FromJson
         }
     }
 
@@ -177,6 +170,16 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             Data = item;
             Names = args;
         }
+
+        public override JObject GetJson()
+        {
+            return base.GetJson();
+        }
+
+        public override void RestoreFromJson(JObject json)
+        {
+            base.RestoreFromJson(json);
+        }
     }
 
     [Serializable]
@@ -187,6 +190,16 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         public CharacterCreationData(string name, CharacterData data) : base(name)
         {
             Data = data;
+        }
+
+        public override JObject GetJson()
+        {
+            return base.GetJson();
+        }
+
+        public override void RestoreFromJson(JObject json)
+        {
+            base.RestoreFromJson(json);
         }
     }
 

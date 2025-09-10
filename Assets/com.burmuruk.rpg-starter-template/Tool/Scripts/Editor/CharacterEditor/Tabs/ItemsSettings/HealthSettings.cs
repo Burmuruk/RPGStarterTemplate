@@ -1,4 +1,5 @@
 ﻿using Burmuruk.RPGStarterTemplate.Editor.Utilities;
+using System.Collections.Generic;
 using UnityEngine.UIElements;
 
 namespace Burmuruk.RPGStarterTemplate.Editor.Controls
@@ -81,7 +82,11 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             IFMaxHealth.value = 100;
         }
 
-        public override bool VerifyData() => true;
+        public override bool VerifyData(out List<string> errors)
+        {
+            errors = new();
+            return true;
+        }
 
         public override ModificationTypes Check_Changes()
         {

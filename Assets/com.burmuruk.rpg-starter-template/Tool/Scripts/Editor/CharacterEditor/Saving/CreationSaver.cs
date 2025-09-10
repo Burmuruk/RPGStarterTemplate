@@ -161,6 +161,8 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         private void SetPickUpModel(in ItemDataArgs args, GameObject parent)
         {
             var model = AssetDatabase.LoadAssetAtPath<GameObject>(args.pickupPath);
+
+            if (model == null) return;
             GameObject modelInstance = GameObject.Instantiate(model, parent.transform);
             garbage.Add(modelInstance);
 

@@ -5,7 +5,7 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
 {
     public class AIConversant : MonoBehaviour
     {
-        [SerializeField] Dialogue dialogue;
+        [SerializeField] DialogueOld dialogue;
         [SerializeField] string conversantName;
 
 

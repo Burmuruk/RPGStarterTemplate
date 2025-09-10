@@ -1,83 +1,85 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Fly : MonoBehaviour
+namespace Burmuruk.RPGStarterTemplate.Movement.PathFindig
 {
-    float speed = 5;
-    float accuracy = 1;
-    float rotSpeed = 5;
-
-    int currentWP = 1;
-    Vector3 goal;
-    OctreeNode currentNode;
-
-    public GameObject octree;
-    Graph graph;
-    List<Node> pathList = new List<Node>();
-
-    void Start()
+    public class Fly : MonoBehaviour
     {
-        Invoke("Navigate", 1);
-    }
+        float speed = 5;
+        float accuracy = 1;
+        float rotSpeed = 5;
 
-    void Navigate()
-    {
-        graph = octree.GetComponent<CreateOctree>().waypoints;
-        currentNode = graph.nodes[currentWP].octreeNode;
-        GetRandomDestination();
-    }
+        int currentWP = 1;
+        Vector3 goal;
+        OctreeNode currentNode;
 
-    private void GetRandomDestination()
-    {
-        int randNode = Random.Range(0, graph.nodes.Count);
-        graph.AStar(graph.nodes[currentWP].octreeNode, graph.nodes[randNode].octreeNode, pathList);
-        currentWP = 0;
-    }
+        public GameObject octree;
+        Graph graph;
+        List<Node> pathList = new List<Node>();
 
-    public int GetPathLength()
-    {
-        return pathList.Count;
-    }
-
-    public OctreeNode GetPathPoint(int index)
-    {
-        return pathList[index].octreeNode;
-    }
-
-    private void LateUpdate()
-    {
-        if (graph == null) return;
-
-        if (GetPathLength() == 0 || currentWP == GetPathLength())
+        void Start()
         {
+            Invoke("Navigate", 1);
+        }
+
+        void Navigate()
+        {
+            graph = octree.GetComponent<CreateOctree>().waypoints;
+            currentNode = graph.nodes[currentWP].octreeNode;
             GetRandomDestination();
-            return;
         }
 
-        if (Vector3.Distance(GetPathPoint(currentWP).nodeBounds.center, transform.position) <= accuracy)
+        private void GetRandomDestination()
         {
-            ++currentWP;
+            int randNode = Random.Range(0, graph.nodes.Count);
+            graph.AStar(graph.nodes[currentWP].octreeNode, graph.nodes[randNode].octreeNode, pathList);
+            currentWP = 0;
         }
 
-        if (currentWP < GetPathLength())
+        public int GetPathLength()
         {
-            goal = GetPathPoint(currentWP).nodeBounds.center;
-            currentNode = GetPathPoint(currentWP);
-
-            Vector3 lookAtGoal = new Vector3(goal.x, goal.y, goal.z);
-            Vector3 direction = lookAtGoal - transform.position;
-
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), Time.deltaTime * rotSpeed);
-
-            transform.Translate(0, 0, speed * Time.deltaTime);
+            return pathList.Count;
         }
-        else
-        {
-            GetRandomDestination();
 
-            if (GetPathLength() == 0)
-                Debug.Log("No path");
+        public OctreeNode GetPathPoint(int index)
+        {
+            return pathList[index].octreeNode;
+        }
+
+        private void LateUpdate()
+        {
+            if (graph == null) return;
+
+            if (GetPathLength() == 0 || currentWP == GetPathLength())
+            {
+                GetRandomDestination();
+                return;
+            }
+
+            if (Vector3.Distance(GetPathPoint(currentWP).nodeBounds.center, transform.position) <= accuracy)
+            {
+                ++currentWP;
+            }
+
+            if (currentWP < GetPathLength())
+            {
+                goal = GetPathPoint(currentWP).nodeBounds.center;
+                currentNode = GetPathPoint(currentWP);
+
+                Vector3 lookAtGoal = new Vector3(goal.x, goal.y, goal.z);
+                Vector3 direction = lookAtGoal - transform.position;
+
+                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), Time.deltaTime * rotSpeed);
+
+                transform.Translate(0, 0, speed * Time.deltaTime);
+            }
+            else
+            {
+                GetRandomDestination();
+
+                if (GetPathLength() == 0)
+                    Debug.Log("No path");
+            }
         }
     }
 }

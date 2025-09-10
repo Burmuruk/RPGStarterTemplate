@@ -301,10 +301,10 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         public void Get_Info(out CharacterProgress progress, out BasicStats baseInfo)
         {
+            SaveCurrentStats();
             baseInfo = _baseInfo;
             progress = new CharacterProgress();
 
-            SaveCurrentStats();
 
             List<CharacterProgress.LevelData> levels = new();
 
@@ -333,6 +333,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         public override void Clear()
         {
+            _setStats?.Invoke(default);
             Highlight(BtnBaseInfo, false);
             Highlight(BtnGeneralProgression, false);
             if (_selectedButton != null)
@@ -345,10 +346,12 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             _changes = null;
             _changesCharacterType = CharacterType.None;
             _changesBaseInfo = null;
+            _baseInfo = default;
 
             _statsPerLevel.Clear();
             _levelButtons.RemoveRange(1, _levelButtons.Count - 1);
             BtnRemove.SetEnabled(false);
+            _setStats?.Invoke(default);
             EnableContainer(StatsContainer, false);
         }
 
@@ -359,7 +362,11 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             _changesBaseInfo = null;
         }
 
-        public override bool VerifyData() => true;
+        public override bool VerifyData(out List<string> errors)
+        {
+            errors = new();
+            return true;
+        }
 
         public override void Load_Changes()
         {

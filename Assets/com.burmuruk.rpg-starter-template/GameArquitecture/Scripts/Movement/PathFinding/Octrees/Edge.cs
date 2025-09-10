@@ -2,14 +2,17 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Edge
+namespace Burmuruk.RPGStarterTemplate.Movement.PathFindig
 {
-    public Node startNode;
-    public Node endNode;
-
-    public Edge(Node from, Node to)
+    public class Edge
     {
-        startNode = from;
-        endNode = to;
-    }
+        public Node startNode;
+        public Node endNode;
+
+        public Edge(Node from, Node to)
+        {
+            startNode = from;
+            endNode = to;
+        }
+    } 
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -16,7 +17,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         public event Action<CreationsState> CreationsStateChanged;
 
         public Button BtnState { get; private set; }
-        public TextField TxtName { get;  set; }
+        public TextField TxtName { get; set; }
         public ColorField Colour { get; private set; }
         public CreationsState CreationsState { get; private set; } = CreationsState.Creating;
 
@@ -62,6 +63,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             if (!newName.VerifyName())
             {
                 Highlight(TxtName, true, BorderColour.Error);
+                TxtName.tooltip = "The name can't be empty.";
             }
             else if (IsTheNameUsed(newName))
             {
@@ -75,27 +77,36 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             }
         }
 
-        public bool VerifyData()
+        public bool VerifyData(out List<string> errors)
         {
-            return ValidateName();
+            var reslut = ValidateName(out var error);
+            errors = new List<string>() { error };
+
+            return reslut;
         }
 
-        private bool ValidateName()
+        private bool ValidateName(out string error)
         {
             string newName = TxtName.value.Trim().ToLower();
+            error = null;
 
-            if (!newName.VerifyName())
+            if (!newName.VerifyName(out var invalidError))
             {
                 Highlight(TxtName, true, BorderColour.Error);
+                TxtName.tooltip = invalidError;
+                error = invalidError;
                 return false;
             }
             if (IsTheNameUsed(newName))
             {
                 Highlight(TxtName, true, BorderColour.Error);
+                TxtName.tooltip = "Name in use.";
+                error = TxtName.tooltip;
                 return false;
             }
 
             Highlight(TxtName, false);
+            TxtName.tooltip = null;
 
             return true;
         }
@@ -117,7 +128,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                         if (CreationsState == CreationsState.Editing && creation.Name.ToLower() == _lastName.ToLower())
                             continue;
 
-                        return true; 
+                        return true;
                     }
                 }
             }

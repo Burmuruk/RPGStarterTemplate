@@ -265,7 +265,11 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             _changes = null;
         }
 
-        public bool VerifyData() => true;
+        public bool VerifyData(out List<string> errors)
+        {
+            errors = new();
+            return true;
+        }
 
         public override ModificationTypes Check_Changes()
         {

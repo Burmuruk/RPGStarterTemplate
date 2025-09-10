@@ -19,7 +19,22 @@ MonoBehaviour:
   - type: 0
     items: []
   - type: 2
-    items: []
+    items:
+    - name: 08185f4e-47b7-4327-976f-6d4d11dd11be
+      data:
+        rid: 6564117875909722130
+    - name: 5e42469f-0140-428d-9201-9a945defa152
+      data:
+        rid: 6564117875909722122
+    - name: 6abbd25d-e0e9-450f-9934-f018b9d2131f
+      data:
+        rid: 6564117875909722126
+    - name: 94f1581d-b7c9-469f-a72b-850d72b4ddb6
+      data:
+        rid: 6564117875909722127
+    - name: b09af90a-d008-46f5-85cc-af472ab99aa7
+      data:
+        rid: 6564117875909722128
   - type: 9
     items: []
   - type: 7
@@ -32,4 +47,29 @@ MonoBehaviour:
     items: []
   references:
     version: 2
-    RefIds: []
+    RefIds:
+    - rid: 6564117875909722122
+      type: {class: ItemCreationData, ns: Burmuruk.RPGStarterTemplate.Editor, asm: Assembly-CSharp-Editor}
+      data:
+        Name: item3
+        Data: {fileID: 0}
+    - rid: 6564117875909722126
+      type: {class: ItemCreationData, ns: Burmuruk.RPGStarterTemplate.Editor, asm: Assembly-CSharp-Editor}
+      data:
+        Name: item4
+        Data: {fileID: 0}
+    - rid: 6564117875909722127
+      type: {class: ItemCreationData, ns: Burmuruk.RPGStarterTemplate.Editor, asm: Assembly-CSharp-Editor}
+      data:
+        Name: item2
+        Data: {fileID: 0}
+    - rid: 6564117875909722128
+      type: {class: ItemCreationData, ns: Burmuruk.RPGStarterTemplate.Editor, asm: Assembly-CSharp-Editor}
+      data:
+        Name: item5
+        Data: {fileID: 0}
+    - rid: 6564117875909722130
+      type: {class: ItemCreationData, ns: Burmuruk.RPGStarterTemplate.Editor, asm: Assembly-CSharp-Editor}
+      data:
+        Name: item
+        Data: {fileID: 0}

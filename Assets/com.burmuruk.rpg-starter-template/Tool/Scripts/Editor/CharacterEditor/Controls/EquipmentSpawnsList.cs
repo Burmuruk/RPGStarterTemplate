@@ -262,19 +262,20 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             throw new System.NotImplementedException();
         }
 
-        public bool VerifyData()
+        public bool VerifyData(out List<string> errors)
         {
+            errors = new();
             bool result = true;
 
             foreach (var element in _enabledElements)
             {
-                bool value = false;
-                result &= value = element.transform.value != null;
-                Highlight(element.transform, !value, BorderColour.Error);
+                bool isValid = false;
+                result &= isValid = element.transform.value != null;
+                Set_ErrorTooltip(element.transform, "Value can't be empty", ref errors, !isValid);
 
                 var place = (EquipmentType)element.place.value;
-                result &= value = place != EquipmentType.None && place != EquipmentType.Body;
-                Highlight(element.place, !value, BorderColour.Error);
+                result &= isValid = place != EquipmentType.None && place != EquipmentType.Body;
+                Set_ErrorTooltip(element.place, "Invalid place", ref errors, !isValid);
             }
 
             return result;

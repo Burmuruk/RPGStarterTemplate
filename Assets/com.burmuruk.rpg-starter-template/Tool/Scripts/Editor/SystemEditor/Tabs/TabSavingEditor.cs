@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine.UIElements;
 
 namespace Burmuruk.RPGStarterTemplate.Editor.Controls
@@ -24,7 +25,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             throw new System.NotImplementedException();
         }
 
-        public override bool VerifyData()
+        public override bool VerifyData(out List<string> errors)
         {
             throw new System.NotImplementedException();
         }

@@ -1674,6 +1674,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 223044201}
+  - component: {fileID: 223044202}
   m_Layer: 0
   m_Name: GameObject
   m_TagString: Untagged
@@ -1696,6 +1697,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &223044202
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 223044200}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdedc77df1d83ff42aa13407bf8d7f8b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dialogue: {fileID: 0}
+  conversantName: ff
 --- !u!1001 &263995711
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4431,7 +4446,7 @@ MonoBehaviour:
   findOnStart: 1
   shouldDraw: 1
   cyclicType: 2
-  nodesCount: 8
+  nodesCount: 0
   lineColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   initialized: 1
 --- !u!1 &817183278
@@ -11011,6 +11026,8 @@ GameObject:
   - component: {fileID: 2100387537}
   - component: {fileID: 2100387536}
   - component: {fileID: 2100387535}
+  - component: {fileID: 2100387540}
+  - component: {fileID: 2100387539}
   m_Layer: 0
   m_Name: NPC
   m_TagString: Untagged
@@ -11107,6 +11124,33 @@ Transform:
   - {fileID: 155459020}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2100387539
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2100387534}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db8b8511ad46c45469484547824c2342, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uniqueIdentifier: 2b639101-56d4-4c3f-8cae-3973e3ba276e
+--- !u!114 &2100387540
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2100387534}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdedc77df1d83ff42aa13407bf8d7f8b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dialogue: {fileID: 0}
+  conversantName: Merch
 --- !u!1 &2133313793
 GameObject:
   m_ObjectHideFlags: 0

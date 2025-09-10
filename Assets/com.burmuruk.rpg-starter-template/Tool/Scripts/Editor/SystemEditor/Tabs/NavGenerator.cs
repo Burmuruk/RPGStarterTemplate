@@ -1,9 +1,7 @@
 using Burmuruk.AI;
 using Burmuruk.RPGStarterTemplate.Movement.PathFindig;
-using Burmuruk.RPGStarterTemplate.Saving;
 using System;
-using System.Collections;
-using System.IO;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -31,7 +29,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         public VisualElement StatusContainer { get; private set; }
         public Label LblSceneName { get; private set; }
-        public Label LblOctreeState{ get; private set; }
+        public Label LblOctreeState { get; private set; }
         public Label LblMeshState { get; private set; }
         public Label LblSaved { get; private set; }
         public UnsignedIntegerField UILayer { get; private set; }
@@ -47,7 +45,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         public VisualElement OctreeControls { get; private set; }
         public VisualElement MeshControls { get; private set; }
         public Button BtnGenerate { get; private set; }
-        public Button BtnDelete{ get; private set; }
+        public Button BtnDelete { get; private set; }
         public Button BtnSave { get; private set; }
 
         public void Initialize(VisualElement container, VisualElement buttonsContainer)
@@ -124,7 +122,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                     {
                         isValid = false;
                         Highlight(P2, true, BorderColour.Error);
-                    } 
+                    }
                 }
 
                 if (!isValid)
@@ -185,9 +183,9 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         private void GenerateNavigation()
         {
-            if (!VerifyData())
+            if (!VerifyData(out var errors))
             {
-                Notify("Invalid data", BorderColour.Error);
+                Notify(errors.Count > 1 ? "Invalid data" : errors[0], BorderColour.Error);
                 return;
             }
 
@@ -246,7 +244,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             else
             {
                 nodesList.x1 = (P1.value as GameObject).transform.position;
-                nodesList.x2 = (P2.value as GameObject).transform.position; 
+                nodesList.x2 = (P2.value as GameObject).transform.position;
             }
         }
 
@@ -316,31 +314,32 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                     return;
                 }
             }
-            
+
             EnableContainer(MaxDepth.parent, evt.newValue);
             EnableContainer(NodeMinSize.parent, evt.newValue);
             BtnGenerate.SetEnabled(evt.newValue || BtnDelete.enabledSelf);
             if (evt.newValue) Highlight(BtnGenerate);
         }
 
-        public override bool VerifyData()
+        public override bool VerifyData(out List<string> errors)
         {
-            bool isValid = true;
-            bool value = false;
+            errors = new();
+            bool result = true;
+            bool isValid = false;
 
             if (!TglDetectSize.value)
             {
-                isValid &= value = P1.value != null;
-                Highlight(P1, !value, BorderColour.Error);
-                isValid &= value = P2.value != null;
-                Highlight(P2, !value, BorderColour.Error);
+                result &= isValid = P1.value != null;
+                Set_ErrorTooltip(P1, "Value can't be empty", ref errors, isValid);
+                result &= isValid = P2.value != null;
+                Set_ErrorTooltip(P2, "Value can't be empty", ref errors, isValid);
             }
             if (TglOctree.value)
             {
-                isValid &= value = NodeMinSize.value > 0;
-                Highlight(NodeMinSize, !value, BorderColour.Error);
-                isValid &= value = MaxDepth.value > 0;
-                Highlight(MaxDepth, !value, BorderColour.Error); 
+                result &= isValid = NodeMinSize.value > 0;
+                Set_ErrorTooltip(NodeMinSize, "Value must be greater than zero", ref errors, isValid);
+                result &= isValid = MaxDepth.value > 0;
+                Set_ErrorTooltip(MaxDepth, "Value must be greater than zero", ref errors, isValid);
             }
             if (TglMesh.value)
             {
@@ -349,11 +348,11 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                     nodesList = ScriptableObject.CreateInstance<NodesList>();
                 }
 
-                isValid &= value = nodesList.debugNode != null;
+                result &= isValid = nodesList.debugNode != null;
                 //Highlight(nodesList, !isValue, BorderColour.Error);
             }
 
-            return isValid;
+            return result;
         }
 
         public override ModificationTypes Check_Changes()
@@ -534,7 +533,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                     nodesList.x2 = (P2.value as GameObject).transform.position;
 
                     Draw_Cube(P1.value as GameObject, P2.value as GameObject);
-                } 
+                }
             }
             else
             {

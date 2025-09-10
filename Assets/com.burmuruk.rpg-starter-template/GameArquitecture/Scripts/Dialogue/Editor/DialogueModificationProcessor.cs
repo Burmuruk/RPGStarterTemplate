@@ -7,7 +7,7 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue.Editor
     {
         private static AssetMoveResult OnWillMoveAsset(string sourcePath, string destinationPath)
         {
-            var dialogue = AssetDatabase.LoadMainAssetAtPath(sourcePath) as Dialogue;
+            var dialogue = AssetDatabase.LoadMainAssetAtPath(sourcePath) as DialogueOld;
 
             if (dialogue != null)
             {

@@ -142,11 +142,10 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         }
     }
 
-    public interface ISaveable
+    public interface ISaveable : IDataVerifiable
     {
         public bool Save();
         public CreationData Load(ElementType type, string id);
-        public bool VerifyData();
     }
 
     [Flags]
@@ -169,7 +168,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 
     public interface IDataVerifiable
     {
-        public bool VerifyData();
+        public bool VerifyData(out List<string> errors);
     }
 
     public enum CreationsState

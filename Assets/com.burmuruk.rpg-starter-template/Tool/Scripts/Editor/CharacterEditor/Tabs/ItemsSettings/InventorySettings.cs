@@ -327,7 +327,11 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             _changes.addInventory = false;
         }
 
-        public override bool VerifyData() => true;
+        public override bool VerifyData(out List<string> errors)
+        {
+            errors = new();
+            return true;
+        }
 
         public override ModificationTypes Check_Changes()
         {

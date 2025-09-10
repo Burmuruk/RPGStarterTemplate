@@ -21,6 +21,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         WeaponBorder,
         ConsumableBorder,
         ItemBorder,
+        SpecialChange
     }
 
     public class BaseLevelEditor : EditorWindow

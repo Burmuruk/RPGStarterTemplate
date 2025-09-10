@@ -133,6 +133,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         public EnumModifierUI<CharacterType> EMCharacterType { get; private set; }
         public DropdownField DDFEnemyTag { get; private set; }
         public TextField TxtTagName { get; private set; }
+        public ObjectField OFModel { get; private set; }
         public PopupField<string> PUBaseClass { get; private set; }
         public VariablesAdderUI Adder { get; private set; }
         public EquipmentSettings EquipmentS { get => (EquipmentSettings)subTabs[CharacterTab.Equipment]; }
@@ -159,7 +160,9 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             BtnApplyStats = container.Q<Button>("btnApplyStats");
             BtnApplyStats.clicked += OnClick_ApplyStats;
             DDFEnemyTag = container.Q<VisualElement>("ddfEnemyTag").Q<DropdownField>();
+            OFModel = container.Q<ObjectField>("ofModel");
             TxtTagName = container.Q<VisualElement>("txtTagName").Q<TextField>();
+            Setup_Model();
             Setup_EnemyTag();
             Setup_PUBaseClass(pBaseClass);
 
@@ -180,6 +183,18 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                     var so = new SerializedObject(basicStats);
                     so.Update();
                 });
+        }
+
+        private void Setup_Model()
+        {
+
+            OFModel.objectType = typeof(GameObject);
+            OFModel.RegisterValueChangedCallback(OnModelChanged);
+        }
+
+        private void OnModelChanged(ChangeEvent<UnityEngine.Object> evt)
+        {
+            
         }
 
         private void Setup_EnemyTag()
@@ -262,37 +277,47 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             DisableNotification();
             Highlight(textField, false);
             string lower = name.ToLowerInvariant();
+            
+            if (!Verify_NewStatName(name, textField, lower))
+                return;
 
+            _statsChanges[_selectedStat.Value].name = name;
+
+            Adder.RequestEnable_ApplyButton(true);
+            Highlight_StatChange(true);
+            Disable_StatNameEditor(_selectedStat.Value);
+
+            int idx = _selectedStat.Value;
+            if (_statsChanges[idx].removed)
+            {
+                Enable_RemoveStat(idx, false);
+            }
+        }
+
+        private bool Verify_NewStatName(string name, TextField textField, string lower)
+        {
             if (string.IsNullOrEmpty(name))
             {
                 _statsChanges[_selectedStat.Value].name = null;
-                Disable_StatEditor(_selectedStat.Value);
+                Disable_StatNameEditor(_selectedStat.Value);
                 Highlight_StatChange(false);
                 Verify_ModChanges();
-                return;
+                return false;
             }
             else if (name.Length < 3)
             {
                 Delete_NewStatName("The name must be at least 3 characters long", textField);
                 Highlight_StatChange(false);
-                return;
+                return false;
             }
 
             if (lower != _stats[_selectedStat.Value].Name.ToLower())
             {
-                if (VerifyVariableName(name))
-                {
-                    _statsChanges[_selectedStat.Value].name = name;
-
-                    Adder.RequestEnable_ApplyButton(true);
-                    Disable_StatEditor(_selectedStat.Value);
-                    Highlight_StatChange(true);
-                }
-                else
+                if (!VerifyVariableName(name))
                 {
                     Notify("Invalid name", BorderColour.Error);
                     Highlight(textField, true, BorderColour.Error);
-                    return;
+                    return false;
                 }
             }
             else
@@ -300,13 +325,16 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 Delete_NewStatName("The name must be different", textField);
                 Highlight(textField, false);
                 Highlight_StatChange(false);
+                return false;
             }
+
+            return true;
         }
 
         private void Highlight_StatChange(bool highlight)
         {
             var button = _stats[_selectedStat.Value].editButtons.Q<Button>("btnEditStat");
-            Highlight(button, highlight);
+            Highlight(button, highlight, BorderColour.SpecialChange);
         }
 
         private void Delete_NewStatName(string message, TextField textField)
@@ -317,7 +345,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             Verify_ModChanges();
         }
 
-        private void Disable_StatEditor(int idx)
+        private void Disable_StatNameEditor(int idx)
         {
             if (_stats[idx].extraSpace.Contains(StatEditorContainer))
             {
@@ -535,30 +563,6 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             EMStatType.Name.text = "Modification name";
         }
 
-        private void OnSelected_StatType(ChangeEvent<Enum> evt)
-        {
-            if (!_selectedStat.HasValue) return;
-
-            int idx = _selectedStat.Value;
-            var newType = (ModifiableStat)evt.newValue;
-
-            if (newType != _stats[idx].Type)
-            {
-                _statsChanges[idx].type = newType;
-                Adder.RequestEnable_ApplyButton(true);
-            }
-            else
-            {
-                _statsChanges[idx].type = null;
-                Verify_ModChanges();
-
-                if (newType == ModifiableStat.None)
-                {
-                    _stats[idx].toggle.SetValueWithoutNotify(false);
-                }
-            }
-        }
-
         private void Setup_Stats(VisualElement container)
         {
             var instance = ScriptableObject.CreateInstance<StatsVisualizer>();
@@ -766,6 +770,33 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             return null;
         }
 
+        private void OnSelected_StatType(ChangeEvent<Enum> evt)
+        {
+            if (!_selectedStat.HasValue) return;
+
+            int idx = _selectedStat.Value;
+            var newType = (ModifiableStat)evt.newValue;
+
+            if (newType != _stats[idx].Type)
+            {
+                _statsChanges[idx].type = newType;
+                Adder.RequestEnable_ApplyButton(true);
+                Highlight(_stats[idx].toggle.Q<VisualElement>("unity-checkmark"), true, BorderColour.SpecialChange);
+                Enable_RemoveStat(idx, false);
+            }
+            else
+            {
+                _statsChanges[idx].type = null;
+                Verify_ModChanges();
+
+                _stats[idx].toggle.SetValueWithoutNotify(newType != ModifiableStat.None);
+                Highlight(_stats[idx].toggle.Q<VisualElement>("unity-checkmark"), false);
+            }
+
+            Disable_Stat(idx);
+            _selectedStat = null;
+        }
+
         private void OnEnable_StatToggle(ChangeEvent<bool> evt, int idx)
         {
             Verify_LastToggleValue();
@@ -779,11 +810,13 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 {
                     _statsChanges[idx].type = null;
                     Verify_ModChanges();
+                    Highlight(_stats[idx].toggle.Q<VisualElement>("unity-checkmark"), false);
                 }
                 else
                 {
                     _statsChanges[idx].type = ModifiableStat.None;
                     Adder.RequestEnable_ApplyButton(true);
+                    Highlight(_stats[idx].toggle.Q<VisualElement>("unity-checkmark"), true, BorderColour.SpecialChange);
                 }
                 return;
             }
@@ -803,12 +836,18 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             if (!_selectedStat.HasValue) return;
 
             var idx = _selectedStat.Value;
-            Disable_Stat(idx);
 
-            if (_statsChanges[idx].type.HasValue && _statsChanges[idx].type != _stats[idx].Type)
-                return;
-
-            _stats[idx].toggle.SetValueWithoutNotify(false);
+            if (_statsChanges[idx].type.HasValue && _statsChanges[idx].type != ModifiableStat.None)
+            {
+                _stats[idx].toggle.SetValueWithoutNotify(true);
+                Highlight(_stats[idx].toggle.Q<VisualElement>("unity-checkmark"), true, BorderColour.SpecialChange);
+                Enable_RemoveStat(idx, false);
+            }
+            else
+            {
+                Disable_Stat(idx);
+                _stats[idx].toggle.SetValueWithoutNotify(false);
+            }
         }
 
         private void Verify_ModChanges()
@@ -915,13 +954,19 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             bool removed = !_statsChanges[idx].removed;
             _statsChanges[idx].removed = removed;
 
-            Highlight(_stats[idx].editButtons.Q<Button>("btnRemoveStat"), removed);
+            Enable_RemoveStat(idx, removed);
 
             if (removed)
             {
                 _selectedStat = idx;
+                Highlight(_stats[idx].toggle.Q<VisualElement>("unity-checkmark"), false);
                 Highlight_StatChange(false);
-                _statsChanges[_selectedStat.Value].name = null;
+                _statsChanges[idx].name = null;
+                _statsChanges[idx].type = _stats[idx].Type == ModifiableStat.None ? null : _stats[idx].Type;
+                _stats[idx].toggle.value = _stats[idx].Enabled;
+                Disable_Stat(idx);
+                Disable_StatNameEditor(idx);
+
                 Adder.RequestEnable_ApplyButton(true);
             }
             else
@@ -929,8 +974,13 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 Verify_ModChanges();
             }
 
-            Disable_StatEditor(idx);
             _selectedStat = null;
+        }
+
+        private void Enable_RemoveStat(int idx, bool value)
+        {
+            Highlight(_stats[idx].editButtons.Q<Button>("btnRemoveStat"), value, BorderColour.SpecialChange);
+            _statsChanges[idx].removed = value;
         }
 
         private void OnClick_EditStat(int idx)
@@ -945,14 +995,8 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             }
             else
             {
-                Disable_StatEditor(idx);
+                Disable_StatNameEditor(idx);
                 _selectedStat = null;
-            }
-
-            if (_statsChanges[idx].removed)
-            {
-                _statsChanges[idx].removed = false;
-                Highlight(_stats[idx].editButtons.Q<Button>("btnRemoveStat"), false);
             }
         }
 
@@ -1040,18 +1084,25 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             base.Clear();
         }
 
-        public override bool VerifyData()
+        public override bool VerifyData(out List<string> errors)
         {
-            var errorColour = BorderColour.Error;
             bool result = true;
             bool isValid = false;
+            errors = new();
 
-            result &= _nameControl.VerifyData();
+            result &= _nameControl.VerifyData(out errors);
 
             result &= isValid = EMCharacterType.Value != CharacterType.None;
-            Highlight(EMCharacterType.EnumField, !isValid, errorColour);
+            Set_ErrorTooltip(EMCharacterType.EnumField, "Ivalid value", ref errors, isValid);
 
-            result &= _progression.VerifyData();
+            result &= isValid = DDFEnemyTag.value != "New" || !string.IsNullOrEmpty(DDFEnemyTag.value.Trim());
+            Set_ErrorTooltip(DDFEnemyTag, "Invalid tag", ref errors, isValid);
+
+            result &= isValid = OFModel.value != null;
+            Set_ErrorTooltip(OFModel, "A model is required", ref errors, isValid);
+
+            result &= _progression.VerifyData(out var progressErrors);
+            errors.AddRange(progressErrors);
             
             foreach (var component in ComponentsList.Components)
             {
@@ -1063,13 +1114,12 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
                     if (subTabs.ContainsKey(tabType) && subTabs[tabType] != null)
                     {
-                        result &= subTabs[tabType].VerifyData();
+                        result &= isValid = subTabs[tabType].VerifyData(out var tabErrors);
+                        SetComponent_ErrorBorder(component, !isValid);
+                        errors.AddRange(tabErrors);
                     }
                 }
             }
-
-            result &= isValid = DDFEnemyTag.value != "New" || !string.IsNullOrEmpty(DDFEnemyTag.value.Trim());
-            Highlight(DDFEnemyTag, !isValid, errorColour);
 
             return result;
         }
@@ -1116,6 +1166,10 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 if (_characterData.Value.characterType != EMCharacterType.Value)
                     CurModificationType = ModificationTypes.EditData;
 
+                //Model
+                if (OFModel.value != _characterData.Value.model)
+                    CurModificationType = ModificationTypes.EditData;
+
                 //Components
                 if (_characterData.Value.components.Count == ComponentsList.Components.Count)
                 {
@@ -1149,27 +1203,25 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         public bool Save()
         {
-            try
+            if (!VerifyData(out var errors))
             {
-                if (!VerifyData())
-                    throw new InvalidDataExeption("Invalid data");
+                string error = errors.Count > 1 ? "Invalid data" : errors[0];
+                Notify(error, BorderColour.Error);
 
-                if (_creationsState == CreationsState.Editing && Check_Changes() == ModificationTypes.None)
-                {
-                    Notify("No changes were found", BorderColour.HighlightBorder);
-                    return false;
-                }
-                else
-                    CurModificationType = ModificationTypes.Add;
+                return false;
+            }    
 
-                DisableNotification();
-                var newData = GetInfo();
-                return SavingSystem.SaveCreation(ElementType.Character, _id, new CharacterCreationData(newData.characterName, newData), CurModificationType);
-            }
-            catch (InvalidDataExeption e)
+            if (_creationsState == CreationsState.Editing && Check_Changes() == ModificationTypes.None)
             {
-                throw e;
+                Notify("No changes were found", BorderColour.HighlightBorder);
+                return false;
             }
+            else
+                CurModificationType = ModificationTypes.Add;
+
+            DisableNotification();
+            var newData = GetInfo();
+            return SavingSystem.SaveCreation(ElementType.Character, _id, new CharacterCreationData(newData.characterName, newData), CurModificationType);
         }
 
         public CreationData Load(ElementType type, string id)
@@ -1282,15 +1334,15 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
                 case ComponentType.Inventory:
                 case ComponentType.Health:
-                    SetClickableButtonColour(element);
+                    SetClickableButtonColour(element, true);
                     break;
 
                 default:
-                    if (element.NameButton.ClassListContains("ClickableBtn"))
-                        element.NameButton.RemoveFromClassList("ClickableBtn");
-                    element.NameButton.style.backgroundColor = new Color(0.1647059f, 0.1647059f, 0.1647059f);
+                    SetClickableButtonColour(element, false);
                     break;
             }
+
+            SetComponent_ErrorBorder(element, false);
         }
 
         private void Clear_ComponentData(ElementComponent element)
@@ -1323,10 +1375,33 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             }
         }
 
-        private void SetClickableButtonColour(ElementComponent element)
+        private void SetClickableButtonColour(ElementComponent element, bool clickable)
         {
-            element.NameButton.AddToClassList("ClickableBtn");
-            element.NameButton.style.backgroundColor = new Color(0.4627451f, 0.4627451f, 4627451f);
+            var (white, whiteLight) = ("WhiteBorder", "whiteBorder-light");
+            var (newClass, lastClass) = clickable ? (white, whiteLight) : (whiteLight, white);
+
+            //if (!element.NameButton.ClassListContains(newClass))
+            element.NameButton.AddToClassList(newClass);
+
+            if (element.NameButton.ClassListContains(lastClass))
+                element.NameButton.RemoveFromClassList(lastClass);
+
+            element.NameButton.SetEnabled(clickable);
+        }
+
+        private void SetComponent_ErrorBorder(ElementComponent component, bool shouldSet)
+        {
+            if (!component.NameButton.ClassListContains("error-border"))
+            {
+                if (shouldSet)
+                {
+                    component.NameButton.AddToClassList("error-border");
+                }
+            }
+            else if (!shouldSet)
+            {
+                component.NameButton.RemoveFromClassList("error-border");
+            }
         }
 
         #region Tab control
@@ -1360,7 +1435,9 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         {
             var items = ((InventorySettings)subTabs[CharacterTab.Inventory]).MClInventoryElements;
             //var inventory = (subTabs[CharacterTab.Inventory] as InventorySettings).GetInventory();
-            ((EquipmentSettings)subTabs[CharacterTab.Equipment]).Load_EquipmentFromList(items);
+            var equipment = ((EquipmentSettings)subTabs[CharacterTab.Equipment]);
+            equipment.Load_EquipmentFromList(items);
+            equipment.Set_Model((GameObject)OFModel.value);
         }
 
         private CharacterData GetInfo()
@@ -1372,6 +1449,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             newData.components ??= new();
             AddCharacterComponents(ref newData);
             newData.characterType = (CharacterType)EMCharacterType.EnumField.value;
+            newData.model = OFModel.value as GameObject;
             newData.enemyTag = DDFEnemyTag.value;
             _progression.Get_Info(out newData.progress, out newData.basicStats);
 
@@ -1386,6 +1464,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             ComponentsList.DDFElement.value = "None";
             EMCharacterType.Value = _characterData.Value.characterType;
             DDFEnemyTag.value = _characterData.Value.enemyTag ?? "";
+            OFModel.value = _characterData.Value.model;
             TempName = _characterData.Value.characterName;
             _originalName = _characterData.Value.characterName;
             UpdateName();
