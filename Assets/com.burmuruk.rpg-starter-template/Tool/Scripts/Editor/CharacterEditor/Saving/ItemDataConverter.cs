@@ -36,7 +36,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             List<BuffData> newBuffs = new();
             int idx = 0;
 
-            if (args != null)
+            if (args != null && args.BuffsNames != null)
             {
                 foreach (var name in args.BuffsNames)
                 {

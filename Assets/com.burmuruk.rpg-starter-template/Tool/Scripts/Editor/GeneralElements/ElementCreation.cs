@@ -1,7 +1,7 @@
-﻿using System;
-using System.Runtime.CompilerServices;
-using UnityEngine.UIElements;
+﻿using Burmuruk.RPGStarterTemplate.Editor.Controls;
 using Burmuruk.RPGStarterTemplate.Editor.Utilities;
+using System;
+using UnityEngine.UIElements;
 
 namespace Burmuruk.RPGStarterTemplate.Editor
 {
@@ -31,6 +31,12 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         public override void SetType(string value)
         {
             Type = Enum.Parse<ElementType>(value);
+        }
+
+        public override void Clear()
+        {
+            base.Clear();
+            Type = default(ElementType);
         }
     }
 
@@ -62,10 +68,10 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         public void Swap_BasicInfoWith(ElementCreationPinnable element)
         {
             var (pinned, type, id, name, toggle, amount) =
-                (element.pinned, 
-                element.Type.ToString(), 
+                (element.pinned,
+                element.Type.ToString(),
                 element.Id,
-                element.NameButton.text, 
+                element.NameButton.text,
                 element.Toggle.value,
                 element.IFAmount.value);
 

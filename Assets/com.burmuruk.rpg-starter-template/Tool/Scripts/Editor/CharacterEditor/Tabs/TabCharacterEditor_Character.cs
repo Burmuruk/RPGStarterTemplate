@@ -87,14 +87,13 @@ namespace Burmuruk.RPGStarterTemplate.Editor
                         if (!Save_Creation()) return;
 
                         Notify("Creation saved", BorderColour.Success);
-
-                        (CreationControls[type] as IClearable).Clear();
                         break;
 
                     case CreationsState.Editing:
                         if (!Edit_Creation()) return;
 
                         Notify("Changes saved", BorderColour.Success);
+                        nameSettings.SetState(CreationsState.Creating);
                         break;
 
                     default:
@@ -124,7 +123,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 
                 if (!result)
                 {
-                    if (IsDisabled(pNotification))
+                    if (IsDisabled(ntf))
                         Notify("Couldn't save changes.", BorderColour.Error);
 
                     return false;

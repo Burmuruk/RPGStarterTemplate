@@ -46,7 +46,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             //if (changesInTab) ;
             //Display warning
 
-            DisableNotification();
+            DisableNotification(NotificationType.System);
             ChangeTab(infoSavingName);
             SelectTabBtn(btnSavingName);
             CreateSavingTextFields();
@@ -126,7 +126,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
                 {
                     Highlight(savingTxtFields[i], false, BorderColour.Error);
                     hasErrors = true;
-                    Notify("Special characteres are not allowed.", BorderColour.Error);
+                    Notify("Special characteres are not allowed.", BorderColour.Error, NotificationType.System);
                 }
                 else
                 {
@@ -173,7 +173,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 
             if (newValues.Count > 0)
             {
-                Notify("No changes found.", BorderColour.Success);
+                Notify("No changes found.", BorderColour.Success, NotificationType.System);
                 return;
             }
 
@@ -183,12 +183,12 @@ namespace Burmuruk.RPGStarterTemplate.Editor
                 {
                     ClearSavingValues();
                     EnableSavingButtons(false);
-                    Notify("Changes applied.", BorderColour.Success);
+                    Notify("Changes applied.", BorderColour.Success, NotificationType.System);
                 }
             }
             catch (InvalidDataExeption e)
             {
-                Notify(e.Message, BorderColour.Error);
+                Notify(e.Message, BorderColour.Error, NotificationType.System);
             }
         }
 

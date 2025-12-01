@@ -11,7 +11,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         private List<NamedBuff?> _changes = new();
         private List<BuffsDataUI> buffs = new();
-        private Dictionary<string, string> buffNames;
+        private Dictionary<string, string> buffNames_Ids;
 
         public BuffAdderUI(VisualElement container) : base(container)
         {
@@ -19,18 +19,19 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             CreationScheduler.Add(ModificationTypes.Rename, ElementType.Buff, this);
             CreationScheduler.Add(ModificationTypes.Add, ElementType.Buff, this);
             CreationScheduler.Add(ModificationTypes.Remove, ElementType.Buff, this);
-            buffNames = CreationScheduler.GetNames(ElementType.Buff);
-            buffNames ??= new();
+            buffNames_Ids = CreationScheduler.GetNames(ElementType.Buff);
+            buffNames_Ids ??= new();
         }
 
         public virtual void AddData(in BaseCreationInfo data)
         {
-            var newBuffsNames = buffNames;
+            var newBuffsNames = buffNames_Ids;
             newBuffsNames.TryAdd(data.Name, data.Id);
 
             foreach (var buff in buffs)
             {
-                buffNames.TryGetValue(buff.DDBuff.value, out string selectedId);
+                bool found = false;
+                buffNames_Ids.TryGetValue(buff.DDBuff.value, out string selectedId);
                 buff.DDBuff.choices.Clear();
 
                 buff.DDBuff.choices.Add("Custom");
@@ -41,24 +42,22 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                     if (newName.Value == selectedId)
                     {
                         buff.DDBuff.value = newName.Key;
-                        goto nextTurn;
+                        found = true;
                     }
                 }
 
-                buff.DDBuff.value = "None";
-
-            nextTurn:
-                ;
+                if (!found)
+                    buff.DDBuff.value = "None";
             }
 
-            this.buffNames = newBuffsNames;
+            this.buffNames_Ids = newBuffsNames;
         }
 
         public virtual void RemoveData(in BaseCreationInfo newValue)
         {
             foreach (var buff in buffs)
             {
-                buffNames.TryGetValue(buff.DDBuff.value, out string selectedId);
+                buffNames_Ids.TryGetValue(buff.DDBuff.value, out string selectedId);
 
                 if (selectedId == newValue.Id)
                 {
@@ -68,7 +67,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 buff.DDBuff.choices.Remove(newValue.Name);
             }
 
-            buffNames.Remove(newValue.Name);
+            buffNames_Ids.Remove(newValue.Name);
         }
 
         public virtual void RenameCreation(in BaseCreationInfo newValue)
@@ -78,7 +77,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             int i = 1;
             Dictionary<string, string> newNames = new();
 
-            foreach (var buffData in buffNames)
+            foreach (var buffData in buffNames_Ids)
             {
                 if (buffData.Value == newValue.Id)
                 {
@@ -104,7 +103,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 }
             }
 
-            buffNames = newNames;
+            buffNames_Ids = newNames;
         }
 
         private void OnValueChanged_BuffsCount(KeyUpEvent evt)
@@ -148,7 +147,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         private VisualElement AddBuff()
         {
             var buff = new BuffsDataUI();
-            buff.SetValues(buffNames);
+            buff.SetValues(buffNames_Ids);
 
             buffs.Add(buff);
             _elementsContainer.Add(buff.Element);
@@ -170,8 +169,14 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         public void UpdateData(List<(string id, BuffData? buff)> buffsData)
         {
+            if (buffsData.Count <= 0)
+            {
+                Clear();
+                return;
+            }
+
             int max = Mathf.Min(buffs.Count, buffsData.Count);
-            _changes?.Clear();
+            _changes = new();
             int i = 0;
 
             for (; i < max; i++)
@@ -204,6 +209,41 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             }
         }
 
+        public virtual void UpdateUIData<T>(T buffsData) where T : List<(string id, BuffData? buff)>
+        {
+            if (buffsData.Count <= 0) return;
+
+            int max = Mathf.Min(buffs.Count, buffsData.Count);
+            int i = 0;
+
+            for (; i < max; i++)
+            {
+                if (!TryGetBuffName(buffsData[i].id, out string curName))
+                    continue;
+
+                buffs[i].UpdateData(curName, buffsData[i].buff);
+            }
+
+            if (buffsData.Count > buffs.Count)
+            {
+                for (int j = i; j < buffsData.Count; j++)
+                {
+                    if (!TryGetBuffName(buffsData[j].id, out string curName))
+                        continue;
+
+                    AddBuff();
+                    buffs[buffs.Count - 1].UpdateData(curName, buffsData[j].buff);
+                }
+            }
+            else if (buffsData.Count < buffs.Count)
+            {
+                for (int j = i; j < buffs.Count; j++)
+                {
+                    RemoveBuff();
+                }
+            }
+        }
+
         private bool TryGetBuffName(string id, out string newName)
         {
             newName = id switch
@@ -218,7 +258,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         private string GetNameById(string id)
         {
-            foreach (var value in buffNames)
+            foreach (var value in buffNames_Ids)
             {
                 if (value.Value == id)
                     return value.Key;
@@ -239,13 +279,13 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             {
                 NamedBuff data = buff.GetInfo();
 
-                if (data.Name == null)
+                if (data.name == null)
                 {
                     continue;
                 }
 
-                if (data.Name != "")
-                    data.Name = buffNames[data.Name];
+                if (data.name != "")
+                    data.name = buffNames_Ids[data.name];
 
                 buffsData.Add(data);
             }
@@ -300,12 +340,12 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         {
             foreach (var buff in namedBuffs)
             {
-                if (buff.Name != "")
+                if (buff.name != "")
                 {
                     bool containsName = false;
                     foreach (var name in _changes)
                     {
-                        if (name.HasValue && name.Value.Name == buff.Name)
+                        if (name.HasValue && name.Value.name == buff.name)
                         {
                             containsName = true;
                             break;
@@ -317,13 +357,13 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                         CurModificationType = ModificationTypes.EditData;
                     }
                 }
-                else if (buff.Name == "")
+                else if (buff.name == "")
                 {
                     bool hasData = false;
 
                     foreach (var change in _changes)
                     {
-                        if (change.HasValue && change.Value.Name == "")
+                        if (change.HasValue && change.Value.name == "")
                         {
                             if (change.Value.Data == buff.Data)
                             {
@@ -341,19 +381,25 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         public void Load_Changes()
         {
+            if (_changes == null)
+            {
+                Clear();
+                return;
+            }
+
             List<(string id, BuffData? data)> newData = new();
 
             foreach (var change in _changes)
             {
                 if (!change.HasValue) continue;
 
-                if (change.Value.Name == INVALIDNAME)
+                if (change.Value.name == INVALIDNAME)
                 {
                     newData.Add(("", change.Value.Data));
                 }
                 else
                 {
-                    newData.Add((buffNames[change.Value.Name], null));
+                    newData.Add((buffNames_Ids[change.Value.name], null));
                 }
             }
             

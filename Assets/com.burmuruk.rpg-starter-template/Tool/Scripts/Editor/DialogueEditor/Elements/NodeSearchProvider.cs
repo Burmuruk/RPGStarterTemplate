@@ -40,14 +40,21 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
         {
             var type = (NodeType)entry.userData;
 
-            var newNode = _graph.CreateNode(_spawnPos, type);
+            GraphViewNode fromNode = _fromPort?.node != null ? _fromPort.node as GraphViewNode : null;
+            var newNode = _graph.CreateNode(_spawnPos, type, fromNode);
+            
+            if (fromNode != null)
+                Set_Connection(newNode);
 
+            return true;
+        }
+
+        private void Set_Connection(GraphViewNode newNode)
+        {
             if (_fromPort.direction == Direction.Output)
                 _graph.Connect(_fromPort, newNode.input);
             else
                 _graph.Connect(newNode.output, _fromPort);
-
-            return true;
         }
     }
 

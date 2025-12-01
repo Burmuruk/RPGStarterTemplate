@@ -9,7 +9,7 @@
             <ui:FloatField label="Duration" value="0" name="ffDuration" class="LineElements" />
             <ui:FloatField label="Rate" value="0" name="ffRate" class="LineElements" />
             <ui:Toggle label="Percentage" name="tglPercentage" class="LineElements" />
-            <ui:Toggle label="Toggle" name="tglAffectAll" class="LineElements" />
+            <ui:Toggle label="Toggle" name="tglAffectAll" class="LineElements Disable" />
             <ui:FloatField label="Probability" value="0" name="ffProbability" class="LineElements" />
         </ui:VisualElement>
     </ui:VisualElement>

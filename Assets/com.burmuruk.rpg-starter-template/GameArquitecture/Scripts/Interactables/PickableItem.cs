@@ -1,4 +1,5 @@
-﻿using Burmuruk.RPGStarterTemplate.Inventory;
+﻿using Burmuruk.RPGStarterTemplate.Control;
+using Burmuruk.RPGStarterTemplate.Inventory;
 using Burmuruk.RPGStarterTemplate.Saving;
 using System;
 using UnityEngine;
@@ -20,6 +21,6 @@ namespace Burmuruk.RPGStarterTemplate.Interaction
 
     public interface IInteractable
     {
-        void Interact();
+        void Interact(Character character);
     }
 }

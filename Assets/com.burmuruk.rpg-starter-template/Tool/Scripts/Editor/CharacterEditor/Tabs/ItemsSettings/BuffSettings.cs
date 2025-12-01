@@ -1,4 +1,5 @@
 ﻿using Burmuruk.RPGStarterTemplate.Stats;
+using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
 
@@ -9,6 +10,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         private NamedBuff _changesBuff;
         private string _id;
 
+        public override string Id => _id;
         public FloatField Value { get; private set; }
         public FloatField Duration { get; private set; }
         public FloatField Rate { get; private set; }
@@ -38,7 +40,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         public BuffData GetInfo() =>
             new BuffData()
             {
-                name = TxtName.value,
+                name = TempName,
                 value = Value.value,
                 duration = Duration.value,
                 rate = Rate.value,
@@ -49,20 +51,34 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         public void UpdateInfo(BuffData data)
         {
+            Clear();
+
+            UpdateUIData(data);
+            _changesBuff = new NamedBuff(data.name, data);
+        }
+
+        public void UpdateUIData<T>(T args) where  T : struct
+        {
+            if (args is not BuffData data) return;
+
+            if (string.IsNullOrEmpty(Id))
+                _originalName = data.name;
             TempName = data.name;
-            _originalName = data.name;
             UpdateName();
+
             Value.value = data.value;
             Duration.value = data.duration;
             Rate.value = data.rate;
             Percentage.value = data.percentage;
             Probability.value = data.probability;
             Stat.value = data.stat;
-            _changesBuff = new NamedBuff(data.name, data);
         }
 
         public override void Clear()
         {
+            foreach (var element in _highlighted)
+                Utilities.UtilitiesUI.Set_Tooltip(element.Key, element.Value, false);
+
             Value.value = 0;
             Duration.value = 0;
             Rate.value = 0;
@@ -144,10 +160,12 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
             result &= _nameControl.VerifyData(out errors);
 
-            result &= isValid = Value.value == 0;
-            Utilities.UtilitiesUI.Set_ErrorTooltip(Value, "The number can't be zero.", ref errors, isValid);
+            result &= isValid = Value.value <= 0;
+            _highlighted[Value] = Value.tooltip;
+            Utilities.UtilitiesUI.Set_ErrorTooltip(Value, "The number can't be less than 1", ref errors, isValid);
 
             result &= isValid = (ModifiableStat)Stat.value != ModifiableStat.None;
+            _highlighted[Stat] = Stat.tooltip;
             Utilities.UtilitiesUI.Set_ErrorTooltip(Stat, "The stat can't be none", ref errors, isValid);
 
             return result;
@@ -157,10 +175,10 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         {
             if (!VerifyData(out var errors))
             {
-                if (errors.Count > 1)
-                    Utilities.UtilitiesUI.Notify("Invalid Data", BorderColour.Error);
-                else
+                if (errors.Count > 0)
                     Utilities.UtilitiesUI.Notify(errors[0], BorderColour.Error);
+                else
+                    Utilities.UtilitiesUI.Notify("Invalid Data", BorderColour.Error);
                 return false;
             }
 
@@ -174,7 +192,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 else
                     CurModificationType = ModificationTypes.Add;
 
-                Utilities.UtilitiesUI.DisableNotification();
+                Utilities.UtilitiesUI.DisableNotification(NotificationType.Creation);
                 var data = new BuffCreationData(_nameControl.TxtName.value.Trim(), GetInfo());
 
                 return SavingSystem.SaveCreation(ElementType.Buff, _id, data, CurModificationType);
@@ -192,9 +210,22 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             if (data == null) return default;
 
             BuffData newData = (data as BuffCreationData).Data;
-            _id = id;
             Set_CreationState(CreationsState.Editing);
             UpdateInfo(newData);
+            _id = id;
+            return data;
+        }
+
+        public CreationData Load(string id)
+        {
+            var data = SavingSystem.Load(id);
+
+            if (data == null) return default;
+
+            BuffData newData = (data as BuffCreationData).Data;
+            Set_CreationState(CreationsState.Editing);
+            UpdateInfo(newData);
+            _id = id;
             return data;
         }
 
@@ -202,6 +233,29 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         {
             _changesBuff = new("", null);
             _id = null;
+        }
+
+        CreationData IDataProvider.GetInfo()
+        {
+            return new BuffCreationData(_id, GetInfo());
+        }
+
+        public void UpdateInfo(CreationData cd)
+        {
+            var data = cd as BuffCreationData;
+            
+            if (string.IsNullOrEmpty(cd.Id))
+            {
+                _creationsState = CreationsState.Creating;
+            }
+            else
+            {
+                _creationsState = CreationsState.Editing;
+                Load(cd.Id);
+            }
+
+            UpdateUIData(data.Data);
+            _id = cd.Id;
         }
     }
 }

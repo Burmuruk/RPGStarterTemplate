@@ -22,7 +22,7 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue.Editor
         const float canvasSize = 4000;
         const float backgroundSize = 50;
 
-        [MenuItem("RPGTemplate/Dialogue Editor (IMGUI)")]
+        //[MenuItem("RPGTemplate/Dialogue Editor (IMGUI)")]
         public static void ShowEditorWindow()
         {
             GetWindow(typeof(DialogueEditorIMGUI), false, "Dialogue Editor");

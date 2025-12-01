@@ -1,5 +1,7 @@
 ﻿using Burmuruk.RPGStarterTemplate.Editor.Utilities;
+using System;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Burmuruk.RPGStarterTemplate.Editor.Controls
@@ -7,7 +9,8 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
     public class HealthSettings : SubWindow
     {
         const string INFO_HEALTH_SETTINGS_NAME = "HealthSettings";
-        private Health? _changes = null;
+        private Health _changes = null;
+        private IVisualElementScheduledItem pkeyDownTimeOut = null;
 
         public IntegerField IFMaxHealth { get; set; }
         public IntegerField IFHealth { get; private set; }
@@ -24,8 +27,30 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             IFHealth.value = 0;
             btnBackHealthSettings = _instance.Q<Button>();
 
+            IFMaxHealth.RegisterValueChangedCallback(OnValueChanged_MaxHealth);
             IFHealth.RegisterValueChangedCallback(OnValueChanged_FFHealthValue);
             btnBackHealthSettings.clicked += () => GoBack?.Invoke();
+        }
+
+        private void OnValueChanged_MaxHealth(ChangeEvent<int> evt)
+        {
+            if (IFHealth.value > evt.newValue)
+            {
+                pkeyDownTimeOut?.Pause();
+                pkeyDownTimeOut = null;
+
+                pkeyDownTimeOut = IFHealth.schedule.Execute(() => 
+                {
+                    IFHealth.SetValueWithoutNotify(IFMaxHealth.value);
+                    Debug.Log("Value Changed");
+                });
+                pkeyDownTimeOut.ExecuteLater(1000);
+            }
+            else
+            {
+                pkeyDownTimeOut?.Pause();
+                pkeyDownTimeOut = null;
+            }
         }
 
         public void UpdateHealth(in Health value)
@@ -35,6 +60,12 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             _changes = value;
         }
 
+        public void UpdateUIData<T>(T data) where T : Health
+        {
+            IFHealth.value = data.HP;
+            IFMaxHealth.value = data.MaxHP;
+        }
+
         private void OnValueChanged_FFHealthValue(ChangeEvent<int> evt)
         {
             if (evt.newValue > IFMaxHealth.value)
@@ -42,7 +73,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 IFHealth.SetValueWithoutNotify(IFMaxHealth.value);
             }
 
-            AddComponentData(ComponentType.Health);
+            //AddComponentData(ComponentType.Health);
         }
 
         private void AddComponentData(ComponentType type)
@@ -92,12 +123,12 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         {
             var modificationType = ModificationTypes.None;
 
-            if (!_changes.HasValue) return ModificationTypes.None;
+            if (_changes == null) return ModificationTypes.None;
 
-            if (IFHealth.value != _changes.Value.HP)
+            if (IFHealth.value != _changes.HP)
                 modificationType = ModificationTypes.EditData;
 
-            if (IFMaxHealth.value != _changes.Value.MaxHP)
+            if (IFMaxHealth.value != _changes.MaxHP)
                 modificationType = ModificationTypes.EditData;
 
             return modificationType;
@@ -105,8 +136,8 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         public override void Load_Changes()
         {
-            IFHealth.value = _changes.Value.HP;
-            IFMaxHealth.value = _changes.Value.MaxHP;
+            IFHealth.value = _changes.HP;
+            IFMaxHealth.value = _changes.MaxHP;
         }
 
         public override void Remove_Changes()

@@ -73,14 +73,62 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         {
             EnableContainer(creation.IFAmount, true);
             creation.IFAmount.RegisterValueChangedCallback(evt => Update_ElementAmount(evt, creation));
+            creation.IFAmount.RegisterCallback<FocusOutEvent>(evt => Check_InvalidAmount(creation, evt));
             creation.RemoveButton.clicked += () => MClInventoryElements.RemoveComponent(creation.idx);
+            creation.NameButton.SetEnabled(false);
+        }
+
+        private void Check_InvalidAmount(ElementCreation creation, FocusOutEvent evt)
+        {
+            if (string.IsNullOrEmpty(creation.IFAmount.text))
+                creation.IFAmount.SetValueWithoutNotify(MClInventoryElements.Amounts[creation.idx]);
         }
 
         private void Update_ElementAmount(ChangeEvent<int> evt, ElementCreation creation)
         {
-            if (evt.newValue <= 0)
+            if (!string.IsNullOrEmpty(creation.IFAmount.text))
+                Update_ElementAmount(evt.newValue, creation);
+        }
+
+        private void Update_ElementAmount(int value, ElementCreation creation)
+        {
+            if (value <= 0)
             {
                 MClInventoryElements.RemoveComponent(creation.idx);
+            }
+            else
+            {
+                var data = SavingSystem.Load(creation.Id);
+                if (string.IsNullOrEmpty(data.Id)) return;
+
+                switch (data)
+                {
+                    case ItemCreationData item:
+
+                        if (value > item.Data.Capacity)
+                        {
+                            creation.IFAmount.SetValueWithoutNotify(item.Data.Capacity);
+                            Notify("Max capacity exceeded", BorderColour.HighlightBorder);
+                            return;
+                        }
+
+                        break;
+
+                    case BuffUserCreationData buff:
+                        if (value > buff.Data.Capacity)
+                        {
+                            creation.IFAmount.SetValueWithoutNotify(buff.Data.Capacity);
+                            Notify("Max capacity exceeded", BorderColour.HighlightBorder);
+                            return;
+                        }
+
+                        break;
+
+                    default:
+                        break;
+                }
+
+                MClInventoryElements.ChangeAmount(creation.idx, value);
             }
         }
 
@@ -161,7 +209,8 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
             if (elementIdx.HasValue)
             {
-                MClInventoryElements.IncrementElement(elementIdx.Value);
+                var component = MClInventoryElements[elementIdx.Value];
+                Update_ElementAmount(component.IFAmount.value + 1, component);
             }
             else
                 MClInventoryElements.AddElement(name, MClInventoryElements.DDFType.value);
@@ -187,7 +236,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 {
                     if (creation.Value == null) continue;
 
-                    _DropDownIds.Add((creation.Value.Name, typeName), creation.Key);
+                    _DropDownIds.Add((creation.Value.Id, typeName), creation.Key);
                 }
             }
 
@@ -208,7 +257,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
             foreach (var creation in SavingSystem.Data.creations[type])
             {
-                MClInventoryElements.DDFElement.choices.Add(creation.Value.Name);
+                MClInventoryElements.DDFElement.choices.Add(creation.Value.Id);
             }
 
             MClInventoryElements.DDFElement.SetValueWithoutNotify("None");
@@ -256,7 +305,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             for (int i = 0; i < MClInventoryElements.Components.Count; i++)
             {
                 if (!MClInventoryElements.Components[i].element.ClassListContains("Disable") &&
-                    MClInventoryElements.Components[i].NameButton.text.Contains(name))
+                    MClInventoryElements.Components[i].NameButton.text == name)
                     return i;
             }
 
@@ -289,6 +338,33 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             var elements = MClInventoryElements;
             elements.RestartValues();
             var newInventory = inventory;
+            TglAddInventory.value = inventory.addInventory;
+
+            if (inventory.items != null)
+                foreach (var item in inventory.items)
+                {
+                    int amount = item.Value;
+
+                    if (!SavingSystem.Data.TryGetCreation(item.Key, out var data, out var type))
+                        continue;
+
+                    Action<ElementCreation> ChangeValue = (e) => elements.ChangeAmount(e.idx, item.Value);
+                    elements.OnElementAdded += ChangeValue;
+
+                    if (!elements.AddElement(data.Id, type.ToString()))
+                        newInventory.items.Remove(item.Key);
+
+                    elements.OnElementAdded -= ChangeValue;
+                }
+
+            _changes = newInventory;
+        }
+
+        public void UpdateUIData<T>(in T inventory) where T : Inventory
+        {
+            var elements = MClInventoryElements;
+            elements.RestartValues();
+            TglAddInventory.value = inventory.addInventory;
 
             if (inventory.items != null)
                 foreach (var item in inventory.items)
@@ -302,27 +378,27 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                     elements.OnElementAdded += ChangeValue;
                     elements.OnElementCreated += ChangeValue;
 
-                    if (!elements.AddElement(data.Name, type.ToString()))
-                        newInventory.items.Remove(item.Key);
+                    elements.AddElement(data.Id, type.ToString());
 
                     elements.OnElementAdded -= ChangeValue;
                     elements.OnElementCreated -= ChangeValue;
                 }
-
-            _changes = newInventory;
         }
 
         public override void Clear()
         {
-            _changes.items = null;
+            if (_changes != null)
+                _changes.items = null;
             MClInventoryElements.Clear();
             _selectedType = null;
-            TglAddInventory.SetValueWithoutNotify(false);
+            TglAddInventory.value = false;
             EnableContainer(_warning, false);
         }
 
         public override void Remove_Changes()
         {
+            if (_changes == null) return;
+
             _changes.items = null;
             _changes.addInventory = false;
         }
@@ -337,13 +413,18 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         {
             var inventory = GetInventory();
 
-            if (_changes.items == null) return CurModificationType = ModificationTypes.None;
+            if (_changes == null) return ModificationTypes.Add;
 
-            foreach (var item in inventory.items)
-            {
-                if (!_changes.items.ContainsKey(item.Key) || _changes.items[item.Key] != item.Value)
-                    return ModificationTypes.EditData;
-            }
+            if (_changes?.items == null ^ inventory?.items == null)
+                return ModificationTypes.EditData;
+            else if (_changes?.items?.Count != inventory?.items?.Count)
+                return ModificationTypes.EditData;
+            else
+                foreach (var item in inventory.items)
+                {
+                    if (!_changes.items.ContainsKey(item.Key) || _changes.items[item.Key] != item.Value)
+                        return ModificationTypes.EditData;
+                }
 
             if (_changes.addInventory != TglAddInventory.value)
                 return ModificationTypes.EditData;

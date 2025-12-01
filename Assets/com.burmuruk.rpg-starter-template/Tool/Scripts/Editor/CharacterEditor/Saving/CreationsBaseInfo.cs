@@ -48,6 +48,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             CreationsState = state;
             BtnState.text = state.ToString();
             BtnState.SetEnabled(state == CreationsState.Editing);
+            CreationsStateChanged?.Invoke(state);
         }
 
         public void UpdateName(string newName, string original)
@@ -60,7 +61,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         {
             string newName = evt.newValue.Trim().ToLower();
 
-            if (!newName.VerifyName())
+            if (!newName.VerifyName(NotificationType.Creation))
             {
                 Highlight(TxtName, true, BorderColour.Error);
                 TxtName.tooltip = "The name can't be empty.";
@@ -73,14 +74,17 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             else
             {
                 Highlight(TxtName, false);
-                DisableNotification();
+                DisableNotification(NotificationType.Creation);
             }
         }
 
         public bool VerifyData(out List<string> errors)
         {
             var reslut = ValidateName(out var error);
-            errors = new List<string>() { error };
+            errors = new List<string>();
+
+            if (!string.IsNullOrEmpty(error))
+                errors.Add(error);
 
             return reslut;
         }
@@ -123,9 +127,9 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             {
                 foreach (var creation in SavingSystem.Data.creations[creationType].Values)
                 {
-                    if (creation.Name.ToLower() == name)
+                    if (creation.Id.ToLower() == name)
                     {
-                        if (CreationsState == CreationsState.Editing && creation.Name.ToLower() == _lastName.ToLower())
+                        if (CreationsState == CreationsState.Editing && creation.Id.ToLower() == _lastName.ToLower())
                             continue;
 
                         return true;
@@ -163,6 +167,8 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         public void Clear()
         {
+            Highlight(TxtName, false, BorderColour.Error);
+            TxtName.tooltip = "";
             TxtName.value = "";
             _lastName = "";
         }

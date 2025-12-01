@@ -34,16 +34,17 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         public override void RestoreFromJson(JObject json)
         {
             base.RestoreFromJson(json);
+            var data = json["buffData"];
 
-            Stats.BuffData buffData = new Stats.BuffData()
+            Data = new Stats.BuffData()
             {
-                name = json["name"].ToObject<string>(),
-                stat = (Stats.ModifiableStat)json["stat"].ToObject<int>(),
-                value = json["value"].ToObject<int>(),
-                duration = json["duration"].ToObject<float>(),
-                rate = json["rate"].ToObject<float>(),
-                percentage = json["percentage"].ToObject<bool>(),
-                probability = json["robability"].ToObject<float>()
+                name = data["name"].ToObject<string>(),
+                stat = (Stats.ModifiableStat)data["stat"].ToObject<int>(),
+                value = data["value"].ToObject<int>(),
+                duration = data["duration"].ToObject<float>(),
+                rate = data["rate"].ToObject<float>(),
+                percentage = data["percentage"].ToObject<bool>(),
+                probability = data["probability"].ToObject<float>()
             };
         }
     }

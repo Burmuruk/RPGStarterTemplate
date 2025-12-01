@@ -1,9 +1,10 @@
-﻿using Burmuruk.RPGStarterTemplate.Editor.Utilities;
+﻿using System;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 {
-    public class ComponentsListUI<T> : ComponentsList<T> where T : ElementCreationUI, new()
+    public class ComponentsListUI<T> : ComponentsList<T> where T : ElementCreationUI, IClearable, new()
     {
         public DropdownField DDFType { get; private set; }
         public DropdownField DDFElement { get; private set; }
@@ -21,7 +22,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         public void AddComponent(ChangeEvent<string> evt)
         {
-            if (Check_HasCharacterComponent(evt.newValue))
+            if (Contains(evt.newValue))
             {
                 DDFElement.SetValueWithoutNotify("None");
                 return;
@@ -33,20 +34,6 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 AddElement(evt.newValue, DDFType.value);
 
             DDFElement.SetValueWithoutNotify("None");
-        }
-
-        protected override T CreateNewComponent(string value, string type, out int idx)
-        {
-            var component = base.CreateNewComponent(value, type, out idx);
-
-            component.IFAmount.RegisterValueChangedCallback((evt) => UpdateTxtAmount(component.idx, evt.newValue));
-
-            return component;
-        }
-
-        private void UpdateTxtAmount(int idx, int newValue)
-        {
-            ChangeAmount(idx, newValue);
         }
 
         public override void Clear()

@@ -19,6 +19,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         Toggle tglShowCustomColour;
 
         Dictionary<ElementType, ISaveable> CreationControls = new();
+        Dictionary<ElementType, float> scrollPosTabs = new();
         [SerializeField] List<BuffData> curWeaponsBuffs;
         Dictionary<string, string> tabNames = new();
 
@@ -28,6 +29,14 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             var generalSettings = CreateInstance<GeneralCharacterSettings>();
             CreationControls.Add(ElementType.None, generalSettings);
             generalSettings.Initialize(infoRight, CreationControls);
+        }
+
+        private void Setup_ScrollPositions()
+        {
+            foreach (var container in infoContainers)
+            {
+                scrollPosTabs.Add(container.Value.type, 0);
+            }
         }
 
         private Dictionary<string, string> GetCreationNames(ElementType type)
@@ -43,7 +52,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             {
                 if (name.Value == null) continue;
 
-                names.Add(name.Key, name.Value.Name);
+                names.Add(name.Value.Id, name.Key);
             }
 
             return names;

@@ -41,9 +41,11 @@ namespace Burmuruk.RPGStarterTemplate.Interaction
         {
             if (!triggerOnCollition || disabled) return;
 
-            if (other.GetComponent<AIGuildMember>() == FindAnyObjectByType<PlayerManager>().CurPlayer)
+            var caller = other.GetComponent<AIGuildMember>();
+
+            if (caller == FindAnyObjectByType<PlayerManager>().CurPlayer)
             {
-                Interact();
+                Interact(caller);
             }
         }
 
@@ -60,7 +62,7 @@ namespace Burmuruk.RPGStarterTemplate.Interaction
             return state;
         }
 
-        public virtual void Interact()
+        public virtual void Interact(Character character)
         {
             if (disabled) return;
 

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -8,12 +7,11 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
     public class PlayerConversant : MonoBehaviour
     {
         [SerializeField] string playerName;
-        DialogueOld currentDialogue;
-        DialogueNodeOld currentNode = null;
+        Dialogue currentDialogue;
+        DialogueNode currentNode = null;
         AIConversant currentConversant = null;
 
         public bool IsChoosing { get; private set; }
-
         public bool IsActive { get => currentDialogue != null; }
 
         public event Action OnConversationUpdated;
@@ -22,11 +20,11 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
         //    currentNode = currentDialogue.GetRootNode();
         //}
 
-        public void StartDialogue(AIConversant newConversant, DialogueOld newDialogue)
+        public void StartDialogue(AIConversant newConversant, Dialogue newDialogue)
         {
             currentConversant = newConversant;
             currentDialogue = newDialogue;
-            currentNode = currentDialogue.GetRootNode();
+            currentNode = newDialogue.dialogueNode;
             TriggerEnterAction();
             OnConversationUpdated?.Invoke();
         }
@@ -48,13 +46,13 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
                 return "";
             }
 
-            return currentNode.Text;
+            return currentNode.Message;
         }
 
-        public IEnumerable<DialogueNodeOld> GetChoices()
-        {
-            return currentDialogue.GetPlayerChildren(currentNode);
-        }
+        //public IEnumerable<DialogueNodeOld> GetChoices()
+        //{
+        //    return currentDialogue.GetPlayerChildren(currentNode);
+        //}
 
         public string GetCurrentConversantName()
         {
@@ -68,9 +66,9 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
             }
         }
 
-        public void SelectChoice(DialogueNodeOld chosenNode)
+        public void SelectChoice(int idx)
         {
-            currentNode = chosenNode;
+            currentNode = currentNode.Children[idx];
             TriggerEnterAction();
             IsChoosing = false;
             Next();
@@ -78,7 +76,7 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
 
         public void Next()
         {
-            int numPlayerResponses = currentDialogue.GetPlayerChildren(currentNode).Count();
+            int numPlayerResponses = currentNode.Children.Count();
             if (numPlayerResponses > 0)
             {
                 IsChoosing = true;
@@ -87,8 +85,8 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
                 return;
             }
 
-            var children = currentDialogue.GetAIChildren(currentNode).ToArray();
-            int randomIndex = UnityEngine.Random.Range(0, children.Length);
+            var children = currentNode.Children;
+            int randomIndex = UnityEngine.Random.Range(0, children.Count());
             TriggerExitAction();
 
             currentNode = children[randomIndex];
@@ -98,7 +96,7 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
 
         public bool HasNext()
         {
-            return currentDialogue.GetAllChildren(currentNode).ToArray().Count() > 0;
+            return currentNode.Children.Count() > 0;
         }
 
         private void TriggerEnterAction()
@@ -121,9 +119,12 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
         {
             if (action == "") return;
 
-            foreach (var trigger in currentConversant.GetComponents<DialogueTrigger>())
+            foreach (var trigger in FindObjectsByType<DialogueTrigger>(FindObjectsSortMode.None))
             {
-                trigger.Trigger(action);
+                if (trigger.Action == action)
+                {
+                    trigger.Trigger(action); 
+                }
             }
         }
     }

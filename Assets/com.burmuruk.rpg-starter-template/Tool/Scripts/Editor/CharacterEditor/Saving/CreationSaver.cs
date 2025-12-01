@@ -20,14 +20,13 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         const string ITEMS_LIST_NAME = "GeneralItemsList.asset";
         const string PROGRESS_NAME = "CharactersProgress.asset";
         const string ASSET_EXTENSION = ".asset";
-        const string RESULT_PATH = "RPG-Results";
+        const string RESULT_PATH = "RPGResults";
         const string ITEMS_FOLDER = "Items";
         const string ARMOUR_FOLDER = "Armour";
         const string PICKUPS_FOLDER = "Pickups";
         const string CHARACTERS_FOLDER = "Characters";
         const string WEAPONS_FOLDER = "Weapons";
         ItemsList _itemsList;
-        string resultsPath = null;
         List<GameObject> garbage = new();
         CharacterProgress _progress;
 
@@ -74,17 +73,18 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         {
             get
             {
-                if (string.IsNullOrEmpty(resultsPath))
+                var resultsPath = PlayerPrefs.GetString("CreationPath");
+
+                if (string.IsNullOrEmpty(resultsPath) || !AssetDatabase.IsValidFolder(resultsPath))
                 {
-                    string basePath = SavingSystem.Data.CreationPath;
-                    if (!AssetDatabase.IsValidFolder(basePath))
+                    if (!AssetDatabase.IsValidFolder(resultsPath))
                     {
-                        string defaultPath = "Assets/";
-                        resultsPath = AssetDatabase.CreateFolder(defaultPath, RESULT_PATH);
+                        string defaultPath = "Assets";
+                        AssetDatabase.CreateFolder(defaultPath, RESULT_PATH);
                         AssetDatabase.Refresh();
                     }
                     else
-                        resultsPath = basePath;
+                        return resultsPath;
 
                     if (!AssetDatabase.IsValidFolder(resultsPath))
                         return null;
@@ -113,6 +113,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             string itemPath = Path + "/" + subFolder + "/" + item.Name + ASSET_EXTENSION;
             if (AssetDatabase.LoadAssetAtPath<InventoryItem>(itemPath) != null)
                 AssetDatabase.DeleteAsset(itemPath);
+
 
             var copy = ScriptableObject.Instantiate(item);
             copy.Pickup = CreatePickUp(item, args, subFolder);
@@ -160,7 +161,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 
         private void SetPickUpModel(in ItemDataArgs args, GameObject parent)
         {
-            var model = AssetDatabase.LoadAssetAtPath<GameObject>(args.pickupPath);
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(args.PickupPath);
 
             if (model == null) return;
             GameObject modelInstance = GameObject.Instantiate(model, parent.transform);
@@ -249,10 +250,30 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             var typeF = typeof(RPGStarterTemplate.Control.Character).GetField("characterType", BindingFlags.Instance | BindingFlags.NonPublic);
             if (typeF != null)
                 typeF.SetValue(player.GetComponent<RPGStarterTemplate.Control.Character>(), characterData.characterType);
-            
+
+            Setup_Drops(player, characterData);
             Setup_BasicStats(player, characterData);
             Set_DetectionPoints(player, characterData);
             Set_Enemy(player, characterData.enemyTag);
+        }
+
+        private void Setup_Drops(GameObject player, CharacterData characterData)
+        {
+            if (!player.TryGetComponent<RPGStarterTemplate.Control.Character>(out var playerComp)) return;
+
+            Type curType = playerComp.GetType();
+
+            while (curType != typeof(Control.Character))
+            {
+                FieldInfo field = curType.GetField("itemsToDrop");
+                if (field != null)
+                {
+                    field.SetValue(playerComp, characterData.drops);
+                    break;
+                }
+
+                curType = curType.BaseType;
+            }
         }
 
         private void Setup_BasicStats(GameObject player, CharacterData characterData)
@@ -299,9 +320,9 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             //    if (data.Value.earsRadious != 0)
             //        hasEars = true;
             //}
-            if (characterData.basicStats.eyesRadious != 0)
+            if (characterData.basicStats.farDectection != 0)
                 hasEyes = true;
-            if (characterData.basicStats.earsRadious != 0)
+            if (characterData.basicStats.closeDetection != 0)
                 hasEars = true;
 
             var eyesF = typeof(RPGStarterTemplate.Control.Character).GetField("farPercept", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -338,7 +359,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         {
             List<Type> components = new()
             {
-                characterData.className,
+                Type.GetType(characterData.className),
                 typeof(CapsuleCollider),
                 typeof(Rigidbody),
             };
@@ -360,12 +381,12 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             return components.ToArray();
         }
 
-        private void Setup_Components(ComponentType type, GameObject player, object data, in CharacterData character)
+        private void Setup_Components(ComponentType type, GameObject player, object component, in CharacterData character)
         {
             switch (type)
             {
                 case ComponentType.Health:
-                    Setup_Health(player, (Health)data);
+                    Setup_Health(player, (Health)component);
                     break;
 
                 case ComponentType.Inventory:
@@ -381,7 +402,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
                     Setup_Inventory(player, inventory2);
 
                     var equipment = (Equipment)character.components[ComponentType.Equipment];
-                    Setup_Equipment(player, equipment);
+                    Setup_Equipment(player, equipment, (Inventory)character.components[ComponentType.Inventory]);
                     break;
 
                 //case ComponentType.Dialogue:
@@ -425,7 +446,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 
         private void Setup_Inventory(GameObject instance, Inventory inventory)
         {
-            if (!inventory.addInventory) return;
+            if (inventory?.items == null || !inventory.addInventory) return;
             
             if (!instance.TryGetComponent<RPGStarterTemplate.Inventory.Inventory>(out var inventoryComp))
                 inventoryComp = instance.AddComponent<RPGStarterTemplate.Inventory.Inventory>();
@@ -441,7 +462,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
                 if (!SavingSystem.Data.TryGetCreation(itemData.Key, out var data, out var type))
                     continue;
 
-                string name = data.Name;
+                string name = data.Id;
 
                 foreach (var item in items)
                 {
@@ -457,7 +478,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             initialItemsF.SetValue(inventoryComp, initalItems.ToArray());
         }
 
-        private void Setup_Equipment(GameObject instance, Equipment equipment)
+        private void Setup_Equipment(GameObject instance, Equipment equipment, in Inventory inventory)
         {
             var equipper = instance.GetComponent<InventoryEquipDecorator>();
 
@@ -469,14 +490,14 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 
             foreach (var itemData in equipment.equipment)
             {
-                string name = SavingSystem.Data.creations[itemData.Value.type][itemData.Key].Name;
+                string name = SavingSystem.Data.creations[itemData.Value.type][itemData.Key].Id;
 
                 foreach (var item in items)
                 {
                     if (item.name == name)
                     {
                         var initialItem = new InitalEquipedItemData();
-                        int amount = equipment.inventory.items[itemData.Key];
+                        int amount = inventory.items[itemData.Key];
 
                         initialItem.Initilize(item, amount, itemData.Value.equipped);
                         initialItems.Add(initialItem);
@@ -493,16 +514,17 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 
         private void SetPlayerModel(GameObject player, InventoryEquipDecorator inventory, in Equipment equipment)
         {
-            var body = GameObject.Instantiate(equipment.model, Vector3.zero, Quaternion.identity, player.transform);
+            var model = SavingSystem.GetAsset<GameObject>(equipment.modelPath);
+            var body = GameObject.Instantiate(model, Vector3.zero, Quaternion.identity, player.transform);
             garbage.Add(body);
 
-            Dictionary<(string cur, string parent), EquipmentType> names = new();
+            Dictionary<string, EquipmentType> names = new();
             equipment.spawnPoints.ForEach(s =>
             {
-                names.TryAdd((s.transform.name, s.transform.parent == null ? null : s.transform.parent.name), s.type);
+                names.TryAdd(s.path, s.type);
             });
 
-            var spawnPoints = GetSpawnPoints(body, ref names);
+            var spawnPoints = GetSpawnPoints(body, names);
 
             FieldInfo bodyF = typeof(RPGStarterTemplate.Inventory.Equipment).GetField("body", BindingFlags.Instance | BindingFlags.NonPublic);
             FieldInfo spawnPointsF = typeof(RPGStarterTemplate.Inventory.Equipment).GetField("spawnPoints", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -514,42 +536,53 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             equipmentF.SetValue(inventory, newEquipment);
         }
 
-        private List<SpawnPointData> GetSpawnPoints(GameObject model, ref Dictionary<(string cur, string parent), EquipmentType> names)
+        private List<SpawnPointData> GetSpawnPoints(GameObject model, Dictionary<string, EquipmentType> names)
         {
             var items = new List<SpawnPointData>();
 
-            for (int i = 0; i < model.transform.childCount; i++)
+            foreach (var name in names)
             {
-                var child = model.transform.GetChild(i);
-                (string cur, string parent)? key = null;
+                if (string.IsNullOrEmpty(name.Key)) continue;
 
-                foreach (var item in names)
+                items.Add(new SpawnPointData()
                 {
-                    if (child.transform.name == item.Key.cur)
-                    {
-                        if (child.transform.parent.transform.name == item.Key.parent)
-                        {
-                            key = item.Key;
-                            break;
-                        }
-                    }
-
-                }
-
-                if (key.HasValue)
-                {
-                    var data = new SpawnPointData()
-                    {
-                        spawnType = (int)names[key.Value],
-                        spawnPoint = child,
-                    };
-                    items.Add(data);
-                    names.Remove(key.Value);
-                }
-
-                if (child.transform.childCount > 0)
-                    items.AddRange(GetSpawnPoints(child.gameObject, ref names));
+                    spawnType = (int)name.Value,
+                    spawnPoint = model.transform.Find(name.Key)
+                });
             }
+
+            //for (int i = 0; i < model.transform.childCount; i++)
+            //{
+            //    var child = model.transform.GetChild(i);
+            //    (string cur, string parent)? key = null;
+
+            //    foreach (var item in names)
+            //    {
+            //        if (child.transform.name == item.Key.cur)
+            //        {
+            //            if (child.transform.parent.transform.name == item.Key.parent)
+            //            {
+            //                key = item.Key;
+            //                break;
+            //            }
+            //        }
+
+            //    }
+
+            //    if (key.HasValue)
+            //    {
+            //        var data = new SpawnPointData()
+            //        {
+            //            spawnType = (int)names[key.Value],
+            //            spawnPoint = child,
+            //        };
+            //        items.Add(data);
+            //        names.Remove(key.Value);
+            //    }
+
+            //    if (child.transform.childCount > 0)
+            //        items.AddRange(GetSpawnPoints(child.gameObject, ref names));
+            //}
 
             return items;
         }

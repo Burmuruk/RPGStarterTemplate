@@ -141,6 +141,8 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         public bool LoadInfo()
         {
             LblSceneName.text = SceneManager.GetActiveScene().name;
+            foreach (var element in _highlighted)
+                Set_Tooltip(element.Key, element.Value, false);
 
             bool found = CheckNavFileStatus();
 
@@ -161,11 +163,11 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             }
             catch (Exception e)
             {
-                Notify("The information couldn't be saved", BorderColour.Error);
+                Notify("The information couldn't be saved", BorderColour.Error, NotificationType.System);
                 throw e;
             }
 
-            Notify("Navigation saved", BorderColour.Success);
+            Notify("Navigation saved", BorderColour.Success, NotificationType.System);
         }
 
         private void RemoveData()
@@ -173,7 +175,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             NavSaver.RemoveFile(SceneManager.GetActiveScene().name);
 
             LoadInfo();
-            Notify("Data removed", BorderColour.Success);
+            Notify("Data removed", BorderColour.Success, NotificationType.System);
         }
 
         bool CheckNavFileStatus()
@@ -185,13 +187,13 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         {
             if (!VerifyData(out var errors))
             {
-                Notify(errors.Count > 1 ? "Invalid data" : errors[0], BorderColour.Error);
+                Notify(errors.Count > 1 ? "Invalid data" : errors[0], BorderColour.Error, NotificationType.System);
                 return;
             }
 
             if (TglOctree.value)
             {
-                Notify("Generating", BorderColour.Success);
+                Notify("Generating", BorderColour.Success, NotificationType.System);
                 CreateOctree();
 
                 bool finished = octree.emptyLeaves.Count > 0;
@@ -202,7 +204,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             }
             if (TglMesh.value)
             {
-                Notify("Generating", BorderColour.Success);
+                Notify("Generating", BorderColour.Success, NotificationType.System);
 
                 SetMeshAreaPoints();
                 nodesList.layer = layer;
@@ -215,7 +217,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 Highlight(BtnSave);
             }
 
-            Notify("Generated", BorderColour.Success);
+            Notify("Generated", BorderColour.Success, NotificationType.System);
         }
 
         private void SetMeshAreaPoints()
@@ -273,7 +275,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
                 if (nodesList.debugNode == null)
                 {
-                    Notify("Node prefab is missing!", BorderColour.Error);
+                    Notify("Node prefab is missing!", BorderColour.Error, NotificationType.System);
                     return;
                 }
             }
@@ -330,15 +332,19 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             if (!TglDetectSize.value)
             {
                 result &= isValid = P1.value != null;
+                _highlighted[P1] = P1.tooltip;
                 Set_ErrorTooltip(P1, "Value can't be empty", ref errors, isValid);
                 result &= isValid = P2.value != null;
+                _highlighted[P2] = P2.tooltip;
                 Set_ErrorTooltip(P2, "Value can't be empty", ref errors, isValid);
             }
             if (TglOctree.value)
             {
                 result &= isValid = NodeMinSize.value > 0;
+                _highlighted[NodeMinSize] = NodeMinSize.tooltip;
                 Set_ErrorTooltip(NodeMinSize, "Value must be greater than zero", ref errors, isValid);
                 result &= isValid = MaxDepth.value > 0;
+                _highlighted[MaxDepth] = MaxDepth.tooltip;
                 Set_ErrorTooltip(MaxDepth, "Value must be greater than zero", ref errors, isValid);
             }
             if (TglMesh.value)
@@ -408,9 +414,19 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             octree = new Octree(GetObjectsInArea(center, size), NodeMinSize.value, waypoints, MaxDepth.value);
         }
 
+        private Octree CreateOctree(float minSize, int depth)
+        {
+            var waypoints = new Graph();
+            GetInitialSize(out Vector3 center, out Vector3 size, out float maxSize);
+
+            OctreeNode.layer = layer;
+            return new Octree(GetObjectsInArea(center, size), minSize, waypoints, depth);
+        }
+
         private void CreateNavMesh()
         {
-            //nodesList.SetAvailableAreaDetector();
+            //var oct = CreateOctree(nodesList.NodeDistance, 20);
+            //nodesList.SetAvailableAreaDetector(oct.IsPointAvailable);
             nodesList.ResetState();
             nodesList.Calculate_PathMesh();
             nodesList.CalculateNodesConnections();
@@ -513,6 +529,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         private void Draw()
         {
             drawingTimeOut?.Pause();
+
             drawingTimeOut = Container.schedule.Execute(() =>
             {
                 DrawArea();
@@ -525,15 +542,13 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         void DrawArea()
         {
-            if (!TglDetectSize.value)
+            if (!TglDetectSize.value &&
+                nodesList != null && P1 != null && P2 != null)
             {
-                if (nodesList != null && P1 != null && P2 != null)
-                {
-                    nodesList.x1 = (P1.value as GameObject).transform.position;
-                    nodesList.x2 = (P2.value as GameObject).transform.position;
+                nodesList.x1 = (P1.value as GameObject).transform.position;
+                nodesList.x2 = (P2.value as GameObject).transform.position;
 
-                    Draw_Cube(P1.value as GameObject, P2.value as GameObject);
-                }
+                Draw_Cube(P1.value as GameObject, P2.value as GameObject);
             }
             else
             {

@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using UnityEditor;
 using UnityEngine.UIElements;
+using static UnityEditor.Rendering.FilterWindow;
 
 namespace Burmuruk.RPGStarterTemplate.Editor.Utilities
 {
@@ -12,12 +13,10 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Utilities
     {
         private const string BORDER_COLOURS_STYLESHEET_NAME = "BorderColours";
         static Regex regVariableName = new Regex(@"(?m)^[a-zA-Z](?!.*\W)+\w*", RegexOptions.Compiled);
-        static Regex regName = new Regex(@"(?m)^[a-zA-Z](?!.*\W)+\w*", RegexOptions.Compiled);
+        static Regex regName = new Regex(@"(?m)^[a-zA-Z](\s*?\w)*$", RegexOptions.Compiled);
         private static StyleSheet _hightlight_Colours;
-        public static VisualElement pNotification = null;
-        public static Label lblNotification;
-        static IVisualElementScheduledItem pNotificationTimeout = null;
         static Dictionary<VisualElement, IVisualElementScheduledItem> highlightTimeouts = null;
+        public static Dictionary<NotificationType, NotificationData> notifications = null;
         public static readonly string[] Keywords = new[]
         {
             // base
@@ -42,39 +41,59 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Utilities
             "record", "init", "with", "not"
         };
 
-        public static void Notify(string message, BorderColour colour)
+        public class NotificationData
         {
-            pNotificationTimeout?.Pause();
-            pNotificationTimeout = null;
+            public VisualElement container;
+            public Label label;
+            public IVisualElementScheduledItem timeout = null;
+
+            public NotificationData(VisualElement element, Label label)
+            {
+                container = element;
+                this.label = label;
+            }
+        }
+
+        public static void Notify(string message, BorderColour colour, NotificationType type = NotificationType.Creation)
+        {
+            if (notifications.ContainsKey(type))
+            {
+                notifications[type].timeout?.Pause();
+                notifications[type].timeout = null;
+            }
+            else
+                return;
 
             string colourText = colour.ToString();
-            pNotification.RemoveFromClassList("Disable");
-            RomveTags(colourText);
+            notifications[type].container.RemoveFromClassList("Disable");
+            RomoveTags();
 
-            if (!pNotification.ClassListContains(colourText))
-                pNotification.AddToClassList(colourText);
+            if (!notifications[type].container.ClassListContains(colourText))
+                notifications[type].container.AddToClassList(colourText);
 
-            lblNotification.text = message;
-            pNotificationTimeout = pNotification.schedule.Execute(() =>
+            notifications[type].label.text = message;
+            notifications[type].timeout = notifications[type].container.schedule.Execute(() =>
             {
-                DisableNotification();
+                DisableNotification(type);
             });
 
-            pNotificationTimeout.ExecuteLater(5000);
+            notifications[type].timeout.ExecuteLater(5000);
 
-            void RomveTags(string colourText)
+            void RomoveTags()
             {
                 int count = Enum.GetValues(typeof(BorderColour)).Length;
 
                 for (int i = 0; i < count; i++)
                 {
-                    if ((BorderColour)i == colour)
+                    var cur = (BorderColour)i;
+
+                    if (cur == colour)
                     {
                         continue;
                     }
-                    else if (pNotification.ClassListContains(colourText))
+                    else if (notifications[type].container.ClassListContains(cur.ToString()))
                     {
-                        pNotification.RemoveFromClassList(colourText);
+                        notifications[type].container.RemoveFromClassList(cur.ToString());
                     }
                 }
             }
@@ -95,10 +114,59 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Utilities
             }
         }
 
-        public static void DisableNotification()
+        public static bool Verify_EmptyField(TextField element, List<string> errors, Dictionary<VisualElement, string> highlights)
         {
-            if (!pNotification.ClassListContains("Disable"))
-                pNotification.AddToClassList("Disable");
+            var isValid = !string.IsNullOrEmpty(element.value);
+            highlights[element] = element.tooltip;
+            Set_ErrorTooltip(element, "Field can't be empty.", ref errors, isValid);
+            return isValid;
+        }
+
+        public static bool Verify_NegativaValue(this FloatField element, List<string> errors, Dictionary<VisualElement, string> highlights) =>
+            Verify_NegativaValue(element, element.value, errors, highlights);
+
+        public static bool Verify_NegativaValue(this IntegerField element, List<string> errors, Dictionary<VisualElement, string> highlights) =>
+            Verify_NegativaValue(element, element.value, errors, highlights);
+
+        public static bool Verify_NegativaValue(VisualElement element, float value, List<string> errors, Dictionary<VisualElement, string> highlights)
+        {
+            errors ??= new List<string>();
+            var isValid = value >= 0;
+            highlights[element] = element.tooltip;
+            Set_ErrorTooltip(element, "Value can't be negative.", ref errors, isValid);
+            return isValid;
+        }
+
+        public static void Set_Tooltip(VisualElement element, Dictionary<VisualElement, string> highlights, string message = "", bool highlight = true, BorderColour colour = BorderColour.HighlightBorder)
+        {
+            Highlight(element, highlight, colour);
+            
+            if (highlight)
+            {
+                element.tooltip = message;
+                highlights.TryAdd(element, message);
+            }
+            else
+            {
+                if (highlights.ContainsKey(element))
+                    element.tooltip = highlights[element];
+                else
+                    element.tooltip = message;
+            }
+        }
+
+        public static void Set_Tooltip(VisualElement element, string message, bool highlight = true, BorderColour colour = BorderColour.HighlightBorder)
+        {
+            Highlight(element, highlight, colour);
+            element.tooltip = message;
+        }
+
+        public static void DisableNotification(NotificationType type)
+        {
+            if (!notifications.ContainsKey(type)) return;
+
+            if (!notifications[type].container.ClassListContains("Disable"))
+                notifications[type].container.AddToClassList("Disable");
         }
 
         public static void Highlight(VisualElement element, long time = 3000, BorderColour colour = BorderColour.HighlightBorder)
@@ -216,17 +284,17 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Utilities
             return regVariableName.IsMatch(name);
         }
 
-        public static bool VerifyName(this string name)
+        public static bool VerifyName(this string name, NotificationType type)
         {
             if (string.IsNullOrEmpty(name))
             {
-                Notify("Name can't be empty.", BorderColour.Error);
+                Notify("Name can't be empty.", BorderColour.Error, type);
                 return false;
             }
 
             if (!regName.IsMatch(name))
             {
-                Notify("Invalid name", BorderColour.Error);
+                Notify("Invalid name", BorderColour.Error, type);
                 return false;
             }
 

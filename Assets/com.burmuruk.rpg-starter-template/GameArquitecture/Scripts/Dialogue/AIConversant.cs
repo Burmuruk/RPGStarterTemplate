@@ -1,11 +1,12 @@
 using Burmuruk.RPGStarterTemplate.Control;
+using Burmuruk.RPGStarterTemplate.Interaction;
 using UnityEngine;
 
 namespace Burmuruk.RPGStarterTemplate.Dialogue
 {
-    public class AIConversant : MonoBehaviour
+    public class AIConversant : MonoBehaviour, IInteractable
     {
-        [SerializeField] DialogueOld dialogue;
+        [SerializeField] Dialogue dialogue;
         [SerializeField] string conversantName;
 
 
@@ -24,6 +25,14 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
         public string GetName()
         {
             return conversantName;
+        }
+
+        public void Interact(Character character)
+        {
+            if (character.TryGetComponent<PlayerConversant>(out var caller))
+            {
+                caller.StartDialogue(this, dialogue);
+            }
         }
     }
 }

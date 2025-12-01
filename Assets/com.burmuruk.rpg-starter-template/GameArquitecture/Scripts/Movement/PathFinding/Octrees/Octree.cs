@@ -55,6 +55,17 @@ namespace Burmuruk.RPGStarterTemplate.Movement.PathFindig
             }
         }
 
+        public bool IsPointAvailable(Vector3 point)
+        {
+            foreach (var leaf in emptyLeaves)
+            {
+                if (leaf.nodeBounds.Contains(point))
+                    return true;
+            }
+
+            return false;
+        }
+
         void ConnectLeafNodeNeighbours()
         {
             var nodeMap = new Dictionary<Vector3Int, OctreeNode>();

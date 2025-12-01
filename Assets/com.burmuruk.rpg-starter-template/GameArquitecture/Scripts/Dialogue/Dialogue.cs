@@ -1,45 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace Burmuruk.RPGStarterTemplate.Dialogue
 {
     [CreateAssetMenu(fileName = "New Dialogue", menuName = "ScriptableObjects/Dialogue", order = 0)]
-    public class Dialogue : ScriptableObject, ISerializationCallbackReceiver
+    public class Dialogue : ScriptableObject
     {
-        [SerializeField]
-        List<DialogueNode> nodes = new();
-        [SerializeField] Vector2 newNodeOffset = new Vector2(250, 0);
+        [SerializeField] public DialogueNode dialogueNode = new();
+        [SerializeField] public string id;
+        [SerializeField] public List<string> characters;
 
-        public void AddNode(string id, string message)
+        public void UpdateDialogue(DialogueNode startNode)
         {
-            foreach (var node in nodes)
-            {
-                if (node.Id == id)
-                {
-                    return;
-                }
-            }
-
-            DialogueNode newNode = new DialogueNode
-            {
-                Id = id,
-                Message = message
-            };
-
-            nodes.Add(newNode);
-        }
-
-        public List<DialogueNode> GetNodes() => nodes;
-
-        public void OnAfterDeserialize()
-        {
-            
-        }
-
-        public void OnBeforeSerialize()
-        {
-            
+            dialogueNode = startNode;
         }
     }
 }

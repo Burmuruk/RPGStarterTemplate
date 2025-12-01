@@ -1,5 +1,6 @@
 using Burmuruk.RPGStarterTemplate.Combat;
 using Burmuruk.RPGStarterTemplate.Inventory;
+using System.Collections.Generic;
 using UnityEngine.UIElements;
 using static Burmuruk.RPGStarterTemplate.Editor.Utilities.UtilitiesUI;
 
@@ -13,6 +14,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         public FloatField MaxDistance { get; private set; }
         public FloatField ReloadTime { get; private set; }
         public IntegerField MaxAmmo { get; private set; }
+        public override ElementType ElementType => ElementType.Weapon;
 
         public EnumField EFBodyPart { get; private set; }
         public EnumModifierUI<WeaponType> EMWeaponType { get; private set; }
@@ -52,11 +54,11 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             var weapon = data as Weapon;
             var buffArgs = args as BuffsNamesDataArgs;
 
-            if (weapon == null) return;
+            //if (weapon == null) return;
 
             EFBodyPart.value = weapon.BodyPart;
             Damage.value = (uint)weapon.Damage;
-            RateDamage.value = weapon.ReloadTime;
+            RateDamage.value = weapon.DamageRate;
             MinDistance.value = weapon.MinDistance;
             MaxDistance.value = weapon.MaxDistance;
             ReloadTime.value = weapon.ReloadTime;
@@ -70,6 +72,25 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             UpdateBuffs(weapon.Buffs, buffArgs);
         }
 
+        public override void UpdateUIData<T, U>(T data, U args)
+        {
+            base.UpdateUIData(data, args);
+
+            var weapon = data as Weapon;
+            var buffArgs = args as BuffsNamesDataArgs;
+
+            EFBodyPart.value = weapon.BodyPart;
+            Damage.value = (uint)weapon.Damage;
+            RateDamage.value = weapon.DamageRate;
+            MinDistance.value = weapon.MinDistance;
+            MaxDistance.value = weapon.MaxDistance;
+            ReloadTime.value = weapon.ReloadTime;
+            MaxAmmo.value = weapon.MaxAmmo;
+            EMWeaponType.Value = (WeaponType)weapon.GetSubType();
+
+            UpdateUIBuffs(weapon.Buffs, buffArgs);
+        }
+
         public override (InventoryItem item, ItemDataArgs args) GetInfo(ItemDataArgs args)
         {
             Weapon weapon = new Weapon();
@@ -77,7 +98,11 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             weapon.Copy(baseInfo);
 
             (var buffs, var buffsNames) = GetBuffsInfo();
-            buffsNames.pickupPath = baseArgs?.pickupPath;
+            buffsNames = buffsNames with
+            {
+                PickupPath = baseArgs?.PickupPath,
+                ImgGUID = baseArgs?.ImgGUID
+            };
 
             weapon.UpdateInfo(
                 (EquipmentType)EFBodyPart.value,
@@ -129,52 +154,34 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 if (_changesWeapon.Damage != Damage.value)
                 {
                     CurModificationType = ModificationTypes.EditData;
-                    Highlight(Damage, true);
                 }
                 if (_changesWeapon.DamageRate != RateDamage.value)
                 {
                     CurModificationType = ModificationTypes.EditData;
-                    Highlight(RateDamage, true);
                 }
                 if (_changesWeapon.MinDistance != MinDistance.value)
                 {
                     CurModificationType = ModificationTypes.EditData;
-                    Highlight(MinDistance, true);
                 }
                 if (_changesWeapon.MaxDistance != MaxDistance.value)
                 {
                     CurModificationType = ModificationTypes.EditData;
-                    Highlight(MaxDistance, true);
                 }
                 if (_changesWeapon.ReloadTime != ReloadTime.value)
                 {
                     CurModificationType = ModificationTypes.EditData;
-                    Highlight(ReloadTime, true);
                 }
                 if (_changesWeapon.MaxAmmo != MaxAmmo.value)
                 {
                     CurModificationType = ModificationTypes.EditData;
-                    Highlight(MaxAmmo, true);
-                }
-                if (_changesWeapon.ReloadTime != ReloadTime.value)
-                {
-                    CurModificationType = ModificationTypes.EditData;
-                    Highlight(ReloadTime, true);
-                }
-                if (_changesWeapon.MaxAmmo != MaxAmmo.value)
-                {
-                    CurModificationType = ModificationTypes.EditData;
-                    Highlight(MaxAmmo, true);
                 }
                 if (_changesWeapon.BodyPart != (EquipmentType)EFBodyPart.value)
                 {
                     CurModificationType = ModificationTypes.EditData;
-                    Highlight(EFBodyPart, true);
                 }
                 if ((WeaponType)_changesWeapon.GetSubType() != EMWeaponType.Value)
                 {
                     CurModificationType = ModificationTypes.EditData;
-                    Highlight(EMWeaponType.Name, true);
                 }
 
                 return CurModificationType;
@@ -185,35 +192,31 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             }
         }
 
-        public override bool Save()
+        public override bool VerifyData(out List<string> errors)
         {
-            if (!VerifyData(out var errors))
-            {
-                Notify(errors.Count > 1 ? "Invalid Data" : errors[0], BorderColour.Error);
-                return false;
-            }
+            errors = new();
+            bool result = true;
 
-            if (_creationsState == CreationsState.Editing && Check_Changes() == ModificationTypes.None)
-            {
-                Notify("No changes were found", BorderColour.HighlightBorder);
-                return false;
-            }
-            else
-                CurModificationType = ModificationTypes.Add;
+            result &= base.VerifyData(out var baseErrors);
 
-            DisableNotification();
-            var (item, args) = ((InventoryItem, BuffsNamesDataArgs))GetInfo(GetCreatedEnums(ElementType.Buff));
-            var creationData = new BuffUserCreationData(_nameControl.TxtName.text.Trim(), item, args);
+            if (baseErrors != null && baseErrors.Count > 0)
+                errors.AddRange(baseErrors);
 
-            return SavingSystem.SaveCreation(ElementType.Weapon, in _id, creationData, CurModificationType);
+            result &= RateDamage.Verify_NegativaValue(errors, _highlighted);
+            result &= MinDistance.Verify_NegativaValue(errors, _highlighted);
+            result &= MaxDistance.Verify_NegativaValue(errors, _highlighted);
+            result &= ReloadTime.Verify_NegativaValue(errors, _highlighted);
+            result &= MaxAmmo.Verify_NegativaValue(errors, _highlighted);
+
+            return result;
         }
 
-        public override CreationData Load(ElementType type, string id)
+        public override CreationData Load(string id)
         {
-            var result = SavingSystem.Load(type, id);
+            var result = SavingSystem.Load(id);
 
             if (result == null) return null;
-            
+
             var weapon = result as BuffUserCreationData;
             _id = id;
             (var item, var args) = (weapon.Data, weapon.Names);
@@ -222,6 +225,23 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
             return weapon;
         }
+
+        //public override void UpdateInfo(CreationData cd)
+        //{
+        //    var data = cd as BuffUserCreationData;
+        //    var (bItem, args) = (data, data.Names);
+
+        //    if (string.IsNullOrEmpty(cd.Id))
+        //    {
+        //        _creationsState = CreationsState.Creating;
+        //    }
+        //    else
+        //    {
+        //        _creationsState = CreationsState.Editing;
+        //        Load()
+        //    }
+
+        //}
 
         public override void Load_Changes()
         {

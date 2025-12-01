@@ -1,4 +1,6 @@
 using Burmuruk.RPGStarterTemplate.Editor.Controls;
+using Burmuruk.RPGStarterTemplate.Editor.Saving.Json;
+using Burmuruk.RPGStarterTemplate.Inventory;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -6,12 +8,10 @@ using UnityEngine;
 
 namespace Burmuruk.RPGStarterTemplate.Editor
 {
-    public class CreationDatabase : ScriptableObject
+    public class CreationDatabase
     {
         public List<CharacterProfile> characters = new();
         public Dictionary<ElementType, Dictionary<string, CreationData>> creations = new();
-        public Dictionary<ElementType, Dictionary<string, CreationData>> changes = new();
-        public ElementType mainElementChange = ElementType.None;
         public List<ElementType> defaultElements = new()
         {
             ElementType.Character,
@@ -22,18 +22,6 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             //ElementType.State,
             ElementType.Buff,
         };
-        string _creationPath;
-        [SerializeField]
-        private List<ElementEntry> serializedCreations = new();
-
-        public string CreationPath
-        {
-            get => _creationPath;
-            set
-            {
-                _creationPath = value;
-            }
-        }
 
         [Serializable]
         public struct CharacterProfile
@@ -48,7 +36,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 
             foreach (var creation in creations[type])
             {
-                if (creation.Value.Name == name)
+                if (creation.Value.Id == name)
                 {
                     id = creation.Key;
                     return true;
@@ -78,42 +66,6 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 
             return true;
         }
-
-        public void SyncFromSerialized()
-        {
-            creations.Clear();
-            //serializedCreations.Clear();
-            foreach (var entry in serializedCreations)
-            {
-                var innerDict = new Dictionary<string, CreationData>();
-                foreach (var item in entry.items)
-                {
-                    innerDict[item.name] = item.data;
-                }
-                creations[entry.type] = innerDict;
-            }
-        }
-
-        public void SyncToSerialized()
-        {
-            serializedCreations.Clear();
-            foreach (var kvp in creations)
-            {
-                var entry = new ElementEntry
-                {
-                    type = kvp.Key,
-                    items = new List<NamedData>()
-                };
-
-                foreach (var inner in kvp.Value)
-                {
-                    entry.items.Add(new NamedData { name = inner.Key, data = inner.Value });
-                }
-
-                serializedCreations.Add(entry);
-            }
-        }
-
     }
 
     [Serializable]
@@ -138,7 +90,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         public RPGStarterTemplate.Inventory.InventoryItem Data;
         public ItemDataArgs args;
 
-        public ItemCreationData(string name, RPGStarterTemplate.Inventory.InventoryItem data, ItemDataArgs args) : base(name)
+        public ItemCreationData(string id, RPGStarterTemplate.Inventory.InventoryItem data, ItemDataArgs args) : base(id)
         {
             Data = data;
             this.args = args;
@@ -147,15 +99,17 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         public override JObject GetJson()
         {
             var status = base.GetJson();
-            status["itemData"] = ConvertDynamicDataToJson(Data);
-
+            
+            status["itemData"] = JsonSerializerHelper.ConvertDynamicDataToJson(Data.GetType(), Data);
+            status["args"] = JsonSerializerHelper.ConvertDynamicDataToJson(args.GetType(), args);
             return status;
         }
 
         public override void RestoreFromJson(JObject json)
         {
             base.RestoreFromJson(json);
-            Data = FromJson
+            Data = (InventoryItem)JsonSerializerHelper.FromJson((JObject)json["itemData"]);
+            args = (ItemDataArgs)JsonSerializerHelper.FromJson((JObject)json["args"]);
         }
     }
 
@@ -173,12 +127,20 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 
         public override JObject GetJson()
         {
-            return base.GetJson();
+            var status = base.GetJson();
+
+            status["itemData"] = JsonSerializerHelper.ConvertDynamicDataToJson(Data.GetType(), Data);
+            status["buffData"] = JsonSerializerHelper.ConvertDynamicDataToJson(Names.GetType(), Names);
+
+            return status;
         }
 
         public override void RestoreFromJson(JObject json)
         {
             base.RestoreFromJson(json);
+
+            Data = (RPGStarterTemplate.Inventory.InventoryItem)JsonSerializerHelper.FromJson((JObject)json["itemData"]);
+            Names = (BuffsNamesDataArgs)JsonSerializerHelper.FromJson((JObject)json["buffData"]);
         }
     }
 
@@ -194,12 +156,17 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 
         public override JObject GetJson()
         {
-            return base.GetJson();
+            var status = base.GetJson();
+            status["CharacterData"] = JsonSerializerHelper.ConvertDynamicDataToJson(Data.GetType(), Data);
+
+            return status;
         }
 
         public override void RestoreFromJson(JObject json)
         {
             base.RestoreFromJson(json);
+
+            Data = (CharacterData)JsonSerializerHelper.FromJson((JObject)json["CharacterData"]);
         }
     }
 
@@ -225,10 +192,10 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         Health,
         Fighter,
         Mover,
+        Flying,
         Inventory,
         Equipment,
-        //Flying,
-        //Dialogue,
+        Dialogue,
         //Patrolling,
     }
 }

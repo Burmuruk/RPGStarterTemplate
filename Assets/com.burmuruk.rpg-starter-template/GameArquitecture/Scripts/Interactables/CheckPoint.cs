@@ -1,7 +1,5 @@
 using Burmuruk.RPGStarterTemplate.Control;
-using Burmuruk.RPGStarterTemplate.Stats;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace Burmuruk.RPGStarterTemplate.Interaction
 {
@@ -16,7 +14,7 @@ namespace Burmuruk.RPGStarterTemplate.Interaction
             levelManager = FindObjectOfType<LevelManager>();
         }
 
-        public void Interact()
+        public void Interact(Character character)
         {
             if (!gameManager.ShowCharactersMenu()) return;
 

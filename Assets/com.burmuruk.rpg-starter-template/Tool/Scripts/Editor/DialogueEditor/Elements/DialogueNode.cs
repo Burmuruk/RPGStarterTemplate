@@ -1,42 +1,58 @@
-﻿using UnityEngine;
+﻿using System.Linq;
+using UnityEditor;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
 {
     public class DialogueNode : BaseNode
     {
+        [SerializeField] private string _text;
+
         public TextField TFMessage { get; private set; }
-        public string Value 
+        public string Text
         {
-            get => TFMessage.value;
-            set => TFMessage.value = value;
-        }
-
-        public override void Initilize(DialogueGraphView graph, Vector2 startPosition)
-        {
-            base.Initilize(graph, startPosition);
-            AddMessageField();
-        }
-
-        private void AddMessageField()
-        {
-            var content = new VisualElement
+            get => _text;
+            set
             {
-                style = {
-                    flexDirection = FlexDirection.Column,
-                    flexGrow = 1 ,
-                    marginTop = 6,
-                    marginBottom = 6,
+                if (_text != value)
+                {
+                    Undo.RecordObject(this, "Update Dialogue Text");
+                    _text = value;
+                    EditorUtility.SetDirty(this);
                 }
-            };
-            var row = new VisualElement { style = { flexDirection = FlexDirection.Row } };
-            row.Add(new Label("Message"));
-            TFMessage = new TextField(500, true, false, '*')
-            { style = { flexGrow = 1, flexShrink = 1, maxWidth = 400, flexBasis = 100 } };
-            row.Add(TFMessage);
+            }
+        }
 
-            content.Add(row);
-            GraphViewNode.extensionContainer.Add(content);
+        public override void Initilize(DialogueGraphView graph, Vector2 startPosition, BaseNode prev)
+        {
+            base.Initilize(graph, startPosition, prev);
+            TFMessage = AddTextField("Message");
+        }
+
+        public override void Save()
+        {
+            base.Save();
+
+            _text = TFMessage?.value;
+        }
+
+        public override RPGStarterTemplate.Dialogue.DialogueNode GetNodeData()
+        {
+            RPGStarterTemplate.Dialogue.DialogueNode nodeData = new RPGStarterTemplate.Dialogue.DialogueNode
+            {
+                Id = this.Id,
+                Children = (from c in GraphViewNode.output.connections
+                            select (c.input.node as GraphViewNode).Parent.GetNodeData()).ToList(),
+                Message = this.TFMessage.value
+            };
+            return nodeData;
+        }
+
+        public override void LoadData()
+        {
+            base.LoadData();
+            TFMessage.SetValueWithoutNotify(_text);
         }
     }
 }

@@ -50,7 +50,7 @@ namespace Burmuruk.AI
 
         List<(IPathNode node, IPathNode hitPos)> edgesToFix;
         private LinkedGrid<IPathNode> nodes;
-        private Func<bool, Vector3> _areaDetector;
+        private Func<Vector3, bool> _areaDetector;
         private GameObject _nodesParent;
         #endregion
 
@@ -97,7 +97,7 @@ namespace Burmuruk.AI
         #endregion
 
         #region Public methods
-        public void SetAvailableAreaDetector(Func<bool, Vector3> detector) => 
+        public void SetAvailableAreaDetector(Func<Vector3, bool> detector) => 
             _areaDetector = detector;
 
         public void Calculate_PathMesh()
@@ -434,7 +434,6 @@ namespace Burmuruk.AI
                     };
 
                     Ray detectionRay = new Ray(curPosA, Vector3.down);
-
                     var verticalHits = Detect_Ground(height, detectionRay, out List<Collider> hittedCols);
 
                     if (verticalHits != null)
@@ -444,6 +443,9 @@ namespace Burmuruk.AI
 
                         for (int k = 0; k < verticalHits.Count; k++)
                         {
+                            //if (_areaDetector != null && !_areaDetector(verticalHits[k]))
+                            //    continue;
+
                             if (Verify_CapsuleArea(verticalHits[k]))
                             {
                                 NodeData newNode;

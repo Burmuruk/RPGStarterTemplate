@@ -1,6 +1,9 @@
 using Burmuruk.RPGStarterTemplate.Editor.Controls;
+using System.Collections.Generic;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 using static Burmuruk.RPGStarterTemplate.Editor.Utilities.UtilitiesUI;
 
@@ -44,10 +47,27 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             GetTabButtons();
             GetInfoContainers();
             GetNotificationSection();
-
+            (notifications ??= new()).TryAdd(
+                NotificationType.System,
+                new NotificationData(ntf, ntfLbl));
             InitializeSaving();
 
+            EditorSceneManager.sceneOpened += OnSceneChanged;
             Show_NavMesh();
+        }
+
+        private void OnDestroy()
+        {
+            EditorSceneManager.sceneOpened -= OnSceneChanged;
+        }
+
+        private void OnSceneChanged(Scene scene, OpenSceneMode mode)
+        {
+            if (infoContainers[infoNavName].element.ClassListContains("Disable"))
+                return;
+
+            navGenerator.Clear();
+            navGenerator.LoadInfo();
         }
 
         protected override void GetInfoContainers()
@@ -83,7 +103,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             //if (changesInTab) ;
             //Display warning
 
-            DisableNotification();
+            DisableNotification(NotificationType.System);
             ChangeTab(btnMissionName);
         }
 
@@ -92,7 +112,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             //if (changesInTab) ;
             //Display warning
 
-            DisableNotification();
+            DisableNotification(NotificationType.System);
             ChangeTab(btnInteractionName);
         }
 
@@ -114,10 +134,17 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             }
 
             if (navGenerator.LoadInfo())
-                Notify("Navigation data found.", BorderColour.Success);
+                Notify("Navigation data found.", BorderColour.Success, NotificationType.System);
             else
-                Notify("The Navigation data wasn't found.", BorderColour.Error);
+                Notify("The Navigation data wasn't found.", BorderColour.Error, NotificationType.System);
         }
         #endregion
+    }
+
+    public enum NotificationType
+    {
+        None,
+        System,
+        Creation
     }
 }

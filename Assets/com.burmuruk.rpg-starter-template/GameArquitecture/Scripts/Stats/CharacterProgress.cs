@@ -62,6 +62,9 @@ namespace Burmuruk.RPGStarterTemplate.Stats
 
                 levelStatsDic[statData.characterType] = (statData.applyForAllLevels, new Dictionary<int, BasicStats>());
 
+                if (statData.levelData == null)
+                    continue;
+
                 foreach (var levelData in statData.levelData)
                 {
                     levelStatsDic[statData.characterType].levels[levelData.level] = levelData.stats;

@@ -1,9 +1,10 @@
-﻿using System;
+﻿using Burmuruk.RPGStarterTemplate.Editor.Controls;
+using System;
 using UnityEngine.UIElements;
 
 namespace Burmuruk.RPGStarterTemplate.Editor
 {
-    public abstract class ElementCreationUI
+    public abstract class ElementCreationUI : IClearable
     {
         public int idx;
         public VisualElement element;
@@ -41,5 +42,14 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         }
 
         public abstract void SetType(string value);
+
+        public virtual void Clear()
+        {
+            Id = null;
+            NameButton.text = "";
+            Toggle.value = false;
+            IFAmount.value = default;
+            EnumField.value = default;
+        }
     }
 }

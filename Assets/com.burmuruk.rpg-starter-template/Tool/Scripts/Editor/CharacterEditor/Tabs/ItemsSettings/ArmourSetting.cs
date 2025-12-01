@@ -22,21 +22,29 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             base.UpdateInfo(data, args, type);
             var armour = data as ArmourElement;
 
-            if (armour == null) return;
+            //if (armour == null) return;
 
             EquipmentPlace.Value = (EquipmentType)armour.GetEquipLocation();
             (_changes as ArmourElement).UpdateInfo(EquipmentPlace.Value);
         }
 
+        public override void UpdateUIData<T, U>(T data, U args)
+        {
+            base.UpdateUIData(data, args);
+            var armour = data as ArmourElement;
+
+            EquipmentPlace.Value = (EquipmentType)armour.GetEquipLocation();
+        }
+
         public override (InventoryItem item, ItemDataArgs args) GetInfo(ItemDataArgs args)
         {
             ArmourElement armour = new ArmourElement();
-            var baseInfo = base.GetInfo(args);
-            armour.Copy(baseInfo.Item1);
+            var (baseInfo, newArgs) = base.GetInfo(args);
+            armour.Copy(baseInfo);
 
             armour.UpdateInfo((EquipmentType)EquipmentPlace.EnumField.value);
 
-            return (armour, null);
+            return (armour, newArgs);
         }
 
         public override ModificationTypes Check_Changes()
@@ -51,7 +59,6 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 if (location != EquipmentPlace.Value)
                 {
                     CurModificationType = ModificationTypes.EditData;
-                    Highlight(EquipmentPlace.EnumField, true);
                 }
 
                 return CurModificationType;
@@ -66,7 +73,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         {
             if (!VerifyData(out var errors))
             {
-                Notify(errors.Count > 1 ? "Invalid Data" : errors[0], BorderColour.Error);
+                Notify(errors.Count <= 0 ? "Invalid Data" : errors[0], BorderColour.Error);
                 return false;
             }
 
@@ -78,9 +85,9 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             else
                 CurModificationType = ModificationTypes.Add;
 
-            DisableNotification();
+            DisableNotification(NotificationType.Creation);
             var (data, args) = GetInfo(null);
-            var creationData = new ItemCreationData(_nameControl.TxtName.value.Trim(), data as ArmourElement, args);
+            var creationData = new ItemCreationData(TxtName.value, data as ArmourElement, args);
 
             return SavingSystem.SaveCreation(ElementType.Armour, in _id, creationData, CurModificationType);
         }
@@ -107,7 +114,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
     {
         public EquipmentType EquipmentPlace { get; private set; }
 
-        public ArmourDataArgs(EquipmentType equipmentPlace, string modelPath): base(modelPath)
+        public ArmourDataArgs(EquipmentType equipmentPlace, string modelPath, string imgGUID) : base(modelPath, imgGUID)
         {
             EquipmentPlace = equipmentPlace;
         }

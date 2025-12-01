@@ -19,7 +19,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 
             if (Application.isPlaying)
             {
-                error = "Can't continue when running application.";
+                error = "Can't proceed when the application is running.";
                 return false;
             }
 

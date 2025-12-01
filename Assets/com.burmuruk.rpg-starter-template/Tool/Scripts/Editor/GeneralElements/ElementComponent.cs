@@ -30,5 +30,11 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         {
             Type = Enum.Parse<ComponentType>(value);
         }
+
+        public override void Clear()
+        {
+            base.Clear();
+            Type = default(ComponentType);
+        }
     }
 }

@@ -10,6 +10,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
     {
         public FloatField ConsumptionTime { get; private set; }
         public FloatField AreaRadious { get; private set; }
+        public override ElementType ElementType { get => ElementType.Consumable; }
 
         public override void Initialize(VisualElement container, CreationsBaseInfo name)
         {
@@ -24,17 +25,29 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         {
             _changes = new ConsumableItem();
             _args = args;
+            
             base.UpdateInfo(data, args, type);
+
+            //if (consumable == null) return;
+
             var consumable = data as ConsumableItem;
             var buffArgs = args as BuffsNamesDataArgs;
-
-            if (consumable == null) return;
-
             ConsumptionTime.value = consumable.ConsumptionTime;
             AreaRadious.value = consumable.AreaRadious;
             (_changes as ConsumableItem).UpdateInfo(consumable.Buffs, ConsumptionTime.value, AreaRadious.value);
 
             UpdateBuffs(consumable.Buffs, buffArgs);
+        }
+
+        public override void UpdateUIData<T, U>(T data, U args)
+        {
+            base.UpdateUIData(data, args);
+
+            var consumable = data as ConsumableItem;
+            var buffArgs = args as BuffsNamesDataArgs;
+            ConsumptionTime.value = consumable.ConsumptionTime;
+            AreaRadious.value = consumable.AreaRadious;
+            UpdateUIBuffs(consumable.Buffs, buffArgs);
         }
 
         public override (InventoryItem item, ItemDataArgs args) GetInfo(ItemDataArgs args)
@@ -44,7 +57,11 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             newItem.Copy(baseInfo);
 
             (var buffs, var buffsNames) = GetBuffsInfo();
-            buffsNames.pickupPath = baseArgs?.pickupPath;
+            buffsNames = buffsNames with
+            {
+                PickupPath = baseArgs?.PickupPath,
+                ImgGUID = baseArgs?.ImgGUID
+            };
 
             newItem.UpdateInfo(
                 buffs.ToArray(),
@@ -73,6 +90,22 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         }
 
         #region Saving
+        public override bool VerifyData(out List<string> errors)
+        {
+            errors = new();
+            bool result = true;
+
+            result &= base.VerifyData(out var baseErrors);
+
+            if (baseErrors != null && baseErrors.Count > 0)
+                errors.AddRange(baseErrors);
+
+            result &= ConsumptionTime.Verify_NegativaValue(errors, _highlighted);
+            result &= AreaRadious.Verify_NegativaValue(errors, _highlighted);
+
+            return result;
+        }
+
         public override ModificationTypes Check_Changes()
         {
             try
@@ -90,15 +123,11 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
                 if (ConsumptionTime.value != lastData.ConsumptionTime)
                 {
-                    Highlight(ConsumptionTime, true, BorderColour.HighlightBorder);
-
                     CurModificationType = ModificationTypes.EditData;
                 }
 
                 if (AreaRadious.value != lastData.AreaRadious)
                 {
-                    Highlight(AreaRadious, true, BorderColour.HighlightBorder);
-
                     CurModificationType = ModificationTypes.EditData;
                 }
 
@@ -120,52 +149,14 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             ConsumptionTime.value = changes.ConsumptionTime;
             AreaRadious.value = changes.AreaRadious;
         }
-
-        public override bool Save()
-        {
-            if (!VerifyData(out var errors))
-            {
-                Notify(errors.Count > 1 ? "Invalid Data" : errors[0], BorderColour.Error);
-                return false;
-            }
-
-            if (_creationsState == CreationsState.Editing && Check_Changes() == ModificationTypes.None)
-            {
-                Notify("No changes were found", BorderColour.HighlightBorder);
-                return false;
-            }
-            else
-                CurModificationType = ModificationTypes.Add;
-
-            DisableNotification();
-            var (item, args) = ((InventoryItem, BuffsNamesDataArgs))GetInfo(GetCreatedEnums(ElementType.Buff));
-            var creationData = new BuffUserCreationData(TxtName.text.Trim(), item, args);
-
-            return SavingSystem.SaveCreation(ElementType.Consumable, in _id, creationData, CurModificationType);
-        }
-
-        public override CreationData Load(ElementType type, string id)
-        {
-            var result = SavingSystem.Load(type, id);
-
-            if (result == null) return default;
-
-            var data = result as BuffUserCreationData;
-            _id = id;
-            var (item, args) = (data, data.Names);
-            Set_CreationState(CreationsState.Editing);
-            UpdateInfo(data.Data, args);
-
-            return result;
-        }
         #endregion
     }
 
     public record BuffsNamesDataArgs : ItemDataArgs
     {
-        public List<string> BuffsNames { get; private set; }
+        public List<string> BuffsNames { get; init; }
 
-        public BuffsNamesDataArgs(List<string> buffs, string modelPath) : base(modelPath)
+        public BuffsNamesDataArgs(List<string> buffs, string modelPath, string imgGUID) : base(modelPath, imgGUID)
         {
             BuffsNames = buffs;
         }
@@ -173,9 +164,9 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
     public record CreatedBuffsDataArgs : ItemDataArgs
     {
-        public CreationData[] Buffs { get; private set; }
+        public CreationData[] Buffs { get; init; }
 
-        public CreatedBuffsDataArgs(CreationData[] buffs, string modelPath) : base(modelPath)
+        public CreatedBuffsDataArgs(CreationData[] buffs, string modelPath, string imgGUID) : base(modelPath, imgGUID)
         {
             Buffs = buffs;
         }
@@ -183,12 +174,12 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
     public struct NamedBuff
     {
-        public string Name { get; set; }
-        public BuffData? Data { get; private set; }
+        public string name;
+        public BuffData? Data { get; init; }
 
         public NamedBuff(string name, BuffData? data)
         {
-            Name = name;
+            this.name = name;
             Data = data;
         }
     }

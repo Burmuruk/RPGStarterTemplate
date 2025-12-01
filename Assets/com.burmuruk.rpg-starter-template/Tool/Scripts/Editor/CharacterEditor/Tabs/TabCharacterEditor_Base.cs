@@ -1,6 +1,5 @@
 using Burmuruk.RPGStarterTemplate.Editor.Controls;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -35,7 +34,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         SearchBar searchBar;
         (ElementType type, int idx) currentSettingTag = (ElementType.None, -1);
 
-        [MenuItem("RPGTemplate/CharacterCreator")]
+        [MenuItem("RPGTemplate/Creation")]
         public static void ShowWindow()
         {
             TabCharacterEditor window = GetWindow<TabCharacterEditor>();
@@ -50,8 +49,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             //{
             //    currentWindow = null;
             //}
-            SavingSystem.Data.changes.Clear();
-            SavingSystem.Data.mainElementChange = ElementType.None;
+            Save_CurrentState();
         }
 
         public void CreateGUI()
@@ -66,6 +64,9 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 
             GetTabButtons();
             GetNotificationSection();
+            (notifications ??= new()).TryAdd(
+                NotificationType.Creation,
+                new NotificationData(ntf, ntfLbl));
 
             SavingSystem.Initialize();
             //Load_CreatedAssets();
@@ -79,128 +80,6 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             //ChangeTab(INFO_GENERAL_SETTINGS_CHARACTER_NAME);
         }
 
-        private void Load_UnsavedChanges()
-        {
-            var changes = SavingSystem.Data.changes;
-            foreach (var change in changes)
-            {
-                var data = change.Value.FirstOrDefault();
-                ItemCreationData creationData = null;
-                string modelPath = null;
-
-                if (string.IsNullOrEmpty(data.Key)) continue;
-
-                switch (change.Key)
-                {
-                    case ElementType.Weapon:
-                        var weaponData = data.Value as BuffUserCreationData;
-                        var (weapon, weBuffsNames) = (weaponData.Data, weaponData.Names);
-
-                        (CreationControls[change.Key] as WeaponSetting).UpdateInfo(weapon, weBuffsNames);
-                        break;
-
-                    case ElementType.Consumable:
-                        var consumableData = data.Value as BuffUserCreationData;
-                        var (consumable, consuBuffsNames) = (consumableData.Data, consumableData.Names);
-
-                        (CreationControls[change.Key] as ConsumableSettings).UpdateInfo(consumable, consuBuffsNames);
-                        break;
-
-                    case ElementType.Armour:
-                        creationData = data.Value as ItemCreationData;
-                        var armour = creationData.Data;
-                        modelPath = creationData.args.pickupPath;
-
-                        (CreationControls[change.Key] as ArmourSetting).UpdateInfo(armour, new ItemDataArgs(modelPath));
-                        break;
-
-                    case ElementType.Item:
-                        creationData = data.Value as ItemCreationData;
-                        var item = creationData.Data;
-                        modelPath = creationData.args.pickupPath;
-
-                        (CreationControls[change.Key] as BaseItemSetting).UpdateInfo(item, new ItemDataArgs(modelPath));
-                        break;
-
-                    case ElementType.Buff:
-                        var buff = (data.Value as BuffCreationData).Data;
-
-                        (CreationControls[change.Key] as BuffSettings).UpdateInfo(buff);
-                        break;
-
-                    case ElementType.Character:
-                        var characterData = (data.Value as CharacterCreationData).Data;
-
-                        (CreationControls[change.Key] as CharacterSettings).LoadInfo(characterData, null);
-                        break;
-                }
-            }
-
-            string tabName = null;
-            foreach (var tab in infoContainers)
-            {
-                if (tab.Value.type == SavingSystem.Data.mainElementChange)
-                {
-                    tabName = tab.Key;
-                    break;
-                }
-            }
-            if (tabName != null && infoContainers.ContainsKey(tabName))
-            {
-                ChangeTab(tabName);
-            }
-            else
-            {
-                ChangeTab(INFO_GENERAL_SETTINGS_CHARACTER_NAME);
-            }
-
-            SavingSystem.Data.changes.Clear();
-            SavingSystem.Data.mainElementChange = ElementType.None;
-        }
-
-        private void Load_CreatedAssets()
-        {
-            var assets = AssetDatabase.LoadAllAssetsAtPath("Assets/RPG-Results");
-            bool noAssets = true;
-
-            //foreach (var asset in assets)
-            //{
-            //    switch (asset)
-            //    {
-            //        case Tesis.Combat.Weapon weapon:
-            //            noAssets &= !SavingSystem.SaveCreation(ElementType.Weapon, null, new CreationData(weapon.Name, weapon), ModificationTypes.Add);
-            //            break;
-
-            //        case Tesis.Stats.ConsumableItem consumable:
-            //            noAssets &= !SavingSystem.SaveCreation(ElementType.Consumable, null, new CreationData(consumable.Name, consumable), ModificationTypes.Add);
-            //            break;
-
-            //        case Tesis.Inventory.ArmourElement armour:
-            //            noAssets &= !SavingSystem.SaveCreation(ElementType.Armour, null, new ItemCreationData(armour.Name, armour), ModificationTypes.Add);
-            //            break;
-
-            //        case Tesis.Inventory.InventoryItem item:
-            //            noAssets &= !SavingSystem.SaveCreation(ElementType.Item, null, new ItemCreationData(item.Name, item), ModificationTypes.Add);
-            //            break;
-
-            //        case Tesis.Control.Character character:
-            //            noAssets &= !SavingSystem.SaveCreation(ElementType.Character, null, new CharacterCreationData(asset.name, character), ModificationTypes.Add);
-            //            break;
-
-            //        default: break;
-            //    }
-            //}
-
-            if (!noAssets)
-            {
-                Notify("Assets loaded successfully", BorderColour.Success);
-            }
-            else
-            {
-                Notify("No assets were found", BorderColour.Success);
-            }
-        }
-
         private void CreateSettingTabs()
         {
             Setup_Coponents();
@@ -212,6 +91,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             Create_ConsumableSettings();
             Create_ArmourSettings();
             Create_GeneralCharacterSettings();
+            Setup_ScrollPositions();
         }
 
         protected override void GetInfoContainers()
@@ -277,6 +157,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             searchBar.Creations.OnComponentClicked += DisplayElementPanel;
             searchBar.OnElementDeleted += SearchBar_OnElementDeleted;
 
+            EnableContainer(leftPanel.Q<Label>("creationsTitle"), true);
             var rightSearchContainer = rightPanel.Q<VisualElement>("SearchContainer");
             rightSearchContainer.AddToClassList("Disable");
             txtSearch_Right = rightPanel.Q<TextField>("txtSearch");
@@ -285,7 +166,19 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         private void SearchBar_OnElementDeleted(ElementType obj)
         {
             if (CreationControls[obj] is BaseInfoTracker tracker && tracker != null)
-                tracker.Set_CreationState(CreationsState.Creating);
+            {
+                if (string.IsNullOrEmpty(tracker.Id)) return;
+
+                tracker.Force_CreationState(CreationsState.Creating);
+
+                if (CreationControls[obj] is IClearable c && c != null)
+                    c.Clear();
+            }
+
+            var enableable = CreationControls[obj] as IEnableable;
+
+            if (enableable == null || !enableable.IsActive)
+                return;
 
             EnableContainer(infoSetup, false);
             ChangeTab(INFO_GENERAL_SETTINGS_CHARACTER_NAME);
@@ -335,6 +228,9 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 
         private void CreateTags(VisualElement rightContainer)
         {
+            rightContainer.Q<Label>(className: "Title").text = "Elements to create";
+            rightContainer.Q<VisualElement>("TagHeaderContainer").tooltip = "Select the type of element you want to create or edit";
+
             var max = SavingSystem.Data.defaultElements.Count;
             var tags = rightContainer.Q<VisualElement>("TagsContainer").Query<Button>(className: "FilterTag").ToList();
             btnsRight_Tag = new();
@@ -342,7 +238,10 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 
             foreach (var item in tags)
             {
-                btnsRight_Tag.Add(new TagData(tagIdx++, item, ElementType.None));
+                btnsRight_Tag.Add(new TagData(tagIdx, item, tagIdx < SavingSystem.Data.defaultElements.Count ?
+                    SavingSystem.Data.defaultElements[tagIdx] :
+                    ElementType.None));
+                ++tagIdx;
             }
             int i = 0;
 
@@ -355,11 +254,10 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 
                 if (i < max)
                 {
-                    var element = SavingSystem.Data.defaultElements[i];
-                    b.element.text = element.ToString();
-                    int j = i;
+                    b.element.text = b.type.ToString();
+                    int j = b.idx;
 
-                    b.element.clicked += () => OnClicked_TagComponents(j, element);
+                    b.element.clicked += () => OnClicked_TagComponents(j, b.type);
                 }
                 else
                     EnableContainer(b.element, false);
@@ -400,12 +298,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         protected override void ChangeTab(string tab)
         {
             base.ChangeTab(tab);
-
-            if (infoContainers[curTab].type != ElementType.None)
-            {
-                if (CreationControls[infoContainers[curTab].type] is IEnableable e && e != null)
-                    e.Enable(true);
-            }
+            Set_ScrollPos();
 
             if (infoContainers.ContainsKey(lastTab) && infoContainers[lastTab].type != ElementType.None)
             {
@@ -413,7 +306,31 @@ namespace Burmuruk.RPGStarterTemplate.Editor
                     e.Enable(false);
             }
 
+            if (infoContainers[curTab].type != ElementType.None)
+            {
+                if (CreationControls[infoContainers[curTab].type] is IEnableable e && e != null)
+                    e.Enable(true);
+            }
+
             nameSettings.TxtName.Focus();
+        }
+
+        private void Set_ScrollPos()
+        {
+            if (!string.IsNullOrEmpty(lastTab))
+                scrollPosTabs[infoContainers[lastTab].type] = infoRight.Q<ScrollView>("infoContainer").scrollOffset.y;
+
+            if (!string.IsNullOrEmpty(curTab))
+            {
+                infoContainers[curTab].element.AddToClassList("Invisible");
+
+                infoRight.schedule.Execute(() =>
+                {
+                    infoRight.Q<ScrollView>("infoContainer").scrollOffset = new(0, scrollPosTabs[infoContainers[curTab].type]);
+                    infoContainers[curTab].element.RemoveFromClassList("Invisible");
+
+                }).ExecuteLater(60);
+            }
         }
 
         #region Events
@@ -454,7 +371,6 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             }
 
             EnableContainer(infoSetup, true);
-            btnSettingAccept.text = "Create";
             btnsRight_Tag.ForEach(t => Highlight(t.element, false));
             Highlight(btnsRight_Tag[idx].element, true);
             currentSettingTag = (type, idx);

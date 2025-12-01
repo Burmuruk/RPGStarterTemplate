@@ -1,5 +1,6 @@
 using Burmuruk.RPGStarterTemplate.Inventory;
 using System;
+using UnityEditor;
 using UnityEngine;
 
 namespace Burmuruk.RPGStarterTemplate.Stats
@@ -10,15 +11,22 @@ namespace Burmuruk.RPGStarterTemplate.Stats
         bool initialized;
 
         [Space(), Header("Basic stats")]
+        [Utilities.DisallowNegative]
         [SerializeField] public float speed;
+        [Utilities.DisallowNegative]
         [SerializeField] public int damage;
+        [Utilities.DisallowNegative]
         [SerializeField] public float damageRate;
+        [Utilities.DisallowNegative]
         [SerializeField] public Color color;
         [SerializeField] public int Name;
 
         [Space(), Header("Detection")]
-        [SerializeField] public float eyesRadious;
-        [SerializeField] public float earsRadious;
+        [Utilities.DisallowNegative]
+        [SerializeField] public float farDectection;
+        [Utilities.DisallowNegative]
+        [SerializeField] public float closeDetection;
+        [Utilities.DisallowNegative]
         [SerializeField] public float minDistance;
 
         
@@ -54,8 +62,8 @@ namespace Burmuruk.RPGStarterTemplate.Stats
                        damage == other.damage &&
                        damageRate == other.damageRate &&
                        color == other.color &&
-                       eyesRadious == other.eyesRadious &&
-                       earsRadious == other.earsRadious &&
+                       farDectection == other.farDectection &&
+                       closeDetection == other.closeDetection &&
                        minDistance == other.minDistance;
             }
             return false;
@@ -68,8 +76,8 @@ namespace Burmuruk.RPGStarterTemplate.Stats
             hashCode = hashCode * 31 + damage.GetHashCode();
             hashCode = hashCode * 31 + damageRate.GetHashCode();
             hashCode = hashCode * 31 + color.GetHashCode();
-            hashCode = hashCode * 31 + eyesRadious.GetHashCode();
-            hashCode = hashCode * 31 + earsRadious.GetHashCode();
+            hashCode = hashCode * 31 + farDectection.GetHashCode();
+            hashCode = hashCode * 31 + closeDetection.GetHashCode();
             hashCode = hashCode * 31 + minDistance.GetHashCode();
             return hashCode;
         }

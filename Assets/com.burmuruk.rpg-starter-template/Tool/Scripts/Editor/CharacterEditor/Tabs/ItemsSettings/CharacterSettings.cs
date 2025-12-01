@@ -1,4 +1,5 @@
-﻿using Burmuruk.RPGStarterTemplate.Stats;
+﻿using Burmuruk.RPGStarterTemplate.Editor.Dialogue;
+using Burmuruk.RPGStarterTemplate.Stats;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -128,14 +129,16 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         #endregion
 
         #region Properties
+        public override string Id => _id;
         public Toggle TglSave { get; private set; }
         public ComponentsListUI<ElementComponent> ComponentsList { get; private set; }
         public EnumModifierUI<CharacterType> EMCharacterType { get; private set; }
         public DropdownField DDFEnemyTag { get; private set; }
         public TextField TxtTagName { get; private set; }
         public ObjectField OFModel { get; private set; }
+        public TreeViewList<DropElementData> DropsList { get; private set; }
         public PopupField<string> PUBaseClass { get; private set; }
-        public VariablesAdderUI Adder { get; private set; }
+        public VariablesAdderUI VariableAdder { get; private set; }
         public EquipmentSettings EquipmentS { get => (EquipmentSettings)subTabs[CharacterTab.Equipment]; }
         public InventorySettings InventoryS { get => (InventorySettings)subTabs[CharacterTab.Inventory]; }
         public VisualElement StatEditorContainer { get; private set; }
@@ -163,6 +166,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             OFModel = container.Q<ObjectField>("ofModel");
             TxtTagName = container.Q<VisualElement>("txtTagName").Q<TextField>();
             Setup_Model();
+            Setup_DropsList();
             Setup_EnemyTag();
             Setup_PUBaseClass(pBaseClass);
 
@@ -174,6 +178,11 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             Setup_EMCharacterType();
             CreateSubTabs();
             Setup_Stats(container);
+            Setup_Progression(container);
+        }
+
+        private void Setup_Progression(VisualElement container)
+        {
             _progression = CreateInstance<ProgressionUIManager>();
             _progression.Initialize(container,
                 () => basicStats.stats,
@@ -185,16 +194,25 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 });
         }
 
+        private void Setup_DropsList()
+        {
+            DropsList = new TreeViewList<DropElementData>(Container);
+            DropsList.Foldout.text = "Drops";
+        }
+
         private void Setup_Model()
         {
-
             OFModel.objectType = typeof(GameObject);
             OFModel.RegisterValueChangedCallback(OnModelChanged);
         }
 
         private void OnModelChanged(ChangeEvent<UnityEngine.Object> evt)
         {
-            
+            if (evt.newValue != null)
+            {
+                OFModel.tooltip = "";
+                Highlight(OFModel, false);
+            }
         }
 
         private void Setup_EnemyTag()
@@ -274,16 +292,16 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         {
             if (_selectedStat == null) return;
 
-            DisableNotification();
+            DisableNotification(NotificationType.Creation);
             Highlight(textField, false);
             string lower = name.ToLowerInvariant();
-            
+
             if (!Verify_NewStatName(name, textField, lower))
                 return;
 
             _statsChanges[_selectedStat.Value].name = name;
 
-            Adder.RequestEnable_ApplyButton(true);
+            VariableAdder.RequestEnable_ApplyButton(true);
             Highlight_StatChange(true);
             Disable_StatNameEditor(_selectedStat.Value);
 
@@ -361,12 +379,12 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         private void OnClick_ApplyStats()
         {
             var classes = GetClasses();
-            var newStats = Adder.GetInfo();
+            var newStats = VariableAdder.GetInfo();
             string updatedText = string.Empty;
             string path = null;
 
             Get_Changes(newStats, out ModChanges mods, out StatChanges stats);
-            DisableNotification();
+            DisableNotification(NotificationType.Creation);
 
             foreach (var name in classes)
             {
@@ -575,8 +593,8 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             statsContainer.schedule.Execute(() =>
             {
                 VisualElement adderUI = container.Q<VisualElement>("VariblesAdder");
-                Adder = new(adderUI, Get_Headers(), _statNames);
-                Adder.OnChange += value => EnableContainer(BtnApplyStats, value);
+                VariableAdder = new(adderUI, Get_Headers(), _statNames);
+                VariableAdder.OnChange += value => EnableContainer(BtnApplyStats, value);
             }).ExecuteLater(200);
         }
 
@@ -605,12 +623,13 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         private void Setup_ComponentsList()
         {
-            ComponentsList.DDFElement.RegisterValueChangedCallback(ComponentsList.AddComponent);
+            ComponentsList.DDFElement.RegisterValueChangedCallback(OnElementSelected);
             ComponentsList.OnElementCreated += Setup_ComponentRemoveButton;
             ComponentsList.OnComponentClicked += OpenComponentSettings;
             ComponentsList.CreationValidator += ContainsCreation;
             ComponentsList.AddElementExtraData += Setup_ComponentButton;
             ComponentsList.OnElementRemoved += Clear_ComponentData;
+            ComponentsList.DeletionValidator += Validate_ComponentRemoval;
 
             ComponentsList.DDFElement.choices.Clear();
 
@@ -620,6 +639,31 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             }
 
             ComponentsList.DDFElement.value = "None";
+        }
+
+        private bool Validate_ComponentRemoval(int idx)
+        {
+            if (IsDisabled(ComponentsList[idx].element))
+                return false;
+
+            if (((ComponentType)ComponentsList[idx].Type) == ComponentType.Inventory &&
+                ComponentsList.Contains(ComponentType.Equipment.ToString()))
+            {
+                Notify("Remove equipment before removing inventory component", BorderColour.Error);
+                return false;
+            }
+
+            return true;
+        }
+
+        private void OnElementSelected(ChangeEvent<string> evt)
+        {
+            ComponentsList.AddComponent(evt);
+
+            ComponentsList.DDFElement.schedule.Execute(() =>
+            {
+                UpdateComponentChoices();
+            }).ExecuteLater(90);
         }
 
         private void Setup_ComponentRemoveButton(ElementComponent component)
@@ -685,7 +729,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 {
                     variableType = member.GetType().ToString(),
                 });
-                
+
                 bool modifiable = member.FieldType == typeof(float) || member.FieldType == typeof(int);
 
                 AddStatUI(statsContainer, prop.FindPropertyRelative(member.Name), member.Name, modifiable);
@@ -780,7 +824,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             if (newType != _stats[idx].Type)
             {
                 _statsChanges[idx].type = newType;
-                Adder.RequestEnable_ApplyButton(true);
+                VariableAdder.RequestEnable_ApplyButton(true);
                 Highlight(_stats[idx].toggle.Q<VisualElement>("unity-checkmark"), true, BorderColour.SpecialChange);
                 Enable_RemoveStat(idx, false);
             }
@@ -815,7 +859,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 else
                 {
                     _statsChanges[idx].type = ModifiableStat.None;
-                    Adder.RequestEnable_ApplyButton(true);
+                    VariableAdder.RequestEnable_ApplyButton(true);
                     Highlight(_stats[idx].toggle.Q<VisualElement>("unity-checkmark"), true, BorderColour.SpecialChange);
                 }
                 return;
@@ -856,12 +900,12 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             {
                 if (chage.HasChanges())
                 {
-                    Adder.RequestEnable_ApplyButton(true);
+                    VariableAdder.RequestEnable_ApplyButton(true);
                     return;
                 }
             }
 
-            Adder.RequestEnable_ApplyButton(false);
+            VariableAdder.RequestEnable_ApplyButton(false);
         }
 
         private void Disable_Stat(int idx)
@@ -883,6 +927,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             var field = new PropertyField(property, name);
             field.Bind(property.serializedObject);
             field.style.flexGrow = 1;
+            field.name = $"Stat_{name}";
 
             var container = new VisualElement();
             container.style.flexDirection = FlexDirection.Column;
@@ -967,7 +1012,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 Disable_Stat(idx);
                 Disable_StatNameEditor(idx);
 
-                Adder.RequestEnable_ApplyButton(true);
+                VariableAdder.RequestEnable_ApplyButton(true);
             }
             else
             {
@@ -1064,6 +1109,9 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         #region Public methods
         public override void Clear()
         {
+            foreach (var element in _highlighted)
+                Utilities.UtilitiesUI.Set_Tooltip(element.Key, element.Value, false);
+
             if (curTab != CharacterTab.None)
             {
                 subTabs[curTab].Clear();
@@ -1077,7 +1125,10 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             CloseWindows();
             _lastTab = CharacterTab.None;
             EMCharacterType.Value = CharacterType.None;
+            DDFEnemyTag.value = null;
             TglSave.value = false;
+            OFModel.SetValueWithoutNotify(null);
+            DropsList.Clear();
             _progression.Clear();
             _characterData = null;
             _id = null;
@@ -1092,18 +1143,37 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
             result &= _nameControl.VerifyData(out errors);
 
+            //Character type
             result &= isValid = EMCharacterType.Value != CharacterType.None;
+            _highlighted[EMCharacterType.EnumField] = EMCharacterType.EnumField.tooltip;
             Set_ErrorTooltip(EMCharacterType.EnumField, "Ivalid value", ref errors, isValid);
 
+            //Enemy tag
             result &= isValid = DDFEnemyTag.value != "New" || !string.IsNullOrEmpty(DDFEnemyTag.value.Trim());
+            _highlighted[DDFEnemyTag] = DDFEnemyTag.tooltip;
             Set_ErrorTooltip(DDFEnemyTag, "Invalid tag", ref errors, isValid);
 
+            //Model
             result &= isValid = OFModel.value != null;
+            _highlighted[OFModel] = OFModel.tooltip;
             Set_ErrorTooltip(OFModel, "A model is required", ref errors, isValid);
 
+            //Drops
+            result &= isValid = DropsList.VerifyData(out var dropErrors);
+            (errors ??= new()).AddRange(dropErrors);
+
+            //Progression
             result &= _progression.VerifyData(out var progressErrors);
             errors.AddRange(progressErrors);
-            
+
+            //Components
+            Verify_ComponentsData(errors, ref result, ref isValid);
+
+            return result;
+        }
+
+        private void Verify_ComponentsData(List<string> errors, ref bool result, ref bool isValid)
+        {
             foreach (var component in ComponentsList.Components)
             {
                 if (!IsDisabled(component.element))
@@ -1120,8 +1190,6 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                     }
                 }
             }
-
-            return result;
         }
 
         public override ModificationTypes Check_Changes()
@@ -1138,26 +1206,6 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                     CurModificationType = ModificationTypes.Rename;
                 }
 
-                //Components's data
-                foreach (var component in ComponentsList.Components)
-                {
-                    if (!IsDisabled(component.element))
-                    {
-                        var tabType = Get_TabType((ComponentType)component.Type);
-
-                        if (tabType == CharacterTab.None) continue;
-
-                        if (subTabs.ContainsKey(tabType) && subTabs[tabType] != null)
-                        {
-                            if (subTabs[tabType].Check_Changes() != ModificationTypes.None)
-                            {
-                                CurModificationType = ModificationTypes.EditData;
-                                break;
-                            }
-                        }
-                    }
-                }
-
                 //Progresssion
                 if (_progression.Check_Changes() != ModificationTypes.None)
                     CurModificationType = ModificationTypes.EditData;
@@ -1167,23 +1215,14 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                     CurModificationType = ModificationTypes.EditData;
 
                 //Model
-                if (OFModel.value != _characterData.Value.model)
+                if (OFModel.value != SavingSystem.GetAsset<GameObject>(_characterData.Value.model))
                     CurModificationType = ModificationTypes.EditData;
 
+                //Drops
+                Check_DropsChanges();
+
                 //Components
-                if (_characterData.Value.components.Count == ComponentsList.Components.Count)
-                {
-                    foreach (var component in ComponentsList.Components)
-                    {
-                        if (!_characterData.Value.components.ContainsKey((ComponentType)component.Type))
-                        {
-                            CurModificationType = ModificationTypes.EditData;
-                            break;
-                        }
-                    }
-                }
-                else
-                    CurModificationType = ModificationTypes.EditData;
+                Check_ComponentsChanges();
 
                 //saving
                 if (_characterData.Value.shouldSave != TglSave.value)
@@ -1201,15 +1240,79 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             }
         }
 
+        private void Check_DropsChanges()
+        {
+            if (_characterData.Value.drops == null)
+            {
+                if (DropsList.TxtCount.value > 0)
+                    CurModificationType = ModificationTypes.EditData;
+            }
+            else if (_characterData.Value.drops.Count != DropsList.TxtCount.value)
+                CurModificationType = ModificationTypes.EditData;
+            else
+            {
+                var newDropData = DropsList.GetInfo() as TreeViewListData;
+
+                for (int i = 0; i < _characterData.Value.drops.Count; i++)
+                {
+                    var cur = _characterData.Value.drops[i];
+                    var newDrop = newDropData.Elements[i] as DropData;
+
+                    if (cur != newDrop.Name)
+                    {
+                        CurModificationType = ModificationTypes.EditData;
+                        break;
+                    }
+                }
+            }
+        }
+
+        private void Check_ComponentsChanges()
+        {
+            if (!(_characterData.Value.components == null ^ ComponentsList.Components != null))
+            {
+                CurModificationType = ModificationTypes.EditData;
+            }
+            else if (ComponentsList?.Components != null)
+            {
+                if (_characterData.Value.components.Count == ComponentsList.EnabledCount)
+                {
+                    foreach (var component in ComponentsList.EnabledComponents)
+                    {
+                        if (!_characterData.Value.components.ContainsKey((ComponentType)component.Type))
+                        {
+                            CurModificationType = ModificationTypes.EditData;
+                            break;
+                        }
+
+                        var tabType = Get_TabType((ComponentType)component.Type);
+
+                        if (tabType == CharacterTab.None) continue;
+
+                        if (subTabs.ContainsKey(tabType) && subTabs[tabType] != null)
+                        {
+                            if (subTabs[tabType].Check_Changes() != ModificationTypes.None)
+                            {
+                                CurModificationType = ModificationTypes.EditData;
+                                break;
+                            }
+                        }
+                    }
+                }
+                else
+                    CurModificationType = ModificationTypes.EditData;
+            }
+        }
+
         public bool Save()
         {
             if (!VerifyData(out var errors))
             {
-                string error = errors.Count > 1 ? "Invalid data" : errors[0];
+                string error = errors.Count <= 0 ? "Invalid data" : errors[0];
                 Notify(error, BorderColour.Error);
 
                 return false;
-            }    
+            }
 
             if (_creationsState == CreationsState.Editing && Check_Changes() == ModificationTypes.None)
             {
@@ -1219,7 +1322,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             else
                 CurModificationType = ModificationTypes.Add;
 
-            DisableNotification();
+            DisableNotification(NotificationType.Creation);
             var newData = GetInfo();
             return SavingSystem.SaveCreation(ElementType.Character, _id, new CharacterCreationData(newData.characterName, newData), CurModificationType);
         }
@@ -1232,7 +1335,20 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
             var data = (CharacterCreationData)result;
             Set_CreationState(CreationsState.Editing);
-            LoadInfo(data.Data, id);
+            UpdateInfo(data.Data, id);
+
+            return data;
+        }
+
+        public CreationData Load(string id)
+        {
+            var result = SavingSystem.Load(id);
+
+            if (result == null) return null;
+
+            var data = (CharacterCreationData)result;
+            Set_CreationState(CreationsState.Editing);
+            UpdateInfo(data.Data, id);
 
             return data;
         }
@@ -1247,7 +1363,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
             _lastTab = CharacterTab.None;
             CharacterData newInfo = _characterData.Value;
-            LoadInfo(newInfo, _id);
+            UpdateInfo(newInfo, _id);
         }
 
         public void CloseWindows()
@@ -1269,6 +1385,27 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             else
                 CloseWindows();
         }
+
+        CreationData IDataProvider.GetInfo()
+        {
+            return new CharacterCreationData(_id, GetInfo());
+        }
+
+        public void UpdateInfo(CreationData cd)
+        {
+            var data = cd as CharacterCreationData;
+
+            if (string.IsNullOrEmpty(cd.Id))
+                _creationsState = CreationsState.Creating;
+            else
+            {
+                _creationsState = CreationsState.Editing;
+                Load(cd.Id);
+            }
+
+            _id = cd.Id;
+            UpdateUIData(data.Data);
+        }
         #endregion
 
         #region Events
@@ -1276,20 +1413,28 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         {
             var type = (ComponentType)ComponentsList[componentIdx].Type;
 
-            CharacterTab newTab = Get_TabType(type);
-
-            if (newTab == CharacterTab.None) return;
-
             switch (type)
             {
                 case ComponentType.Equipment:
                     Load_InventoryItemsInEquipment();
                     break;
-                case ComponentType.Inventory:
+
+                case ComponentType.Dialogue:
+                    if (DialogueEditor.window == null)
+                        DialogueEditor.ShowEditorWindow();
+
+                    DialogueEditor.window.Show();
+                    DialogueEditor.window.Focus();
+                    DialogueEditor.window.ShowCharacterDialogues(_id);
                     break;
 
                 default: break;
             }
+
+            CharacterTab newTab = Get_TabType(type);
+
+            if (newTab == CharacterTab.None)
+                return;
 
             ChangeWindow(newTab);
         }
@@ -1298,20 +1443,19 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         {
             var components = (List<ElementComponent>)list;
             int i = 0;
-            int? emptyIdx = -1;
+            int emptyIdx = -1;
 
             foreach (var component in components)
             {
-                if (!component.element.ClassListContains("Disable"))
-                {
-                    if (component.NameButton.text == name)
-                    {
-                        return null;
-                    }
-                }
-                else if (!emptyIdx.HasValue)
+                if (component.element.ClassListContains("Disable"))
                 {
                     emptyIdx = i;
+                    break;
+                }
+
+                if (component.NameButton.text == name)
+                {
+                    return null;
                 }
 
                 ++i;
@@ -1330,8 +1474,9 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             {
                 case ComponentType.Equipment:
                     AddEquipment(element);
-                    goto case ComponentType.Health;
+                    goto case ComponentType.Inventory;
 
+                case ComponentType.Dialogue:
                 case ComponentType.Inventory:
                 case ComponentType.Health:
                     SetClickableButtonColour(element, true);
@@ -1348,12 +1493,27 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         private void Clear_ComponentData(ElementComponent element)
         {
             var tabType = Get_TabType((ComponentType)element.Type);
+            ComponentsList.DDFElement.schedule.Execute(() =>
+                UpdateComponentChoices()).ExecuteLater(90);
 
             if (tabType == CharacterTab.None) return;
 
             if (!subTabs.ContainsKey(tabType)) return;
 
             subTabs[tabType].Clear();
+        }
+
+        private void UpdateComponentChoices()
+        {
+            var names = new List<string>(Enum.GetNames(typeof(ComponentType)));
+
+            for (int i = 0; i < names.Count; i++)
+            {
+                if (ComponentsList.Contains(names[i]))
+                    names.RemoveAt(i--);
+            }
+
+            ComponentsList.DDFElement.choices = names;
         }
         #endregion
 
@@ -1377,7 +1537,8 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         private void SetClickableButtonColour(ElementComponent element, bool clickable)
         {
-            var (white, whiteLight) = ("WhiteBorder", "whiteBorder-light");
+            //var (white, whiteLight) = ("WhiteBorder", "whiteBorder-light");
+            var (white, whiteLight) = ("WhiteBorder", "WhiteBorder");
             var (newClass, lastClass) = clickable ? (white, whiteLight) : (whiteLight, white);
 
             //if (!element.NameButton.ClassListContains(newClass))
@@ -1440,36 +1601,106 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             equipment.Set_Model((GameObject)OFModel.value);
         }
 
-        private CharacterData GetInfo()
+        public CharacterData GetInfo()
         {
             CharacterData newData = new();
-            newData.characterName = TxtName.value;
+            newData.characterName = TempName;
             newData.shouldSave = TglSave.value;
-            newData.className = _selectableClasses[PUBaseClass.value];
+            newData.className = _selectableClasses[PUBaseClass.value].AssemblyQualifiedName;
             newData.components ??= new();
             AddCharacterComponents(ref newData);
             newData.characterType = (CharacterType)EMCharacterType.EnumField.value;
-            newData.model = OFModel.value as GameObject;
+            newData.model = SavingSystem.GetAssetReference(OFModel.value);
             newData.enemyTag = DDFEnemyTag.value;
+            newData.drops = Get_DropsInfo();
             _progression.Get_Info(out newData.progress, out newData.basicStats);
 
             return newData;
         }
 
-        public void LoadInfo(in CharacterData newData, string id)
+        public void UpdateInfo(in CharacterData newData, string id)
         {
+            Clear();
             _characterData = newData;
-            LoadCharacterComponents(in newData);
-            _progression.LoadStats(newData.progress, newData.basicStats, newData.characterType);
-            ComponentsList.DDFElement.value = "None";
-            EMCharacterType.Value = _characterData.Value.characterType;
-            DDFEnemyTag.value = _characterData.Value.enemyTag ?? "";
-            OFModel.value = _characterData.Value.model;
             TempName = _characterData.Value.characterName;
             _originalName = _characterData.Value.characterName;
             UpdateName();
+
+            string className = Find_SelectableClass(newData.className);
+            PUBaseClass.value = string.IsNullOrEmpty(className) ? "" : className;
+            OFModel.value = SavingSystem.GetAsset<GameObject>(_characterData.Value.model);
+            LoadCharacterComponents(in newData);
+            _progression.LoadStats(newData.progress, newData.basicStats, newData.characterType);
+            DropsList.UpdateInfo(Convert_DropsInfo(_characterData.Value.drops));
             TglSave.value = _characterData.Value.shouldSave;
+            DDFEnemyTag.value = _characterData.Value.enemyTag ?? "";
+            EMCharacterType.Value = _characterData.Value.characterType;
+            ComponentsList.DDFElement.value = "None";
+            UpdateComponentChoices();
             _id = id;
+
+        }
+
+        private string Find_SelectableClass(string className)
+        {
+            Type searchType = Type.GetType(className);
+
+            foreach (var item in _selectableClasses)
+            {
+                if (item.Value == searchType)
+                {
+                    return item.Key;
+                }
+            }
+
+            return null;
+        }
+
+        private void UpdateUIData<T>(in T arg1) where T : struct
+        {
+            if (!(arg1 is CharacterData newData)) return;
+
+            if (string.IsNullOrEmpty(Id))
+                _originalName = newData.characterName;
+            TempName = newData.characterName;
+            UpdateName();
+
+            string className = Find_SelectableClass(newData.className);
+            PUBaseClass.value = string.IsNullOrEmpty(className) ? "" : className;
+            OFModel.value = SavingSystem.GetAsset<GameObject>(newData.model);
+            UpdateComponentsUI(in newData);
+            _progression.UpdateUIData(newData.progress, newData.basicStats, newData.characterType);
+            DropsList.UpdateUIData(Convert_DropsInfo(newData.drops));
+
+            TglSave.value = newData.shouldSave;
+            DDFEnemyTag.value = newData.enemyTag ?? "";
+            EMCharacterType.Value = newData.characterType;
+            ComponentsList.DDFElement.value = "None";
+            UpdateComponentChoices();
+        }
+
+        private List<string> Get_DropsInfo()
+        {
+            var data = DropsList.GetInfo() as TreeViewListData;
+            var drops = new List<string>();
+
+            data.Elements.ForEach(e => drops.Add((e as DropData).Name));
+
+            return drops;
+        }
+
+        private CreationData Convert_DropsInfo(List<string> drops)
+        {
+            TreeViewListData data = new();
+
+            if (drops == null) return data;
+
+            foreach (var drop in drops)
+            {
+                data.Elements.Add(new DropData(drop));
+            }
+
+            return data;
         }
 
         private void AddCharacterComponents(ref CharacterData characterData)
@@ -1496,7 +1727,9 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                         AddInventoryComponent(ref characterData);
 
                         var inventory = (Inventory)characterData.components[ComponentType.Inventory];
-                        characterData.components[ComponentType.Equipment] = EquipmentS.GetEquipment(in inventory);
+                        var equipment = EquipmentS.GetEquipment(in inventory);
+                        characterData.components[ComponentType.Equipment] = equipment;
+                        equipment.modelPath = SavingSystem.GetAssetReference(OFModel.value);
                         break;
 
                     case ComponentType.None:
@@ -1521,25 +1754,51 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             characterData.components[ComponentType.Inventory] = inventory;
         }
 
+        private void UpdateComponentsUI(in CharacterData data)
+        {
+            ComponentsList.Clear();
+
+            if (data.components == null) return;
+
+            foreach (var component in data.components)
+            {
+                switch (component.Key)
+                {
+                    case ComponentType.None:
+                        continue;
+
+                    case ComponentType.Health:
+                        ((HealthSettings)subTabs[CharacterTab.Health]).UpdateUIData((Health)component.Value);
+                        break;
+
+                    case ComponentType.Inventory:
+                        ((InventorySettings)subTabs[CharacterTab.Inventory]).UpdateUIData((Inventory)component.Value);
+                        var items = ((InventorySettings)subTabs[CharacterTab.Inventory]).MClInventoryElements;
+
+                        if (data.components.ContainsKey(ComponentType.Equipment))
+                        {
+                            var equipment = data.components[ComponentType.Equipment];
+                            EquipmentS.UpdateUIData((Equipment)equipment, OFModel.value as GameObject, items);
+                            ComponentsList.AddElement(ComponentType.Equipment.ToString());
+                        }
+                        break;
+
+                    //case ComponentType.Equipment:
+                    //    EquipmentS.UpdateUIData((Equipment)component.Value, OFModel.value as GameObject);
+                    //    break;
+
+                    default:
+                        break;
+                }
+
+                ComponentsList.AddElement(component.Key.ToString());
+            }
+        }
+
         private void LoadCharacterComponents(in CharacterData data)
         {
             ComponentsList.Clear();
 
-            //if (data.health !=null && data.health.Count > 0)
-            //{
-            //    ((HealthSettings)subTabs[CharacterTab.Health]).LoadInfo(data.health[0]);
-            //    ComponentsList.AddElement(ComponentType.Health.ToString());
-            //}
-            //if (data.inventory != null && data.inventory.Count > 0)
-            //{
-            //    ((InventorySettings)subTabs[CharacterTab.Inventory]).LoadInventoryItems(data.inventory[0]);
-            //    ComponentsList.AddElement(ComponentType.Inventory.ToString());
-            //}
-            //if (data.equipment != null && data.equipment.Count > 0)
-            //{
-            //    ((EquipmentSettings)subTabs[CharacterTab.Equipment]).LoadEquipment(data.equipment[0]);
-            //    ComponentsList.AddElement(ComponentType.Equipment.ToString());
-            //}
             if (data.components == null) return;
 
             foreach (var component in data.components)
@@ -1555,15 +1814,15 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
                     case ComponentType.Inventory:
                         ((InventorySettings)subTabs[CharacterTab.Inventory]).LoadInventoryItems((Inventory)component.Value);
+                        var items = ((InventorySettings)subTabs[CharacterTab.Inventory]).MClInventoryElements;
+
+                        if (data.components.ContainsKey(ComponentType.Equipment))
+                        {
+                            var equipment = data.components[ComponentType.Equipment];
+                            EquipmentS.LoadEquipment((Equipment)equipment, OFModel.value as GameObject, items);
+                            ComponentsList.AddElement(ComponentType.Equipment.ToString());
+                        }
                         break;
-
-
-                    case ComponentType.Equipment:
-                        EquipmentS.LoadEquipment((Equipment)component.Value);
-                        break;
-
-                    //case ComponentType.Dialogue:
-                    //    break;
 
                     default:
                         break;
@@ -1577,7 +1836,10 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         {
             _characterData = null;
             _progression.Remove_Changes();
-            subTabs[CharacterTab.Equipment].Remove_Changes();
+            DropsList.Remove_Changes();
+            //foreach (var tab in subTabs)
+            //    tab.Value?.Remove_Changes();
+            subTabs[CharacterTab.Equipment]?.Remove_Changes();
             subTabs[CharacterTab.Inventory].Remove_Changes();
             subTabs[CharacterTab.Health].Remove_Changes();
             _id = null;

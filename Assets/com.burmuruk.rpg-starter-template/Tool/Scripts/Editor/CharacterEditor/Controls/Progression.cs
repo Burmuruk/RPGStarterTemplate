@@ -1,4 +1,6 @@
-﻿using Burmuruk.RPGStarterTemplate.Stats;
+﻿using Burmuruk.RPGStarterTemplate.Editor.Utilities;
+using Burmuruk.RPGStarterTemplate.Stats;
+using Burmuruk.RPGStarterTemplate.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -11,23 +13,25 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
     {
         public Button BtnBaseInfo { get; private set; }
         public Button BtnGeneralProgression { get; private set; }
+        public Toggle TglApplyForAllLevels { get; private set; }
         public Button BtnAdd { get; private set; }
         public Button BtnRemove { get; private set; }
         public VisualElement StatsContainer { get; private set; }
-        public VisualElement LevelButtonsContainer { get; private set; }
+        public ScrollView LevelButtonsScrollView { get; private set; }
+        public VisualElement LevelButtonsContainer { get => LevelButtonsScrollView.contentContainer; }
 
         private List<Button> _levelButtons = new();
         private List<BasicStats> _statsPerLevel = new();
         private BasicStats _baseInfo;
+        private BasicStats _increment;
         private BasicStats? _changesBaseInfo = null;
 
         private Button _selectedButton = null;
-        private int _currentLevel = 1;
-        private int _totalLevels = 0;
         private bool _applyForAllLevels = false;
         private CharacterProgress _changes = null;
         private CharacterType _changesCharacterType;
         private CharacterType _characterType;
+
         private BasicStats? CurrentData
         {
             get
@@ -40,7 +44,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 }
                 else if (_selectedButton == BtnGeneralProgression)
                 {
-                    return _statsPerLevel[0];
+                    return _increment;
                 }
                 else
                 {
@@ -59,7 +63,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 }
                 else if (_selectedButton == BtnGeneralProgression)
                 {
-                    _statsPerLevel[0] = value.Value;
+                    _increment = value.Value;
                 }
                 else
                 {
@@ -74,6 +78,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         public void Initialize(VisualElement container, Func<BasicStats> getStats, Action<BasicStats> setStats)
         {
+            base.Initialize(container);
             _getStats = getStats;
             _setStats = setStats;
 
@@ -83,18 +88,28 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             BtnAdd = _instance.Q<Button>("btnAddLevel");
             BtnRemove = _instance.Q<Button>("btnRemoveLevel");
             StatsContainer = container.Q<VisualElement>("statsContainer");
-            LevelButtonsContainer = _instance.Q<VisualElement>("levelButtons");
+            LevelButtonsScrollView = _instance.Q<ScrollView>("levelButtons");
+            TglApplyForAllLevels = _instance.Q<Toggle>("tglApplyAll");
 
             BtnBaseInfo.clicked += () => SwitchView(BtnBaseInfo);
             BtnGeneralProgression.clicked += () => SwitchView(BtnGeneralProgression);
-            BtnAdd.clicked += AddLevel;
+            TglApplyForAllLevels.RegisterValueChangedCallback((e) => OnTglValueChanged(e.newValue));
+            BtnAdd.clicked += OnClickedLevelButton;
             BtnRemove.clicked += RemoveLevel;
 
-            _levelButtons.Add(BtnGeneralProgression);
-            _statsPerLevel.Add(new BasicStats());
-            Highlight(BtnBaseInfo, true);
-            _selectedButton = BtnBaseInfo;
+            SwitchView(BtnBaseInfo);
             EnableContainer(StatsContainer, true);
+        }
+
+        private void OnClickedLevelButton()
+        {
+            AddLevel();
+            var button = _levelButtons[_levelButtons.Count - 1];
+            SwitchView(button);
+            LevelButtonsScrollView.schedule.Execute(() =>
+            {
+                LevelButtonsScrollView.ScrollTo(button);
+            }).ExecuteLater(80);
         }
 
         public void Set_CharacterType(CharacterType type) => _characterType = type;
@@ -125,22 +140,22 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             if (newButton == BtnBaseInfo)
             {
                 _setStats(_baseInfo);
-                ToggleLevelButtons(true);
             }
             else if (newButton == BtnGeneralProgression)
             {
-                _applyForAllLevels = true;
-                _setStats(_statsPerLevel[0]);
-                ToggleLevelButtons(false);
+                _setStats(_increment);
             }
             else
             {
                 int index = _levelButtons.IndexOf(newButton);
-                _currentLevel = index;
                 _setStats(_statsPerLevel[index]);
-                _applyForAllLevels = false;
-                ToggleLevelButtons(true);
             }
+        }
+
+        private void OnTglValueChanged(bool value)
+        {
+            ToggleLevelButtons(!value);
+            BtnGeneralProgression.SetEnabled(value);
         }
 
         private void SaveCurrentStats()
@@ -151,9 +166,9 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             {
                 _baseInfo = _getStats();
             }
-            else if (_selectedButton == BtnGeneralProgression || _selectedButton == null)
+            else if (_selectedButton == BtnGeneralProgression)
             {
-                _statsPerLevel[0] = _getStats();
+                _increment = _getStats();
             }
             else
             {
@@ -164,7 +179,6 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         private void AddLevel()
         {
-            _totalLevels++;
             var levelIndex = _levelButtons.Count;
             Button newButton = null;
             newButton = new Button(() => SwitchView(newButton))
@@ -182,97 +196,108 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         private void RemoveLevel()
         {
-            if (_totalLevels <= 0) return;
+            if (_levelButtons.Count <= 0) return;
+
+            if (_levelButtons.Count == 1)
+                SwitchView(BtnBaseInfo);
+            else
+                SwitchView(_levelButtons[_levelButtons.Count - 2]);
 
             int lastIndex = _levelButtons.Count - 1;
             LevelButtonsContainer.Remove(_levelButtons[lastIndex]);
             _levelButtons.RemoveAt(lastIndex);
             _statsPerLevel.RemoveAt(lastIndex);
-            _totalLevels--;
 
-            BtnRemove.SetEnabled(_totalLevels > 0);
+            BtnRemove.SetEnabled(_levelButtons.Count > 0);
         }
 
         private void ToggleLevelButtons(bool enable)
         {
-            for (int i = 1; i < _levelButtons.Count; i++)
-            {
-                EnableContainer(_levelButtons[i], enable);
-            }
-
+            LevelButtonsContainer.SetEnabled(enable);
             ToggleAdditionButtons(enable);
         }
 
         private void ToggleAdditionButtons(bool enable)
         {
             BtnAdd.SetEnabled(enable);
-            BtnRemove.SetEnabled(enable && _totalLevels > 0);
+            BtnRemove.SetEnabled(enable && _levelButtons.Count > 0);
         }
 
         public void LoadStats(CharacterProgress progress, BasicStats baseInfo, CharacterType type)
         {
             _changes = progress;
-            _baseInfo = baseInfo;
             _changesBaseInfo = baseInfo;
-            _characterType = type;
             _changesCharacterType = type;
+            //if (progress == null)
+            //    _changes = CreateInstance<CharacterProgress>();
+            UpdateUIData(progress, baseInfo, type);
+        }
+
+        public void UpdateUIData(CharacterProgress progress, BasicStats baseInfo, CharacterType type)
+        {
+            _baseInfo = baseInfo;
+            _increment = default;
+            _characterType = type;
             _selectedButton = null;
 
             _statsPerLevel.Clear();
             LevelButtonsContainer.Clear();
-            LevelButtonsContainer.Add(BtnGeneralProgression);
-            _levelButtons.RemoveRange(1, _levelButtons.Count - 1);
+            _levelButtons.Clear();
 
             if (progress.ApplyForAll(type))
             {
                 _applyForAllLevels = true;
-                _statsPerLevel.Add(progress.GetDataByLevel(type, 1).Value);
-                SwitchView(BtnGeneralProgression);
+                _increment = progress.GetDataByLevel(type, -1).Value;
             }
             else
             {
                 _applyForAllLevels = false;
-                _statsPerLevel.Add(new BasicStats());
-                int i = 1;
+                int i = 0;
                 BasicStats? data;
+
                 do
                 {
                     data = progress.GetDataByLevel(type, i);
                     if (data.HasValue)
                     {
                         AddLevel();
-                        _statsPerLevel[_statsPerLevel.Count - 1] = data.Value;
+                        _statsPerLevel[i] = data.Value;
                     }
                     i++;
                 } while (data.HasValue);
-
-                _currentLevel = 1;
-                SwitchView(BtnBaseInfo);
             }
+
+            TglApplyForAllLevels.value = _applyForAllLevels;
+            OnTglValueChanged(_applyForAllLevels);
+            SwitchView(BtnBaseInfo);
         }
 
         public override ModificationTypes Check_Changes()
         {
-            if (_changes == null) return ModificationTypes.None;
-
             ModificationTypes changes = ModificationTypes.None;
 
             if (_characterType != _changesCharacterType)
                 changes |= ModificationTypes.EditData;
 
             SaveCurrentStats();
-
             FieldInfo[] fields = typeof(BasicStats).GetFields();
+
+            if (_changesBaseInfo.HasValue && HasChanges(fields, _changesBaseInfo.Value, _baseInfo))
+                changes |= ModificationTypes.EditData;
+
+            if (_applyForAllLevels != TglApplyForAllLevels.value)
+                return changes |= ModificationTypes.EditData;
+
+            if (_changes == null) return changes;
 
             if (_applyForAllLevels)
             {
-                var prev = _changes.GetDataByLevel(_changesCharacterType, 1);
-                if (!prev.HasValue || HasChanges(fields, prev.Value, _statsPerLevel[0]))
+                if (HasChanges(fields, _increment, _changes.GetDataByLevel(_characterType, -1).Value))
                     changes |= ModificationTypes.EditData;
             }
             else
             {
-                for (int i = 1; i < _statsPerLevel.Count; i++)
+                for (int i = 0; i < _statsPerLevel.Count; i++)
                 {
                     var prev = _changes.GetDataByLevel(_changesCharacterType, i);
                     if (!prev.HasValue || HasChanges(fields, prev.Value, _statsPerLevel[i]))
@@ -282,9 +307,6 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                     }
                 }
             }
-
-            if (_changesBaseInfo.HasValue && HasChanges(fields, _changesBaseInfo.Value, _baseInfo))
-                changes |= ModificationTypes.EditData;
 
             return changes;
 
@@ -304,21 +326,19 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             SaveCurrentStats();
             baseInfo = _baseInfo;
             progress = new CharacterProgress();
-
-
             List<CharacterProgress.LevelData> levels = new();
 
-            if (_applyForAllLevels)
+            if (TglApplyForAllLevels.value)
             {
                 levels.Add(new CharacterProgress.LevelData
                 {
-                    level = 1,
-                    stats = _statsPerLevel[0]
+                    level = -1,
+                    stats = _increment
                 });
             }
             else
             {
-                for (int i = 1; i < _statsPerLevel.Count; i++)
+                for (int i = 0; i < _statsPerLevel.Count; i++)
                 {
                     levels.Add(new CharacterProgress.LevelData
                     {
@@ -328,20 +348,15 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 }
             }
 
-            progress.SetData(_characterType, _applyForAllLevels, levels);
+            progress.SetData(_characterType, TglApplyForAllLevels.value, levels);
         }
 
         public override void Clear()
         {
             _setStats?.Invoke(default);
-            Highlight(BtnBaseInfo, false);
-            Highlight(BtnGeneralProgression, false);
-            if (_selectedButton != null)
-                Highlight(_selectedButton, false);
+            SwitchView(BtnBaseInfo);
 
             _selectedButton = null;
-            _currentLevel = 1;
-            _totalLevels = 0;
             _applyForAllLevels = false;
             _changes = null;
             _changesCharacterType = CharacterType.None;
@@ -349,10 +364,13 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             _baseInfo = default;
 
             _statsPerLevel.Clear();
-            _levelButtons.RemoveRange(1, _levelButtons.Count - 1);
+            _levelButtons.ForEach(b => b.RemoveFromHierarchy());
+            _levelButtons.Clear();
             BtnRemove.SetEnabled(false);
             _setStats?.Invoke(default);
+            TglApplyForAllLevels.value = false;
             EnableContainer(StatsContainer, false);
+            Clear_Highlights();
         }
 
         public override void Remove_Changes()
@@ -364,8 +382,67 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         public override bool VerifyData(out List<string> errors)
         {
+            Clear_Highlights();
+            bool result = true;
             errors = new();
-            return true;
+
+            if (_baseInfo != null)
+                result &= Verify_Stats(_baseInfo);
+
+            if (_applyForAllLevels)
+            {
+                foreach (var stats in _statsPerLevel)
+                {
+                    result &= Verify_Stats(stats);
+                }
+            }
+
+            return result;
+        }
+
+        private bool Verify_Stats(in BasicStats stats)
+        {
+            bool result = true;
+
+            var fields = typeof(BasicStats).GetFields();
+            foreach (var field in fields)
+            {
+                if (Attribute.IsDefined(field, typeof(DisallowNegativeAttribute)))
+                {
+                    if (DisallowNegativeAttribute.ValidateUsage(field))
+                    {
+                        var value = float.Parse(field.GetValue(stats).ToString());
+                        var stat = Container.Q<VisualElement>($"Stat_{field.Name}");
+
+                        if (field.FieldType == typeof(int) || field.FieldType == typeof(Int32))
+                        {
+                            var statField = stat.Q<IntegerField>();
+                            result &= statField.Verify_NegativaValue(null, _highlighted);
+                        }
+                        else
+                        {
+                            var statField = stat.Q<FloatField>();
+                            result &= statField.Verify_NegativaValue(null, _highlighted);
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        //private FloatField GetStatField()
+        //{
+        //    Container.Query<TextValueField>
+        //}
+
+        private void Clear_Highlights()
+        {
+            foreach (var element in _highlighted)
+            {
+                Set_Tooltip(element.Key, element.Value, false, BorderColour.Error);
+            }
+            _highlighted.Clear();
         }
 
         public override void Load_Changes()

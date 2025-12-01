@@ -2,7 +2,7 @@
 
 namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 {
-    public class MyCustomList : IClearable
+    public class MyCustomList : IClearable, IUpdatableUI
     {
         protected ModificationTypes _modificationType;
         protected VisualElement _elementsContainer;
@@ -58,7 +58,11 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             _scrollView.style.flexGrow = 1;
             _scrollView.verticalScrollerVisibility = ScrollerVisibility.Auto;
             _scrollView.Add(_elementsContainer);
-            _scrollView.RegisterCallback<WheelEvent>(evt => evt.StopPropagation());
+            _scrollView.RegisterCallback<WheelEvent>(evt =>
+            {
+                if (_scrollView.verticalScroller.enabledSelf)
+                    evt.StopPropagation();
+            });
             Foldout.Add(_scrollView);
 
             var buttons = Container.Q<VisualElement>("buttonsContainer");

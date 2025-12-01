@@ -151,7 +151,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         {
             if (VerifyHeaderName())
             {
-                DisableNotification();
+                DisableNotification(NotificationType.Creation);
             }
         }
 
@@ -232,7 +232,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 
             Highlight(TxtName, false);
             VariablesList.AddElement(name, EMStatType.Value.ToString());
-            DisableNotification();
+            DisableNotification(NotificationType.Creation);
             return true;
         }
 
@@ -330,7 +330,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             }
 
             Highlight(TxtName, false);
-            DisableNotification();
+            DisableNotification(NotificationType.Creation);
             isStatEditable = null;
             return true;
         }
@@ -403,6 +403,12 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         public override void SetType(string value)
         {
             _type = (T)Enum.Parse(typeof(T), value);
+        }
+
+        public override void Clear()
+        {
+            base.Clear();
+            Type = default(T);
         }
     }
 }

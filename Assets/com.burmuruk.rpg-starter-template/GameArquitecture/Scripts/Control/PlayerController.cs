@@ -237,7 +237,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
             }
             else if (m_interactables.Count > 0)
             {
-                m_interactables[0].Interact();
+                m_interactables[0].Interact(player);
             }
         }
 

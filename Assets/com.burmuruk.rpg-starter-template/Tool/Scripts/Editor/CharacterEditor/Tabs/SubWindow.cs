@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using UnityEditor.PackageManager;
 using UnityEngine.UIElements;
 
 namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 {
-    public abstract class SubWindow : UnityEditor.Editor, IClearable, IChangesObserver, IEnableable
+    public abstract class SubWindow : UnityEditor.Editor, IClearable, IChangesObserver, IEnableable, IUpdatableUI
     {
         protected VisualElement _container;
         protected VisualElement _instance;
         protected ModificationTypes _modificationType;
+        protected Dictionary<VisualElement, string> _highlighted = new();
 
         public bool IsActive { get; set; }
         public VisualElement Container { get => _container; }

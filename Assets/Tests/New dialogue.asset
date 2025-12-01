@@ -1,0 +1,99 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8168803799838848496
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31168052f5af1b642a930f7c1b126564, type: 3}
+  m_Name: ul
+  m_EditorClassIdentifier: 
+  dialogueNode:
+    Id: 52e62457-96ff-4918-8b70-0f782febbe15
+    Message: 1
+    Children:
+    - Id: 3fe0bf91-8cf1-4bbc-9fbb-51662107e3cc
+      Message: 2
+      Children:
+      - Id: 3543065f-a51e-4203-a1bf-ef6acac2bc98
+        Message: 3
+        Children:
+        - Id: aa716f05-c8ce-4a1f-966a-9cafcd61491a
+          Message: 4
+          Children: []
+          onEnterAction: 
+          onExitAction: 
+        onEnterAction: 
+        onExitAction: 
+      onEnterAction: 
+      onExitAction: 
+    onEnterAction: 
+    onExitAction: 
+  id: 52e62457-96ff-4918-8b70-0f782febbe15
+  characters:
+  - Mer
+--- !u!114 &-904468356309679329
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31168052f5af1b642a930f7c1b126564, type: 3}
+  m_Name: bm
+  m_EditorClassIdentifier: 
+  dialogueNode:
+    Id: d400de0a-fa22-4fe2-9d50-d3b9f4e1b3bf
+    Message: b
+    Children:
+    - Id: 3543065f-a51e-4203-a1bf-ef6acac2bc98
+      Message: 3
+      Children:
+      - Id: aa716f05-c8ce-4a1f-966a-9cafcd61491a
+        Message: 4
+        Children: []
+        onEnterAction: 
+        onExitAction: 
+      onEnterAction: 
+      onExitAction: 
+    onEnterAction: 
+    onExitAction: 
+  id: d400de0a-fa22-4fe2-9d50-d3b9f4e1b3bf
+  characters:
+  - 84bb82e2-0aad-438f-9eae-e220510c8bee
+  - Mer
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c545672f6c926b7449d618f255ab4b99, type: 3}
+  m_Name: New dialogue
+  m_EditorClassIdentifier: 
+  dialogueNode:
+    Id: 
+    Message: 
+    Children: []
+    onEnterAction: 
+    onExitAction: 
+  id: 
+  characters: []
+  dialogues:
+  - id: 52e62457-96ff-4918-8b70-0f782febbe15
+    dialogue: {fileID: -8168803799838848496}
+    name: 
+    characters: []
+  - id: d400de0a-fa22-4fe2-9d50-d3b9f4e1b3bf
+    dialogue: {fileID: -904468356309679329}
+    name: 
+    characters: []

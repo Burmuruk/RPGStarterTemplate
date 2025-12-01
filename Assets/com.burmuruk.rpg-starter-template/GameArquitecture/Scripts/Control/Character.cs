@@ -109,8 +109,8 @@ namespace Burmuruk.RPGStarterTemplate.Control
         {
             if (health.HP <= 0) return;
 
-            eyesPerceibed = Physics.OverlapSphere(farPercept.position, stats.eyesRadious, 1 << 10);
-            earsPerceibed = Physics.OverlapSphere(closePercept.position, stats.earsRadious, 1 << 10);
+            eyesPerceibed = Physics.OverlapSphere(farPercept.position, stats.farDectection, 1 << 10);
+            earsPerceibed = Physics.OverlapSphere(closePercept.position, stats.closeDetection, 1 << 10);
 
             PerceptionManager();
         }
@@ -120,9 +120,9 @@ namespace Burmuruk.RPGStarterTemplate.Control
             if (/*!newStats.Initilized ||*/ !farPercept || !closePercept) return;
 
             Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(farPercept.position, stats.eyesRadious);
+            Gizmos.DrawWireSphere(farPercept.position, stats.farDectection);
             Gizmos.color = Color.blue;
-            Gizmos.DrawWireSphere(closePercept.position, stats.earsRadious);
+            Gizmos.DrawWireSphere(closePercept.position, stats.closeDetection);
         }
         #endregion
 
@@ -424,8 +424,8 @@ namespace Burmuruk.RPGStarterTemplate.Control
             basicStatsData["Damage"] = ModsList.TryGetRealValue(stats.damage, character, ModifiableStat.BaseDamage);
             basicStatsData["DamageRate"] = ModsList.TryGetRealValue(stats.damageRate, character, ModifiableStat.GunFireRate);
             basicStatsData["Color"] = VectorToJToken.CaptureVector(stats.color);
-            basicStatsData["EyesRadious"] = stats.eyesRadious;
-            basicStatsData["EarsRadious"] = stats.earsRadious;
+            basicStatsData["EyesRadious"] = stats.farDectection;
+            basicStatsData["EarsRadious"] = stats.closeDetection;
             basicStatsData["MinDistance"] = ModsList.TryGetRealValue(stats.minDistance, character, ModifiableStat.MinDistance);
 
             return basicStatsData;
@@ -439,8 +439,8 @@ namespace Burmuruk.RPGStarterTemplate.Control
                 stats.damage = state["Damage"].ToObject<int>();
                 stats.damageRate = state["DamageRate"].ToObject<float>();
                 stats.color = state["Color"].ToObject<Vector4>();
-                stats.eyesRadious = state["EyesRadious"].ToObject<float>();
-                stats.earsRadious = state["EarsRadious"].ToObject<float>();
+                stats.farDectection = state["EyesRadious"].ToObject<float>();
+                stats.closeDetection = state["EarsRadious"].ToObject<float>();
                 stats.minDistance = state["MinDistance"].ToObject<float>();
 
                 SetStats(stats);

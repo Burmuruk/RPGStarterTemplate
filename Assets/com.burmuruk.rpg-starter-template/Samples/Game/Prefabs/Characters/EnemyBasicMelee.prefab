@@ -135,8 +135,8 @@ MonoBehaviour:
     damageRate: 1
     color: {r: 0, g: 0, b: 0, a: 0}
     Name: 0
-    eyesRadious: 3
-    earsRadious: 3
+    farDectection: 0
+    closeDetection: 0
     minDistance: 3
     poder: 0
   mover: {fileID: 0}

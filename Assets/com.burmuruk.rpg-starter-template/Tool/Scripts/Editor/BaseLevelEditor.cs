@@ -32,6 +32,8 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         protected Dictionary<string, (VisualElement element, ElementType type)> infoContainers = new();
         protected string curTab = "";
         protected string lastTab = "";
+        protected VisualElement ntf; //notification
+        protected Label ntfLbl; //notification label
 
         Button selectedButton;
         protected const string acceptButtonName = "AceptButton";
@@ -54,9 +56,9 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 
         protected void GetNotificationSection()
         {
-            pNotification = container.Q<VisualElement>("notifications");
-            lblNotification = container.Q<Label>("lblNotifications");
-            pNotification.AddToClassList("Disable");
+            ntf = container.Q<VisualElement>("notifications");
+            ntfLbl = container.Q<Label>("lblNotifications");
+            ntf.AddToClassList("Disable");
         }
 
         protected virtual void ChangeTab(string tab)

@@ -45,6 +45,18 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             get => Creations[idx];
             set => Creations[idx] = value;
         }
+        public ElementType CurrentFilter
+        {
+            get => currentFilter;
+            set
+            {
+                if (!tagButtons.Where(t => t.type == value).Any())
+                    return;
+
+                currentFilter = value;
+                SearchAllElements(currentFilter);
+            }
+        }
 
         public SearchBar(VisualElement container, int initialAmount, bool addFilters)
         {
@@ -312,7 +324,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             bool FindValues(string text, ElementType type, out List<string> valuesIds)
             {
                 valuesIds = (from c in SavingSystem.Data.creations[type]
-                             where c.Value.Name.ToLower().Contains(text.ToLower())
+                             where c.Value.Id.ToLower().Contains(text.ToLower())
                              select c.Key).ToList();
 
                 return valuesIds.Count > 0;
@@ -421,7 +433,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             return enabled;
 
             string GetName(int i, int j) =>
-                SavingSystem.Data.creations[elements[i].type][elements[i].ids[j]]?.Name;
+                SavingSystem.Data.creations[elements[i].type][elements[i].ids[j]]?.Id;
         }
         #endregion
 

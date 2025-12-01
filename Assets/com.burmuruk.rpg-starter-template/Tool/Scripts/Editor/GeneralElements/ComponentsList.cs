@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine.UIElements;
 using static Burmuruk.RPGStarterTemplate.Editor.Utilities.UtilitiesUI;
@@ -62,6 +63,10 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
                 return i;
             }
+        }
+        public List<T> EnabledComponents
+        {
+            get => Components.Where(c => !IsDisabled(c.element)).ToList();
         }
 
         public T this[int index]
@@ -128,7 +133,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             }
         }
 
-        protected bool Check_HasCharacterComponent(string value)
+        public bool Contains(string value)
         {
             for (int i = 0; i < Components.Count; i++)
             {
@@ -242,29 +247,36 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
             ChangeAmount(idx, 0);
             EnableContainer(Components[idx].element, false);
-            Displaceids(idx);
+            DisplaceIds(idx);
         }
 
-        private void Displaceids(int startIdx)
+        private void DisplaceIds(int startIdx)
         {
-            int idx = startIdx;
+            if (startIdx < 0 || startIdx >= Components.Count)
+                return;
 
-            for (int i = startIdx + 1; i < Components.Count - 1; i++)
-            {
-                Components[i].idx = idx;
-                Amounts[i] = Amounts[idx++];
-            }
-
+            // Guarda los elementos a mover
             var component = Components[startIdx];
-            component.idx = Components.Count - 1;
-            Components.Insert(Components.Count - 1, component);
+            var amount = Amounts[startIdx];
+
+            // Elimina de su posición actual
             Components.RemoveAt(startIdx);
+            Amounts.RemoveAt(startIdx);
+
+            // Añade al final
+            Components.Add(component);
+            Amounts.Add(amount);
+
+            // Reasigna índices en orden
+            for (int i = 0; i < Components.Count; i++)
+                Components[i].idx = i;
+
+            // Actualiza también el orden visual (si aplica)
             Container.Remove(component.element);
             Container.Add(component.element);
-
-            Amounts.Add(Amounts[startIdx]);
-            Amounts.RemoveAt(startIdx);
         }
+
+
 
         public virtual void Clear()
         {

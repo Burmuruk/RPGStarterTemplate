@@ -8,6 +8,12 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
     {
         public string Id;
         public string Message;
-        public List<string> Children = new List<string>();
+        public List<DialogueNode> Children = new ();
+        public string onEnterAction;
+        public string onExitAction;
+
+        internal string GetOnEnterAction() => onEnterAction;
+
+        internal string GetOnExitAction() => onExitAction;
     }
 }

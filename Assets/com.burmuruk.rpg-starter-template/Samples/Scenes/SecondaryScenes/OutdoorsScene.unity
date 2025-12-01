@@ -11149,8 +11149,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bdedc77df1d83ff42aa13407bf8d7f8b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dialogue: {fileID: 0}
-  conversantName: Merch
+  dialogue: {fileID: -8168803799838848496, guid: 80523f5101cad874585608f91fcf27da,
+    type: 2}
+  conversantName: Mer
 --- !u!1 &2133313793
 GameObject:
   m_ObjectHideFlags: 0
