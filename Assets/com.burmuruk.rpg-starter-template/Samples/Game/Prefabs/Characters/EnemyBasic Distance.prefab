@@ -84,12 +84,37 @@ PrefabInstance:
       propertyPath: _maxHp
       value: 8
       objectReference: {fileID: 0}
+    - target: {fileID: 7197814264841399882, guid: 8309bf9444a004e4b854038f1c57a905,
+        type: 3}
+      propertyPath: shouldGetClose
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7197814264841399882, guid: 8309bf9444a004e4b854038f1c57a905,
+        type: 3}
+      propertyPath: detectionRadious
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 8130546791557357396, guid: 8309bf9444a004e4b854038f1c57a905,
         type: 3}
       propertyPath: initialWeapon
       value: 
       objectReference: {fileID: 11400000, guid: 1d4668583dbdb284c89aed484e05052e,
         type: 2}
+    - target: {fileID: 9070186933416403932, guid: 8309bf9444a004e4b854038f1c57a905,
+        type: 3}
+      propertyPath: wanderRadious
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 9070186933416403932, guid: 8309bf9444a004e4b854038f1c57a905,
+        type: 3}
+      propertyPath: m_slowingRadious
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 9070186933416403932, guid: 8309bf9444a004e4b854038f1c57a905,
+        type: 3}
+      propertyPath: wanderDisplacement
+      value: 2
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -123,15 +148,15 @@ MonoBehaviour:
   hasFarPerception: 1
   hasClosePerception: 1
   enemyTag: Player
-  characterType: 2
+  characterType: 5
   stats:
-    speed: 5
+    speed: 7
     damage: 1
     damageRate: 1
     color: {r: 0, g: 0, b: 0, a: 0}
     Name: 0
-    eyesRadious: 5
-    earsRadious: 2
+    farDectection: 3
+    closeDetection: 5
     minDistance: 5
     poder: 0
   mover: {fileID: 0}

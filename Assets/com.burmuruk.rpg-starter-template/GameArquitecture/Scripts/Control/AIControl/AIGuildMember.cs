@@ -171,12 +171,12 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
             mainPlayer = character;
         }
 
-        public void SetTarget(AIEnemyController enemy)
+        public void SetTarget(Character enemy)
         {
             Target = enemy.transform;
         }
 
-        public void AttackEnemy(AIEnemyController enemy)
+        public void AttackEnemy(Character enemy)
         {
             Target = enemy.transform;
             PlayerState = PlayerState.Combat;
@@ -185,7 +185,7 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
             fighter.BasicAttack();
         }
 
-        public void AutoAttackEnemy(AIEnemyController enemy)
+        public void AutoAttackEnemy(Character enemy)
         {
             Target = enemy.transform;
             PlayerState = PlayerState.Combat;

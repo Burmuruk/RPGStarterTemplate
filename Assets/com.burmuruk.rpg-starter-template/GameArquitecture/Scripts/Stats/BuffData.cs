@@ -10,10 +10,11 @@ namespace Burmuruk.RPGStarterTemplate.Stats
         public string name;
         public ModifiableStat stat;
         public float value;
+        [Tooltip("Time in seconds of the effect")]
         public float duration;
         public float rate;
         public bool percentage;
-        public float probability;
+        [Range(0,1)] public float probability; //values between 0 - 1
 
         public static bool operator == (BuffData lhs, BuffData rhs)
         {

@@ -45,7 +45,7 @@ namespace Burmuruk.RPGStarterTemplate.Interaction
 
             if (caller == FindAnyObjectByType<PlayerManager>().CurPlayer)
             {
-                Interact(caller);
+                Interact();
             }
         }
 
@@ -62,7 +62,7 @@ namespace Burmuruk.RPGStarterTemplate.Interaction
             return state;
         }
 
-        public virtual void Interact(Character character)
+        public virtual void Interact()
         {
             if (disabled) return;
 
@@ -84,9 +84,9 @@ namespace Burmuruk.RPGStarterTemplate.Interaction
             SetDisabled(state["Disabled"].ToObject<bool>());
         }
 
-        public void StopPlayer(bool pause)
+        public void StartCinematic(bool start)
         {
-            FindObjectOfType<Character>().StopActions(pause);
+            FindObjectOfType<GameManager>().StartCinematic(start);
         }
 
         private void SetDisabled(bool value)

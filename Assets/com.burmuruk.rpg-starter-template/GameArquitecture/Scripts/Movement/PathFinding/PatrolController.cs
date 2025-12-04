@@ -132,6 +132,7 @@ namespace Burmuruk.WorldG.Patrol
                 CreateSpline();
             };
             finder.Find_BestRoute<T>((start, end));
+            //finder.FindRoute(start, nodeList.FindNearestNode(end));
         }
 
         private void CreateSpline()

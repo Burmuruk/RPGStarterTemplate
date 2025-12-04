@@ -160,6 +160,13 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 
         private void OnAccept_SavingBtn()
         {
+            if (EditorUtility.DisplayDialog("Enum modification",
+                        "This function is not compleate yet. Continue may produce unexpected errors",
+                        "continue", "cancel"))
+            { }
+            else
+                return;
+
             var enumEditor = new EnumEditor();
             List<string> newValues = new();
 

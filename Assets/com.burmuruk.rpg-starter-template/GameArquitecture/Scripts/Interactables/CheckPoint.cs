@@ -5,20 +5,18 @@ namespace Burmuruk.RPGStarterTemplate.Interaction
 {
     public class CheckPoint : MonoBehaviour, IInteractable
     {
-        GameManager gameManager;
-        LevelManager levelManager;
+        protected GameManager gameManager;
+        protected LevelManager levelManager;
 
-        private void Start()
+        protected virtual void Start()
         {
             gameManager = FindObjectOfType<GameManager>();
             levelManager = FindObjectOfType<LevelManager>();
         }
 
-        public void Interact(Character character)
+        public virtual void Interact()
         {
-            if (!gameManager.ShowCharactersMenu()) return;
-
-            levelManager.ChangeMenu();
+            if (!gameManager.CanChangeToUI()) return;
         }
     }
 }

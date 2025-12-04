@@ -254,7 +254,8 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         {
             if (evt.newValue)
             {
-                nodesList ??= ScriptableObject.CreateInstance<NodesList>();
+                if (nodesList == null) 
+                    nodesList = ScriptableObject.CreateInstance<NodesList>();
 
                 MeshControls.Add(new InspectorElement(nodesList));
                 EnableContainer(MeshControls, true);

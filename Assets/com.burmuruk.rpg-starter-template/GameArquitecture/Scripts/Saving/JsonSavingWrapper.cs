@@ -3,19 +3,20 @@ using Burmuruk.RPGStarterTemplate.Stats;
 using Burmuruk.RPGStarterTemplate.UI;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
+using static Burmuruk.RPGStarterTemplate.Stats.BasicStats;
 
 namespace Burmuruk.RPGStarterTemplate.Saving
 {
     public class JsonSavingWrapper : MonoBehaviour
     {
         const string DEFAULT_SAVEFILE = "miGuardado-";
-        //const string DEFAULT_AUTOSAVE_FILE = "miAutoGuardado-";
         const string DEFAULT_IMAGE_NAME = "Slot";
         const string DEFAULT_IMAGE_EXTENTION = ".png";
 
@@ -37,10 +38,10 @@ namespace Burmuruk.RPGStarterTemplate.Saving
         private void Awake()
         {
             var saver = GetComponent<JsonSavingSystem>();
+
             OnLoading += (_) =>
             {
                 FindObjectOfType<GameManager>()?.SetState(GameManager.State.Loading);
-
             };
 
             saver.onSceneLoaded += () =>
@@ -52,7 +53,6 @@ namespace Burmuruk.RPGStarterTemplate.Saving
                 if (_lastBuildIdx == 0)
                 {
                     GetComponent<PersistentObjSpawner>().TrySpawnObjects();
-                    //FindObjectOfType<LevelManager>().pauseMenu = 
                 }
             };
 
@@ -64,57 +64,169 @@ namespace Burmuruk.RPGStarterTemplate.Saving
             OnLoadingStateFinished += LoadStage;
 
             DontDestroyOnLoad(gameObject);
+            PersistentObjects.Register(gameObject);
         }
 
-        //private IEnumerator Start()
-        //{
-        //    yield return GetComponent<JsonSavingSystem>().LoadLastScene(defaultSaveFile);
-        //}
-
+        /// <summary>
+        /// Saves the current state into the indicated slot.
+        /// </summary>
+        /// <param name="slot">Positive for manual and negative for auto-save</param>
+        /// <param name="slotData">Scene data</param>
         public void Save(int slot, JObject slotData = null)
         {
             OnSaving?.Invoke(0);
+            
+            StartCoroutine(CaptureScreenshot(slot, slotData));
+        }
 
-            if (slot == 0)
+        /// <summary>
+        /// Captura un screenshot de la pantalla actual y devuelve:
+        /// - base64: string PNG en Base64 para guardar en JSON
+        /// - pngBytes: bytes del PNG para guardar en archivo físico
+        /// </summary>
+        private IEnumerator CaptureScreenshot(int slot, JObject slotData)
+        {
+            yield return new WaitForEndOfFrame();
+
+            slotData ??= FindObjectOfType<LevelManager>().CaptureLevelData();
+            int w = Screen.width;
+            int h = Screen.height;
+
+            Texture2D tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
+            tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+            tex.Apply();
+
+            byte[] png = tex.EncodeToPNG();
+            string base64 = Convert.ToBase64String(png);
+
+            UnityEngine.Object.Destroy(tex);
+
+            slotData["Image"] = base64;
+
+            GetComponent<JsonSavingSystem>().Save(DEFAULT_SAVEFILE, slot, slotData);
+            TakeSlotPicture(slot, png);
+
+            OnSaving?.Invoke(1);
+            yield break;
+        }
+
+        private IEnumerator CaptureScreenshotAuto(JObject slotData, bool overrideManualSave)
+        {
+            yield return new WaitForEndOfFrame();
+
+            var saver = GetComponent<JsonSavingSystem>();
+            var data = saver.LoadSave(DEFAULT_SAVEFILE);
+            JObject newSave = new JObject();
+
+            if (slotData == null || !slotData.ContainsKey("Slot"))
             {
-                int id = System.DateTime.Now.Second + System.DateTime.Now.Hour + System.DateTime.Now.Year;
-                GetComponent<JsonSavingSystem>().Save(DEFAULT_SAVEFILE/* + id*/, -1, slotData);
+                slotData = CreateDefaultSlotData(1);
+            }
+
+            int manualSlotIndex = slotData["Slot"].ToObject<int>();
+
+            int w = Screen.width;
+            int h = Screen.height;
+
+            Texture2D tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
+            tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+            tex.Apply();
+
+            byte[] png = tex.EncodeToPNG();
+            string base64 = Convert.ToBase64String(png);
+
+            UnityEngine.Object.Destroy(tex);
+            slotData["Image"] = base64;
+
+            foreach (var kvp in data)
+            {
+                if (!int.TryParse(kvp.Key, out int id)) continue;
+                if (id > 0)
+                {
+                    newSave[kvp.Key] = kvp.Value;
+                }
+            }
+
+            for (int i = -1; i >= -3; i--)
+            {
+                string key = i.ToString();
+
+                if (!data.ContainsKey(key)) continue;
+
+                int newIndex = i - 1;
+                if (newIndex < -3)
+                {
+                    DeleteSlotPicture(i);
+                    continue;
+                }
+
+                newSave[newIndex.ToString()] = data[key];
+                RenameSlotPicture(i, newIndex);
+            }
+
+            var curDataState = saver.LoadCurrentSlot(DEFAULT_SAVEFILE, slotData);
+            string slotIdxKey = manualSlotIndex.ToString();
+
+            if (curDataState.ContainsKey(slotIdxKey))
+            {
+                newSave["-1"] = curDataState[slotIdxKey];
             }
             else
             {
-                GetComponent<JsonSavingSystem>().Save(DEFAULT_SAVEFILE, slot, slotData);
+                JObject fallbackState = new JObject
+                {
+                    ["SlotData"] = slotData
+                };
+                newSave["-1"] = fallbackState;
             }
 
-            TakeSlotPicture(slot);
+            TakeSlotPicture(-1, png);
+
+            if (overrideManualSave)
+            {
+                if (curDataState.ContainsKey(slotIdxKey))
+                {
+                    newSave[slotIdxKey] = curDataState[slotIdxKey];
+                }
+
+                TakeSlotPicture(-1, png);
+            }
+
+            saver.OverwriteSave(DEFAULT_SAVEFILE, newSave);
 
             OnSaving?.Invoke(1);
+
+            yield break;
         }
 
-        private void TakeSlotPicture(int slot)
+        private JObject CreateDefaultSlotData(int slot)
         {
-            string path = Path.Combine(Application.persistentDataPath, DEFAULT_IMAGE_NAME + slot.ToString() + DEFAULT_IMAGE_EXTENTION);
-            ScreenCapture.CaptureScreenshot(path);
-        }
-
-        private void CopySlotPicture(int oldSlot, int newSlot)
-        {
-            string oldPath = Path.Combine(Application.persistentDataPath, DEFAULT_IMAGE_NAME + oldSlot.ToString() + DEFAULT_IMAGE_EXTENTION);
-            string newPath = Path.Combine(Application.persistentDataPath, DEFAULT_IMAGE_NAME + newSlot.ToString() + DEFAULT_IMAGE_EXTENTION);
-
-            Task.Delay(100).GetAwaiter().OnCompleted(() => CreatePictureCopy(oldPath, newPath));
-        }
-
-        private void CreatePictureCopy(string oldPath, string newPath)
-        {
-            if (File.Exists(oldPath))
+            JObject slotData = new JObject
             {
-                File.Copy(oldPath, newPath, true);
-            }
+                ["Slot"] = slot,
+                ["BuildIdx"] = SceneManager.GetActiveScene().buildIndex,
+                ["TimePlayed"] = 0f
+            };
+
+            return slotData;
+        }
+
+        private void TakeSlotPicture(int slot, byte[] pngBytes)
+        {
+            if (pngBytes == null || pngBytes.Length == 0) return;
+
+            string path = Path.Combine(
+                Application.persistentDataPath,
+                DEFAULT_IMAGE_NAME + slot.ToString() + DEFAULT_IMAGE_EXTENTION);
+
+            File.WriteAllBytes(path, pngBytes);
         }
 
         private void DeleteSlotPicture(int slot)
         {
-            string path = Path.Combine(Application.persistentDataPath, DEFAULT_IMAGE_NAME + slot.ToString() + DEFAULT_IMAGE_EXTENTION);
+            string path = Path.Combine(
+                Application.persistentDataPath,
+                DEFAULT_IMAGE_NAME + slot.ToString() + DEFAULT_IMAGE_EXTENTION);
 
             if (File.Exists(path))
             {
@@ -124,8 +236,13 @@ namespace Burmuruk.RPGStarterTemplate.Saving
 
         private void RenameSlotPicture(int lastSlot, int newSlot)
         {
-            string oldPath = Path.Combine(Application.persistentDataPath, DEFAULT_IMAGE_NAME + lastSlot.ToString() + DEFAULT_IMAGE_EXTENTION);
-            string newPath = Path.Combine(Application.persistentDataPath, DEFAULT_IMAGE_NAME + newSlot.ToString() + DEFAULT_IMAGE_EXTENTION);
+            string oldPath = Path.Combine(
+                Application.persistentDataPath,
+                DEFAULT_IMAGE_NAME + lastSlot.ToString() + DEFAULT_IMAGE_EXTENTION);
+
+            string newPath = Path.Combine(
+                Application.persistentDataPath,
+                DEFAULT_IMAGE_NAME + newSlot.ToString() + DEFAULT_IMAGE_EXTENTION);
 
             if (File.Exists(oldPath))
             {
@@ -134,9 +251,9 @@ namespace Burmuruk.RPGStarterTemplate.Saving
         }
 
         /// <summary>
-        /// Loads the game at the specified index. If there's no index saved, a new slot is created.
+        /// Loads the indicated slot.
+        /// Positive number: manual. Nagative: auto-saves.
         /// </summary>
-        /// <param name="slot">Use positive numbers for manual saving and negative for auto saving.</param>
         public void Load(int slot)
         {
             _lastBuildIdx = SceneManager.GetActiveScene().buildIndex;
@@ -144,76 +261,42 @@ namespace Burmuruk.RPGStarterTemplate.Saving
             OnLoadingUI?.Invoke();
             FindObjectOfType<BuffsManager>()?.RemoveAllBuffs();
 
-            //Timer timer = new Timer(500);
-            //timer.Elapsed += (obj, args) => LoadWithoutFade(slot);
-            //timer.Start();
             Task.Delay(50).GetAwaiter().OnCompleted(() => LoadWithoutFade(slot));
         }
 
         public void DeleteSlot(int idx)
         {
             GetComponent<JsonSavingSystem>().DeleteSlot(DEFAULT_SAVEFILE, idx);
-
-            string path = Path.Combine(Application.persistentDataPath, DEFAULT_IMAGE_NAME + idx.ToString() + DEFAULT_IMAGE_EXTENTION);
-            File.Delete(path);
+            DeleteSlotPicture(idx);
         }
 
         private void LoadWithoutFade(int slot)
         {
-            //string fileName = slot < 0 ? DEFAULT_SAVEFILE : DEFAULT_AUTOSAVE_FILE;
-            //GetComponent<JsonSavingSystem>().Load(fileName, slot,
-            //    (args) => { OnLoaded?.Invoke(args); OnLoadedUI?.Invoke(); });
-
-            GetComponent<JsonSavingSystem>().Load(DEFAULT_SAVEFILE, slot,
-                (args) => { OnLoaded?.Invoke(args); OnLoadedUI?.Invoke(); });
+            GetComponent<JsonSavingSystem>().Load(
+                DEFAULT_SAVEFILE,
+                slot,
+                (args) =>
+                {
+                    OnLoaded?.Invoke(args);
+                    OnLoadedUI?.Invoke();
+                });
 
             OnLoading?.Invoke(1);
         }
 
         /// <summary>
-        /// Creates a new auto-save slot with -1 as it's index.
+        /// Creates a new auto-save in -1 and sort the rest:
+        /// -1 -> -2, -2 -> -3, -3 se elimina.
         /// </summary>
+        /// <param name="slotData">Data from the manual slot (must have "Slot").</param>
+        /// <param name="overrideManualSave">
+        /// true = override the manual slot with current data.
+        /// </param>
         public void AddNewAutoSaveSlot(JObject slotData, bool overrideManualSave)
         {
             OnSaving?.Invoke(0);
-            var slots = FindAvailableSlots(out _);
 
-            var saver = GetComponent<JsonSavingSystem>();
-            var data = saver.LoadSave(DEFAULT_SAVEFILE);
-            var newSave = new JObject();
-
-            for (int i = -3; i < 4; i++)
-            {
-                if (!data.ContainsKey(i.ToString())) continue;
-
-                if (i > 0)
-                {
-                    newSave[i.ToString()] = data[i.ToString()];
-                    continue; // Skip if it's not an auto-save slot
-                }
-                else if (i - 1 < -3)
-                {
-                    DeleteSlotPicture(i);
-                    continue; // Removes old auto-save slots
-                }
-
-                newSave[(i - 1).ToString()] = data[i.ToString()];
-                RenameSlotPicture(i, i - 1);
-            }
-
-            string slotIdx = slotData["Slot"].ToObject<string>();
-            var curData = saver.LoadCurrentSlot(DEFAULT_SAVEFILE, slotData);
-            newSave[(-1).ToString()] = curData[slotIdx];
-            TakeSlotPicture(-1);
-
-            if (overrideManualSave)
-            {
-                CopySlotPicture(-1, slotData["Slot"].ToObject<int>());
-                newSave[slotIdx] = curData[slotIdx];
-            }
-
-            saver.OverwriteSave(DEFAULT_SAVEFILE, newSave);
-            OnSaving?.Invoke(1);
+            StartCoroutine(CaptureScreenshotAuto(slotData, overrideManualSave));
         }
 
         public List<(int id, JObject slotData)> FindAvailableSlots(out List<(int id, Sprite sprite)> images)
@@ -222,9 +305,6 @@ namespace Burmuruk.RPGStarterTemplate.Saving
             var saver = GetComponent<JsonSavingSystem>();
 
             var slots = saver.LookForSlots(DEFAULT_SAVEFILE);
-            //if (includeAutoSaves)
-            //    slots.AddRange(saver.LookForSlots(DEFAULT_AUTOSAVE_FILE));
-
             if (slots is null) return null;
 
             foreach (var slot in slots)
@@ -241,7 +321,9 @@ namespace Burmuruk.RPGStarterTemplate.Saving
         private bool TryLoadSlotImage(int slot, out Sprite sprite)
         {
             sprite = null;
-            string path = Path.Combine(Application.persistentDataPath, DEFAULT_IMAGE_NAME + slot.ToString() + DEFAULT_IMAGE_EXTENTION);
+            string path = Path.Combine(
+                Application.persistentDataPath,
+                DEFAULT_IMAGE_NAME + slot.ToString() + DEFAULT_IMAGE_EXTENTION);
 
             if (!File.Exists(path))
                 return false;
@@ -251,7 +333,11 @@ namespace Burmuruk.RPGStarterTemplate.Saving
             Texture2D tex = new Texture2D(2, 2);
             ImageConversion.LoadImage(tex, data);
 
-            sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(.5f, .5f));
+            sprite = Sprite.Create(
+                tex,
+                new Rect(0, 0, tex.width, tex.height),
+                new Vector2(.5f, .5f));
+
             return true;
         }
 
@@ -265,7 +351,7 @@ namespace Burmuruk.RPGStarterTemplate.Saving
             FindObjectOfType<LevelManager>().SaveSlotData(data);
         }
 
-        private void LoadStage(int stage)
+        protected virtual void LoadStage(int stage)
         {
             switch ((SavingExecution)stage)
             {
@@ -273,19 +359,14 @@ namespace Burmuruk.RPGStarterTemplate.Saving
                     break;
 
                 case SavingExecution.System:
-
                     break;
 
                 case SavingExecution.Organization:
                     FindObjectOfType<LevelManager>().SetPaths();
                     FindObjectOfType<PlayerManager>().UpdateLeaderPosition();
-
                     break;
 
                 case SavingExecution.General:
-
-                    //if (_lastBuildIdx == 0) break;
-
                     FindObjectOfType<HUDManager>().Init();
                     break;
             }

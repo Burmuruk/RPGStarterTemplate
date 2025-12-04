@@ -112,6 +112,8 @@ namespace Burmuruk.RPGStarterTemplate.Inventory
             {
                 foreach (var itemData in _initialItems)
                 {
+                    if (itemData.Amount <= 0) continue;
+
                     for (int i = 0; i < itemData.Amount; i++)
                     {
                         Add(itemData.Item.ID); 

@@ -12,10 +12,10 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
         public override void Initilize(DialogueGraphView graph, Vector2 startPosition, BaseNode prev)
         {
             base.Initilize(graph, startPosition, prev);
-
-            TFTitle = AddTextField("Title");
-            TFDescription = AddTextField("Description");
-            TFInstructions = AddTextField("Instructions");
+            
+            TFTitle = AddTextField(GraphViewNode.extensionContainer, "Title");
+            TFDescription = AddTextField(GraphViewNode.extensionContainer, "Description");
+            TFInstructions = AddTextField(GraphViewNode.extensionContainer, "Instructions");
         }
     }
 }

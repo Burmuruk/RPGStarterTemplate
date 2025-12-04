@@ -9,9 +9,9 @@ namespace Burmuruk.RPGStarterTemplate.Interaction
         PlayerManager playerManager;
         AIGuildMember mainPlayer;
 
-        public override void Interact(Character character)
+        public override void Interact()
         {
-            base.Interact(character);
+            base.Interact();
 
             playerManager = FindObjectOfType<PlayerManager>();
             var levelManager = FindObjectOfType<LevelManager>();

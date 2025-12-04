@@ -30,6 +30,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
         public BaseNode Parent { get; private set; }
         public TextField TxtOnEnterAction { get; private set; }
         public TextField TxtOnExitAction { get; private set; }
+        public VisualElement AlwaysVisibleContainer { get; set; }
 
         public GraphViewNode(DialogueGraphView graphView, BaseNode parent)
         {
@@ -59,21 +60,25 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
             input.AddManipulator(new EdgeConnector<Edge>(graph.ConnectorListener));
             output.AddManipulator(new EdgeConnector<Edge>(graph.ConnectorListener));
 
-            var alwaysVisible = new VisualElement();
+            var collapsible = topContainer.parent.Q<VisualElement>("collapsible-area");
+            //topContainer.parent.Remove(collapsible);
+            AlwaysVisibleContainer = new VisualElement();
+            topContainer.parent.Add(AlwaysVisibleContainer);
+            //topContainer.parent.Add(collapsible);
             TxtOnEnterAction = new TextField("On Enter Action:");
             TxtOnExitAction = new TextField("On Exit Action:");
-            alwaysVisible.Add(TxtOnEnterAction);
-            alwaysVisible.Add(TxtOnExitAction);
+            extensionContainer.Add(TxtOnEnterAction);
+            extensionContainer.Add(TxtOnExitAction);
 
             extensionContainer.Add(new VisualElement());
             extensionContainer.style.marginTop = 6;
             extensionContainer.style.marginBottom = 6;
 
             var colorRow = new VisualElement { style = { flexDirection = FlexDirection.Row } };
-            StartBtn = MakeColorButton(new Color(0.6078432f, 0.1490196f, 0.1490196f));
-            DialogueBtn = MakeColorButton(new Color(0.01568628f, 0.572549f, 0.6235294f));
-            MissionBtn = MakeColorButton(new Color(0.254902f, 0.3490196f, 0.7333333f));
-            BranchBtn = MakeColorButton(new Color(0.9921569f, 0.6941177f, 0.3176471f));
+            StartBtn = MakeColorButton(new Color(0.6078432f, 0.1490196f, 0.1490196f), "Enable start point");
+            DialogueBtn = MakeColorButton(new Color(0.01568628f, 0.572549f, 0.6235294f), "Connected to dialogue node");
+            MissionBtn = MakeColorButton(new Color(0.254902f, 0.3490196f, 0.7333333f), "Connected to mission node");
+            BranchBtn = MakeColorButton(new Color(0.9921569f, 0.6941177f, 0.3176471f), "Connected to branch node");
             colorRow.Add(StartBtn);
             colorRow.Add(MissionBtn);
             colorRow.Add(DialogueBtn);
@@ -84,6 +89,9 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
 
             RefreshExpandedState();
             RefreshPorts();
+
+            if (collapsed)
+                ToggleCollapse();
         }
 
         public void ShowButton(Button button, bool shouldShow)
@@ -118,9 +126,10 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
             OnDeselected?.Invoke();
         }
 
-        private Button MakeColorButton(Color color)
+        private Button MakeColorButton(Color color, string tooltip)
         {
             var button = new Button();
+            button.tooltip = tooltip;
             button.style.borderTopColor = color;
             button.style.borderBottomColor = color;
             button.style.borderLeftColor = color;
@@ -139,6 +148,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
         private Button MakePinButton()
         {
             var button = new Button();
+            button.tooltip = "Pin node";
             button.name = PIN_BUTTON_NAME;
             Texture2D pinIcon = (Texture2D)AssetDatabase.LoadAssetAtPath("Assets/com.burmuruk.rpg-starter-template/Tool/Art/Editor/Pin.png", typeof(Texture2D));
             button.style.backgroundImage = new StyleBackground(pinIcon);

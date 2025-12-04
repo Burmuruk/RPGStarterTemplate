@@ -7,6 +7,7 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
     public class DialogueNode
     {
         public string Id;
+        public string characterName;
         public string Message;
         public List<DialogueNode> Children = new ();
         public string onEnterAction;

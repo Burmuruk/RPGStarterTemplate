@@ -6,8 +6,8 @@ namespace Burmuruk.RPGStarterTemplate.Control
 {
     public class SceneChanger : MonoBehaviour
     {
-        [SerializeField] int nextSceneBuildIdx;
-        [SerializeField] UnityEvent OnTriggered;
+        [SerializeField] protected int nextSceneBuildIdx;
+        [SerializeField] protected UnityEvent OnTriggered;
         private int _id = 0;
 
         public void DisableAndSave()
@@ -23,7 +23,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
                 _id = GetHashCode();
         }
 
-        private void OnTriggerEnter(Collider other)
+        protected virtual void OnTriggerEnter(Collider other)
         {
             if (other.gameObject.TryGetComponent(out AIGuildMember member))
             {

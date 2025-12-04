@@ -11,20 +11,20 @@ using UnityEngine.InputSystem;
 
 namespace Burmuruk.RPGStarterTemplate.Control
 {
-    class PlayerController : MonoBehaviour
+    public class PlayerController : MonoBehaviour
     {
         [SerializeField] Camera mainCamera;
-        Character player;
-        GameManager gameManager;
-        LevelManager levelManager;
+        protected Character player;
+        protected GameManager gameManager;
+        protected LevelManager levelManager;
 
-        bool m_shouldMove = false;
-        Vector3 m_direction = default;
-        bool m_canChangeFormation = false;
-        private Dictionary<Transform, Pickup> m_pickables = new ();
-        private List<IInteractable> m_interactables = new List<IInteractable>();
-        int interactableIdx = 0;
-        bool detachRotation = false;
+        protected bool m_shouldMove = false;
+        protected Vector3 m_direction = default;
+        protected bool m_canChangeFormation = false;
+        protected Dictionary<Transform, Pickup> m_pickables = new ();
+        protected List<IInteractable> m_interactables = new List<IInteractable>();
+        protected int interactableIdx = 0;
+        protected bool detachRotation = false;
         
         enum Interactions
         {
@@ -34,15 +34,14 @@ namespace Burmuruk.RPGStarterTemplate.Control
             Interact
         }
 
-        public event Action<bool> OnFormationHold;
-        public event Action<Vector2, object> OnFormationChanged;
         public event Action<bool, string> OnPickableEnter;
         public event Action<bool, string> OnPickableExit;
         public event Action<string, Vector3> OnItemPicked;
         public event Action<bool, string> OnInteractableEnter;
         public event Action<bool, string> OnInteractableExit;
+        public event Action OnInteract;
 
-        public AIEnemyController Target { get; private set; }
+        public Character Target { get; private set; }
         public bool HavePickable
         {
             get
@@ -73,6 +72,9 @@ namespace Burmuruk.RPGStarterTemplate.Control
                         if (detachRotation)
                             player.mover.DetachRotation = true;
 
+                        if (player.Target != Target) //Asssigns new target
+                            Target = player.Target.gameObject.GetComponent<Character>();
+
                         player.transform.LookAt(Target.transform);
                     }
                     else
@@ -102,27 +104,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
         {
             if (!player) return;
 
-            if (gameManager.GameState == GameManager.State.UI)
-            {
-                if (context.performed)
-                {
-                    var dir = context.ReadValue<Vector2>();
-                    if (dir.magnitude <= 0)
-                    {
-                        m_shouldMove = false;
-                        return;
-                    }
-
-                    levelManager.RotatePlayer(dir);
-                    m_shouldMove = true;
-                }
-                else
-                {
-                    levelManager.RotatePlayer(Vector2.zero);
-                    m_shouldMove = false;
-                }
-            }
-            else if (gameManager.GameState != GameManager.State.Playing)
+            if (gameManager.GameState != GameManager.State.Playing)
                 return;
 
             if (context.performed)
@@ -154,7 +136,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
 
                 if (enemy)
                 {
-                    var newTarget = enemy.GetComponent<AIEnemyController>();
+                    var newTarget = enemy.GetComponent<Character>();
                     var playerRef = (AIGuildMember)player;
 
                     if (Target != null && Target == newTarget)
@@ -164,7 +146,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
                         detachRotation = false;
                         playerRef.Retreat();
                     }
-                    else
+                    else if (enemy.CompareTag(player.EnemyTag))
                     {
                         Target = newTarget;
                         Target.Select();
@@ -177,49 +159,15 @@ namespace Burmuruk.RPGStarterTemplate.Control
             }
         }
 
-        public void DisplayFormations(InputAction.CallbackContext context)
-        {
-            if (!player) return;
-
-            if (context.performed)
-            {
-                m_canChangeFormation = true;
-
-                OnFormationHold?.Invoke(true);
-            }
-            else
-            {
-                if (m_canChangeFormation)
-                    OnFormationHold?.Invoke(false);
-
-                m_canChangeFormation = false;
-            }
-        }
-
-        public void ChangeFormation(InputAction.CallbackContext context)
-        {
-            if (!player || gameManager.GameState != GameManager.State.Playing) return;
-
-            if (context.performed && m_canChangeFormation)
-            {
-                var dir = context.ReadValue<Vector2>();
-
-                if (dir.y == -1 && Target == null)
-                    return;
-
-                object args = dir switch
-                {
-                    { y: -1 } => Target,
-                    _ => null
-                };
-
-                OnFormationChanged?.Invoke(dir, args);
-            }
-        }
-
         public void Interact(InputAction.CallbackContext context)
         {
             if (!context.performed) return;
+
+            if (gameManager.GameState == GameManager.State.Cinematic)
+            {
+                OnInteract?.Invoke();
+                return;
+            }
 
             if (HavePickable)
             {
@@ -237,36 +185,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
             }
             else if (m_interactables.Count > 0)
             {
-                m_interactables[0].Interact(player);
-            }
-        }
-
-        public void Cross(InputAction.CallbackContext context)
-        {
-            if (!context.performed) return;
-
-            var value = context.ReadValue<Vector2>();
-
-            switch (value)
-            {
-                case { y: < 0 }:
-                    ConsumeItem();
-                    break;
-
-                case { x: < 0 }:
-                    ChangeItem(-1);
-                    break;
-
-                case { x: > 0 }:
-                    ChangeItem(1);
-                    break;
-
-                case { y: > 0}:
-                    //ShowItems()
-                    break;
-
-                default:
-                    break;
+                m_interactables[0].Interact();
             }
         }
 
@@ -281,36 +200,6 @@ namespace Burmuruk.RPGStarterTemplate.Control
             else
             {
                 levelManager.Pause();
-            }
-        }
-
-        public void ShowMoreOptions(InputAction.CallbackContext context)
-        {
-            if (!context.performed) return;
-
-            if (gameManager.GameState == GameManager.State.UI)
-            {
-                levelManager.ShowMoreOptions();
-            }
-        }
-
-        public void Remove(InputAction.CallbackContext context)
-        {
-            if (!context.performed) return;
-
-            if (gameManager.GameState == GameManager.State.UI)
-            {
-                levelManager.Remove();
-            }
-        }
-
-        public void ChangeMenu(InputAction.CallbackContext context)
-        {
-            if (!context.performed) return;
-
-            if (gameManager.GameState == GameManager.State.UI)
-            {
-                levelManager.ChangeMenu();
             }
         }
 
@@ -342,7 +231,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
         }
         #endregion
 
-        #region Private methods
+        #region Actions and detections
         public void UseAbility(Ability ability)
         {
             if (gameManager.GameState != GameManager.State.Playing)
@@ -364,7 +253,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
             }
         }
 
-        private void ConsumeItem()
+        protected void ConsumeItem()
         {
             var items = (player.Inventory as InventoryEquipDecorator).Equipped.GetItems((int)EquipmentLocation.Items);
 
@@ -373,14 +262,14 @@ namespace Burmuruk.RPGStarterTemplate.Control
             (items[0] as ConsumableItem).Use(player, null, null);
         }
 
-        private void ChangeItem(int v)
+        protected void ChangeItem(int v)
         {
             throw new NotImplementedException();
         }
 
-        private Collider DetectEnemyInMouse()
+        protected Collider DetectEnemyInMouse()
         {
-            if (!player) return null;
+            if (!player || gameManager.GameState != GameManager.State.Playing) return null;
 
             Ray ray = GetRayFromMouseToWorld();
             RaycastHit hit;
@@ -413,7 +302,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
             //}
         }
 
-        private void DetectItems()
+        protected void DetectItems()
         {
             var items = Physics.OverlapSphere(player.transform.position, 1.5f, 1 << 11);
             var hadItem = m_pickables.Count > 0;
@@ -449,7 +338,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
             m_pickables = newList;
         }
 
-        private void DetectInteractables()
+        protected void DetectInteractables()
         {
             var items = Physics.OverlapSphere(player.transform.position, 1f, 1 << 11);
             var hadItem = m_interactables.Count > 0;

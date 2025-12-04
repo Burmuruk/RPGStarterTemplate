@@ -21,6 +21,6 @@ namespace Burmuruk.RPGStarterTemplate.Interaction
 
     public interface IInteractable
     {
-        void Interact(Character character);
+        void Interact();
     }
 }

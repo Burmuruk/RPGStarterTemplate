@@ -1,6 +1,8 @@
 ﻿using Burmuruk.RPGStarterTemplate.Combat;
 using Burmuruk.RPGStarterTemplate.Control;
 using Burmuruk.RPGStarterTemplate.Control.AI;
+using Burmuruk.RPGStarterTemplate.Control.Samples;
+using Burmuruk.RPGStarterTemplate.Dialogue;
 using Burmuruk.RPGStarterTemplate.Inventory;
 using Burmuruk.RPGStarterTemplate.Saving;
 using Burmuruk.Utilities;
@@ -8,6 +10,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,9 +19,9 @@ namespace Burmuruk.RPGStarterTemplate.UI
     public class HUDManager : MonoBehaviour
     {
         [Header("References")]
-        [SerializeField] PlayerManager playerManager;
+        [SerializeField] PlayerManagerSample playerManager;
         [SerializeField] Camera mainCamera;
-        PlayerController playerController;
+        PlayerControllerSample playerController;
         GameManager gameManager;
         Missions.MissionManager missionsManager;
 
@@ -36,6 +39,10 @@ namespace Burmuruk.RPGStarterTemplate.UI
         [SerializeField] StackableLabel pNotifications;
         [Header("Missions"), Space()]
         [SerializeField] StackableLabel pMissions;
+        [Header("Dialogues"), Space()]
+        [SerializeField] GameObject pDialogue;
+        [SerializeField] TextMeshProUGUI pDialogueText;
+        [SerializeField] TextMeshProUGUI pDialogueTitle;
         [Header("Life"), Space()]
         [SerializeField] StackableLabel pLife;
 
@@ -93,8 +100,8 @@ namespace Burmuruk.RPGStarterTemplate.UI
 
         private void Awake()
         {
-            playerController = FindObjectOfType<PlayerController>();
-            playerManager = FindObjectOfType<PlayerManager>();
+            playerController = FindObjectOfType<PlayerControllerSample>();
+            playerManager = FindObjectOfType<PlayerManagerSample>();
             gameManager = FindObjectOfType<GameManager>();
             missionsManager = FindAnyObjectByType<Missions.MissionManager>();
             missionsManager.OnMissionStarted += (m) => ShowMission( m.Description );
@@ -173,18 +180,48 @@ namespace Burmuruk.RPGStarterTemplate.UI
 
         private void UpdateSubscripttions()
         {
+            RemoveSubscripttions();
             playerManager.OnCombatEnter += EnableHPPlayersBar;
             playerManager.OnCombatEnter += ShowAbilities;
             playerManager.OnFormationChanged += ChangeFormation;
+            playerManager.OnPlayerAdded += (_) => RestartPlayersTags();
             playerController.OnFormationHold += ShowFormations;
             playerController.OnPickableEnter += ShowInteractionButton;
             playerController.OnPickableExit += ShowInteractionButton;
             playerController.OnItemPicked += ShowNotification;
+            if (playerController.TryGetComponent<PlayerConversant>(out var conversarnt))
+            {
+                conversarnt.OnConversationUpdated += ShowDialogues;
+                conversarnt.OnConversationEnded += HideDialogues; 
+            }
             //playerManager. combat mode -> abilities
 
             foreach (var player in playerManager.Players)
             {
                 player.Health.OnDamaged += (hp) => { UpdateHealth(hp, player); };
+            }
+        }
+
+        private void RemoveSubscripttions()
+        {
+            playerManager.OnCombatEnter -= EnableHPPlayersBar;
+            playerManager.OnCombatEnter -= ShowAbilities;
+            playerManager.OnFormationChanged -= ChangeFormation;
+            playerManager.OnPlayerAdded -= (_) => RestartPlayersTags();
+            playerController.OnFormationHold -= ShowFormations;
+            playerController.OnPickableEnter -= ShowInteractionButton;
+            playerController.OnPickableExit -= ShowInteractionButton;
+            playerController.OnItemPicked -= ShowNotification;
+            if (playerController.TryGetComponent<PlayerConversant>(out var conversarnt))
+            {
+                conversarnt.OnConversationUpdated -= ShowDialogues;
+                conversarnt.OnConversationEnded -= HideDialogues;
+            }
+            //playerManager. combat mode -> abilities
+
+            foreach (var player in playerManager.Players)
+            {
+                player.Health.OnDamaged -= (hp) => { UpdateHealth(hp, player); };
             }
         }
 
@@ -212,6 +249,7 @@ namespace Burmuruk.RPGStarterTemplate.UI
             cdFormationInfo = new CoolDownAction(.5f, EnableFormationsInfo, true);
             cdMissions = new Queue<CoolDownAction>();
             mainCamera = Camera.main;
+
 
             InitializeStackables();
             CreateHPPlayersBar();
@@ -352,6 +390,20 @@ namespace Burmuruk.RPGStarterTemplate.UI
             {
                 pMissions.container.SetActive(false);
             }
+        }
+
+        private void ShowDialogues(DialogueNode dialogue)
+        {
+            pDialogue.SetActive(true);
+            pDialogueText.text = dialogue.Message;
+            pDialogueTitle.text = dialogue.characterName;
+        }
+
+        private void HideDialogues()
+        {
+            pDialogue.SetActive(false);
+            pDialogueText.text = string.Empty;
+            pDialogueTitle.text = string.Empty;
         }
 
         private void ShowInteractionButton(bool shouldShow, string name)

@@ -76,33 +76,6 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
-                },
-                {
-                    "name": "MoreOptions",
-                    "type": "Button",
-                    "id": "9c1755b8-4032-44ff-a620-2497bc47f2fb",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "Delete",
-                    "type": "Button",
-                    "id": "92e5395e-377b-498f-953a-83af72b7c7e6",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "ChangeMenu",
-                    "type": "Button",
-                    "id": "8a4d8847-956f-4d36-8bca-6a399f206b0b",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -263,7 +236,7 @@
                 {
                     "name": "up",
                     "id": "09eeee6d-dc25-4abc-8cdb-8b5ac661c028",
-                    "path": "<Keyboard>/z",
+                    "path": "<Keyboard>/q",
                     "interactions": "",
                     "processors": "",
                     "groups": "PC",
@@ -274,7 +247,7 @@
                 {
                     "name": "down",
                     "id": "e671a2c5-8954-4bad-a51e-95a12a7ca5c5",
-                    "path": "<Keyboard>/c",
+                    "path": "<Keyboard>/e",
                     "interactions": "",
                     "processors": "",
                     "groups": "PC",
@@ -285,7 +258,7 @@
                 {
                     "name": "left",
                     "id": "5b48c962-fcdd-4d94-8185-81f5fe583c53",
-                    "path": "<Keyboard>/q",
+                    "path": "<Keyboard>/z",
                     "interactions": "",
                     "processors": "",
                     "groups": "PC",
@@ -296,7 +269,7 @@
                 {
                     "name": "right",
                     "id": "15b484bb-f7b1-4f42-809d-6fab3640828e",
-                    "path": "<Keyboard>/e",
+                    "path": "<Keyboard>/c",
                     "interactions": "",
                     "processors": "",
                     "groups": "PC",
@@ -325,39 +298,6 @@
                     "action": "Pause",
                     "isComposite": false,
                     "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "08296580-9c15-4bfb-98e9-644ce623753a",
-                    "path": "<Keyboard>/r",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "PC",
-                    "action": "MoreOptions",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "9a6cac85-a6cd-43e7-8fc4-fd52adae25c7",
-                    "path": "<Keyboard>/delete",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "PC",
-                    "action": "Delete",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "55b83bbe-da0e-4d35-9bbf-d3c1ddb50835",
-                    "path": "<Keyboard>/tab",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "PC",
-                    "action": "ChangeMenu",
-                    "isComposite": false,
-                    "isPartOfComposite": false
                 }
             ]
         },
@@ -384,9 +324,36 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "DeleteItem",
+                    "name": "MoreOptions",
                     "type": "Button",
-                    "id": "34b93853-65e7-4172-9962-0304ba3ef334",
+                    "id": "6eb23648-2dc0-4fac-bbdf-b58bbea8c62d",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Delete",
+                    "type": "Button",
+                    "id": "a3b6269b-699e-48a2-814c-4a98ddf77354",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "ChangeMenu",
+                    "type": "Button",
+                    "id": "6c88f72a-5e68-42bd-a67d-1691a8bc5492",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "ChangeCharacter",
+                    "type": "Button",
+                    "id": "f998482b-d1bb-472b-84b7-22f27172119d",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -462,14 +429,69 @@
                 },
                 {
                     "name": "",
-                    "id": "fe6d4321-c998-481e-9ec0-31c11281e7e9",
+                    "id": "5670af71-3df5-41db-b44f-4f841f13f867",
+                    "path": "<Keyboard>/r",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "PC",
+                    "action": "MoreOptions",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "51da441e-5877-4ade-ab71-74d3255b8748",
                     "path": "<Keyboard>/delete",
                     "interactions": "",
                     "processors": "",
                     "groups": "PC",
-                    "action": "DeleteItem",
+                    "action": "Delete",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "88a4f723-5406-4e19-9e34-713fdc6d735e",
+                    "path": "<Keyboard>/tab",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "PC",
+                    "action": "ChangeMenu",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "Change",
+                    "id": "4ab95bdf-bb71-4eb4-af63-9e604871cadc",
+                    "path": "1DAxis",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ChangeCharacter",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "negative",
+                    "id": "bdfb11a2-aef6-4b40-80b7-f4d0f80426ff",
+                    "path": "<Keyboard>/q",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "PC",
+                    "action": "ChangeCharacter",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "positive",
+                    "id": "54cffc1d-893e-49c0-84f8-8772dc82f2a2",
+                    "path": "<Keyboard>/e",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "PC",
+                    "action": "ChangeCharacter",
+                    "isComposite": false,
+                    "isPartOfComposite": true
                 }
             ]
         }

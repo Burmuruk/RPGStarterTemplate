@@ -213,6 +213,7 @@ namespace Burmuruk.RPGStarterTemplate.UI
                 case ItemType.Ability:
                 case ItemType.Weapon:
                 case ItemType.Modification:
+                case ItemType.Armor:
 
                     UnEquipItem(idx);
                     break;
@@ -250,11 +251,11 @@ namespace Burmuruk.RPGStarterTemplate.UI
                 case Menu.None:
                     break;
                 case Menu.Inventory:
-                    ShowInventoryMenu();
+                    ShowAbilitiesMenu();
                     break;
 
                 case Menu.Abilities:
-                    ShowAbilitiesMenu();
+                    ShowInventoryMenu();
                     break;
 
                 default:
@@ -286,20 +287,20 @@ namespace Burmuruk.RPGStarterTemplate.UI
 
         private void ShowAbilitiesMenu()
         {
-            abilitiesMenu.SetActive(false);
+            abilitiesMenu.SetActive(true);
             characterModel.SetActive(false);
 
-            charactersMenu.SetActive(true);
-            curMenu = Menu.Inventory;
+            charactersMenu.SetActive(false);
+            curMenu = Menu.Abilities;
         }
 
         private void ShowInventoryMenu()
         {
-            charactersMenu.SetActive(false);
+            charactersMenu.SetActive(true);
 
             characterModel.SetActive(true);
-            abilitiesMenu.SetActive(true);
-            curMenu = Menu.Abilities;
+            abilitiesMenu.SetActive(false);
+            curMenu = Menu.Inventory;
         }
 
         private void ChangeEquiped()

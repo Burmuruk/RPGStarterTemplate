@@ -27,11 +27,12 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
             return conversantName;
         }
 
-        public void Interact(Character character)
+        public void Interact()
         {
-            if (character.TryGetComponent<PlayerConversant>(out var caller))
+            if (FindObjectOfType<PlayerConversant>() is var pc && pc != null)
             {
-                caller.StartDialogue(this, dialogue);
+                FindObjectOfType<GameManager>().StartCinematic(true);
+                pc.StartDialogue(this, dialogue);
             }
         }
     }

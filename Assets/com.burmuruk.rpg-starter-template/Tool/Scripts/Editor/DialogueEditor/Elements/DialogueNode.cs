@@ -27,7 +27,8 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
         public override void Initilize(DialogueGraphView graph, Vector2 startPosition, BaseNode prev)
         {
             base.Initilize(graph, startPosition, prev);
-            TFMessage = AddTextField("Message");
+            TFMessage = AddTextField(GraphViewNode.AlwaysVisibleContainer, "Message");
+
         }
 
         public override void Save()
@@ -37,15 +38,11 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
             _text = TFMessage?.value;
         }
 
-        public override RPGStarterTemplate.Dialogue.DialogueNode GetNodeData()
+        public override RPGStarterTemplate.Dialogue.DialogueNode GetNodeData(RPGStarterTemplate.Dialogue.DialogueNode nodeData)
         {
-            RPGStarterTemplate.Dialogue.DialogueNode nodeData = new RPGStarterTemplate.Dialogue.DialogueNode
-            {
-                Id = this.Id,
-                Children = (from c in GraphViewNode.output.connections
-                            select (c.input.node as GraphViewNode).Parent.GetNodeData()).ToList(),
-                Message = this.TFMessage.value
-            };
+            nodeData ??= new();
+            nodeData.Message = this.TFMessage.value;
+            base.GetNodeData(nodeData);
             return nodeData;
         }
 

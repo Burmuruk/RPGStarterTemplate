@@ -2,20 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
-using UnityEngine;
 
 namespace Burmuruk.RPGStarterTemplate.Dialogue
 {
     public class DialogueBlock : Dialogue
     {
         public List<DialogueData> dialogues = new();
-        private string id;
-
-        public string Id 
-        { 
-            get => id is null ? id = Guid.NewGuid().ToString() : id;
-            set => id = value; 
-        }
 
         [Serializable]
         public struct DialogueData
@@ -65,7 +57,7 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
                     return;
 
                 AssetDatabase.AddObjectToAsset(dialogue, this);
-            } 
+            }
 #endif
         }
     }

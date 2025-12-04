@@ -29,6 +29,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
         public Dictionary<string, BaseNode> nodes = new();
 
         public event Action OnChange;
+        public event Action OnSave;
         public event Action<string> Notify;
 
         [Serializable]
@@ -94,6 +95,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
                     flexGrow = 1
                 }
             };
+            OnChange = null;
             CreateSettingsTab();
             CreatePinsTab();
             //CreateSaveButton();
@@ -162,7 +164,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
 
                 node.parent.schedule.Execute(() =>
                 {
-                    Debug.Log("later");
+                    RemoveCharacterData(node.Parent);
                     nodes.Remove(node.Parent.Id);
 
                     foreach (var id in ids)
@@ -175,6 +177,24 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
 
                     OnChange?.Invoke();
                 }).ExecuteLater(100);
+            }
+        }
+
+        private void RemoveCharacterData(BaseNode node)
+        {
+            bool isCharacter = this.nodes.Values.Any(n => n.characterID == node.characterID && n.Id != node.Id);
+
+            if (isCharacter) return;
+
+            string characterID = node.characterID;
+
+            for (int i = 0; i < characters.Count(); i++)
+            {
+                if (characters[i].id == characterID)
+                    {
+                    characters.RemoveAt(i);
+                    return;
+                }
             }
         }
 
@@ -250,11 +270,8 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
 
         private void OnChanged_TxtDialogueName(ChangeEvent<string> evt)
         {
-            foreach (var node in nodes.Values)
-            {
-                if (node.characterID == _selectedNode.characterID)
-                    node.dialogueName = evt.newValue;
-            }
+            _selectedNode.dialogueName = evt.newValue;
+            OnChange?.Invoke();
         }
 
         private void SetNodesNames(ChangeEvent<string> evt)
@@ -279,6 +296,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
 
             _selectedNode.Title = evt.newValue;
             SaveCharacterData(evt.newValue, _selectedNode.characterID, CFNodeColour.value);
+            OnChange?.Invoke();
         }
 
         private void SetNodesIds(ChangeEvent<string> evt)
@@ -314,6 +332,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
 
             _selectedNode.GraphViewNode.Q<VisualElement>("node-border").style.backgroundColor = evt.newValue;
             SaveCharacterData(TxtCharacterName.value, _selectedNode.characterID, CFNodeColour.value);
+            OnChange?.Invoke();
         }
 
         public void SetTargetNode(BaseNode node)
@@ -346,6 +365,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
             {
                 TxtId.value = null;
                 TxtCharacterName.value = null;
+                OnChange?.Invoke();
                 return;
             }
 
@@ -368,6 +388,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
                 }
 
                 UpdateSettingsValues(cur);
+                OnChange?.Invoke();
             }
             else
             {
@@ -456,6 +477,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
             var fromN = (from.node as GraphViewNode).Parent;
             var toN = (to.node as GraphViewNode).Parent;
             fromN.OnPortConnected(fromN, toN, from, to);
+            OnChange?.Invoke();
         }
 
         public void OnPortDisconnected(Port from, Port to)
@@ -463,6 +485,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
             var fromN = (from.node as GraphViewNode).Parent;
             var toN = (to.node as GraphViewNode).Parent;
             fromN.OnPortDisconnected(fromN, toN, from, to);
+            OnChange?.Invoke();
         }
 
         private void OnStartNodeChanged(string id, bool value)
@@ -516,7 +539,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
         #region Saving
         public void SaveResults()
         {
-            if (string.IsNullOrEmpty(_path))
+            if (string.IsNullOrEmpty(_path) || Result == null)
             {
                 if (!GenerateResultAsset()) return;
             }
@@ -580,7 +603,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
                 {
                     RPGStarterTemplate.Dialogue.Dialogue dialogue = GetDialogueData(id, node);
                     Result[id] = dialogue;
-                    dialogue.UpdateDialogue(node.GetNodeData());
+                    dialogue.UpdateDialogue(node.GetNodeData(null));
                 }
             }
 
@@ -649,7 +672,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
             AttachNodes();
             EditorUtility.SetDirty(this);
             AssetDatabase.SaveAssets();
-
+            OnSave?.Invoke();
             //string path = Path.Combine("Assets", "Test_DialogueGraphController.asset");
             //AssetDatabase.CreateAsset(this, path);
             //AssetDatabase.SaveAssets();

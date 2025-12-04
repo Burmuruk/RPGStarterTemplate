@@ -133,23 +133,26 @@ namespace Burmuruk.Utilities
         {
             if (inCoolDown || OnTick == null || tickTime == 0 || time == 0) yield break;
 
-            var waiter = new WaitForFixedUpdate();
+            var waiter = new WaitForSeconds(tickTime);
             CanUse = false;
             inCoolDown = true;
             currentTime = 0;
-            float tickLaps = 1;
+            //float tickLaps = 1;
 
             while (currentTime < time)
             {
-                currentTime += Time.fixedDeltaTime;
-                
-                yield return new WaitForFixedUpdate();
+                currentTime += tickTime;
+                yield return waiter;
 
-                if (currentTime / (tickLaps * tickTime) >= 1)
-                {
-                    OnTick?.Invoke();
-                    tickLaps++;
-                }
+                OnTick?.Invoke();
+                //currentTime += Time.fixedDeltaTime;
+                //yield return new WaitForFixedUpdate();
+
+                //if (currentTime / (tickLaps * tickTime) >= 1)
+                //{
+                //    OnTick?.Invoke();
+                //    tickLaps++;
+                //}
             }
 
             if (OnFinished != null)

@@ -1,3 +1,4 @@
+using Burmuruk.RPGStarterTemplate.Control;
 using System;
 using System.Linq;
 using UnityEngine;
@@ -10,15 +11,30 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
         Dialogue currentDialogue;
         DialogueNode currentNode = null;
         AIConversant currentConversant = null;
+        PlayerController playerController;
 
         public bool IsChoosing { get; private set; }
         public bool IsActive { get => currentDialogue != null; }
 
-        public event Action OnConversationUpdated;
+        public event Action<DialogueNode> OnConversationUpdated;
+        public event Action OnConversationEnded;
         //private void Awake()
         //{
         //    currentNode = currentDialogue.GetRootNode();
         //}
+
+        private void OnEnable()
+        {
+            playerController = FindObjectOfType<PlayerController>();
+            playerController.OnInteract += Next;
+        }
+
+        private void OnDisable()
+        {
+            if (playerController == null) return;
+
+            playerController.OnInteract -= Next;
+        }
 
         public void StartDialogue(AIConversant newConversant, Dialogue newDialogue)
         {
@@ -26,7 +42,7 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
             currentDialogue = newDialogue;
             currentNode = newDialogue.dialogueNode;
             TriggerEnterAction();
-            OnConversationUpdated?.Invoke();
+            OnConversationUpdated?.Invoke(currentNode);
         }
 
         public void Quit()
@@ -36,7 +52,8 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
             currentNode = null;
             IsChoosing = false;
             currentConversant = null;
-            OnConversationUpdated?.Invoke();
+            FindObjectOfType<GameManager>().StartCinematic(false);
+            OnConversationEnded?.Invoke();
         }
 
         public string GetText()
@@ -76,12 +93,19 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
 
         public void Next()
         {
+            if (!IsActive) return;
+
             int numPlayerResponses = currentNode.Children.Count();
-            if (numPlayerResponses > 0)
+            if (numPlayerResponses > 1)
             {
                 IsChoosing = true;
                 TriggerExitAction();
-                OnConversationUpdated?.Invoke();
+                OnConversationUpdated?.Invoke(currentNode);
+                return;
+            }
+            else if (numPlayerResponses == 0)
+            {
+                Quit();
                 return;
             }
 
@@ -91,7 +115,7 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
 
             currentNode = children[randomIndex];
             TriggerEnterAction();
-            OnConversationUpdated?.Invoke();
+            OnConversationUpdated?.Invoke(currentNode);
         }
 
         public bool HasNext()

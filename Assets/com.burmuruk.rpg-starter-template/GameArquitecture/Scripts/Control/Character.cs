@@ -65,6 +65,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
         public CharacterType CharacterType { get => characterType; }
         public bool IsSelected => throw new NotImplementedException();
         public ref Equipment Equipment { get => ref (inventory as InventoryEquipDecorator).Equipped; }
+        public string EnemyTag => enemyTag;
         public Transform Target
         {
             get => m_target;

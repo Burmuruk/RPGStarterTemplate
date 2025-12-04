@@ -23,7 +23,10 @@ namespace Burmuruk.RPGStarterTemplate.Saving
             int nextScene = 2;
             JObject slotData = null;
 
-            if (state.ContainsKey(slot.ToString()) && (state[slot.ToString()] as JObject).ContainsKey("SlotData"))
+            if (state.ContainsKey(slot.ToString()) &&
+                state[slot.ToString()] is JObject obj &&
+                obj != null &&
+                obj.ContainsKey("SlotData"))
             {
                 slotState = (JObject)state[slot.ToString()];
                 slotData = (JObject)slotState["SlotData"];
@@ -34,7 +37,7 @@ namespace Burmuruk.RPGStarterTemplate.Saving
                 slotData = new JObject();
                 slotData["Slot"] = slot;
                 slotData["BuildIdx"] = nextScene;
-                slotData["TimePlayed"] = 0;
+                slotData["TimePlayed"] = 0f;
                 slotData["MembersCount"] = 1;
 
                 slotState["SlotData"] = slotData;
@@ -48,12 +51,23 @@ namespace Burmuruk.RPGStarterTemplate.Saving
 
             callback?.Invoke(slotData);
             //yield return SceneManager.UnloadSceneAsync(curScene);
-            //Debug.Log("Scene Unloaded");
         }
 
         public void Save(string saveFile, int slot, JObject slotData = null)
         {
             JObject state = LoadJsonFromFile(saveFile);
+
+            // Por seguridad, garantizamos que SlotData tenga información básica.
+            if (slotData == null)
+            {
+                slotData = new JObject
+                {
+                    ["Slot"] = slot,
+                    ["BuildIdx"] = SceneManager.GetActiveScene().buildIndex,
+                    ["TimePlayed"] = 0f
+                };
+            }
+
             CaptureAsToken(ref state, slotData, slot);
             SaveFileAsJson(saveFile, state);
         }
@@ -68,10 +82,21 @@ namespace Burmuruk.RPGStarterTemplate.Saving
             return LoadJsonFromFile(saveFile);
         }
 
+        /// <summary>
+        /// Construye un estado nuevo solo con el slot actual (SlotData + entidades).
+        /// Se usa para crear copias de slot (auto-save, override, etc).
+        /// </summary>
         public JObject LoadCurrentSlot(string saveFile, JObject slotData)
         {
             JObject state = new();
-            CaptureAsToken(ref state, slotData, 1);
+            int slot = 1;
+
+            if (slotData != null && slotData.ContainsKey("Slot"))
+            {
+                slot = slotData["Slot"].ToObject<int>();
+            }
+
+            CaptureAsToken(ref state, slotData, slot);
             return state;
         }
 
@@ -85,6 +110,7 @@ namespace Burmuruk.RPGStarterTemplate.Saving
 
             int curSlot = slot;
 
+            // Reacomoda solo los slots superiores (1→2→3, etc.)
             while (data.ContainsKey((curSlot + 1).ToString()))
             {
                 data[curSlot.ToString()] = data[(curSlot + 1).ToString()];
@@ -99,10 +125,7 @@ namespace Burmuruk.RPGStarterTemplate.Saving
         public void Load(string saveFile, int slot, Action<JObject> callback)
         {
             JObject state = LoadJsonFromFile(saveFile);
-
             StartCoroutine(LoadLastScene(state, slot, callback));
-
-            //RestoreFromToken(LoadJsonFromFile(saveFile));
         }
 
         private JObject LoadJsonFromFile(string saveFile)
@@ -124,15 +147,12 @@ namespace Burmuruk.RPGStarterTemplate.Saving
         private void SaveFileAsJson(string saveFile, JObject state)
         {
             string path = GetPathFromSaveFile(saveFile);
-
             File.WriteAllText(path, Encrypter.EncryptString(state));
         }
 
         private void CaptureAsToken(ref JObject state, JObject slotData, int slot)
         {
             IDictionary<string, JToken> stateDict = state;
-
-            //if (!state.ContainsKey(slot.ToString())) return;
 
             JObject slotState = new();
 
@@ -141,18 +161,18 @@ namespace Burmuruk.RPGStarterTemplate.Saving
                 slotState = (JObject)stateDict[slot.ToString()];
             }
 
-            slotState["SlotData"] = slotData;
+            slotState["SlotData"] = slotData ?? new JObject();
 
             foreach (var saveable in FindObjectsOfType<JsonSaveableEntity>())
             {
-                var idComponents = saveable.CaptureAsJtoken(out JObject UniqueItemns);
+                var idComponents = saveable.CaptureAsJtoken(out JObject UniqueItems);
 
                 if (idComponents != null)
                     slotState[saveable.GetUniqueIdentifier()] = idComponents;
 
-                if (UniqueItemns == null) continue;
+                if (UniqueItems == null) continue;
 
-                foreach (var item in UniqueItemns)
+                foreach (var item in UniqueItems)
                 {
                     if (slotState.ContainsKey(item.Key))
                     {
@@ -195,13 +215,7 @@ namespace Burmuruk.RPGStarterTemplate.Saving
 
                 for (int x = 0; x < saveables.Count; x++)
                 {
-                    //string id = saveables[x].GetUniqueIdentifier();
-
                     saveables[x].RestoreFromJToken(state, (SavingExecution)i);
-                    //if (!stateDict.ContainsKey(id))
-                    //{
-                    //    //saveables.RemoveAt(x);
-                    //}
                 }
 
                 OnLoadingStateFinished?.Invoke(i);
@@ -224,7 +238,6 @@ namespace Burmuruk.RPGStarterTemplate.Saving
 
         private string GetPathFromSaveFile(string saveFile)
         {
-            //return Path.Combine( Application.persistentDataPath, saveFile + ".sav");
             return Path.Combine(Application.persistentDataPath, saveFile + extension);
         }
 
@@ -237,8 +250,15 @@ namespace Burmuruk.RPGStarterTemplate.Saving
 
             foreach (var slot in stateDict)
             {
-                int id = Int32.Parse(slot.Key);
-                slots.Add((id, (JObject)slot.Value["SlotData"]));
+                if (!int.TryParse(slot.Key, out int id)) continue;
+
+                try
+                {
+                    slots.Add((id, (JObject)slot.Value["SlotData"]));
+                }
+                catch (InvalidOperationException)
+                {
+                }
             }
 
             return slots;

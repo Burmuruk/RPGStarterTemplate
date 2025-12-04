@@ -94,6 +94,14 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         private void OnClick_RemoveValue()
         {
+            if (EditorUtility.DisplayDialog("Enum modification",
+                        "This function is not compleate yet. Continue may produce error with previous references if it's not" +
+                        "the first time using this.",
+                        "continue", "cancel"))
+            { }
+            else
+                return;
+
             if (EnumField.text == "None") return;
 
             ShowElements(false);
@@ -134,6 +142,14 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         private void OnKeyUp_TxtCharacterType(KeyUpEvent evt)
         {
+            if (EditorUtility.DisplayDialog("Enum modification",
+                        "This function is not compleate yet. Continue may produce error with previous references if it's not" +
+                        "the first time using this.",
+                        "continue", "cancel"))
+            {}
+            else
+                return;
+
             if (evt.keyCode == KeyCode.Return)
             {
                 if (!VerifyVariableName(TxtNewValue.value))

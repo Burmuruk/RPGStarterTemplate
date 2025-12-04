@@ -1,33 +1,30 @@
 ﻿using Burmuruk.RPGStarterTemplate.Combat;
 using Burmuruk.RPGStarterTemplate.Control.AI;
 using Burmuruk.RPGStarterTemplate.Inventory;
-using Burmuruk.RPGStarterTemplate.Movement.PathFindig;
 using Burmuruk.RPGStarterTemplate.Saving;
 using Burmuruk.RPGStarterTemplate.Stats;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.ConstrainedExecution;
 using UnityEngine;
 
 namespace Burmuruk.RPGStarterTemplate.Control
 {
     public class PlayerManager : MonoBehaviour, IJsonSaveable
     {
-        [SerializeField] CharacterProgress progress;
-        [SerializeField] PlayerCustomization customization;
-        [SerializeField] GameObject PlayerPrefab;
+        [SerializeField] protected CharacterProgress progress;
+        [SerializeField] protected PlayerCustomization customization;
+        [SerializeField] protected GameObject PlayerPrefab;
+        [SerializeField] protected string curPlayerName;
 
-        GameObject playersParent;
-        List<AIGuildMember> players;
-        PlayerController playerController;
-        int? m_CurPlayer;
-        [SerializeField] string curPlayerName;
-        (Formation value, object args) curFormation = default;
+        protected GameObject playersParent;
+        protected List<AIGuildMember> players;
+        protected PlayerController playerController;
+        protected int? m_CurPlayer;
+        protected (Formation value, object args) curFormation = default;
 
         public event Action OnPlayerChanged;
-        public event Action OnFormationChanged;
         public event Action<bool> OnCombatEnter;
         public event Action<Character> OnPlayerAdded;
 
@@ -78,10 +75,9 @@ namespace Burmuruk.RPGStarterTemplate.Control
             }
         }
 
-        private void Awake()
+        protected virtual void Awake()
         {
             playerController = FindObjectOfType<PlayerController>();
-            playerController.OnFormationChanged += ChangeFormation;
             var mainInventory = GetComponent<Inventory.Inventory>();
             MainInventory = mainInventory;
 
@@ -212,29 +208,6 @@ namespace Burmuruk.RPGStarterTemplate.Control
             SetPlayerControl(0);
         }
 
-        private void ChangeFormation(Vector2 value, object args)
-        {
-            Formation formation = value switch
-            {
-                { y: 1 } => Formation.Follow,
-                { y: -1 } => Formation.LockTarget,
-                { x: -1 } => Formation.Protect,
-                { x: 1 } => Formation.Free,
-                _ => Formation.None,
-            };
-
-            players.ForEach((player) =>
-            {
-                if (player.enabled)
-                {
-                    player.SetFormation(formation, args);
-                }
-            });
-
-            curFormation = (formation, args);
-            OnFormationChanged?.Invoke();
-        }
-
         private void EnterToCombatMode(bool shouldEnter)
         {
             PlayerState state = shouldEnter ? PlayerState.Combat : PlayerState.None;
@@ -281,7 +254,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
         {
             member.OnCombatStarted -= EnterToCombatMode;
             if (players != null)
-            { 
+            {
                 if (players.Contains(member))
                     players.Remove(member);
 

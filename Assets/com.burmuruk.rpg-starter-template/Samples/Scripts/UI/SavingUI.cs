@@ -79,6 +79,20 @@ public class SavingUI : MonoBehaviour
         slotsContainer.SetActive(shouldShow);
     }
 
+    public void SaveSlot(int slot)
+    {
+        if (!deleting)
+        {
+            savingWrapper.Save(slot);
+        }
+        else
+        {
+            savingWrapper.DeleteSlot(slot);
+            EnterDeletingMode();
+            ToggleSlots();
+        }
+    }
+
     public void LoadSlot(int slot)
     {
         if (!deleting)

@@ -27,14 +27,14 @@ MonoBehaviour:
   m_maxDistance: 1.5
   reloadTime: 0
   maxAmmo: 0
-  m_buffsData:
-  - stat: 0
-    value: 0
+  _buffs:
+  - name: Paralysis
+    stat: 2
+    value: 10
     duration: 0
     rate: 0
-    percentage: 0
-    affectAll: 0
+    percentage: 1
     probability: 0
   equipment:
-    Body: {fileID: 0}
+    body: {fileID: 0}
     spawnPoints: []

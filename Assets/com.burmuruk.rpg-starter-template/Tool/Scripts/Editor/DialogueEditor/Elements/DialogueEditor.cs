@@ -193,6 +193,11 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
 
         private void SetUpControllerEvents()
         {
+            _controller.OnChange += () =>
+            {
+                window.name = window.name.Replace("*", "") + "*";
+            };
+            _controller.OnSave += () => window.name = window.name.Replace("*", "");
             _controller.Notify += (m) => ShowNotificationMessage(m);
             graphView.OnSave += _controller.Save;
             graphView.OnExportResults += _controller.SaveResults;
@@ -324,6 +329,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
 
     public class DialogueGraphView : GraphView
     {
+        public bool saved = true;
         private EdgeConnector<Edge> _edgeConnector;
         private CreateNodeEdgeConnectorListener _conectorListener;
         private NodeSearchProvider _searchProvider;
@@ -399,6 +405,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
             OnPortConnected = null;
             OnPortDisconnected = null;
             OnPortDisconnected += OnEdgeDisconnected;
+            saved = true;
         }
 
         private void OnEdgeDisconnected(Port from, Port to)
@@ -410,7 +417,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
         {
             var menu = new GenericMenu();
             menu.AddItem(new GUIContent("Crear nodo"), false, () => OpenCreateNodeSearch(position, null));
-            menu.AddItem(new GUIContent("Save"), false, () => OnSave?.Invoke());
+            menu.AddItem(new GUIContent(saved ? "Save" : "Save*"), false, () => OnSave?.Invoke());
             menu.AddItem(new GUIContent("Export results"), false, () => OnExportResults?.Invoke());
             menu.DropDown(new Rect(position, Vector2.zero));
         }

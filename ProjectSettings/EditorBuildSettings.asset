@@ -6,7 +6,7 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/com.burmuruk.rpg-starter-template/Samples/Scenes/MainMenu.unity
+    path: Assets/com.burmuruk.rpg-starter-template/Samples/Scenes/MainMenuSample.unity
     guid: 58ccb2d51f0b9754f9e1fc2c4233db4f
   - enabled: 1
     path: Assets/com.burmuruk.rpg-starter-template/Samples/Scenes/SecondaryScenes/MenuCharactersScene.unity

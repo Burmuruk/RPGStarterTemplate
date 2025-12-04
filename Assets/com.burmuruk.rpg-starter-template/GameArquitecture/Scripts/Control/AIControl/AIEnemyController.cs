@@ -305,7 +305,14 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
 
             var rand = UnityEngine.Random.Range(0, itemsToDrop.Count);
 
-            FindObjectOfType<PickupSpawner>().AddItem(itemsToDrop[rand], transform.position);
+            try
+            {
+                FindObjectOfType<PickupSpawner>().AddItem(itemsToDrop[rand], transform.position);
+            }
+            catch (ArgumentException)
+            {
+                Debug.Log("No prefab detected to drop");
+            }
 
             //var item = Instantiate(itemsToDrop.Items[rand].Prefab);
             //item.transform.position = transform.position;

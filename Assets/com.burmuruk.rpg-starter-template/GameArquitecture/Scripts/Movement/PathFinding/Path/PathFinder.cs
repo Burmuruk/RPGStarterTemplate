@@ -1,38 +1,33 @@
 ﻿using Burmuruk.WorldG.Patrol;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Burmuruk.AI.PathFinding
 {
     public enum FinderType
-	{
-		None,
-		Dijkstra,
-		AStar
-	}
+    {
+        None,
+        Dijkstra,
+        AStar
+    }
 
-	public class PathFinder
-	{
-		#region Varibles
-		INodeListSupplier nodesList;
-		IPathFinder algorithem;
-		public List<LinkedList<IPathNode>> paths;
-		public List<(int idx, float distance)> routeSizes = null;
-		LinkedList<IPathNode>.Enumerator enumerator;
-		public int? shorstestNodeIdx = null;
-		public int curPath = -1;
+    public class PathFinder
+    {
+        #region Variables
+        INodeListSupplier nodesList;
+        IPathFinder algorithem;
+        public List<LinkedList<IPathNode>> paths;
+        public int curPath = -1;
 
-		//states
-		(IPathNode start, IPathNode end)[] curNodes = null;
-		public bool isCalculating = false;
-		public event Action OnPathCalculated;
+        //states
+        (IPathNode start, IPathNode end)[] curNodes = null;
+        public bool isCalculating = false;
+        public event Action OnPathCalculated;
 
         #endregion
 
-        #region public
         public LinkedList<IPathNode> BestRoute
         {
             get
@@ -40,87 +35,88 @@ namespace Burmuruk.AI.PathFinding
                 if (isCalculating || paths == null || paths.Count <= 0)
                     return null;
 
-                return paths[routeSizes[curPath].idx];
+                return paths[0];
             }
         }
 
-        public int? ShorstestNodeIdx { get => shorstestNodeIdx; }
-
-        public PathFinder()
-        {
-
-        }
+        public PathFinder() { }
 
         public PathFinder(INodeListSupplier nodesList)
         {
             this.nodesList = nodesList;
             paths = new List<LinkedList<IPathNode>>();
-            enumerator = default;
         }
 
         public void SetNodeList(INodeListSupplier nodesList)
         {
             this.nodesList = nodesList;
             paths = new List<LinkedList<IPathNode>>();
-            enumerator = default;
         }
 
         public LinkedList<IPathNode> Get_Route(IPathNode start, IPathNode end, out float distance)
         {
+            if (algorithem == null) throw new InvalidOperationException("Algorithm is null");
             return algorithem.Get_Route(start, end, out distance);
         }
 
+        /// <summary>
+        /// Simplified: runs a single pathfinding call asynchronously and stores the result in paths[0]
+        /// </summary>
         public void Find_BestRoute<T>(params (IPathNode start, Vector3 end)[] pairs) where T : IPathFinder, new()
         {
-            var nodes = new (IPathNode start, IPathNode end)[pairs.Length];
-
-            for (int i = 0; i < pairs.Length; i++)
-            {
-                nodes[i] = (pairs[i].start, nodesList.FindNearestNode(pairs[i].end));
-            }
-
-            Find_BestRoute<T>(nodes);
-        }
-
-        public void Find_BestRoute<T>(params (IPathNode start, IPathNode end)[] pairs) where T : IPathFinder, new()
-        {
             if (isCalculating) return;
-            if (!nodesList.Initilized || pairs == null) return;
+            if (nodesList == null || !nodesList.Initilized || pairs == null) return;
 
             if (algorithem == null) algorithem = new T();
-            //algorithem.SetNodeList(nodesList.Nodes);
-            shorstestNodeIdx = null;
-            curNodes = pairs;
-            var distances = new List<float>();
-            Task<List<float>> task;
-
-            routeSizes = new();
-            paths = new();
-            int idx = paths.Count;
-            int idxDis = (routeSizes ??= new()).Count;
-
-            //for (int i = 0; i < pairs.Length; i++)
-            //{
-            //    curNodes[i].start = nodesList.FindNearestNode(pairs[i].start);
-            //    curNodes[i].end = nodesList.FindNearestNode(pairs[i].end);
-            //}
 
             isCalculating = true;
-            task = Task.Run(() => GetAllRoutes(curNodes));
+            curNodes = new (IPathNode, IPathNode)[pairs.Length];
 
-            //task.Wait();
+            // resolve end nodes
+            for (int i = 0; i < pairs.Length; i++)
+            {
+                curNodes[i].start = pairs[i].start;
+                curNodes[i].end = nodesList.FindNearestNode(pairs[i].end);
+            }
+
+            Task<(LinkedList<IPathNode> path, float dist)> task = Task.Run(() =>
+            {
+                try
+                {
+                    // compute only the first pair (most callers use single pair)
+                    var p = curNodes[0];
+                    float d;
+                    var route = algorithem.Get_Route(p.start, p.end, out d);
+                    return (route, d);
+                }
+                catch (Exception)
+                {
+                    return (null, 0f);
+                }
+            });
+
             var awaiter = task.GetAwaiter();
             awaiter.OnCompleted(() =>
             {
                 try
                 {
                     var result = awaiter.GetResult();
-                    FindShortestPath(result, idx, idxDis);
+
+                    paths = new List<LinkedList<IPathNode>>();
+                    if (result.path != null)
+                    {
+                        paths.Add(result.path);
+                        curPath = 0;
+                    }
+                    else
+                    {
+                        curPath = -1;
+                    }
                 }
-                catch (AggregateException aex)
+                catch (Exception)
                 {
-                    //Debug.Log(aex.Message);
-                    Debug.LogWarning("Path not founded");
+                    paths = new List<LinkedList<IPathNode>>();
+                    curPath = -1;
                 }
                 finally
                 {
@@ -128,158 +124,38 @@ namespace Burmuruk.AI.PathFinding
                     OnPathCalculated?.Invoke();
                 }
             });
-
-            return;
         }
 
-        //public void GoToEnd<T>(Vector3 start) where T : IPathFinder, new()
-        //{
-        //    Find_BestRoute<T>((start, nodesList.EndNode));
-
-        //}
-
-        public Vector3? GetNextNode()
+        /// <summary>
+        /// Quick validation of consecutive node-to-node connections using Physics.Raycast.
+        /// Must be called from main thread. Returns true if the path has no dynamic obstruction.
+        /// </summary>
+        public bool ValidatePath(LinkedList<IPathNode> path, LayerMask? mask = null)
         {
-            if (curPath < 0 || routeSizes.Count <= 0 || routeSizes[curPath].idx < 0) return null;
+            if (path == null || path.Count < 2) return true;
+            //LayerMask useMask = mask ?? 1 << 9;
 
-            if (enumerator.Current == null)
-                enumerator = BestRoute.GetEnumerator();
-
-            if (enumerator.MoveNext())
+            IPathNode prev = null;
+            foreach (var node in path)
             {
-                return enumerator.Current.Position;
-            }
-
-            else if (curPath + 1 < routeSizes.Count)
-            {
-                RemoveMainPath();
-                //curPath++;
-                enumerator = BestRoute.GetEnumerator();
-                return GetNextNode();
-            }
-
-            return null;
-        } 
-        #endregion
-
-        #region private
-        private void FindShortestPath(List<float> distances, int idx, int idxDis)
-        {
-            if (distances.Count <= 0) return;
-
-            SortElements(distances, idx, idxDis);
-            RemoveLongPaths(idx, idxDis, distances.Count - 1);
-            shorstestNodeIdx = null;
-
-            if (paths[0].First == null) return;
-
-            for (int i = 0; i < curNodes.Length; i++)
-            {
-                if (curNodes[i].end.ID == paths[idx].Last.Value.ID || curNodes[i].end.ID == paths[idx].First.Value.ID)
+                if (prev != null)
                 {
-                    shorstestNodeIdx = i;
-                }
-            }
-
-            routeSizes.RemoveAt(routeSizes.Count - 1);
-
-            if (curPath < 0)
-                curPath = idxDis;
-
-            //Debug.Log($"Sorteado index {idxDis} distance {routeSizes[idxDis].distance} to {paths[idxs].Last.Value.ID}");
-
-            isCalculating = false;
-
-            void SortElements(List<float> distances, int idxPath, int idxDis)
-            {
-                routeSizes.Add((-1, float.MaxValue));
-
-                for (int i = 0; i < distances.Count; i++)
-                {
-                    bool added = false;
-
-                    for (int j = idxDis; j < routeSizes.Count; j++)
+                    Vector3 a = prev.Position + Vector3.up * 0.4f;
+                    Vector3 b = node.Position + Vector3.up * 0.4f;
+                    float dist = Vector3.Distance(a, b);
+#if UNITY_EDITOR || UNITY_STANDALONE || UNITY_ANDROID || UNITY_IOS
+                    if (Physics.Raycast(a, (b - a).normalized, out RaycastHit hit, dist, 1 <<9))
                     {
-                        if (distances[i] < routeSizes[j].distance)
-                        {
-                            routeSizes.Insert(j, (idxPath + i, distances[i]));
-                            added = true;
-                            break;
-                        }
+                        if (!hit.collider.isTrigger)
+                            return false;
                     }
-
-                    if (!added)
-                        routeSizes.Add((paths.Count - 1, distances[i]));
+#endif
                 }
+                prev = node;
             }
-            void RemoveLongPaths(int idx, int idxDis, int length)
-            {
-                routeSizes.RemoveRange(idxDis + 1, length);
 
-                paths[idx] = paths[routeSizes[idxDis].idx];
-                routeSizes[idxDis] = (idx, routeSizes[idxDis].distance);
-
-                paths.RemoveRange(idx + 1, length);
-            }
+            return true;
         }
-
-        private List<float> GetAllRoutes((IPathNode start, IPathNode end)[] nodes)
-        {
-            Task[] tasks = new Task[nodes.Length];
-            List<float> distances = new List<float>();
-
-            for (int i = 0; i < nodes.Length; i++)
-            {
-                int j = i;
-                Task task = Task.Run(() => Get_Path(distances, nodes[j].start, nodes[j].end));
-                tasks[i] = task;
-            }
-
-            try
-            {
-                //Debug.Log($"To start {tasks.Length} Threads");
-                var notNull = tasks.Where(t => t != null).ToArray();
-                Task.WaitAll(notNull);
-            }
-            catch (AggregateException aex)
-            {
-                //Debug.LogError(aex.InnerException);
-            }
-            return distances;
-        }
-
-        private void RemoveMainPath()
-        {
-            paths.RemoveAt(0);
-            routeSizes.RemoveAt(0);
-
-            for (int i = 0; i < routeSizes.Count; i++)
-            {
-                routeSizes[i] = (routeSizes[i].idx - 1, routeSizes[i].distance);
-            }
-        }
-
-        private void Get_Path(List<float> distances, IPathNode start, IPathNode end)
-        {
-            try
-            {
-                float dis = 0;
-                var path = Get_Route(start, end, out dis);
-
-                if (path == null) return;
-
-                lock (distances)
-                {
-                    distances.Add(dis);
-                    paths.Add(path);
-                }
-            }
-            catch (NullReferenceException)
-            {
-                throw;
-            }
-        }
-        #endregion
     }
 
     public struct RequiredLists
@@ -347,4 +223,3 @@ namespace Burmuruk.AI.PathFinding
             node = this.prev;
     }
 }
-

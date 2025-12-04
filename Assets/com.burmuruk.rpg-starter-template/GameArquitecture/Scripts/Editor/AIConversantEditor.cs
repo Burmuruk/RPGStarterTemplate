@@ -43,14 +43,18 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
             return root;
         }
 
-        private ObjectField CreateDialogueField(SerializedProperty serialized)
+        private ObjectField CreateDialogueField(SerializedProperty prop)
         {
-            var field = new ObjectField("Dialogue");
-            field.objectType = typeof(Dialogue);
-            field.value = serialized.objectReferenceValue;
+            var field = new ObjectField("Dialogue")
+            {
+                objectType = typeof(Dialogue)
+            };
+
             field.RegisterValueChangedCallback(OnValueChanged_Dialogue);
+            field.BindProperty(prop); // ? lo importante
             return field;
         }
+
 
         private void OnValueChanged_Dialogue(ChangeEvent<UnityEngine.Object> evt)
         {
@@ -85,7 +89,7 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
 
         private void Setup_Dropdown(DropdownField dd, List<string> choices)
         {
-            dd.choices = choices;
+            dd.choices = choices??=new();
             dd.style.display = DisplayStyle.Flex;
             dd.value = dd.choices.FirstOrDefault();
         }
@@ -117,20 +121,23 @@ namespace Burmuruk.RPGStarterTemplate.Dialogue
                 var db = this.dialogue.value as DialogueBlock;
                 Dialogue dialogue = null;
 
-                foreach (var data in db.dialogues)
+                if (db?.dialogues != null)
                 {
-                    if (data.dialogue.name == evt.newValue)
+                    foreach (var data in db.dialogues)
                     {
-                        dialogue = data.dialogue;
-                        dialogueField.objectReferenceValue = data.dialogue;
-                        break;
+                        if (data.dialogue.name == evt.newValue)
+                        {
+                            dialogue = data.dialogue;
+                            dialogueField.objectReferenceValue = data.dialogue;
+                            break;
+                        }
                     }
                 }
 
-                Setup_Dropdown(characterDD, dialogue.characters);
+                serializedObject.ApplyModifiedProperties();
+                Setup_Dropdown(characterDD, dialogue?.characters);
             });
 
-            serializedObject.ApplyModifiedProperties();
             return dropdown;
         }
     }

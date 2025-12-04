@@ -113,16 +113,15 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
             OnExecutionChanged?.Invoke(this, _isExecutable);
         }
 
-        public virtual RPGStarterTemplate.Dialogue.DialogueNode GetNodeData()
+        public virtual RPGStarterTemplate.Dialogue.DialogueNode GetNodeData(RPGStarterTemplate.Dialogue.DialogueNode nodeData)
         {
-            RPGStarterTemplate.Dialogue.DialogueNode nodeData = new RPGStarterTemplate.Dialogue.DialogueNode
-            {
-                Id = this.Id,
-                Children = (from c in GraphViewNode.output.connections
-                            select (c.input.node as GraphViewNode).Parent.GetNodeData()).ToList(),
-                onEnterAction = onEnterAction,
-                onExitAction = onExitAction
-            };
+            nodeData ??= new();
+            nodeData.Id = this.Id;
+            nodeData.Children = (from c in GraphViewNode.output.connections
+                        select (c.input.node as GraphViewNode).Parent.GetNodeData(null)).ToList();
+            nodeData.onEnterAction = onEnterAction;
+            nodeData.onExitAction = onExitAction;
+            nodeData.characterName = Title;
             return nodeData;
         }
 
@@ -281,14 +280,14 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
                 _position = GraphViewNode.GetPosition().position;
                 _expanded = GraphViewNode.expanded;
                 this.name = Id;
-                onEnterAction = GraphViewNode.TxtOnEnterAction.value;
-                onExitAction = GraphViewNode.TxtOnExitAction.value;
+                onEnterAction = this.onEnterAction = GraphViewNode.TxtOnEnterAction.value;
+                onExitAction = this.onExitAction = GraphViewNode.TxtOnExitAction.value;
             }
             _isStartNode = IsStartNode;
         }
 #endif
 
-        protected TextField AddTextField(string tag)
+        protected TextField AddTextField(VisualElement container, string tag)
         {
             var content = new VisualElement
             {
@@ -308,7 +307,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
             row.Add(textField);
 
             content.Add(row);
-            GraphViewNode.extensionContainer.Add(row);
+            container.Add(row);
             return textField;
         }
     }

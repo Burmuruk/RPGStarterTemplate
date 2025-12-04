@@ -99,6 +99,12 @@ namespace Burmuruk.RPGStarterTemplate.Control
             SceneManager.LoadScene(idx);
         }
 
+        public void ChangeScene(string sceneName)
+        {
+            GameState = State.Loading;
+            SceneManager.LoadScene(sceneName);
+        }
+
         public void ExitGame()
         {
             Application.Quit();
@@ -109,17 +115,26 @@ namespace Burmuruk.RPGStarterTemplate.Control
             SceneManager.LoadScene(2);
         }
 
-        public void StartCinematic()
+        public void StartCinematic(bool start)
         {
-            GameState = State.Cinematic;
-        }
+            if (start)
+            {
+                if (state != State.Playing) return;
 
-        public bool ShowCharactersMenu()
+                GameState = State.Cinematic;
+            }
+            else
+            {
+                if (state != State.Cinematic) return;
+
+                GameState = State.Playing;
+            }
+        }
+        
+        public bool CanChangeToUI()
         {
             if (GameState != State.Playing)
                 return false;
-
-            GameState = State.UI;
 
             return true;
         }

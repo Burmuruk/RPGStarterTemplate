@@ -71,7 +71,19 @@ namespace Burmuruk.RPGStarterTemplate.Combat
         public void SetTarget(Transform target)
         {
             m_target = target;
+
+            if (target == null) return;
             m_targetHealth = target?.GetComponent<Health>();
+            m_targetHealth.OnDied -= RemoveTarget;
+            m_targetHealth.OnDied += RemoveTarget;
+        }
+        public void RemoveTarget(Transform target)
+        {
+            target.GetComponent<Health>().OnDied -= RemoveTarget;
+
+            if (m_target != target) return;
+            m_target = null;
+            m_targetHealth = null;
         }
 
         /// <summary>

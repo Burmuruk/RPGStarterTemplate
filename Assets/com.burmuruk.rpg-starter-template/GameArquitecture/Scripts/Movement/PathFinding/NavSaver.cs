@@ -3,6 +3,7 @@ using Burmuruk.WorldG.Patrol;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using UnityEditor;
@@ -17,6 +18,7 @@ namespace Burmuruk.RPGStarterTemplate.Movement.PathFindig
         static float radious;
         static float distance;
         static float maxAngle;
+        static int writeX = 0, writeY = 0, writeZ = 0;
 
         static Dictionary<uint, Queue<((int x, int y, int z) idx, int connectionIdx)>> nodesWaiting;
         static Dictionary<uint, IPathNode> addedNodes;
@@ -43,27 +45,57 @@ namespace Burmuruk.RPGStarterTemplate.Movement.PathFindig
 
         public static void SaveList(IPathNode[][][] nodes, int count)
         {
-            LinkedList<string> text = new LinkedList<string>();
-            text.AddFirst(nodes.Length.ToString() + ">" + nodes[0][0][0].Position.x.ToString() + "|");
+            string sceneName = SceneManager.GetActiveScene().name;
+            string path = Path.Combine(Application.streamingAssetsPath, FILE_NAME + "_" + sceneName + ".txt");
 
-            for (int i = 0; i < nodes.Length; ++i)
+            if (!Directory.Exists(Application.streamingAssetsPath))
+                Directory.CreateDirectory(Application.streamingAssetsPath);
+
+            using (StreamWriter writer = new StreamWriter(path, false, Encoding.UTF8))
             {
-                text.AddLast(string.Concat(nodes[i].Length, ">"));
+                int sizeX = nodes.Length;
+                writer.WriteLine($"NODES {sizeX}");
 
-                for (int j = 0; j < nodes[i].Length; ++j)
+                // Guardar dimensiones reales
+                for (int x = 0; x < sizeX; x++)
                 {
-                    text.AddLast(nodes[i][j].Length + ">");
+                    int sizeY = nodes[x].Length;
+                    int sizeZ = sizeY > 0 ? nodes[x][0].Length : 0;
 
-                    for (int k = 0; k < nodes[i][j].Length; ++k)
+                    writer.WriteLine($"DIM {sizeY} {sizeZ}");
+                }
+
+                // Guardar nodos
+                for (int x = 0; x < sizeX; x++)
+                {
+                    for (int y = 0; y < nodes[x].Length; y++)
                     {
-                        text.AddLast(string.Concat(nodes[i][j][k].ID, "*", nodes[i][j][k].Position.y, "|", nodes[i][j][k].Position.z, "|", GetNodeConnections(nodes[i][j][k])));
+                        for (int z = 0; z < nodes[x][y].Length; z++)
+                        {
+                            var n = nodes[x][y][z];
+                            writer.WriteLine($"NODE {n.ID} {n.Position.x} {n.Position.y} {n.Position.z}");
+                        }
                     }
                 }
 
-                text.AddLast("\\");
+                // Guardar conexiones
+                for (int x = 0; x < sizeX; x++)
+                {
+                    for (int y = 0; y < nodes[x].Length; y++)
+                    {
+                        for (int z = 0; z < nodes[x][y].Length; z++)
+                        {
+                            var n = nodes[x][y][z];
+                            string conn = string.Join(" ", n.NodeConnections.Select(c => c.node.ID));
+                            writer.WriteLine($"CONN {n.ID} {conn}");
+                        }
+                    }
+                }
+
+                writer.WriteLine("END");
             }
 
-            Write(text);
+            AssetDatabase.Refresh();
             saved = true;
         }
 
@@ -103,17 +135,23 @@ namespace Burmuruk.RPGStarterTemplate.Movement.PathFindig
             AssetDatabase.Refresh();
         }
 
+        //private static string GetNodeConnections(IPathNode node)
+        //{
+        //    string connections = "";
+
+        //    foreach (var cnc in node.NodeConnections)
+        //    {
+        //        connections += cnc.node.ID + "*";
+        //    }
+
+        //    return connections += ")";
+        //}
+
         private static string GetNodeConnections(IPathNode node)
         {
-            string connections = "";
-
-            foreach (var cnc in node.NodeConnections)
-            {
-                connections += cnc.node.ID + "*";
-            }
-
-            return connections += ")";
+            return string.Join(",", node.NodeConnections.Select(c => c.node.ID));
         }
+
 
         public static void SaveExtraData(float radious, float distance, float maxAngle)
         {
@@ -156,181 +194,98 @@ namespace Burmuruk.RPGStarterTemplate.Movement.PathFindig
             addedNodes = new();
             nodesWaiting = new();
 
-            LinkedList<char[]> text = LoadFromFile();
-            GetNodesFromText(text, out IPathNode[][][] nodes);
-            SetConnections(nodes);
-
-            return nodes;
-        }
-
-        private static void GetNodesFromText(LinkedList<char[]> text, out IPathNode[][][] nodes)
-        {
-            nodes = null;
-            Queue<uint> ids = new();
-            string number = "";
-            int sizes = -1;
-            int positions = -1;
-            int x = -1, y = -2, z = -1;
-            float xPos = 0, yPos = 0, zPos = 0;
-            float initialXPos = 0;
-
-            foreach (var item in text)
-            {
-                for (int i = 0; i < item.Length; ++i)
-                {
-                    switch (item[i])
-                    {
-                        case '>':
-                            Int32.TryParse(number, out int newInt);
-
-                            if (sizes > 0)
-                            {
-                                ++y;
-                                nodes[x][y] = new IPathNode[newInt];
-                                z = 0;
-                            }
-                            else if (sizes == 0)
-                            {
-                                nodes[x] = new IPathNode[newInt][];
-                                ++sizes;
-                                ++y;
-                            }
-                            else
-                            {
-                                nodes = new IPathNode[newInt][][];
-                                ++sizes;
-                                ++x;
-                            }
-
-                            number = "";
-                            break;
-
-                        case '|':
-                            float.TryParse(number, out float newPos);
-
-                            if (positions > 0)
-                            {
-                                zPos = newPos;
-                            }
-                            else if (positions == 0)
-                            {
-                                yPos = newPos;
-                                ++positions;
-                            }
-                            else
-                            {
-                                xPos = newPos;
-                                initialXPos = xPos;
-                                ++positions;
-                            }
-
-                            number = "";
-                            break;
-
-                        case '*':
-                            uint.TryParse(number, out uint newId);
-
-                            ids.Enqueue(newId);
-                            number = "";
-                            break;
-
-                        case ')':
-                            nodes[x][y][z] = new ScrNode(ids.Dequeue(), new Vector3(xPos, yPos, zPos));
-                            RegisterConnections(nodes, ids, x, y, z);
-                            ++z;
-                            positions = 0;
-                            number = "";
-                            break;
-
-                        case '\\':
-                            ++x;
-                            xPos = initialXPos + (x * .5f);
-                            y = -2;
-                            z = 0;
-                            sizes = 0;
-                            positions = 0;
-                            number = "";
-                            break;
-
-                        default:
-                            number += item[i];
-                            break;
-                    }
-                }
-            }
-        }
-
-        private static void RegisterConnections(IPathNode[][][] nodes, Queue<uint> ids, int x, int y, int z)
-        {
-            addedNodes.Add(nodes[x][y][z].ID, nodes[x][y][z]);
-
-            List<NodeConnection> connections = new List<NodeConnection>();
-
-            while (ids.Count > 0)
-            {
-                uint id = ids.Dequeue();
-
-                if (id > nodes[x][y][z].ID)
-                {
-                    if (!nodesWaiting.ContainsKey(id))
-                        nodesWaiting.Add(id, new());
-
-                    nodesWaiting[id].Enqueue(((x, y, z), 0));
-                }
-                else
-                {
-                    //var (nx, ny ,nz) = (addedNodes[id].x, addedNodes[id].y, addedNodes[id].z);
-                    connections.Add(new NodeConnection(addedNodes[id], ConnectionType.BIDIMENSIONAL, .5f));
-                }
-            }
-
-            var nodeCopy = (ScrNode)nodes[x][y][z];
-            nodeCopy.SetConnections(connections);
-            nodes[x][y][z] = nodeCopy;
-        }
-
-        private static void SetConnections(IPathNode[][][] nodes)
-        {
-            foreach (var node in nodesWaiting)
-            {
-                while (node.Value.Count > 0)
-                {
-                    ((int x, int y, int z) pos, int idx) id = node.Value.Dequeue();
-                    //var nodeCopy = (ScrNode)nodes[id.pos.x][id.pos.y][id.pos.z];
-                    //var connections = nodeCopy.NodeConnections;
-                    var connections = ((ScrNode)nodes[id.pos.x][id.pos.y][id.pos.z]).NodeConnections;
-
-                    connections ??= new();
-                    connections.Add(new NodeConnection(addedNodes[node.Key], ConnectionType.BIDIMENSIONAL, 0.5f));
-
-                    ((ScrNode)nodes[id.pos.x][id.pos.y][id.pos.z]).SetConnections(connections);
-                    //nodeCopy.SetConnections(connections);
-                    //nodes[id.pos.x][id.pos.y][id.pos.z] = nodeCopy;
-                }
-            }
-        }
-
-        private static LinkedList<char[]> LoadFromFile()
-        {
             string sceneName = SceneManager.GetActiveScene().name;
             string path = Path.Combine(Application.streamingAssetsPath, FILE_NAME + "_" + sceneName + ".txt");
-            
-            var text = new LinkedList<char[]>();
 
-            using (Stream stream = new FileStream(path, FileMode.Open))
+            string[] lines = File.ReadAllLines(path);
+            int lineIndex = 0;
+
+            // Leer cantidad X
+            string[] header = lines[lineIndex++].Split(' ');
+            int sizeX = int.Parse(header[1]);
+
+            // Leer las dimensiones Y,Z de cada X
+            int[] sizeY = new int[sizeX];
+            int[] sizeZ = new int[sizeX];
+
+            for (int x = 0; x < sizeX; x++)
             {
-                int totalRedaded = 0;
-
-                do
-                {
-                    byte[] bytes = new byte[50];
-                    totalRedaded = stream.Read(bytes, 0, bytes.Length);
-                    text.AddLast(Encoding.UTF8.GetChars(bytes));
-
-                } while (totalRedaded > 0);
+                string[] dim = lines[lineIndex++].Split(' ');
+                sizeY[x] = int.Parse(dim[1]);
+                sizeZ[x] = int.Parse(dim[2]);
             }
 
-            return text;
+            // Crear la matriz real
+            IPathNode[][][] nodes = new IPathNode[sizeX][][];
+
+            for (int x = 0; x < sizeX; x++)
+            {
+                nodes[x] = new IPathNode[sizeY[x]][];
+
+                for (int y = 0; y < sizeY[x]; y++)
+                {
+                    nodes[x][y] = new IPathNode[sizeZ[x]];
+                }
+            }
+
+            int cx = 0, cy = 0, cz = 0;
+
+            // Leer nodos
+            for (; lineIndex < lines.Length; lineIndex++)
+            {
+                if (lines[lineIndex].StartsWith("NODE"))
+                {
+                    string[] p = lines[lineIndex].Split(' ');
+
+                    uint id = uint.Parse(p[1]);
+                    float px = float.Parse(p[2]);
+                    float py = float.Parse(p[3]);
+                    float pz = float.Parse(p[4]);
+
+                    ScrNode node = new ScrNode(id, new Vector3(px, py, pz));
+
+                    nodes[cx][cy][cz] = node;
+                    addedNodes[id] = node;
+
+                    cz++;
+                    if (cz >= sizeZ[cx])
+                    {
+                        cz = 0; cy++;
+                        if (cy >= sizeY[cx])
+                        {
+                            cy = 0; cx++;
+                        }
+                    }
+                }
+                else break;
+            }
+
+            // Leer conexiones
+            for (; lineIndex < lines.Length; lineIndex++)
+            {
+                if (lines[lineIndex].StartsWith("CONN"))
+                {
+                    string[] p = lines[lineIndex].Split(' ');
+
+                    uint id = uint.Parse(p[1]);
+                    ScrNode node = (ScrNode)addedNodes[id];
+
+                    List<NodeConnection> conns = new();
+
+                    for (int i = 2; i < p.Length; i++)
+                    {
+                        if (uint.TryParse(p[i], out uint cid))
+                        {
+                            if (addedNodes.TryGetValue(cid, out IPathNode target))
+                                conns.Add(new NodeConnection(target, ConnectionType.BIDIMENSIONAL, 0.5f));
+                        }
+                    }
+
+                    node.SetConnections(conns);
+                }
+            }
+
+            return nodes;
         }
     }
 }

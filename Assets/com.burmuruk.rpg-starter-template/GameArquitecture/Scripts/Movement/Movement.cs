@@ -21,7 +21,7 @@ namespace Burmuruk.RPGStarterTemplate.Movement
     [RequireComponent(typeof(Rigidbody))]
     public class Movement : MonoBehaviour, IScheduledAction
     {
-        [SerializeField] float m_maxVel; 
+        [SerializeField] float m_maxVel;
         [SerializeField] float m_maxSteerForce;
         [SerializeField] float m_threshold;
         [SerializeField] float m_slowingRadious;
@@ -80,10 +80,10 @@ namespace Burmuruk.RPGStarterTemplate.Movement
         }
         public bool DetachRotation
         {
-            get => detachRotation; 
+            get => detachRotation;
             set
             {
-                if (m_state == MovementState.None) 
+                if (m_state == MovementState.None)
                     detachRotation = value;
             }
         }
@@ -92,20 +92,16 @@ namespace Burmuruk.RPGStarterTemplate.Movement
             get
             {
                 return m_threshold;
-                //if (m_inventory == null)
-                //    return m_threshold;
-
-                //return stats.MinDistance;
             }
         }
-        bool CanMove 
-        { 
+        bool CanMove
+        {
             get
             {
                 if (nodeList == null || !m_canMove) return false;
 
                 return true;
-            } 
+            }
         }
         BasicStats Stats { get => stats.Invoke(); }
 
@@ -122,8 +118,8 @@ namespace Burmuruk.RPGStarterTemplate.Movement
         private void FixedUpdate()
         {
             Move();
-            
-        } 
+
+        }
         #endregion
 
         public void Initialize(InventoryEquipDecorator inventory, ActionScheduler scheduler, Func<BasicStats> stats)
@@ -159,18 +155,18 @@ namespace Burmuruk.RPGStarterTemplate.Movement
                 curNodePosition ??= nodeList.FindNearestNode(transform.position);
 
                 m_scheduler.AddAction(this, ActionPriority.Low, () =>
-                    {
-                        Vector3 point = transform.position + direction;
-                        var nearestPoint = nodeList.FindNearestNode(point);
-                        bool result = nodeList.ValidatePosition(point, nearestPoint);
+                {
+                    Vector3 point = transform.position + direction;
+                    var nearestPoint = nodeList.FindNearestNode(point);
+                    bool result = nodeList.ValidatePosition(point, nearestPoint);
 
-                        if (result)
-                        {
-                            m_state = MovementState.Moving;
-                            target = point;
-                            m_pathNodeTarget = nearestPoint;
-                        }
-                    });
+                    if (result)
+                    {
+                        m_state = MovementState.Moving;
+                        target = point;
+                        m_pathNodeTarget = nearestPoint;
+                    }
+                });
             }
             catch (NullReferenceException)
             {
@@ -179,7 +175,7 @@ namespace Burmuruk.RPGStarterTemplate.Movement
         }
 
         public void MoveTo(Vector3 point, bool abortWhenLarger = false)
-       {
+        {
             if (IsWorking || !CanMove) return;
 
             m_state = MovementState.Calculating;
@@ -193,10 +189,7 @@ namespace Burmuruk.RPGStarterTemplate.Movement
             try
             {
                 curNodePosition = nodeList.FindNearestNode(transform.position);
-                Debug.DrawRay(curNodePosition.Position, Vector3.up * 10, Color.green);
-                Debug.DrawRay(point, Vector3.up * 10, Color.cyan);
-                Debug.DrawRay(transform.position, Vector3.up * 10, Color.black);
-                
+
                 m_scheduler.AddAction(this, ActionPriority.Low, () =>
                     m_pathFinder.Find_BestRoute<AStar>((curNodePosition, point)));
             }
@@ -204,27 +197,6 @@ namespace Burmuruk.RPGStarterTemplate.Movement
             {
                 FinishAction();
             }
-
-            //var nearest = nodeList.FindNearestNode(point);
-
-            //if (nearest == null)
-            //{
-            //    m_state = MovementState.Moving;
-            //    return;
-            //}
-
-            //if (nodeList.ValidatePosition(point, nearest))
-            //{
-            //    target = point;
-            //    //m_pathFinder.Find_BestRoute<AStar>((transform.position, target)); 
-            //}
-            //else
-            //{
-            //    m_state = MovementState.None;
-            //    return;
-            //    target = nearest.Position;
-            //    m_pathFinder.Find_BestRoute<AStar>((transform.position, nearest.Position));
-            //}
         }
 
         public void FollowWithDistance(Movement target, float gap, params Character[] fellows)
@@ -237,7 +209,7 @@ namespace Burmuruk.RPGStarterTemplate.Movement
             try
             {
                 curNodePosition ??= nodeList.FindNearestNode(transform.position);
-                
+
                 m_pathFinder.Find_BestRoute<AStar>((curNodePosition, point));
             }
             catch (NullReferenceException)
@@ -288,28 +260,16 @@ namespace Burmuruk.RPGStarterTemplate.Movement
             return;
         }
 
-        /// <summary>
-        /// Gives access to max speed of node
-        /// </summary>
-        /// <returns>float m_speed</returns>
         public float GetSpeed()
         {
             return Stats.speed;
         }
 
-        /// <summary>
-        /// Gives access to max velocity of node
-        /// </summary>
-        /// <returns>float m_MaxVel</returns>
         public float getMaxVel()
         {
             return m_maxVel = Stats.speed;
         }
 
-        /// <summary>
-        /// Gives access to steer force of node
-        /// </summary>
-        /// <returns>float m_MaxSteerForce</returns>
         public float getMaxSteerForce()
         {
             return m_maxSteerForce;
@@ -318,8 +278,6 @@ namespace Burmuruk.RPGStarterTemplate.Movement
         public void StartAction()
         {
             if (!m_scheduler.Initilized) return;
-
-            //m_scheduler.AddAction(this, ActionPriority.Low, );
         }
 
         public void PauseAction()
@@ -360,7 +318,7 @@ namespace Burmuruk.RPGStarterTemplate.Movement
 
         public void FinishAction()
         {
-            m_rb.velocity = new(0, m_rb.velocity.y, 0);
+            m_rb.velocity = new Vector3(0, m_rb.velocity.y, 0);
             m_curPath = null;
             enumerator = null;
             m_pathNodeTarget = null;
@@ -409,12 +367,14 @@ namespace Burmuruk.RPGStarterTemplate.Movement
         {
             if (!m_canMove || !IsMoving) return;
 
+            float adaptiveThreshold = Mathf.Max(Threshold, (nodeList?.NodeDistance ?? 1f) * 0.3f);
+
             m_rb.velocity = SteeringBehaviours.Seek2D(this, target);
             var pos1 = transform.position + colYExtents;
             var pos2 = target;
             float d = Vector3.Distance(pos1, pos2);
 
-            if (d <= Threshold)
+            if (d <= adaptiveThreshold)
             {
                 if (m_state == MovementState.FollowingPath)
                 {
@@ -439,18 +399,18 @@ namespace Burmuruk.RPGStarterTemplate.Movement
             {
                 if (detachRotation)
                 {
-                    m_rb.velocity = Vector3.ProjectOnPlane(SteeringBehaviours.Arrival(this, destiny, SlowingRadious, Threshold), new Vector3(0,1,0));
+                    m_rb.velocity = Vector3.ProjectOnPlane(SteeringBehaviours.Arrival(this, destiny, SlowingRadious, adaptiveThreshold), new Vector3(0, 1, 0));
                 }
                 else
                 {
-                    m_rb.velocity = SteeringBehaviours.Arrival(this, destiny, SlowingRadious, Threshold);
+                    m_rb.velocity = SteeringBehaviours.Arrival(this, destiny, SlowingRadious, adaptiveThreshold);
                 }
 
-                CurDirection = Vector3.zero;
+                CurDirection = m_rb.velocity.sqrMagnitude > 0.0001f ? m_rb.velocity.normalized : CurDirection;
             }
             else
             {
-                CurDirection = m_rb.velocity.normalized;
+                CurDirection = m_rb.velocity.sqrMagnitude > 0.0001f ? m_rb.velocity.normalized : CurDirection;
             }
 
             if (!detachRotation)
@@ -471,10 +431,8 @@ namespace Burmuruk.RPGStarterTemplate.Movement
 
                 if (enumerator.MoveNext())
                 {
-                    if (curNodeIdx < m_curPath.Count - 1)
-                        target = (enumerator.Current.Position - transform.position).normalized * .5f + transform.position;
-                    else
-                        target = enumerator.Current.Position;
+                    // --- IMPORTANT: use node position directly (no intermediate moving target) ---
+                    target = enumerator.Current.Position;
 
                     m_pathNodeTarget = enumerator.Current;
                     curNodeIdx++;
@@ -493,15 +451,20 @@ namespace Burmuruk.RPGStarterTemplate.Movement
 
             m_curPath = m_pathFinder.BestRoute;
 
+            if (m_pathFinder != null && !m_pathFinder.ValidatePath(m_curPath))
+            {
+                FinishAction();
+                return;
+            }
+
             if (!GetNextNode()) { Cancel(); return; }
             if (abortOnLargerPath && m_curPath.Count * .5f > maxDistance + .5f * 5)
             {
-                print("count: " + m_curPath + "maxDistance" + maxDistance);
                 Cancel();
                 return;
             }
 
-            var minNodes = Mathf.Max((int)MathF.Round(SlowingRadious / nodeList.NodeDistance), 0);
+            var minNodes = Mathf.Max((int)Mathf.Round(SlowingRadious / nodeList.NodeDistance), 0);
             nodeIdxSlowingRadious = m_curPath.Count - minNodes;
 
             colYExtents = Vector3.down * col.bounds.extents.y;
@@ -524,7 +487,7 @@ namespace Burmuruk.RPGStarterTemplate.Movement
                     lastNode = node;
                 }
             }
-            
+
             void Cancel()
             {
                 FinishAction();

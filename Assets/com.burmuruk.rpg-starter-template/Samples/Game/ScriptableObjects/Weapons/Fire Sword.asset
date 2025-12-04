@@ -27,14 +27,14 @@ MonoBehaviour:
   m_maxDistance: 1.5
   reloadTime: 0
   maxAmmo: 0
-  m_buffsData:
-  - stat: 1
-    value: -3
-    duration: 30
+  _buffs:
+  - name: Fire
+    stat: 1
+    value: 1
+    duration: 60
     rate: 1
     percentage: 0
-    affectAll: 0
-    probability: 0.8
+    probability: 1
   equipment:
-    Body: {fileID: 0}
+    body: {fileID: 0}
     spawnPoints: []
