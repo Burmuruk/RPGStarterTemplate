@@ -20,7 +20,7 @@
     {
       "displayName": "Demo Scene",
       "description": "Example of a basic RPG setup using this template.",
-      "path": "Samples~/Scenes/MainMenuSample"
+      "path": "Samples~/RPGStarterDemo"
     }
   ],
   "keywords": [ "RPG", "template", "starter", "unity", "toolkit" ],
