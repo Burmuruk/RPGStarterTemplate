@@ -1,6 +1,5 @@
 ﻿using Burmuruk.RPGStarterTemplate.Control;
 using Burmuruk.RPGStarterTemplate.Stats;
-using Burmuruk.RPGStarterTemplate.UI;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
@@ -10,7 +9,6 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
-using static Burmuruk.RPGStarterTemplate.Stats.BasicStats;
 
 namespace Burmuruk.RPGStarterTemplate.Saving
 {
@@ -75,7 +73,7 @@ namespace Burmuruk.RPGStarterTemplate.Saving
         public void Save(int slot, JObject slotData = null)
         {
             OnSaving?.Invoke(0);
-            
+
             StartCoroutine(CaptureScreenshot(slot, slotData));
         }
 
@@ -367,7 +365,6 @@ namespace Burmuruk.RPGStarterTemplate.Saving
                     break;
 
                 case SavingExecution.General:
-                    FindObjectOfType<HUDManager>().Init();
                     break;
             }
         }

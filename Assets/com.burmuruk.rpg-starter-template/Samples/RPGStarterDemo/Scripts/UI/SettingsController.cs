@@ -4,7 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Burmuruk.RPGStarterTemplate.Control
+namespace Burmuruk.RPGStarterTemplate.UI.Samples
 {
     public class SettingsController : MonoBehaviour
     {

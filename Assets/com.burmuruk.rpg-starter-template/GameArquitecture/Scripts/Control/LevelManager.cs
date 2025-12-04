@@ -2,7 +2,6 @@ using Burmuruk.RPGStarterTemplate.Control.AI;
 using Burmuruk.RPGStarterTemplate.Interaction;
 using Burmuruk.RPGStarterTemplate.Movement.PathFindig;
 using Burmuruk.RPGStarterTemplate.Saving;
-using Burmuruk.RPGStarterTemplate.UI;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
@@ -16,13 +15,12 @@ namespace Burmuruk.RPGStarterTemplate.Control
 {
     public class LevelManager : MonoBehaviour, ISlotDataProvider, IslotDataSaver
     {
-        [SerializeField] UnityEvent onUILoaded;
-        [SerializeField] UnityEvent onUIUnLoaded;
+        [SerializeField] protected UnityEvent onUILoaded;
+        [SerializeField] protected UnityEvent onUIUnLoaded;
         [SerializeField] public GameObject pauseMenu;
         protected JsonSavingWrapper savingWrapper;
 
         protected GameManager gameManager;
-        protected UIMenuCharacters menuCharacters;
         protected PlayerManager playerManager;
 
         List<GameObject> itemsToDestroy = new();
@@ -43,11 +41,10 @@ namespace Burmuruk.RPGStarterTemplate.Control
             FindObjectOfType<PickupSpawner>().RegisterCurrentItems();
         }
 
-        void Start()
+        protected virtual void Start()
         {
             playerManager = FindObjectOfType<PlayerManager>();
-            //AddItemToDestroy(playerManager.PlayersParent);
-            AddItemToDestroy(FindObjectOfType<SavingUI>().gameObject);
+            AddItemToDestroy(playerManager.PlayersParent);
 
             gameManager = GetComponent<GameManager>();
             gameManager.onStateChange += UpdateGameState;
@@ -84,24 +81,6 @@ namespace Burmuruk.RPGStarterTemplate.Control
             NavSaver.LoadNavMesh();
             FindAnyObjectByType<LevelManager>().SetPaths();
             UpdatePlayerPosition();
-        }
-
-        public void Update()
-        {
-            if (Input.GetKeyUp(KeyCode.K))
-            {
-                var data = CaptureLevelData();
-
-                savingWrapper.Save(data["Slot"].ToObject<int>(), data);
-            }
-
-            if (Input.GetKeyUp(KeyCode.L))
-            {
-
-
-                TemporalSaver.RemoveAllData();
-                savingWrapper.Load(GetSlotData().Id);
-            }
         }
 
         public void SetPaths()
@@ -143,7 +122,6 @@ namespace Burmuruk.RPGStarterTemplate.Control
 
         public void GoToMainMenu()
         {
-            FindObjectOfType<Fader>().FadeIn();
             savingWrapper.AddNewAutoSaveSlot(CaptureLevelData(), true);
 
             itemsToDestroy.ForEach(obj => Destroy(obj));
@@ -157,37 +135,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
             gameManager.ExitGame();
         }
 
-        private void VerifyScene(Scene scene, LoadSceneMode mode)
-        {
-            if (scene.buildIndex == 1)
-            {
-                onUILoaded?.Invoke();
-                Time.timeScale = 0;
-                SceneManager.SetActiveScene(scene);
-                var rootItems = SceneManager.GetSceneByBuildIndex(1).GetRootGameObjects();
-                FindObjectOfType<LevelManager>().
-                GetComponentInChildren<Camera>().gameObject.SetActive(false);
-                var uiController = FindObjectOfType<UICharactersController>();
-
-                foreach (var item in rootItems)
-                {
-                    menuCharacters = item.GetComponentInChildren<UIMenuCharacters>();
-
-                    if (menuCharacters != null)
-                    {
-                        var pm = FindObjectOfType<PlayerManager>();
-                        menuCharacters.SetPlayers(pm.Players);
-                        menuCharacters.SetInventory(pm.MainInventory);
-                        menuCharacters.SetPlayerManager(pm);
-
-                        menuCharacters.OnMainPlayerChanged += playerManager.SetPlayerControl;
-                        uiController.menuCharacters = menuCharacters;
-                        uiController.gameManager = gameManager;
-                        break;
-                    }
-                }
-            }
-        }
+        protected virtual void VerifyScene(Scene scene, LoadSceneMode mode) { }
 
         private void RestoreScene(Scene scene)
         {
@@ -198,17 +146,11 @@ namespace Burmuruk.RPGStarterTemplate.Control
             }
         }
 
-        public void ToggleSavingOptions()
-        {
-            FindObjectOfType<SavingUI>().ToggleSlots();
-        }
+        public virtual void ToggleSavingOptions() { }
 
-        public void HideSavingOptions()
-        {
-            FindObjectOfType<SavingUI>().ShowSlots(false);
-        }
+        public virtual void HideSavingOptions() { }
 
-        public void Pause()
+        public virtual void Pause()
         {
             if (gameManager.GameState == GameManager.State.Pause)
             {
@@ -273,16 +215,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
             }
         }
 
-        public void ExitUI()
-        {
-            if (menuCharacters.curState != UIMenuCharacters.State.None) return;
-
-            menuCharacters.UnloadMenu();
-            GetComponentInChildren<Camera>(true).gameObject.SetActive(true);
-
-            gameManager.ExitUI();
-            Task.Delay(200).GetAwaiter().OnCompleted(() => savingWrapper.AddNewAutoSaveSlot(CaptureLevelData(), false));
-        }
+        public virtual void ExitUI() { }
 
         public void RestoreFromJToken(JToken state)
         {
@@ -305,17 +238,15 @@ namespace Burmuruk.RPGStarterTemplate.Control
             slotIdx = slotData.Id;
         }
 
-        private void UpdateGameState(GameManager.State state)
+        protected virtual void UpdateGameState(GameManager.State state)
         {
             switch (state)
             {
                 case GameManager.State.Playing:
-                    FindObjectOfType<HUDManager>(true).gameObject.SetActive(true);
                     break;
                 case GameManager.State.Pause:
                     break;
                 case GameManager.State.UI:
-                    FindObjectOfType<HUDManager>().gameObject.SetActive(false);
                     break;
                 case GameManager.State.Loading:
                     break;

@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace Burmuruk.RPGStarterTemplate.UI
+namespace Burmuruk.RPGStarterTemplate.UI.Samples
 {
     public class MyItemButton : Button
     {

@@ -1,8 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-namespace Burmuruk.RPGStarterTemplate.UI
+namespace Burmuruk.RPGStarterTemplate.UI.Samples
 {
     public class CreditsExit : MonoBehaviour
     {
@@ -14,5 +12,5 @@ namespace Burmuruk.RPGStarterTemplate.UI
             mainButtons.SetActive(true);
             credtis.SetActive(false);
         }
-    } 
+    }
 }

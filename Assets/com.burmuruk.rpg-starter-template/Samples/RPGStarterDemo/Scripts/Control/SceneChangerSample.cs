@@ -1,5 +1,4 @@
 ﻿using Burmuruk.RPGStarterTemplate.Control.AI;
-using System;
 using UnityEngine;
 
 namespace Burmuruk.RPGStarterTemplate.Control.Samples

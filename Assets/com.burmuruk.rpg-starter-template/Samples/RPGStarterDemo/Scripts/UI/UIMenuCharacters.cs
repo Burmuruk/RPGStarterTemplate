@@ -10,7 +10,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Burmuruk.RPGStarterTemplate.UI
+namespace Burmuruk.RPGStarterTemplate.UI.Samples
 {
     public class UIMenuCharacters : MonoBehaviour
     {
