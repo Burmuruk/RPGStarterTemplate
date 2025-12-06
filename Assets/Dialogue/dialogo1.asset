@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c545672f6c926b7449d618f255ab4b99, type: 3}
+  m_Name: dialogo1
+  m_EditorClassIdentifier: 
+  dialogueNode:
+    Id: 
+    characterName: 
+    Message: 
+    Children: []
+    onEnterAction: 
+    onExitAction: 
+  id: 
+  characters: []
+  dialogues:
+  - id: db8b83ed-2c0b-424c-9a1d-78942b71c8ba
+    dialogue: {fileID: 8195291711931298106}
+    name: 
+    characters: []
+--- !u!114 &8195291711931298106
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31168052f5af1b642a930f7c1b126564, type: 3}
+  m_Name: Inicio
+  m_EditorClassIdentifier: 
+  dialogueNode:
+    Id: db8b83ed-2c0b-424c-9a1d-78942b71c8ba
+    characterName: Soldado 1
+    Message: Texto 1
+    Children:
+    - Id: 45170e0c-1f72-4b72-8fd2-4f3ef38001fc
+      characterName: Soldado 1
+      Message: Texto 2
+      Children:
+      - Id: 1ed25707-01d4-4681-98e0-5c439bf509c4
+        characterName: Solado 2
+        Message: Texto 3
+        Children: []
+        onEnterAction: 
+        onExitAction: 
+      onEnterAction: 
+      onExitAction: 
+    onEnterAction: 
+    onExitAction: 
+  id: db8b83ed-2c0b-424c-9a1d-78942b71c8ba
+  characters:
+  - Soldado 1
+  - Solado 2

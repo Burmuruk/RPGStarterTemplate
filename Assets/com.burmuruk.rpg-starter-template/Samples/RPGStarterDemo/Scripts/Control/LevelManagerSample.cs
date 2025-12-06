@@ -15,7 +15,8 @@ namespace Burmuruk.RPGStarterTemplate.Control.Samples
         protected override void Start()
         {
             base.Start();
-            AddItemToDestroy(FindObjectOfType<SavingUI>().gameObject);
+            AddItemToDestroy(FindObjectOfType<SavingUI>(true).gameObject);
+            FindObjectOfType<HUDManager>()?.Init();
         }
 
         public void Update()
@@ -62,6 +63,24 @@ namespace Burmuruk.RPGStarterTemplate.Control.Samples
             gameManager.ExitUI();
             Task.Delay(200).GetAwaiter().OnCompleted(() => savingWrapper.AddNewAutoSaveSlot(CaptureLevelData(), false));
         }
+
+        //public override void Pause()
+        //{
+        //    if (gameManager.Continue())
+        //    {
+        //        pauseMenu.gameObject.SetActive(false);
+        //        Time.timeScale = 1;
+
+        //        HideSavingOptions();
+        //    }
+        //    else if (pauseMenu.gameObject.activeSelf)
+        //    {
+        //        pauseMenu.gameObject.SetActive(false);
+        //        Time.timeScale = 1;
+
+        //        HideSavingOptions();
+        //    }
+        //}
 
         protected override void VerifyScene(Scene scene, LoadSceneMode mode)
         {

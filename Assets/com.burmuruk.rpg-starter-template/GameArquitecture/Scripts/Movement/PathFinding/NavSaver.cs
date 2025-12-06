@@ -197,6 +197,8 @@ namespace Burmuruk.RPGStarterTemplate.Movement.PathFindig
             string sceneName = SceneManager.GetActiveScene().name;
             string path = Path.Combine(Application.streamingAssetsPath, FILE_NAME + "_" + sceneName + ".txt");
 
+            if (!File.Exists(path)) return null;
+
             string[] lines = File.ReadAllLines(path);
             int lineIndex = 0;
 
