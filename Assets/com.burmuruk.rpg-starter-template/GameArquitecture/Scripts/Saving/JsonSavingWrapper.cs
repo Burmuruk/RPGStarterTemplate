@@ -45,8 +45,7 @@ namespace Burmuruk.RPGStarterTemplate.Saving
 
             saver.onSlotLoaded += () =>
             {
-                Movement.PathFindig.NavSaver.Restart();
-                Movement.PathFindig.NavSaver.LoadNavMesh();
+                LoadNavigationMap();
                 TemporalSaver.RemoveAllData();
                 
                 FindObjectOfType<PersistentObjSpawner>()?.TrySpawnObjects();
@@ -57,6 +56,12 @@ namespace Burmuruk.RPGStarterTemplate.Saving
 
             DontDestroyOnLoad(gameObject);
             PersistentObjects.Register(gameObject);
+        }
+
+        protected virtual void LoadNavigationMap()
+        {
+            Movement.PathFindig.NavSaver.Restart();
+            Movement.PathFindig.NavSaver.LoadNavMesh();
         }
 
         /// <summary>
@@ -276,8 +281,7 @@ namespace Burmuruk.RPGStarterTemplate.Saving
 
             yield return SceneManager.LoadSceneAsync(name, LoadSceneMode.Single);
 
-            Movement.PathFindig.NavSaver.Restart();
-            Movement.PathFindig.NavSaver.LoadNavMesh();
+            LoadNavigationMap();
             var spawner = GetComponent<PersistentObjSpawner>();
             spawner.TrySpawnObjects();
             spawner.enabled = false;

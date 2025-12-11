@@ -6,6 +6,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
@@ -30,13 +31,12 @@ namespace Burmuruk.RPGStarterTemplate.Control
         //public static List<Coroutine> activeCoroutines = new();
         public event Action OnNavmeshLoaded;
 
-        private void Awake()
+        protected virtual void Awake()
         {
             savingWrapper = FindObjectOfType<JsonSavingWrapper>();
             //playerManager.OnPlayerAdded += SetPathToCharacter;
 
-            NavSaver.Restart();
-            NavSaver.LoadNavMesh();
+            LoadNavigationMap();
             FindObjectOfType<PickupSpawner>().RegisterCurrentItems();
         }
 
@@ -56,8 +56,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
             StartCoroutine(Autosave());
             DontDestroyOnLoad(gameObject.transform.root);
 
-            NavSaver.Restart();
-            NavSaver.LoadNavMesh();
+            LoadNavigationMap();
             FindAnyObjectByType<LevelManager>().SetPaths();
             UpdatePlayerPosition();
         }
@@ -76,8 +75,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
 
         private void OnLevelWasLoaded(int level)
         {
-            NavSaver.Restart();
-            NavSaver.LoadNavMesh();
+            LoadNavigationMap();
             FindAnyObjectByType<LevelManager>().SetPaths();
             UpdatePlayerPosition();
         }
@@ -132,6 +130,12 @@ namespace Burmuruk.RPGStarterTemplate.Control
         {
             savingWrapper.AddNewAutoSaveSlot(CaptureLevelData(), true);
             gameManager.ExitGame();
+        }
+
+        protected virtual void LoadNavigationMap()
+        {
+            NavSaver.LoadNavMesh();
+            FindAnyObjectByType<LevelManager>().SetPaths();
         }
 
         protected virtual void VerifyScene(Scene scene, LoadSceneMode mode) { }
@@ -258,7 +262,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
             return data;
         }
 
-        IEnumerator Autosave()
+        protected IEnumerator Autosave()
         {
             yield break;
             //while (true)
