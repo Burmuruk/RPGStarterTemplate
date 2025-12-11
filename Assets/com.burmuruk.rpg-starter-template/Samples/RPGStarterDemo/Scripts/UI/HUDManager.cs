@@ -256,7 +256,7 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
             hasInitialized = true;
 
             UpdateSubscripttions();
-            DontDestroyOnLoad(transform.parent.gameObject);
+            DontDestroyOnLoad(transform.root);
         }
 
         public void RestartPlayersTags()

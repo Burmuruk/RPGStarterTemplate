@@ -26,7 +26,6 @@ namespace Burmuruk.RPGStarterTemplate.Control
         List<GameObject> itemsToDestroy = new();
 
         private int slotIdx = 1;
-        private bool initialized = false;
 
         //public static List<Coroutine> activeCoroutines = new();
         public event Action OnNavmeshLoaded;
@@ -55,7 +54,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
             };
 
             StartCoroutine(Autosave());
-            DontDestroyOnLoad(gameObject);
+            DontDestroyOnLoad(gameObject.transform.root);
 
             NavSaver.Restart();
             NavSaver.LoadNavMesh();
