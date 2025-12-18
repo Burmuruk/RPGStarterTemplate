@@ -1,5 +1,6 @@
 ﻿using Burmuruk.RPGStarterTemplate.Control;
 using Burmuruk.RPGStarterTemplate.Movement.PathFindig;
+using Burmuruk.RPGStarterTemplate.UI.Samples;
 using System.IO;
 using UnityEngine;
 
@@ -37,6 +38,13 @@ namespace Burmuruk.RPGStarterTemplate.Saving.Samples
             NavSaver.LoadNavMesh(assetsSamplePath);
             FindAnyObjectByType<LevelManager>()?.SetPaths(); 
 #endif
+        }
+
+        protected override void LoadFinalElements(SlotData data)
+        {
+            SetSlotData(data);
+            FindObjectOfType<HUDManager>().Init();
+            FindObjectOfType<GameManager>()?.SetState(GameManager.State.Playing);
         }
     }
 }
