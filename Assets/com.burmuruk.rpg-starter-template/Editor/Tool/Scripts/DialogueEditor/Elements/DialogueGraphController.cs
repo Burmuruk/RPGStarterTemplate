@@ -125,7 +125,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
             node.OnExecutionChanged += Node_OnExecutionChanged;
             node.OnExecutionChanged += (n, v) =>
             {
-                if (!v) Notify?.Invoke("Unrachable node detected.");
+                if (!v) Notify?.Invoke("Unreachable node detected");
             };
             node.OnSelected += SetTargetNode;
             node.OnDeselected += SetTargetNode;

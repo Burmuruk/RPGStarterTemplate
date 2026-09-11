@@ -18,6 +18,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         VisualElement target;
         bool _enableApplyRequest = false;
         bool? isStatEditable = null;
+        EnumRegistry _registry;
 
         class StatDataUI
         {
@@ -49,6 +50,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         {
             _headers = headers;
             _statsNames = statsNames;
+            _registry = SavingSystem.LoadEnumRegistry();
             ButtonAddStat = container.Q<Button>("btnCancel");
             PMoreOptions = container.Q<VisualElement>("PNewValueControls");
             TxtHeader = container.Q<TextField>("txtHeader");
@@ -79,7 +81,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         private void OnClick_ToggleStat(ChangeEvent<bool> evt)
         {
             EnableContainer(EMStatType.Container, evt.newValue);
-            EMStatType.Value = ModifiableStat.None;
+            EMStatType.Id = EnumRegistry.NoneId;
         }
 
         private void Setup_VariablesList()
@@ -95,7 +97,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             element.LblHeader.text = !IsDisabled(TxtHeader) ? TxtHeader.value : DDFHeader.value;
             element.VariableType = (VariableType)EFType.value;
             element.NameButton.text = TxtName.value;
-            element.Modification.text = EMStatType.Value.ToString();
+            element.Modification.text = EMStatType.Text;
 
             if (!isStatEditable.HasValue)
             {
@@ -231,7 +233,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             }
 
             Highlight(TxtName, false);
-            VariablesList.AddElement(name, EMStatType.Value.ToString());
+            VariablesList.AddElement(name, EMStatType.Text);
             DisableNotification(NotificationType.Creation);
             return true;
         }
@@ -391,24 +393,6 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             ResetValues();
             Update_BtnApply();
             EnableContainer(TxtHeader, false);
-        }
-    }
-
-    public class ElementCreation<T> : ElementCreationUI where T : Enum
-    {
-        private T _type;
-
-        public override Enum Type { get => _type; set => _type = (T)value; }
-
-        public override void SetType(string value)
-        {
-            _type = (T)Enum.Parse(typeof(T), value);
-        }
-
-        public override void Clear()
-        {
-            base.Clear();
-            Type = default(T);
         }
     }
 }

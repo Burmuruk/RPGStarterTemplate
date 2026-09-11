@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b77ef1b6c010ebe438dded9187084dbd, type: 3}
+  m_Name: chainsaw
+  m_EditorClassIdentifier: 
+  m_name: chainsaw
+  m_description: 
+  _type: 4
+  m_sprite: {fileID: 0}
+  pickup: {fileID: 5905903756824079181, guid: eb4acb990e349ca4cb90eab393e1fc08, type: 3}
+  m_capacity: 99
+  _id: -12928
+  m_bodyPart: 8
+  weaponType: 3
+  m_damage: 2
+  m_rateDamage: 2
+  m_minDistance: 2
+  m_maxDistance: 2
+  reloadTime: 2
+  maxAmmo: 2
+  _buffs: []
+  equipment:
+    body: {fileID: 0}
+    spawnPoints: []

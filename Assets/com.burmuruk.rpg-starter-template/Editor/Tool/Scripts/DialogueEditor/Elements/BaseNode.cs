@@ -1,4 +1,4 @@
-﻿using System;
+﻿                         using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -200,8 +200,9 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
                 }
             }
 
-            value = port.direction != Direction.Input && node.IsStartNode;
-            node.MakeStartButton(value);
+            //value = port.direction != Direction.Input && node.IsStartNode;
+            //node.MakeStartButton(value);
+            node.MakeStartButton(node.IsStartNode);
         }
 
         private void Color_StatusButtonDesconnection(BaseNode node, Port port, BaseNode other)

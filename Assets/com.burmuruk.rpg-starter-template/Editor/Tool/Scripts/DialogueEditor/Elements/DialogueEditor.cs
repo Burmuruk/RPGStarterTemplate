@@ -424,10 +424,50 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
 
         public override List<Port> GetCompatiblePorts(Port startPort, NodeAdapter nodeAdapter)
         {
-            return (from nap in ports.ToList()
-                    where nap.direction != startPort.direction && nap.node != startPort.node &&
-                        !nap.connections.Any(p => GetInput(startPort.direction, p).node == startPort.node)
-                    select nap).ToList();
+            return (from port in ports.ToList()
+                    where port.direction != startPort.direction && port.node != startPort.node &&
+                        !port.connections.Any(p => GetInput(startPort.direction, p).node == startPort.node)
+                    select port).ToList();
+        }
+
+        public static bool AreConnected(Port a, Port b)
+        {
+            return AreConnected(a, b) || AreConnected(b, a);
+        }
+
+        public bool IsChild(Port from, Port to)
+        {
+            if (from == null || to == null)
+                return false;
+
+            if (from == to)
+                return true;
+
+            HashSet<Port> visited = new();
+            Stack<Port> stack = new();
+
+            stack.Push(from);
+
+            while (stack.Count > 0)
+            {
+                Port current = stack.Pop();
+
+                if (current == null)
+                    continue;
+
+                if (!visited.Add(current))
+                    continue;
+
+                if (current == to)
+                    return true;
+
+                foreach (var edge in current.connections)
+                {
+                    stack.Push(GetInput(Direction.Output, edge));
+                }
+            }
+
+            return false;
         }
 
         private Port GetInput(Direction direction, Edge edge) =>
