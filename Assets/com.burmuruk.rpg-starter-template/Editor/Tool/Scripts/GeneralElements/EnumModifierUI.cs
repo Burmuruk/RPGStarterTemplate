@@ -1,6 +1,3 @@
-using Burmuruk.RPGStarterTemplate.Stats;
-using Burmuruk.RPGStarterTemplate.Utilities;
-using Microsoft.Win32;
 using System;
 using System.Linq;
 using UnityEditor;
@@ -14,7 +11,6 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
     {
         public const string ContainerName = "EnumModifier";
         EnumRegistry registry;
-        EnumEditor enumEditor = new();
         string _path = null;
         State state = State.None;
 
@@ -35,10 +31,10 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         public VisualElement EnumContainer { get; private set; }
         public VisualElement NewValueContainer { get; private set; }
         public int Id { get => DEnumField.SelectedId; set => DEnumField.SetValue(value); }
-        public string Text 
-        { 
-            get => DEnumField.Value; 
-            private set => DEnumField.SetValue(registry.GetId<T>(value)); 
+        public string Text
+        {
+            get => DEnumField.Value;
+            private set => DEnumField.SetValue(registry.GetId<T>(value));
         }
         private State CurrentState
         {
@@ -51,7 +47,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             }
         }
         private DynamicEnumField DEnumField { get; set; }
-        public DropdownField EnumField { get => DEnumField.DDField; }
+        public DropdownField EnumField => DEnumField.DDField;
 
         public EnumModifierUI(VisualElement container)
         {
@@ -232,7 +228,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         private bool IsNameInUse(string newName)
         {
-            foreach (var name in Enum.GetNames(typeof(T)))
+            foreach (string name in Enum.GetNames(typeof(T)))
             {
                 if (name.ToLower() == newName)
                 {
@@ -272,15 +268,20 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 Highlight(button, shouldHighlight, BorderColour.SpecialChange);
         }
 
-        private Button GetStateButton() => GetStateButton(this.state);
+        private Button GetStateButton()
+        {
+            return GetStateButton(this.state);
+        }
 
-        private Button GetStateButton(State state) =>
-            state switch
+        private Button GetStateButton(State state)
+        {
+            return state switch
             {
                 State.Adding => BtnAddValue,
                 State.Editing => BtnEditValue,
                 _ => null
             };
+        }
 
         public virtual void Clear()
         {

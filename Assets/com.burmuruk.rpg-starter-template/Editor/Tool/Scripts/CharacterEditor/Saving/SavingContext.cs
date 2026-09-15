@@ -3,9 +3,7 @@
     public sealed class SavingContext
     {
         public CreationRepository Creations { get; }
-
         public UnsavedChangesRepository UnsavedChanges { get; }
-
         public EnumRepository Enums { get; }
 
         public SavingContext(CreationRepository creations, UnsavedChangesRepository unsavedChanges, EnumRepository enums)

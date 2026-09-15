@@ -16,9 +16,9 @@ MonoBehaviour:
   m_description: asdf
   _type: 4
   m_sprite: {fileID: 0}
-  pickup: {fileID: 8255543301420538405, guid: f2248ea022625a54087f5f3c46922cc0, type: 3}
+  pickup: {fileID: 2716212408600227579, guid: a9c9f0f447c06784e9a0eb84c466e0a8, type: 3}
   m_capacity: 2
-  _id: -13054
+  _id: -4038
   m_bodyPart: 0
   weaponType: 1
   m_damage: 1

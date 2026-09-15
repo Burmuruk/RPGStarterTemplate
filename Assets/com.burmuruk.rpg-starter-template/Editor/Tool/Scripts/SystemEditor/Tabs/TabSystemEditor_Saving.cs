@@ -160,43 +160,43 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 
         private void OnAccept_SavingBtn()
         {
-            if (EditorUtility.DisplayDialog("Enum modification",
-                        "This function is not compleate yet. Continue may produce unexpected errors",
-                        "continue", "cancel"))
-            { }
-            else
-                return;
+            //if (EditorUtility.DisplayDialog("Enum modification",
+            //            "This function is not compleate yet. Continue may produce unexpected errors",
+            //            "continue", "cancel"))
+            //{ }
+            //else
+            //    return;
 
-            var enumEditor = new EnumEditor();
-            List<string> newValues = new();
+            //var enumEditor = new EnumEditor();
+            //List<string> newValues = new();
 
-            foreach (var textFiel in savingTxtFields)
-            {
-                if (string.IsNullOrEmpty(textFiel.value))
-                    continue;
+            //foreach (var textFiel in savingTxtFields)
+            //{
+            //    if (string.IsNullOrEmpty(textFiel.value))
+            //        continue;
 
-                newValues.Add(textFiel.value.Trim());
-            }
+            //    newValues.Add(textFiel.value.Trim());
+            //}
 
-            if (newValues.Count > 0)
-            {
-                Notify("No changes found.", BorderColour.Success, NotificationType.System);
-                return;
-            }
+            //if (newValues.Count > 0)
+            //{
+            //    Notify("No changes found.", BorderColour.Success, NotificationType.System);
+            //    return;
+            //}
 
-            try
-            {
-                if (enumEditor.SetValues(typeof(SavingExecution).Name, _path, newValues.ToArray()))
-                {
-                    ClearSavingValues();
-                    EnableSavingButtons(false);
-                    Notify("Changes applied.", BorderColour.Success, NotificationType.System);
-                }
-            }
-            catch (InvalidDataExeption e)
-            {
-                Notify(e.Message, BorderColour.Error, NotificationType.System);
-            }
+            //try
+            //{
+            //    if (enumEditor.SetValues(typeof(SavingExecution).Name, _path, newValues.ToArray()))
+            //    {
+            //        ClearSavingValues();
+            //        EnableSavingButtons(false);
+            //        Notify("Changes applied.", BorderColour.Success, NotificationType.System);
+            //    }
+            //}
+            //catch (InvalidDataExeption e)
+            //{
+            //    Notify(e.Message, BorderColour.Error, NotificationType.System);
+            //}
         }
 
         private void OnCanceled_SavingBtn()

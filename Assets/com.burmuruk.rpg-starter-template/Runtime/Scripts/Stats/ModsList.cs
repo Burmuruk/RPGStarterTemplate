@@ -1,4 +1,4 @@
-﻿using Burmuruk.RPGStarterTemplate.Control;
+using Burmuruk.RPGStarterTemplate.Control;
 using System;
 using System.Collections.Generic;
 
@@ -150,13 +150,14 @@ namespace Burmuruk.RPGStarterTemplate.Stats
 
     public enum ModifiableStat
     {
-        None,
-        HP,
-        Speed,
-        BaseDamage,
-        GunDamage,
-        GunFireRate,
-        MinDistance
+    	None = 0,
+    	HP = 1,
+    	Speed = 2,
+    	BaseDamage = 3,
+    	GunDamage = 4,
+    	GunFireRate = 5,
+    	MinDistance = 6,
+    	TestBuff = 7,
     }
 
     public enum ModsType

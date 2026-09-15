@@ -16,8 +16,8 @@ MonoBehaviour:
   m_description: basic armour expantion
   _type: 5
   m_sprite: {fileID: 0}
-  pickup: {fileID: 6235018416511242327, guid: c17b20abe0bc19b41a89ccfa5c947ae1, type: 3}
+  pickup: {fileID: 4665468970246912988, guid: e3dbbe0fd764b7c4982a904f5b421d8e, type: 3}
   m_capacity: 99
-  _id: -13180
-  m_bodyPart: 10
+  _id: -4164
+  m_bodyPart: 9
   modifications: []

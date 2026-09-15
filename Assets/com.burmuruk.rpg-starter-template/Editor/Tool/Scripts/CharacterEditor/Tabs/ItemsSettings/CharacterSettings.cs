@@ -4,11 +4,15 @@ using Burmuruk.RPGStarterTemplate.Stats;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using UnityEditor;
+using UnityEditor.Compilation;
+using UnityEditor.PackageManager;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -407,13 +411,14 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 updatedText = ModSetupEditor.RenameModChanges(updatedText, mods.edit);
                 updatedText = ModSetupEditor.AddMods(updatedText, mods.add);
                 File.WriteAllText(path, updatedText);
-                AssetDatabase.SaveAssets();
             }
 
-
             Change_StatsNames(stats);
-            AssetDatabase.SaveAssets();
+
+            SavingSystem.SaveEnumRegistry(_enumRegistry);
+            _enumRegistry.ApplyEnums();
             AssetDatabase.Refresh();
+            CompilationPipeline.RequestScriptCompilation();
         }
 
         private void Get_Changes(List<ModChange> newStats, out ModChanges mods, out StatChanges stats)
@@ -1089,7 +1094,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             toggle = new Toggle()
             {
                 text = "",
-                tooltip = $"Acción personalizada para {name}"
+                tooltip = "Allows this variable to be modified by buffs. The required code will be generated automatically."
             };
 
             toggle.RegisterValueChangedCallback(evt => OnEnable_StatToggle(evt, idx));
@@ -1128,9 +1133,10 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 Utilities.UtilitiesUI.Set_Tooltip(element.Key, element.Value, false);
 
             ComponentsList.Clear();
-            subTabs[CharacterTab.Inventory].Clear();
-            subTabs[CharacterTab.Equipment].Clear();
-            subTabs[CharacterTab.Health].Clear();
+            foreach (var subTab in subTabs.Where(s => s.Key != CharacterTab.None).Select(s => s.Value))
+            {
+                subTab.Clear();
+            }
 
             CloseWindows();
             _lastTab = CharacterTab.None;
@@ -1198,12 +1204,20 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
                     if (subTabs.ContainsKey(tabType) && subTabs[tabType] != null)
                     {
-                        result &= isValid = subTabs[tabType].VerifyData(out var tabErrors);
-                        SetComponent_ErrorBorder(component, !isValid);
+                        result &= isValid = Verify_TabData(tabType, component, out var tabErrors);
                         errors.AddRange(tabErrors);
                     }
                 }
             }
+        }
+
+        private bool Verify_TabData(CharacterTab tabType, ListElementUI<ComponentType> component, out List<string> tabErrors)
+        {
+            bool isValid = subTabs[tabType].VerifyData(out tabErrors);
+
+            if (component != null)
+                SetComponent_ErrorBorder(component, !isValid);
+            return isValid;
         }
 
         public override ModificationTypes Check_Changes()
@@ -1330,10 +1344,13 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 return false;
             }
 
-            if (_creationsState == CreationsState.Editing && Check_Changes() == ModificationTypes.None)
+            if (_creationsState == CreationsState.Editing)
             {
-                Notify("No changes were found", BorderColour.HighlightBorder);
-                return false;
+                if (Check_Changes() == ModificationTypes.None)
+                {
+                    Notify("No changes were found", BorderColour.HighlightBorder);
+                    return false;
+                }
             }
             else
                 CurModificationType = ModificationTypes.Add;
@@ -1389,8 +1406,10 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             for (int i = 1; i < Enum.GetValues(typeof(CharacterTab)).Length; i++)
             {
                 EnableContainer(subTabs[(CharacterTab)i].Instance, false);
+                EnableTab((CharacterTab)i, false);
             }
 
+            _lastTab = curTab;
             curTab = CharacterTab.None;
         }
 
@@ -1606,9 +1625,31 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 return;
 
             EnableContainer(subTabs[curTab].Instance, false);
+            EnableTab(curTab, false);
             EnableContainer(subTabs[newTab].Instance, true);
+            EnableTab(newTab, true);
+
             _lastTab = newTab;
             curTab = newTab;
+        }
+
+        private void EnableTab(CharacterTab newTab, bool shoudEnable)
+        {
+            if (newTab != CharacterTab.None)
+            {
+                subTabs[newTab].Enable(shoudEnable);
+                var component = ComponentsList.EnabledComponents.FirstOrDefault(c => Get_TabType((ComponentType)c.Type) == newTab);
+                Verify_TabData(newTab, component, out _);
+            }
+            else
+            {
+                foreach (var comp in ComponentsList.EnabledComponents)
+                {
+                    bool hasErrors = !subTabs[Get_TabType((ComponentType)comp.Type)].VerifyData(out _);
+                    string message = hasErrors ? "Possible errors in tab." : "";
+                    Set_Tooltip(comp.NameButton, _highlighted, message, hasErrors);
+                }
+            }
         }
         #endregion
 

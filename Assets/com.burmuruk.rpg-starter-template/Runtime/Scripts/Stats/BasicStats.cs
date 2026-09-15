@@ -13,6 +13,7 @@ namespace Burmuruk.RPGStarterTemplate.Stats
         [Space(), Header("Basic stats")]
         [Utilities.DisallowNegative]
         [SerializeField] public float speed;
+        [SerializeField] public UnityEngine.Vector2 testDir;
         [Utilities.DisallowNegative]
         [SerializeField] public int damage;
         [Utilities.DisallowNegative]
@@ -27,6 +28,10 @@ namespace Burmuruk.RPGStarterTemplate.Stats
         [SerializeField] public float closeDetection;
         [Utilities.DisallowNegative]
         [SerializeField] public float minDistance;
+
+
+        [Space(), Header("testHeader")]
+        [SerializeField] public float testAmount;
 
 [Serializable]
         public struct Slot

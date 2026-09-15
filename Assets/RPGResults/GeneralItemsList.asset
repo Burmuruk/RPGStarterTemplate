@@ -13,8 +13,13 @@ MonoBehaviour:
   m_Name: GeneralItemsList
   m_EditorClassIdentifier: 
   _items:
-  - {fileID: 11400000, guid: 175fe3c78e83207429be515a7ac1d70f, type: 2}
-  - {fileID: 11400000, guid: 449520cb4768cf94bad34d07c62afd17, type: 2}
-  - {fileID: 11400000, guid: 5ba01c870d3eef74785096dd2ec75cb3, type: 2}
-  - {fileID: 11400000, guid: 75d5ab7c5a8d03a429868d7724c3ba74, type: 2}
-  - {fileID: 11400000, guid: 255a923844a52a94baa78ed3e1b04544, type: 2}
+  - {fileID: 11400000, guid: 1f3b38362d4feee489c8420617940342, type: 2}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 11400000, guid: 1f3b38362d4feee489c8420617940342, type: 2}
+  - {fileID: 11400000, guid: b9bd4fe2ed1faf046b9d4cd4f3f1ad69, type: 2}
+  - {fileID: 11400000, guid: ef745a4c7d565f44ab210d070d3733f1, type: 2}
+  - {fileID: 11400000, guid: 06ba4d323d12df840a5168fe95916fde, type: 2}
+  - {fileID: 11400000, guid: 46349abac533d7f4c9ea5a6c7d78c436, type: 2}

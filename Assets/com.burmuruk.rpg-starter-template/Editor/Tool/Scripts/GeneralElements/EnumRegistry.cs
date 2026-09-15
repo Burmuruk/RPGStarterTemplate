@@ -1,6 +1,10 @@
-﻿using System;
+﻿using Burmuruk.RPGStarterTemplate.Editor.Saving;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
+using UnityEditor;
 
 namespace Burmuruk.RPGStarterTemplate.Editor
 {
@@ -24,6 +28,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
     {
         public string enumType;
         public int nextId;
+        public bool hasChanges;
         public List<EnumEntry> entries = new();
 
         public EnumDefinition(string enumType)
@@ -35,9 +40,12 @@ namespace Burmuruk.RPGStarterTemplate.Editor
     [Serializable]
     public class EnumRegistry
     {
+        private readonly EnumEditor enumEditor = new();
         public const int NoneId = 0;
-
+        public bool waitingForCompilation;
         public List<EnumDefinition> definitions = new();
+
+        public bool HasChanges => definitions.Any(x => x.hasChanges);
 
         public IReadOnlyList<EnumEntry> GetEntries<T>() where T : Enum
         {
@@ -93,6 +101,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             EnumEntry entry = new(definition.nextId++, name, definition.entries.Count);
 
             definition.entries.Add(entry);
+            definition.hasChanges = true;
 
             Notify(enumType, ModificationTypes.Add);
 
@@ -111,7 +120,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             ValidateName(definition, newName, id);
 
             definition.entries[idx] = definition.entries[idx] with { Name = newName };
-            //definition.entries[idx].Name = newName;
+            definition.hasChanges = true;
 
             Notify(enumType, ModificationTypes.Rename);
         }
@@ -129,6 +138,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
                 return;
 
             definition.entries.Remove(entry);
+            definition.hasChanges = true;
 
             UpdateOrders(definition);
 
@@ -156,6 +166,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             ordered.Insert(newIndex, entry);
 
             definition.entries = ordered;
+            definition.hasChanges = true;
 
             UpdateOrders(definition);
 
@@ -170,6 +181,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
                 return;
 
             definitions.Remove(definition);
+            definition.hasChanges = true;
 
             Notify(enumType, ModificationTypes.EditData);
         }
@@ -241,5 +253,76 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 
             SavingSystem.SaveEnumRegistry(this);
         }
+
+        #region Apply
+        public bool ApplyEnums()
+        {
+            bool result = false;
+
+            foreach (EnumDefinition definition in definitions)
+            {
+                UnityEngine.Debug.Log(
+                    $"Enum: {definition.enumType}, " +
+                    $"hasChanges: {definition.hasChanges}, " +
+                    $"opciones: {string.Join(", ", definition.entries.Select(e => e.Name))}");
+
+                if (!definition.hasChanges)
+                    continue;
+
+                Type type = Type.GetType(definition.enumType);
+
+                if (type == null)
+                    throw new InvalidOperationException(
+                        $"No se pudo resolver el enum: {definition.enumType}");
+
+                string path = FindEnumPath(type);
+
+                if (string.IsNullOrEmpty(path))
+                    throw new InvalidOperationException(
+                        $"No se encontró el script del enum: {type.FullName}");
+
+                UnityEngine.Debug.Log($"Escribiendo {type.FullName} en: {path}");
+
+                if (!enumEditor.SetValues(type.Name, path, definition.entries))
+                {
+                    throw new InvalidOperationException(
+                        $"No se pudo actualizar el enum {type.FullName} en {path}");
+                }
+
+                result = true;
+            }
+
+            return result;
+        }
+
+        private string FindEnumPath(Type type)
+        {
+            string pattern = $@"\benum\s+{Regex.Escape(type.Name)}\b";
+            var matches = new List<string>();
+
+            foreach (string guid in AssetDatabase.FindAssets("t:Script"))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+
+                if (!path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)
+                    || !File.Exists(path))
+                    continue;
+
+                string content = File.ReadAllText(path);
+
+                if (Regex.IsMatch(content, pattern))
+                    matches.Add(path);
+            }
+
+            if (matches.Count > 1)
+            {
+                throw new InvalidOperationException(
+                    $"Hay varias declaraciones candidatas para {type.FullName}:\n" +
+                    string.Join("\n", matches));
+            }
+
+            return matches.Count == 1 ? matches[0] : null;
+        }
+        #endregion
     }
 }

@@ -45,41 +45,38 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             CreateSplitViewEquipment(InfoBodyPlacement);
 
             MClEquipmentElements = new(_instance.Q<VisualElement>(ComponentsList.CONTAINER_NAME));
-            UIParts.OnChoicesChanged += VerifyEquippedItems;
+            UIParts.OnChoicesChanged += _ => VerifyEquippedItems();
             Setup_ComponentsList();
             RegisterToChanges();
         }
 
-        private void VerifyEquippedItems(List<string> placesTaken)
+        private bool VerifyEquippedItems()
         {
             if (_isLoading)
-                return;
+                return true;
 
-            foreach (var item in MClEquipmentElements.Components)
+            bool result = true;
+
+            foreach (var element in MClEquipmentElements.EnabledComponents)
             {
-                if (IsDisabled(item.element))
+                var field = element.GetComponent<ListElementTypedUI<ElementType, EquipmentType>>();
+
+                if (field == null)
                     continue;
 
-                var equipable = ItemDataConverter.GetItem((ElementType)item.Type, item.Id) as EquipeableItem;
+                var item = ItemDataConverter.GetItem((ElementType)element.Type, element.Id) as EquipeableItem;
 
-                try
+                var requiredPlace = (EquipmentType)item.GetEquipLocation();
+
+                if (requiredPlace == EquipmentType.None)
                 {
-                    var requiredPlace = (EquipmentType)equipable.GetEquipLocation();
-
-                    string requiredPlaceName = _enumRegistry.GetName<EquipmentType>((int)requiredPlace) ?? "None";
-                    if (requiredPlace != EquipmentType.None && placesTaken.Contains(requiredPlaceName))
-                    {
-                        Set_Tooltip(item.element, _highlighted, "There's no spawn point for: " + requiredPlaceName, true);
-                        Notify(item.element.tooltip, BorderColour.HighlightBorder);
-                        continue;
-                    }
-
-                    Set_Tooltip(item.element, _highlighted, highlight: false);
+                    requiredPlace = (EquipmentType)field.DynamicEnumField.SelectedId;
                 }
-                catch (NullReferenceException)
-                {
-                }
+
+                result &= Verify_Placement(element, requiredPlace);
             }
+
+            return result;
         }
 
         private void Setup_ComponentsList()
@@ -157,7 +154,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             EnableContainer(element.RemoveButton, false);
             element.Toggle.RegisterValueChangedCallback((evt) => OnValueChanged_TglEquipment(evt.newValue, elementRef));
             var equipmentField = element.GetComponent<ListElementTypedUI<ElementType, EquipmentType>>();
-            equipmentField.EnumField.RegisterValueChangedCallback((evt) => OnValueChanged_EFEquipment(equipmentField.DynamicEnumField.SelectedId, elementRef));
+            equipmentField.DynamicEnumField.SelectionChanged += id => OnValueChanged_EFEquipment(id, element);
             element.NameButton.SetEnabled(false);
             element.NameButton.style.marginRight = 15;
             equipmentField.EnumField.style.marginLeft = 15;
@@ -190,11 +187,14 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         private void OnValueChanged_EFEquipment(int newValue, EquipmentListElement element)
         {
-            var equipmentField = element.GetComponent<ListElementTypedUI<ElementType, EquipmentType>>();
-            if (Verify_Placement(element, (EquipmentType)newValue) && newValue == EnumRegistry.NoneId)
+            if (_isLoading) return;
+
+            Verify_Placement(element, (EquipmentType)newValue);
+
+            if (newValue == EnumRegistry.NoneId)
             {
                 element.Toggle.SetValueWithoutNotify(false);
-                equipmentField.DynamicEnumField.SetEnabled(false);
+                element.GetComponent<ListElementTypedUI<ElementType, EquipmentType>>()?.DynamicEnumField.SetEnabled(false);
             }
         }
 
@@ -211,33 +211,31 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
             Set_Tooltip(element.element, _highlighted, highlight: false);
 
-            element.GetComponent<ListElementTypedUI<ElementType, EquipmentType>>()?.DynamicEnumField.SetEnabled(newValue && Verify_Placement(element, place));
+            element.GetComponent<ListElementTypedUI<ElementType, EquipmentType>>()?.
+                DynamicEnumField.SetEnabled(newValue && (int)(EquipmentType)item.GetEquipLocation() == EnumRegistry.NoneId);
+
+            Verify_Placement(element, place);
         }
 
         private bool Verify_Placement(EquipmentListElement element, EquipmentType place)
         {
+            if (_isLoading) return true;
+
             Set_Tooltip(element.element, _highlighted, highlight: false);
 
             if (place == EquipmentType.None)
-            {
                 return true;
-            }
 
-            var points = UIParts.GetInfo();
+            bool exists = UIParts.GetInfo().Any(point => point.transform != null && (int)point.type == (int)place);
 
-            foreach (var point in points)
-            {
-                if (point.type == place)
-                {
-                    return true;
-                }
-            }
+            if (exists)
+                return true;
 
-            string placeName = _enumRegistry.GetName<EquipmentType>((int)place) ?? "None";
+            string placeName = _enumRegistry.GetName<EquipmentType>((int)place) ?? $"ID {(int)place}";
+
             Set_Tooltip(element.element, _highlighted, "There's no spawn point for: " + placeName);
-            if (!_isLoading)
-                Notify(element.element.tooltip, BorderColour.HighlightBorder);
 
+            //Notify(element.element.tooltip, BorderColour.HighlightBorder);
             return false;
         }
 
@@ -486,27 +484,23 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         {
             var model = OFModel.value as GameObject;
 
-            if (!OFModel.value)
+            if (model == null || t == null)
                 return null;
 
-            if (t != null ? t.gameObject : null == model)
-                return "";
+            var names = new List<string>();
+            Transform current = t;
 
-            int i = 0;
-            string path = t.name;
-            var cur = t.parent;
-
-            while (cur != null ? cur.gameObject : null != null && cur.gameObject != model && i < 10)
+            while (current != null && current != model.transform)
             {
-                path = cur.name + "/" + path;
-                cur = cur.parent;
-                ++i;
+                names.Add(current.name);
+                current = current.parent;
             }
 
-            //if (cur.gameObject != model)
-            //    path = null;
+            if (current == null)
+                return null;
 
-            return path;
+            names.Reverse();
+            return string.Join("/", names);
         }
 
         public void LoadEquipment(in Equipment equipment, in GameObject model, ComponentsList<ListElementUI<ElementType>> inventory)
@@ -634,25 +628,39 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         public override void Clear()
         {
-            OFModel.value = null;
-            UIParts.Clear();
-            EMBodyPart.Clear();
-            TVBodyParts.Clear();
+            bool wasLoading = _isLoading;
+            _isLoading = true;
 
-            foreach (var item in MClEquipmentElements.Components)
+            try
             {
-                if (!IsDisabled(item.Toggle))
+                MClEquipmentElements.Clear();
+                _itemsIds.Clear();
+
+                foreach (var item in MClEquipmentElements.Components)
                 {
-                    item.Toggle.value = false;
+                    item.Toggle.SetValueWithoutNotify(false);
+
                     item.GetComponent<ListElementTypedUI<ElementType, EquipmentType>>()?.DynamicEnumField.Clear();
                 }
-            }
 
-            _changes = null;
-            _inventory = null;
-            foreach (var item in _highlighted)
-                Set_Tooltip(item.Key, item.Value, false);
-            _highlighted.Clear();
+                OFModel.SetValueWithoutNotify(null);
+                UIParts.Clear();
+                EMBodyPart.Clear();
+                TVBodyParts.Clear();
+
+                _changes = null;
+                _inventory = null;
+
+                // Set_Tooltip podría modificar _highlighted.
+                foreach (var item in _highlighted.ToList())
+                    Set_Tooltip(item.Key, item.Value, false);
+
+                _highlighted.Clear();
+            }
+            finally
+            {
+                _isLoading = wasLoading;
+            }
         }
 
         public override void Remove_Changes()
@@ -670,6 +678,8 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
             result &= UIParts.VerifyData(out var partsErrors);
             errors.AddRange(partsErrors);
+
+            result &= VerifyEquippedItems();
 
             return result;
         }

@@ -135,7 +135,8 @@ namespace Burmuruk.RPGStarterTemplate.Control
             ModsList.AddVariable((Character)this, ModifiableStat.BaseDamage, () => stats.damage, (value) => { stats.damage = (int)value; });
             ModsList.AddVariable((Character)this, ModifiableStat.GunFireRate, () => stats.damageRate, (value) => { stats.damageRate = value; });
             ModsList.AddVariable((Character)this, ModifiableStat.MinDistance, () => stats.minDistance, (value) => { stats.minDistance = value; });
-        
+            ModsList.AddVariable((Character)this, ModifiableStat.TestBuff, () => stats.testAmount, (value) => { stats.testAmount = value; });
+            ModsList.AddVariable((Character)this, ModifiableStat.TestBuff, () => stats.farDectection, (value) => { stats.farDectection = (int)value; });
 }
 
         public virtual void SetStats(BasicStats newStats)

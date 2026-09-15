@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1001 &2593620836928147878
+--- !u!1001 &8421199445223171448
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -62,7 +62,7 @@ PrefabInstance:
         type: 3}
       propertyPath: inventoryItem
       value: 
-      objectReference: {fileID: 11400000, guid: 75d5ab7c5a8d03a429868d7724c3ba74,
+      objectReference: {fileID: 11400000, guid: 06ba4d323d12df840a5168fe95916fde,
         type: 2}
     - target: {fileID: 8276199979495380523, guid: c711a927548baeb49b666c4bb0fb1e6e,
         type: 3}
