@@ -62,8 +62,10 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             EMStatType = new EnumModifierUI<ModifiableStat>(container.Q<VisualElement>("TypeAdder"));
             VariablesList = new ComponentsList<ElementStatVariable>(container, _elementPath);
 
+            EMStatType.Name.text = "Buff";
             Setup_VariablesList();
             EFType.Init(VariableType.@int);
+            EFType.RegisterValueChangedCallback(OnValueChanged_EFType);
             Setup_DDFHeader();
 
             EnableContainer(PMoreOptions, false);
@@ -73,9 +75,25 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             TxtName.RegisterCallback<KeyUpEvent>(OnKeyUp_TxtName);
             ButtonAddStat.clicked += OnClick_CancelButton;
             TglEditStat.RegisterValueChangedCallback(OnClick_ToggleStat);
+            TglEditStat.tooltip = "Allows this variable to be modified by buffs. The required code will be generated automatically.";
             EnableContainer(EMStatType.Container, false);
 
             ShowElements(false);
+        }
+
+        private void OnValueChanged_EFType(ChangeEvent<Enum> evt)
+        {
+            bool shouldEnable = (VariableType)evt.newValue switch
+            {
+                VariableType.@int => true,
+                VariableType.@float => true,
+                VariableType.@double => true,
+                _ => false
+            };
+            EnableContainer(EFType, shouldEnable);
+
+            if (!shouldEnable)
+                EFType.SetValueWithoutNotify(VariableType.None);
         }
 
         private void OnClick_ToggleStat(ChangeEvent<bool> evt)
@@ -233,7 +251,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             }
 
             Highlight(TxtName, false);
-            VariablesList.AddElement(name, EMStatType.Text);
+            VariablesList.AddElement(name, EMStatType.DEnumField.SelectedId);
             DisableNotification(NotificationType.Creation);
             return true;
         }

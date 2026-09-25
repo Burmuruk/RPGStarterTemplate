@@ -68,6 +68,12 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
             SetSlotColour(Color.white);
         }
 
+        private void OnLevelWasLoaded(int level)
+        {
+            if (level == 0)
+                ShowMenu(true);
+        }
+
         public void ToggleSlots()
         {
             ShowSlots(!slotsContainer.activeSelf);
@@ -127,6 +133,7 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
             if (slotsCount >= 3)
             {
                 btnAddMore.SetActive(false);
+                btnLoad.SetActive(true);
             }
             else if (slotsCount > 0)
             {

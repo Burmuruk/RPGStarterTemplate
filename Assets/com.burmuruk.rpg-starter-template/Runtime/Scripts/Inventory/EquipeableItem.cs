@@ -1,8 +1,6 @@
 ﻿using Burmuruk.RPGStarterTemplate.Control;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using UnityEngine;
 
 namespace Burmuruk.RPGStarterTemplate.Inventory
 {
@@ -13,16 +11,14 @@ namespace Burmuruk.RPGStarterTemplate.Inventory
 
         public event Action<Character, EquipeableItem> OnUnequiped;
 
-        public int MaxCount { get => maxCount; }
-        public bool IsEquip { get => characters.Count > 0; }
+        public int MaxCount => maxCount;
+        public bool IsEquip => characters.Count > 0;
         public List<Character> Characters
         {
             get
             {
-                if (characters != null && characters.Count > 0 && characters[0] == null)
-                {
-                    characters.Clear();
-                }
+                characters ??= new List<Character>();
+                characters.RemoveAll(character => character == null);
 
                 return characters;
             }
@@ -36,7 +32,7 @@ namespace Burmuruk.RPGStarterTemplate.Inventory
                 this.characters = new List<Character>();
         }
 
-        public EquipeableItem(int count, params Character[] characters) : this (characters)
+        public EquipeableItem(int count, params Character[] characters) : this(characters)
         {
             this.maxCount = count;
         }
@@ -45,13 +41,17 @@ namespace Burmuruk.RPGStarterTemplate.Inventory
 
         public virtual void Equip(Character character)
         {
-            characters.Add(character);
+            if (character == null)
+                return;
+
+            if (!characters.Contains(character))
+                characters.Add(character);
         }
 
         public virtual void Unequip(Character character)
         {
-            characters.Remove(character);
-            OnUnequiped?.Invoke(character, this);
+            if (characters.Remove(character))
+                OnUnequiped?.Invoke(character, this);
         }
     }
 }

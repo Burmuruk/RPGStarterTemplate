@@ -106,5 +106,17 @@ namespace Burmuruk.RPGStarterTemplate.Inventory
 
             return null;
         }
+
+        public void ClearPart(int part)
+        {
+            if (_parts == null)
+                Initilize();
+
+            if (part == 0)
+                return;
+
+            _parts[part] = (GetSpawnPoint(part), null, new List<EquipeableItem>()
+            );
+        }
     }
 }

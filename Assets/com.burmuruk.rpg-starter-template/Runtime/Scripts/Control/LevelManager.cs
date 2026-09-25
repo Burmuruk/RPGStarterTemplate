@@ -119,7 +119,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
 
         public void GoToMainMenu()
         {
-            savingWrapper.AddNewAutoSaveSlot(CaptureLevelData(), true);
+            savingWrapper.AddNewAutoSaveSlot(CaptureLevelData(), false);
 
             itemsToDestroy.ForEach(obj => Destroy(obj));
             gameManager.GoToMainMenu();
@@ -128,7 +128,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
 
         public void ExitGame()
         {
-            savingWrapper.AddNewAutoSaveSlot(CaptureLevelData(), true);
+            savingWrapper.AddNewAutoSaveSlot(CaptureLevelData(), false);
             gameManager.ExitGame();
         }
 

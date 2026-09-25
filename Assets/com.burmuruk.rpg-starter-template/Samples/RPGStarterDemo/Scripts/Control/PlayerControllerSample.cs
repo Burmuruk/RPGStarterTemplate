@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Burmuruk.RPGStarterTemplate.Inventory;
+using Burmuruk.RPGStarterTemplate.Stats;
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -78,6 +80,21 @@ namespace Burmuruk.RPGStarterTemplate.Control.Samples
                 default:
                     break;
             }
+        }
+
+        protected void ConsumeItem()
+        {
+            var items = (player.Inventory as InventoryEquipDecorator).Equipped.GetItems((int)EquipmentLocation.Items);
+
+            if (items == null || items.Count == 0)
+                return;
+
+            (items[0] as ConsumableItem).Use(player, null, null);
+        }
+
+        protected void ChangeItem(int v)
+        {
+
         }
     }
 }

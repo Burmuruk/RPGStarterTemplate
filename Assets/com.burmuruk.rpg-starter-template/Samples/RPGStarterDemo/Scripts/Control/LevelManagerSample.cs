@@ -40,7 +40,7 @@ namespace Burmuruk.RPGStarterTemplate.Control.Samples
 
         public void ChangeMenu()
         {
-            savingWrapper.AddNewAutoSaveSlot(CaptureLevelData(), true);
+            savingWrapper.AddNewAutoSaveSlot(CaptureLevelData(), false);
 
             gameManager.EnableUI(true);
             SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);

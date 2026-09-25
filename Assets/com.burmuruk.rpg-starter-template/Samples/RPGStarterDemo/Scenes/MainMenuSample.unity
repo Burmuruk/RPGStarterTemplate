@@ -3173,6 +3173,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b80530c9a97f45242ac78d4f118ea033, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  reloadScene: 1
 --- !u!4 &326100392
 Transform:
   m_ObjectHideFlags: 0
@@ -4551,6 +4552,89 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
   id: 0
+--- !u!1001 &504529473
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 993f05239fe266e419493711216d6253,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.37271333
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 993f05239fe266e419493711216d6253,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 993f05239fe266e419493711216d6253,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.08734888
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 993f05239fe266e419493711216d6253,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 993f05239fe266e419493711216d6253,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 993f05239fe266e419493711216d6253,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 993f05239fe266e419493711216d6253,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 993f05239fe266e419493711216d6253,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 993f05239fe266e419493711216d6253,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 993f05239fe266e419493711216d6253,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 993f05239fe266e419493711216d6253,
+        type: 3}
+      propertyPath: m_Name
+      value: Sword And Shield Slash
+      objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: 993f05239fe266e419493711216d6253,
+        type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 0532e447df16b1546a0645b89fec2ce6, type: 2}
+    - target: {fileID: 5866666021909216657, guid: 993f05239fe266e419493711216d6253,
+        type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6340470073509001594, guid: 993f05239fe266e419493711216d6253,
+        type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 276803c2052a25b4cabecb11fbb29e69, type: 2}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 993f05239fe266e419493711216d6253, type: 3}
 --- !u!1 &551832401
 GameObject:
   m_ObjectHideFlags: 0
@@ -22356,7 +22440,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mainMenu: {fileID: 0}
-  creditsAnimator: {fileID: 0}
+  creditsAnimator: {fileID: 1898995775882045031}
   onMenuOpened:
     m_PersistentCalls:
       m_Calls: []
@@ -22367,3 +22451,4 @@ SceneRoots:
   - {fileID: 1610474531}
   - {fileID: 71509252}
   - {fileID: 326100392}
+  - {fileID: 504529473}

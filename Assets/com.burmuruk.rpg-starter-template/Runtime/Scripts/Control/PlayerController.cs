@@ -253,20 +253,6 @@ namespace Burmuruk.RPGStarterTemplate.Control
             }
         }
 
-        protected void ConsumeItem()
-        {
-            var items = (player.Inventory as InventoryEquipDecorator).Equipped.GetItems((int)EquipmentLocation.Items);
-
-            if (items == null || items.Count == 0) return;
-
-            (items[0] as ConsumableItem).Use(player, null, null);
-        }
-
-        protected void ChangeItem(int v)
-        {
-            throw new NotImplementedException();
-        }
-
         protected Collider DetectEnemyInMouse()
         {
             if (!player || gameManager.GameState != GameManager.State.Playing) return null;

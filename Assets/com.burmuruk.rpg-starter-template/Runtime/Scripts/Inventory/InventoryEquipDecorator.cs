@@ -52,10 +52,14 @@ namespace Burmuruk.RPGStarterTemplate.Inventory
         public bool TryEquip(Character player, InventoryItem item, out List<EquipeableItem> unequippedItems)
         {
             unequippedItems = null;
-            if (item == null) return false;
+            if (item == null || !(item is EquipeableItem equiped)) 
+                return false;
 
-            var equiped = (EquipeableItem)item;
-            if (equiped.Characters.Contains(player)) return false;
+            if (equiped.Characters.Contains(player))
+            {
+                UpdateModel(player, equiped);
+                return false;
+            }
 
             _alarmedEquipItem = (player, (EquipeableItem)item);
 

@@ -1,9 +1,10 @@
-﻿using Burmuruk.RPGStarterTemplate.Editor.Saving;
+﻿using System.IO;
+using System.Text.RegularExpressions;
+using Burmuruk.RPGStarterTemplate.Editor.Controls;
+using Burmuruk.RPGStarterTemplate.Editor.Saving;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using UnityEditor;
 
 namespace Burmuruk.RPGStarterTemplate.Editor
@@ -257,71 +258,63 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         #region Apply
         public bool ApplyEnums()
         {
-            bool result = false;
-
-            foreach (EnumDefinition definition in definitions)
+            var pending = definitions.Where(d => d.hasChanges).ToList();
+            var paths = new Dictionary<EnumDefinition, string>();
+            foreach (var definition in pending)
             {
-                UnityEngine.Debug.Log(
-                    $"Enum: {definition.enumType}, " +
-                    $"hasChanges: {definition.hasChanges}, " +
-                    $"opciones: {string.Join(", ", definition.entries.Select(e => e.Name))}");
-
-                if (!definition.hasChanges)
-                    continue;
-
                 Type type = Type.GetType(definition.enumType);
-
                 if (type == null)
-                    throw new InvalidOperationException(
-                        $"No se pudo resolver el enum: {definition.enumType}");
-
-                string path = FindEnumPath(type);
-
-                if (string.IsNullOrEmpty(path))
-                    throw new InvalidOperationException(
-                        $"No se encontró el script del enum: {type.FullName}");
-
-                UnityEngine.Debug.Log($"Escribiendo {type.FullName} en: {path}");
-
-                if (!enumEditor.SetValues(type.Name, path, definition.entries))
-                {
-                    throw new InvalidOperationException(
-                        $"No se pudo actualizar el enum {type.FullName} en {path}");
-                }
-
-                result = true;
+                    throw new InvalidOperationException($"Cannot resolve enum: {definition.enumType}");
+                paths.Add(definition, FindEnumPath(type));
             }
 
-            return result;
+            var updates = ModStatReferences.PrepareUpdates(this);
+            var originals = updates.Keys.Concat(paths.Values).Distinct()
+                .ToDictionary(path => path, File.ReadAllText);
+            try
+            {
+                // References first: an enum may be declared in the same file.
+                // No Refresh here; the caller requests compilation after all writes.
+                foreach (var update in updates)
+                    File.WriteAllText(update.Key, update.Value);
+
+                foreach (var definition in pending)
+                {
+                    Type type = Type.GetType(definition.enumType);
+                    if (!enumEditor.SetValues(type.Name, paths[definition], definition.entries))
+                        throw new InvalidOperationException($"Cannot update enum: {type.FullName}");
+                }
+            }
+            catch
+            {
+                foreach (var original in originals)
+                    File.WriteAllText(original.Key, original.Value);
+                throw;
+            }
+
+            foreach (var definition in pending)
+                definition.hasChanges = false;
+            SavingSystem.SaveEnumRegistry(this);
+            return pending.Count > 0 || updates.Count > 0;
         }
 
         private string FindEnumPath(Type type)
         {
             string pattern = $@"\benum\s+{Regex.Escape(type.Name)}\b";
             var matches = new List<string>();
-
             foreach (string guid in AssetDatabase.FindAssets("t:Script"))
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
-
-                if (!path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)
-                    || !File.Exists(path))
+                if (!path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase) || !File.Exists(path))
                     continue;
-
-                string content = File.ReadAllText(path);
-
-                if (Regex.IsMatch(content, pattern))
+                if (Regex.IsMatch(ModStatReferences.MaskTrivia(File.ReadAllText(path)), pattern))
                     matches.Add(path);
             }
-
-            if (matches.Count > 1)
-            {
+            if (matches.Count != 1)
                 throw new InvalidOperationException(
-                    $"Hay varias declaraciones candidatas para {type.FullName}:\n" +
+                    $"Expected one declaration of {type.FullName}; found {matches.Count}:\n" +
                     string.Join("\n", matches));
-            }
-
-            return matches.Count == 1 ? matches[0] : null;
+            return matches[0];
         }
         #endregion
     }

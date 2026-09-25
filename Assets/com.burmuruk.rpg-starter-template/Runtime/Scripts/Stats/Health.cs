@@ -49,7 +49,7 @@ namespace Burmuruk.RPGStarterTemplate.Stats
 
         public JToken CaptureAsJToken(out SavingExecution execution)
         {
-            execution = SavingExecution.General;
+            execution = SavingExecution.References;
             return JToken.FromObject(_hp);
         }
 

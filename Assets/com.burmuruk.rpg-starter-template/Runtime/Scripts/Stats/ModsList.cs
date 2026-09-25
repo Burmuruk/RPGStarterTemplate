@@ -158,6 +158,7 @@ namespace Burmuruk.RPGStarterTemplate.Stats
     	GunFireRate = 5,
     	MinDistance = 6,
     	TestBuff = 7,
+    	workie = 8,
     }
 
     public enum ModsType

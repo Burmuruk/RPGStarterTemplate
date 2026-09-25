@@ -105,13 +105,6 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
             gameManager = FindObjectOfType<GameManager>();
             missionsManager = FindAnyObjectByType<Missions.MissionManager>();
             missionsManager.OnMissionStarted += (m) => ShowMission( m.Description );
-
-            var savingWrapper = FindObjectOfType<JsonSavingWrapper>();
-            if (savingWrapper)
-            {
-                savingWrapper.OnSaving += ShowSavingIcon;
-                savingWrapper.OnLoading += ShowSavingIcon;
-            }
         }
 
         private void InitializeStackables()
@@ -150,10 +143,22 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
             //if (!hasInitialized) { return; }
 
             //UpdateSubscripttions();
+            var savingWrapper = FindObjectOfType<JsonSavingWrapper>();
+            if (savingWrapper)
+            {
+                savingWrapper.OnSaving += ShowSavingIcon;
+                savingWrapper.OnLoading += ShowSavingIcon;
+            }
         }
 
         private void OnDisable()
         {
+            var savingWrapper = FindObjectOfType<JsonSavingWrapper>();
+            if (savingWrapper)
+            {
+                savingWrapper.OnSaving -= ShowSavingIcon;
+                savingWrapper.OnLoading -= ShowSavingIcon;
+            }
             //if (!hasInitialized) { return; }
 
             //playerManager.OnCombatEnter -= EnableHPPlayersBar;

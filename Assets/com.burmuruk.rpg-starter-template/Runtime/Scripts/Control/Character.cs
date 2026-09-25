@@ -131,12 +131,12 @@ namespace Burmuruk.RPGStarterTemplate.Control
         public virtual void SetUpMods()
         {
             //ModsList.AddVariable(this, ModifiableStat.HP, _=>health.HP, (value) => health.HP = value);
-            ModsList.AddVariable((Character)this, ModifiableStat.Speed, () => stats.speed, (value) => stats.speed = value);
-            ModsList.AddVariable((Character)this, ModifiableStat.BaseDamage, () => stats.damage, (value) => { stats.damage = (int)value; });
-            ModsList.AddVariable((Character)this, ModifiableStat.GunFireRate, () => stats.damageRate, (value) => { stats.damageRate = value; });
-            ModsList.AddVariable((Character)this, ModifiableStat.MinDistance, () => stats.minDistance, (value) => { stats.minDistance = value; });
-            ModsList.AddVariable((Character)this, ModifiableStat.TestBuff, () => stats.testAmount, (value) => { stats.testAmount = value; });
-            ModsList.AddVariable((Character)this, ModifiableStat.TestBuff, () => stats.farDectection, (value) => { stats.farDectection = (int)value; });
+            ModsList.AddVariable((Character)this, (ModifiableStat)2, () => stats.speed, (value) => stats.speed = value);
+            ModsList.AddVariable((Character)this, (ModifiableStat)3, () => stats.damage, (value) => { stats.damage = (int)value; });
+            ModsList.AddVariable((Character)this, (ModifiableStat)5, () => stats.damageRate, (value) => { stats.damageRate = value; });
+            ModsList.AddVariable((Character)this, (ModifiableStat)6, () => stats.minDistance, (value) => { stats.minDistance = value; });
+            ModsList.AddVariable((Character)this, (ModifiableStat)7, () => stats.testAmount, (value) => { stats.testAmount = value; });
+            ModsList.AddVariable((Character)this, (ModifiableStat)4, () => stats.farDectection, (value) => { stats.farDectection = (int)value; });
 }
 
         public virtual void SetStats(BasicStats newStats)
@@ -279,7 +279,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
         #region Saving
         public JToken CaptureAsJToken(out SavingExecution execution)
         {
-            execution = SavingExecution.General;
+            execution = SavingExecution.References;
             return CaptureCharacterData();
         }
 
@@ -331,9 +331,11 @@ namespace Burmuruk.RPGStarterTemplate.Control
                     inventory.Add(id);
                 }
 
-                if (inventory.GetItem(id) is EquipeableItem equipeable && state.ContainsKey("Equipped"))
+                if (inventory.GetItem(id) is EquipeableItem equipeable && 
+                    state[i.ToString()]["Equipped"]?.ToObject<bool>() == true)
                 {
-                    (inventory as InventoryEquipDecorator).TryEquip(this, equipeable, out _);
+                    (inventory as InventoryEquipDecorator)
+                        .TryEquip(this, equipeable, out _);
                 }
 
                 i++;

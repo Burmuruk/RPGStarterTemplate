@@ -46,7 +46,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 HighlightButton(true);
             }
         }
-        private DynamicEnumField DEnumField { get; set; }
+        public DynamicEnumField DEnumField { get; set; }
         public DropdownField EnumField => DEnumField.DDField;
 
         public EnumModifierUI(VisualElement container)

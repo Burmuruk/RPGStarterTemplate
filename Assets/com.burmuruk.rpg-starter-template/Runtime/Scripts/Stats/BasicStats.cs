@@ -32,6 +32,7 @@ namespace Burmuruk.RPGStarterTemplate.Stats
 
         [Space(), Header("testHeader")]
         [SerializeField] public float testAmount;
+        [SerializeField] public bool didItWork;
 
 [Serializable]
         public struct Slot

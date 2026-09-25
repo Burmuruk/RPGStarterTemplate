@@ -126,7 +126,8 @@ namespace Burmuruk.RPGStarterTemplate.Control
         {
             var item = MainInventory.GetItem(id);
 
-            if (item == null) return;
+            if (item == null)
+                return;
 
             if (item.Type == ItemType.Ability)
             {
@@ -171,11 +172,13 @@ namespace Burmuruk.RPGStarterTemplate.Control
         {
             var players = FindObjectsOfType<AIGuildMember>();
 
-            if (players.Length == 0) return;
+            if (players.Length == 0)
+                return;
 
             foreach (var player in players)
             {
                 RemoveMember(player);
+                player.GetComponent<JsonSaveableEntity>()?.ReleaseIdentifierForDestruction();
                 Destroy(player.gameObject);
             }
 
@@ -261,7 +264,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
 
         public JToken CaptureAsJToken(out SavingExecution execution)
         {
-            execution = SavingExecution.Organization;
+            execution = SavingExecution.Instances;
             JObject state = new JObject();
 
             state["Players"] = CapturePlayers();
@@ -279,7 +282,8 @@ namespace Burmuruk.RPGStarterTemplate.Control
 
         private JToken CapturePlayers()
         {
-            if (players.Count == 0) return null;
+            if (players.Count == 0)
+                return null;
 
             JObject playersState = new JObject();
             var leaderIdentifier = players[0].Leader.GetComponent<JsonSaveableEntity>().GetUniqueIdentifier();
@@ -341,7 +345,8 @@ namespace Burmuruk.RPGStarterTemplate.Control
 
         private JToken CaptureInventory()
         {
-            if (Players.Count == 0) return null;
+            if (Players.Count == 0)
+                return null;
 
             JObject state = new JObject();
             int i = 0;
@@ -350,7 +355,8 @@ namespace Burmuruk.RPGStarterTemplate.Control
             {
                 var items = MainInventory.GetList(type);
 
-                if (items == null) continue;
+                if (items == null)
+                    continue;
 
 
                 for (int j = 0; j < items.Count; j++)
@@ -379,9 +385,11 @@ namespace Burmuruk.RPGStarterTemplate.Control
 
         private void RestoreInventory(JToken jToken)
         {
-            if (Players.Count == 0) return;
+            if (Players.Count == 0)
+                return;
 
-            if (!(jToken is JObject state && state != null)) return;
+            if (!(jToken is JObject state && state != null))
+                return;
 
             int i = 0;
 
