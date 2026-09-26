@@ -18,8 +18,8 @@ namespace Burmuruk.RPGStarterTemplate.Control.Samples
         protected override void Start()
         {
             base.Start();
-            AddItemToDestroy(FindObjectOfType<SavingUI>(true).gameObject);
-            FindObjectOfType<HUDManager>()?.Init();
+            AddItemToDestroy(FindAnyObjectByType<SavingUI>(FindObjectsInactive.Include).gameObject);
+            FindAnyObjectByType<HUDManager>(FindObjectsInactive.Include)?.Init();
         }
 
         public void Update()
@@ -48,12 +48,12 @@ namespace Burmuruk.RPGStarterTemplate.Control.Samples
 
         public override void ToggleSavingOptions()
         {
-            FindObjectOfType<SavingUI>().ToggleSlots();
+            FindAnyObjectByType<SavingUI>().ToggleSlots();
         }
 
         public override void HideSavingOptions()
         {
-            FindObjectOfType<SavingUI>().ShowSlots(false);
+            FindAnyObjectByType<SavingUI>().ShowSlots(false);
         }
 
         public override void ExitUI()
@@ -138,9 +138,9 @@ namespace Burmuruk.RPGStarterTemplate.Control.Samples
                 Time.timeScale = 0;
                 SceneManager.SetActiveScene(scene);
                 var rootItems = SceneManager.GetSceneByBuildIndex(1).GetRootGameObjects();
-                FindObjectOfType<LevelManager>().
+                FindAnyObjectByType<LevelManager>().
                 GetComponentInChildren<Camera>().gameObject.SetActive(false);
-                var uiController = FindObjectOfType<UICharactersController>();
+                var uiController = FindAnyObjectByType<UICharactersController>();
 
                 foreach (var item in rootItems)
                 {
@@ -148,7 +148,7 @@ namespace Burmuruk.RPGStarterTemplate.Control.Samples
 
                     if (menuCharacters != null)
                     {
-                        var pm = FindObjectOfType<PlayerManager>();
+                        var pm = FindAnyObjectByType<PlayerManager>();
                         menuCharacters.SetPlayers(pm.Players);
                         menuCharacters.SetInventory(pm.MainInventory);
                         menuCharacters.SetPlayerManager(pm);
@@ -165,14 +165,17 @@ namespace Burmuruk.RPGStarterTemplate.Control.Samples
         protected override void UpdateGameState(GameManager.State state)
         {
             base.UpdateGameState(state);
+            HUDManager hud = FindAnyObjectByType<HUDManager>(FindObjectsInactive.Include);
 
             switch (state)
             {
                 case GameManager.State.Playing:
-                    FindObjectOfType<HUDManager>(true).gameObject.SetActive(true);
+                    hud?.gameObject.SetActive(true);
+                    hud.SetVisible(true);
                     break;
                 case GameManager.State.UI:
-                    FindObjectOfType<HUDManager>().gameObject.SetActive(false);
+                    hud?.gameObject.SetActive(false);
+                    hud.SetVisible(false);
                     break;
                 default:
                     break;

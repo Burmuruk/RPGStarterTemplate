@@ -2,7 +2,6 @@ using Burmuruk.RPGStarterTemplate.Saving;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static Burmuruk.RPGStarterTemplate.Editor.Utilities.UtilitiesUI;
@@ -11,172 +10,217 @@ namespace Burmuruk.RPGStarterTemplate.Editor
 {
     public partial class TabSystemEditor : BaseLevelEditor
     {
-        private const string ECRYPT_PREF_KEY = "RPGTemplate_EncryptSaving";
         private readonly List<SavingStageDraft> savingStages = new();
         private readonly List<string> savingBaseline = new();
         private readonly Dictionary<SavingStageDraft, VisualElement> savingRows = new();
+        private readonly List<TemplateContainer> savingRowClones = new();
+        private readonly List<SavingStageDraft> savingReplacementCandidates = new();
         private bool savingDraftLoaded;
         private bool savingAwaitingCompilation;
         private VisualElement savingRowsContainer;
         private VisualElement savingRemovalPanel;
+        private VisualTreeAsset savingRowTemplate;
         private Label savingStatus;
+        private Label savingRemovalPrompt;
+        private DropdownField savingReplacement;
+        private Button savingAddButton;
+        private Button savingAcceptButton;
+        private Button savingCancelButton;
+        private Button savingConfirmRemovalButton;
+        private Button savingCancelRemovalButton;
+        private SavingStageDraft savingPendingRemoval;
         private SavingStageDraft savingDragged;
         private SavingStageDraft savingDropTarget;
         private bool savingDropAfter;
 
         public Toggle TglEncrypt { get; private set; }
 
-        private void InitializeSaving()
+        private static T RequireSavingElement<T>(VisualElement root, string elementName) where T : VisualElement
         {
-            var buttons = container.Q<VisualElement>("SavingButtons");
-            TglEncrypt = container.Q<Toggle>("TglEncryptSaving");
-            TglEncrypt.SetValueWithoutNotify(PlayerPrefs.GetInt(ECRYPT_PREF_KEY, 0) != 0);
-            TglEncrypt.RegisterValueChangedCallback(OnTglEcryptClicked);
-            GetAceptButton(buttons).clicked += OnAccept_SavingBtn;
-            GetCancelButton(buttons).clicked += OnCanceled_SavingBtn;
+            return root.Q<T>(elementName) ?? throw new InvalidOperationException(
+                $"Saving UI: missing {typeof(T).Name} named '{elementName}' in UXML.");
         }
 
-        private void OnTglEcryptClicked(ChangeEvent<bool> evt) =>
-            PlayerPrefs.SetInt(ECRYPT_PREF_KEY, evt.newValue ? 1 : 0);
+        private void InitializeSaving()
+        {
+            TglEncrypt = RequireSavingElement<Toggle>(container, "TglEncryptSaving");
+            savingRowsContainer = RequireSavingElement<VisualElement>(container, "savingRowsContainer");
+            savingAddButton = RequireSavingElement<Button>(container, "btnAddSavingStage");
+            savingAcceptButton = RequireSavingElement<Button>(container, "btnAcceptSaving");
+            savingCancelButton = RequireSavingElement<Button>(container, "btnCancelSaving");
+            savingRemovalPanel = RequireSavingElement<VisualElement>(container, "savingRemovalPanel");
+            savingRemovalPrompt = RequireSavingElement<Label>(savingRemovalPanel, "lblSavingRemovalPrompt");
+            savingReplacement = RequireSavingElement<DropdownField>(savingRemovalPanel, "ddSavingReplacement");
+            savingConfirmRemovalButton = RequireSavingElement<Button>(savingRemovalPanel, "btnConfirmSavingRemoval");
+            savingCancelRemovalButton = RequireSavingElement<Button>(savingRemovalPanel, "btnCancelSavingRemoval");
+            savingStatus = RequireSavingElement<Label>(container, "lblSavingStatus");
+
+            TemplateContainer template = RequireSavingElement<TemplateContainer>(container, "tplSavingStage");
+            savingRowTemplate = template.templateSource;
+            //TglEncrypt.SetValueWithoutNotify(PlayerPrefs.GetInt(encrypt_pref_key, 0) != 0);
+            TglEncrypt.RegisterValueChangedCallback(OnTglEcryptClicked);
+            SubscribeTemplate();
+            HideSavingRemoval();
+        }
+
+        private void SubscribeTemplate()
+        {
+            savingAddButton.clicked += AddSavingStage;
+            savingAcceptButton.clicked += OnAccept_SavingBtn;
+            savingCancelButton.clicked += OnCanceled_SavingBtn;
+            savingConfirmRemovalButton.clicked += ConfirmSavingRemoval;
+            savingCancelRemovalButton.clicked += HideSavingRemoval;
+        }
+
+        private void OnTglEcryptClicked(ChangeEvent<bool> evt)
+        {
+            //PlayerPrefs.SetInt(encrypt_pref_key, evt.newValue ? 1 : 0);
+        }
 
         private void Show_Saving()
         {
             DisableNotification(NotificationType.System);
             ChangeTab(infoSavingName);
             SelectTabBtn(btnSavingName);
+
             if (!savingDraftLoaded)
-                LoadSavingDraft();
+                LoadSavingOptions();
+
             CreateSavingTextFields();
         }
-
-        private void LoadSavingDraft()
+        
+        private void LoadSavingOptions()
         {
             savingStages.Clear();
             savingBaseline.Clear();
+
             foreach (SavingExecution stage in Enum.GetValues(typeof(SavingExecution)))
             {
                 string name = stage.ToString();
                 savingBaseline.Add(name);
                 savingStages.Add(new SavingStageDraft { OriginalName = name, Name = name });
             }
+
             savingDraftLoaded = true;
         }
 
         private void CreateSavingTextFields()
         {
-            var info = container.Q<VisualElement>("savingInfoCont");
-            info.Clear();
-            savingRows.Clear();
-            savingRowsContainer = new VisualElement();
-            info.Add(new Label("Stages run from top to bottom. Drag the handle to change their order.")
-            { style = { whiteSpace = WhiteSpace.Normal, marginBottom = 6 } });
-            info.Add(savingRowsContainer);
+            HideSavingRemoval();
+            savingDragged = null;
+            savingDropTarget = null;
 
-            foreach (var stage in savingStages.Where(s => !s.Removed))
+            foreach (TemplateContainer clone in savingRowClones)
+                clone.RemoveFromHierarchy();
+
+            savingRowClones.Clear();
+            savingRows.Clear();
+
+            foreach (SavingStageDraft stage in savingStages.Where(s => !s.Removed))
             {
-                var row = new VisualElement();
-                row.style.flexDirection = FlexDirection.Row;
-                row.style.alignItems = Align.Center;
-                row.style.marginBottom = 4;
-                var handle = new Label("≡")
-                { tooltip = stage.IsSystem ? "This system stage has a fixed position." : "Drag to change execution order." };
-                handle.style.width = 24;
-                handle.style.unityTextAlign = TextAnchor.MiddleCenter;
-                var field = new TextField { value = stage.Name, isReadOnly = stage.IsSystem };
-                field.style.flexGrow = 1;
-                field.tooltip = stage.IsSystem ? "Required system stage." : "C# stage name. References update when you apply.";
+                TemplateContainer clone = savingRowTemplate.Instantiate();
+                VisualElement row = RequireSavingElement<VisualElement>(clone, "savingStageRow");
+                Label handle = RequireSavingElement<Label>(row, "lblSavingStageDrag");
+                TextField field = RequireSavingElement<TextField>(row, "txtSavingStageName");
+                Button remove = RequireSavingElement<Button>(row, "btnRemoveSavingStage");
+                field.SetValueWithoutNotify(stage.Name);
+                field.isReadOnly = stage.IsSystem;
                 field.RegisterValueChangedCallback(evt =>
                 {
                     stage.Name = evt.newValue;
-                    // A displayed replacement menu becomes stale after editing a name.
-                    savingRemovalPanel?.Clear();
+                    HideSavingRemoval();
                     RefreshSavingValidation();
                 });
-                var remove = new Button(() => ShowSavingRemoval(stage)) { text = "−", tooltip = "Remove stage" };
-                remove.style.width = 26;
-                remove.style.marginLeft = 4;
-                var icon = EditorGUIUtility.IconContent("TreeEditor.Trash").image;
-                if (icon != null)
-                {
-                    remove.text = "";
-                    remove.Add(new Image
-                    {
-                        image = icon,
-                        scaleMode = ScaleMode.ScaleToFit,
-                        style = { width = 14, height = 14 }
-                    });
-                }
-                remove.SetEnabled(!stage.IsSystem && !savingAwaitingCompilation);
-                handle.SetEnabled(!stage.IsSystem && !savingAwaitingCompilation);
-                field.SetEnabled(!stage.IsSystem && !savingAwaitingCompilation);
+                remove.clicked += () => ShowSavingRemoval(stage);
+                bool editable = !stage.IsSystem && !savingAwaitingCompilation;
+                remove.SetEnabled(editable);
+                handle.SetEnabled(editable);
+                field.SetEnabled(editable);
                 AttachSavingDrag(handle, stage);
-                row.Add(handle);
-                row.Add(field);
-                row.Add(remove);
                 savingRows[stage] = row;
-                savingRowsContainer.Add(row);
+                savingRowClones.Add(clone);
+                savingRowsContainer.Add(clone);
             }
-            var add = new Button(AddSavingStage) { text = "+ Add stage" };
-            add.style.alignSelf = Align.FlexStart;
-            add.style.marginTop = 6;
-            add.SetEnabled(!savingAwaitingCompilation);
-            info.Add(add);
-            savingRemovalPanel = new VisualElement();
-            savingRemovalPanel.style.marginTop = 8;
-            info.Add(savingRemovalPanel);
-            savingStatus = new Label();
-            savingStatus.style.whiteSpace = WhiteSpace.Normal;
-            savingStatus.style.marginTop = 6;
-            info.Add(savingStatus);
+
+            savingAddButton.SetEnabled(!savingAwaitingCompilation);
             RefreshSavingValidation();
         }
 
         private void AddSavingStage()
         {
+            if (savingAwaitingCompilation)
+                return;
+
             var reserved = new HashSet<string>(savingStages.Select(s => s.Name), StringComparer.OrdinalIgnoreCase);
             reserved.UnionWith(savingBaseline);
             reserved.UnionWith(SavingExecutionAliases.GetMappings().Keys);
             string name = "NewStage";
             int suffix = 2;
+
             while (reserved.Contains(name))
                 name = "NewStage" + suffix++;
+
             var stage = new SavingStageDraft { Name = name };
             savingStages.Add(stage);
             CreateSavingTextFields();
-            var field = savingRows[stage].Q<TextField>();
+            TextField field = RequireSavingElement<TextField>(savingRows[stage], "txtSavingStageName");
             field.schedule.Execute(() => { field.Focus(); field.SelectAll(); });
         }
 
         private void ShowSavingRemoval(SavingStageDraft stage)
         {
-            if (stage.IsSystem)
+            if (stage.IsSystem || savingAwaitingCompilation)
                 return;
-            savingRemovalPanel.Clear();
+
+            HideSavingRemoval();
+
             if (stage.OriginalName == null && !savingStages.Any(s => s.Replacement == stage))
             {
                 savingStages.Remove(stage);
                 CreateSavingTextFields();
                 return;
             }
-            var candidates = savingStages.Where(s => !s.Removed && s != stage).ToList();
-            var choices = new List<string> { "No replacement (only if unused in code)" };
-            choices.AddRange(candidates.Select(s => s.Name));
-            savingRemovalPanel.Add(new Label($"Remove '{stage.Name}'. Redirect references and old saved data to:")
-            { style = { whiteSpace = WhiteSpace.Normal } });
-            var replacement = new DropdownField(choices, 0);
-            savingRemovalPanel.Add(replacement);
-            var actions = new VisualElement { style = { flexDirection = FlexDirection.Row } };
-            actions.Add(new Button(() =>
+
+            savingPendingRemoval = stage;
+            savingReplacementCandidates.AddRange(savingStages.Where(s => !s.Removed && s != stage));
+            savingReplacement.choices = new List<string> { "No replacement (only if unused in code)" };
+            savingReplacement.choices.AddRange(savingReplacementCandidates.Select(s => s.Name));
+            savingReplacement.SetValueWithoutNotify(savingReplacement.choices[0]);
+            savingRemovalPrompt.text = $"Satage: {stage.Name}\n\n Redirect code references to another stage:";
+            EnableContainer(savingRemovalPanel, true);
+        }
+
+        private void ConfirmSavingRemoval()
+        {
+            if (savingPendingRemoval == null || savingAwaitingCompilation)
+                return;
+
+            int index = savingReplacement.index;
+
+            if (index < 0 || index > savingReplacementCandidates.Count)
+                return;
+
+            savingPendingRemoval.Removed = true;
+            savingPendingRemoval.Replacement = index > 0 ? savingReplacementCandidates[index - 1] : null;
+            CreateSavingTextFields();
+        }
+
+        private void HideSavingRemoval()
+        {
+            savingPendingRemoval = null;
+            savingReplacementCandidates.Clear();
+
+            if (savingRemovalPanel != null)
+                EnableContainer(savingRemovalPanel, false);
+        }
+
+        private void ClearSavingDropMarkers()
+        {
+            foreach (VisualElement row in savingRows.Values)
             {
-                stage.Removed = true;
-                stage.Replacement = replacement.index > 0 ? candidates[replacement.index - 1] : null;
-                CreateSavingTextFields();
-            })
-            { text = "Remove stage" });
-            actions.Add(new Button(() => savingRemovalPanel.Clear()) { text = "Keep stage" });
-            savingRemovalPanel.Add(actions);
-            savingRemovalPanel.Add(new Label("Without a replacement, data saved in that stage will be skipped.")
-            { style = { whiteSpace = WhiteSpace.Normal } });
+                row.RemoveFromClassList("saving-drop-before");
+                row.RemoveFromClassList("saving-drop-after");
+            }
         }
 
         private void AttachSavingDrag(Label handle, SavingStageDraft stage)
@@ -185,6 +229,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             {
                 if (evt.button != 0 || stage.IsSystem || savingAwaitingCompilation)
                     return;
+
                 savingDragged = stage;
                 savingDropTarget = null;
                 handle.CapturePointer(evt.pointerId);
@@ -194,32 +239,22 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             {
                 if (savingDragged != stage || !handle.HasPointerCapture(evt.pointerId))
                     return;
-                foreach (var row in savingRows.Values)
-                {
-                    row.style.borderTopWidth = 0;
-                    row.style.borderBottomWidth = 0;
-                }
+
+                ClearSavingDropMarkers();
                 savingDropTarget = null;
-                // Use the Y coordinate so dragging slightly outside the handle remains easy.
-                foreach (var pair in savingRows)
+
+                foreach (KeyValuePair<SavingStageDraft, VisualElement> pair in savingRows)
                 {
                     if (pair.Key.IsSystem || pair.Key == stage)
                         continue;
-                    var bounds = pair.Value.worldBound;
+
+                    Rect bounds = pair.Value.worldBound;
                     if (evt.position.y < bounds.yMin || evt.position.y > bounds.yMax)
                         continue;
+
                     savingDropTarget = pair.Key;
                     savingDropAfter = evt.position.y > bounds.center.y;
-                    if (savingDropAfter)
-                    {
-                        pair.Value.style.borderBottomWidth = 2;
-                        pair.Value.style.borderBottomColor = new Color(0.25f, 0.6f, 1f);
-                    }
-                    else
-                    {
-                        pair.Value.style.borderTopWidth = 2;
-                        pair.Value.style.borderTopColor = new Color(0.25f, 0.6f, 1f);
-                    }
+                    pair.Value.AddToClassList(savingDropAfter ? "saving-drop-after" : "saving-drop-before");
                     break;
                 }
                 evt.StopPropagation();
@@ -228,17 +263,21 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             {
                 if (savingDragged != stage)
                     return;
-                var target = savingDropTarget;
+
+                SavingStageDraft target = savingDropTarget;
                 bool after = savingDropAfter;
                 savingDragged = null;
                 savingDropTarget = null;
+
                 if (handle.HasPointerCapture(evt.pointerId))
                     handle.ReleasePointer(evt.pointerId);
+
                 if (target != null)
                 {
                     savingStages.Remove(stage);
                     savingStages.Insert(savingStages.IndexOf(target) + (after ? 1 : 0), stage);
                 }
+
                 CreateSavingTextFields();
                 evt.StopPropagation();
             });
@@ -246,49 +285,72 @@ namespace Burmuruk.RPGStarterTemplate.Editor
             {
                 savingDragged = null;
                 savingDropTarget = null;
-                foreach (var row in savingRows.Values)
-                {
-                    row.style.borderTopWidth = 0;
-                    row.style.borderBottomWidth = 0;
-                }
+                ClearSavingDropMarkers();
             });
         }
 
         private bool SavingHasChanges()
         {
             var active = savingStages.Where(s => !s.Removed).ToList();
+
             return !active.Select(s => s.OriginalName).SequenceEqual(savingBaseline) ||
                 active.Any(s => s.Name != s.OriginalName);
+        }
+
+        private void RefreshSavingHighlights(bool hasChanges)
+        {
+            var active = savingStages.Where(s => !s.Removed).ToList();
+
+            for (int i = 0; i < active.Count; i++)
+            {
+                SavingStageDraft stage = active[i];
+
+                if (!savingRows.TryGetValue(stage, out VisualElement row))
+                    continue;
+
+                bool added = stage.OriginalName == null;
+                bool renamed = added || stage.Name != stage.OriginalName;
+                bool moved = !added && savingBaseline.IndexOf(stage.OriginalName) != i;
+                Highlight(RequireSavingElement<Label>(row, "lblSavingStageDrag"), moved);
+            }
         }
 
         private void RefreshSavingValidation()
         {
             bool changed = SavingHasChanges();
             string error = null;
+
             try
-            { SavingStageEditor.BuildChanges(savingBaseline, savingStages); }
-            catch (Exception ex) { error = ex.Message; }
+            {
+                SavingStageEditor.BuildChanges(savingBaseline, savingStages);
+            }
+            catch (Exception ex)
+            {
+                error = ex.Message;
+            }
+
             changesInTab = changed;
-            var buttons = container.Q<VisualElement>("SavingButtons");
+            RefreshSavingHighlights(changed);
             EnableSavingButtons(changed);
-            GetAceptButton(buttons).SetEnabled(changed && error == null && !savingAwaitingCompilation);
-            GetCancelButton(buttons).SetEnabled(changed && !savingAwaitingCompilation);
-            if (savingStatus != null)
-                savingStatus.text = savingAwaitingCompilation ? "Changes written. Waiting for Unity to compile." :
-                    error ?? (changed ? "Pending changes. Apply updates the enum and its script references." : "No pending changes.");
+            savingAcceptButton.SetEnabled(changed && error == null && !savingAwaitingCompilation);
+            savingCancelButton.SetEnabled(changed && !savingAwaitingCompilation);
+            savingStatus.text = savingAwaitingCompilation ? "Changes written. Waiting for Unity to compile." :
+                error ?? (changed ? "Pending changes. Apply updates the enum and its script references." : "No pending changes.");
         }
 
         private void EnableSavingButtons(bool shouldEnable)
         {
-            var buttons = container.Q<VisualElement>("SavingButtons");
-            GetAceptButton(buttons).EnableInClassList("Invisible", !shouldEnable);
-            GetCancelButton(buttons).EnableInClassList("Invisible", !shouldEnable);
+            EnableContainer(savingAcceptButton, shouldEnable);
+            EnableContainer(savingCancelButton, shouldEnable);
+
+            Highlight(savingAcceptButton, shouldEnable, BorderColour.SpecialChange);
         }
 
         private void OnAccept_SavingBtn()
         {
             if (!SavingHasChanges() || savingAwaitingCompilation)
                 return;
+
             try
             {
                 int count = SavingStageEditor.Apply(savingBaseline, savingStages);
@@ -306,7 +368,8 @@ namespace Burmuruk.RPGStarterTemplate.Editor
         {
             if (savingAwaitingCompilation)
                 return;
-            LoadSavingDraft();
+
+            LoadSavingOptions();
             CreateSavingTextFields();
             DisableNotification(NotificationType.System);
         }

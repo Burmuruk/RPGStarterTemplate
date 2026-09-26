@@ -169,11 +169,10 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
 
             if (!cdHorde.CanUse)
             {
-                StopCoroutine(cdHorde.CoolDown());
                 cdHorde.Restart();
             }
-
-            StartCoroutine(cdHorde.CoolDown());
+            else
+                StartCoroutine(cdHorde.CoolDown());
         }
     }
 }

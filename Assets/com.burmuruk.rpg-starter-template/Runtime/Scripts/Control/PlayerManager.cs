@@ -170,25 +170,24 @@ namespace Burmuruk.RPGStarterTemplate.Control
 
         private void DestroyPlayers()
         {
-            var players = FindObjectsOfType<AIGuildMember>();
+            var previousPlayers = FindObjectsOfType<AIGuildMember>(true);
 
-            if (players.Length == 0)
-                return;
-
-            foreach (var player in players)
+            foreach (var player in previousPlayers)
             {
+                if (player == null)
+                    continue;
+
                 RemoveMember(player);
-                player.GetComponent<JsonSaveableEntity>()?.ReleaseIdentifierForDestruction();
+
+                player.GetComponent<JsonSaveableEntity>()
+                    ?.ReleaseIdentifierForDestruction();
+
+                player.gameObject.SetActive(false);
                 Destroy(player.gameObject);
             }
 
-            this.players = new();
-
+            players.Clear();
             m_CurPlayer = null;
-            //foreach (var member in players)
-            //{
-            //    AddMember(member);
-            //}
         }
 
         private void EnableIAInRestOfPlayers(int mainPlayerIdx)
@@ -321,8 +320,6 @@ namespace Burmuruk.RPGStarterTemplate.Control
 
                 if ((state[i.ToString()] as JObject).ContainsKey("Leader"))
                     leaderIdx = i;
-
-                OnPlayerAdded?.Invoke(newPlayer);
             }
 
             //for (int i = 0; i < players.Count; i++)
@@ -334,10 +331,14 @@ namespace Burmuruk.RPGStarterTemplate.Control
 
             players.Clear();
 
+            DontDestroyOnLoad(players[0].gameObject.transform.parent);
+
             foreach (var member in members)
                 AddMember(member);
 
-            DontDestroyOnLoad(players[0].gameObject.transform.parent);
+            Debug.Log(
+    $"RestorePlayers: creados={members.Length}, " +
+    $"registrados={players.Count}, líder={leaderIdx}");
 
             curFormation = ((Formation)state["Formation"].ToObject<int>(), null);
             SetPlayerControl(leaderIdx);

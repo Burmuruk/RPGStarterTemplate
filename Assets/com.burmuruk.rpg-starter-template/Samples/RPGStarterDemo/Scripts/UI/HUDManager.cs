@@ -19,9 +19,10 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
     public class HUDManager : MonoBehaviour
     {
         [Header("References")]
-        [SerializeField] PlayerManagerSample playerManager;
         [SerializeField] Camera mainCamera;
+        CanvasGroup hudCanvasGroup;
         PlayerControllerSample playerController;
+        PlayerManagerSample playerManager;
         GameManager gameManager;
         Missions.MissionManager missionsManager;
 
@@ -58,6 +59,8 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
         List<(StackableNode node, CoolDownAction coolDown)> cdNotifications = new();
         public FormationState formationState = FormationState.None;
         bool hasInitialized = false;
+        private readonly List<Action> removeSubscriptions = new();
+        private readonly List<Action> removeHealthSubscriptions = new();
 
         Dictionary<AIGuildMember, StackableNode> playersLife;
 
@@ -100,11 +103,22 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
 
         private void Awake()
         {
-            playerController = FindObjectOfType<PlayerControllerSample>();
-            playerManager = FindObjectOfType<PlayerManagerSample>();
-            gameManager = FindObjectOfType<GameManager>();
+            hudCanvasGroup = GetComponent<CanvasGroup>();
+            playerController = FindAnyObjectByType<PlayerControllerSample>();
+            playerManager = FindAnyObjectByType<PlayerManagerSample>();
+            gameManager = FindAnyObjectByType<GameManager>();
             missionsManager = FindAnyObjectByType<Missions.MissionManager>();
             missionsManager.OnMissionStarted += (m) => ShowMission( m.Description );
+        }
+
+        public void SetVisible(bool visible)
+        {
+            if (hudCanvasGroup == null)
+                return;
+
+            hudCanvasGroup.alpha = visible ? 1f : 0f;
+            hudCanvasGroup.interactable = visible;
+            hudCanvasGroup.blocksRaycasts = visible;
         }
 
         private void InitializeStackables()
@@ -129,6 +143,9 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
             
             foreach (var player in playerManager.Players)
             {
+                if (player == null || player.Health == null)
+                    continue;
+
                 StackableNode lifeBar = pLife.Get();
                 playersLife.Add(player, lifeBar);
 
@@ -143,7 +160,7 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
             //if (!hasInitialized) { return; }
 
             //UpdateSubscripttions();
-            var savingWrapper = FindObjectOfType<JsonSavingWrapper>();
+            var savingWrapper = FindAnyObjectByType<JsonSavingWrapper>();
             if (savingWrapper)
             {
                 savingWrapper.OnSaving += ShowSavingIcon;
@@ -153,7 +170,7 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
 
         private void OnDisable()
         {
-            var savingWrapper = FindObjectOfType<JsonSavingWrapper>();
+            var savingWrapper = FindAnyObjectByType<JsonSavingWrapper>();
             if (savingWrapper)
             {
                 savingWrapper.OnSaving -= ShowSavingIcon;
@@ -186,66 +203,157 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
         private void UpdateSubscripttions()
         {
             RemoveSubscripttions();
-            playerManager.OnCombatEnter += EnableHPPlayersBar;
-            playerManager.OnCombatEnter += ShowAbilities;
-            playerManager.OnFormationChanged += ChangeFormation;
-            playerManager.OnPlayerAdded += (_) => RestartPlayersTags();
-            playerController.OnFormationHold += ShowFormations;
-            playerController.OnPickableEnter += ShowInteractionButton;
-            playerController.OnPickableExit += ShowInteractionButton;
-            playerController.OnItemPicked += ShowNotification;
-            if (playerController.TryGetComponent<PlayerConversant>(out var conversarnt))
-            {
-                conversarnt.OnConversationUpdated += ShowDialogues;
-                conversarnt.OnConversationEnded += HideDialogues; 
-            }
-            //playerManager. combat mode -> abilities
 
-            foreach (var player in playerManager.Players)
+            var manager = playerManager;
+            var controller = playerController;
+
+            if (manager != null)
             {
-                player.Health.OnDamaged += (hp) => { UpdateHealth(hp, player); };
+                manager.OnCombatEnter += EnableHPPlayersBar;
+                manager.OnCombatEnter += ShowAbilities;
+                manager.OnFormationChanged += ChangeFormation;
+                manager.OnPlayerAdded += HandlePlayerAdded;
+
+                removeSubscriptions.Add(() =>
+                {
+                    manager.OnCombatEnter -= EnableHPPlayersBar;
+                    manager.OnCombatEnter -= ShowAbilities;
+                    manager.OnFormationChanged -= ChangeFormation;
+                    manager.OnPlayerAdded -= HandlePlayerAdded;
+                });
             }
+
+            if (controller != null)
+            {
+                controller.OnFormationHold += ShowFormations;
+                controller.OnPickableEnter += ShowInteractionButton;
+                controller.OnPickableExit += ShowInteractionButton;
+                controller.OnItemPicked += ShowNotification;
+
+                removeSubscriptions.Add(() =>
+                {
+                    controller.OnFormationHold -= ShowFormations;
+                    controller.OnPickableEnter -= ShowInteractionButton;
+                    controller.OnPickableExit -= ShowInteractionButton;
+                    controller.OnItemPicked -= ShowNotification;
+                });
+
+                if (controller.TryGetComponent<PlayerConversant>(out var conversant))
+                {
+                    conversant.OnConversationUpdated += ShowDialogues;
+                    conversant.OnConversationEnded += HideDialogues;
+
+                    removeSubscriptions.Add(() =>
+                    {
+                        conversant.OnConversationUpdated -= ShowDialogues;
+                        conversant.OnConversationEnded -= HideDialogues;
+                    });
+                }
+            }
+
+            RefreshHealthSubscriptions();
         }
 
         private void RemoveSubscripttions()
         {
-            playerManager.OnCombatEnter -= EnableHPPlayersBar;
-            playerManager.OnCombatEnter -= ShowAbilities;
-            playerManager.OnFormationChanged -= ChangeFormation;
-            playerManager.OnPlayerAdded -= (_) => RestartPlayersTags();
-            playerController.OnFormationHold -= ShowFormations;
-            playerController.OnPickableEnter -= ShowInteractionButton;
-            playerController.OnPickableExit -= ShowInteractionButton;
-            playerController.OnItemPicked -= ShowNotification;
-            if (playerController.TryGetComponent<PlayerConversant>(out var conversarnt))
-            {
-                conversarnt.OnConversationUpdated -= ShowDialogues;
-                conversarnt.OnConversationEnded -= HideDialogues;
-            }
-            //playerManager. combat mode -> abilities
+            foreach (var unsubscribe in removeSubscriptions)
+                unsubscribe();
+
+            removeSubscriptions.Clear();
+
+            foreach (var unsubscribe in removeHealthSubscriptions)
+                unsubscribe();
+
+            removeHealthSubscriptions.Clear();
+        }
+
+        private void RefreshHealthSubscriptions()
+        {
+            foreach (var unsubscribe in removeHealthSubscriptions)
+                unsubscribe();
+
+            removeHealthSubscriptions.Clear();
+
+            if (playerManager == null)
+                return;
 
             foreach (var player in playerManager.Players)
             {
-                player.Health.OnDamaged -= (hp) => { UpdateHealth(hp, player); };
+                if (player == null || player.Health == null)
+                    continue;
+
+                var health = player.Health;
+
+                void OnDamaged(int hp)
+                {
+                    UpdateHealth(hp, player);
+                }
+
+                health.OnDamaged += OnDamaged;
+
+                removeHealthSubscriptions.Add(() => health.OnDamaged -= OnDamaged);
             }
+        }
+
+        private void HandlePlayerAdded(Character player)
+        {
+            if (!hasInitialized)
+                return;
+
+            RestartPlayersTags();
+            RefreshHealthSubscriptions();
+        }
+
+        private void OnDestroy()
+        {
+            RemoveSubscripttions();
         }
 
         private void UpdateHealthPosition()
         {
-            if (playersLife == null || playersLife.Count <= 0) return;
+            if (playerManager == null || playerManager.Players == null || playersLife == null)
+                return;
+
+            if (mainCamera == null)
+                mainCamera = Camera.main;
+
+            if (mainCamera == null)
+                return;
 
             foreach (var player in playerManager.Players)
             {
-                var position = Vector3.Lerp(playersLife[player].label.transform.parent.position,
-                    mainCamera.WorldToScreenPoint(player.transform.position + Vector3.up * 2),
-                    Time.deltaTime * 20);
+                if (player == null)
+                    continue;
 
-                playersLife[player].label.transform.parent.position = position;
+                if (!playersLife.TryGetValue(player, out var bar))
+                    continue;
+
+                if (bar.label == null)
+                    continue;
+
+                var barTransform = bar.label.transform.parent;
+                if (barTransform == null)
+                    continue;
+
+                var screenPosition = mainCamera.WorldToScreenPoint(
+                    player.transform.position + Vector3.up * 2);
+
+                barTransform.position = Vector3.Lerp(
+                    barTransform.position,
+                    screenPosition,
+                    Time.deltaTime * 20);
             }
         }
 
         public void Init()
         {
+            RemoveSubscripttions();
+
+            playerController = FindAnyObjectByType<PlayerControllerSample>();
+            playerManager = FindAnyObjectByType<PlayerManagerSample>();
+            gameManager = FindAnyObjectByType<GameManager>();
+            mainCamera = Camera.main;
+
             cdChangeFormation = new CoolDownAction(2, (value) =>
             {
                 formationState = FormationState.Showing;
@@ -256,7 +364,8 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
             mainCamera = Camera.main;
 
 
-            InitializeStackables();
+            if (!hasInitialized)
+                InitializeStackables();
             CreateHPPlayersBar();
             hasInitialized = true;
 
@@ -276,11 +385,21 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
 
         private void UpdateHealth(float hp, AIGuildMember player)
         {
-            playersLife[player].image.fillAmount = hp / player.Health.MaxHp;
+            if (player == null || player.Health == null || playersLife == null ||
+                !playersLife.TryGetValue(player, out var bar))
+                return;
 
-            if (hp <= player.Health.MaxHp )
-                playersLife[player].image.transform.parent.parent.gameObject.SetActive(true);
-        } 
+            if (bar.image == null)
+                return;
+
+            float maxHp = player.Health.MaxHp;
+            bar.image.fillAmount = maxHp > 0
+                ? Mathf.Clamp01(hp / maxHp)
+                : 0f;
+
+            if (hp <= maxHp)
+                bar.image.transform.parent.parent.gameObject.SetActive(true);
+        }
 
         private void ShowFormations(bool value)
         {
@@ -288,8 +407,8 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
             {
                 if (formationState == FormationState.Changing)
                 {
-                    StopCoroutine(cdChangeFormation.CoolDown());
                     cdChangeFormation.Restart();
+                    StopCoroutine(cdChangeFormation.CoolDown());
 
                     return;
                 }
@@ -310,20 +429,21 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
                 formationState = FormationState.None;
             }
 
-            StopCoroutine(cdFormationInfo.CoolDown());
             cdFormationInfo.Restart();
-            StartCoroutine(cdFormationInfo.CoolDown());
+
+            if (!cdFormationInfo.CanUse)
+                StartCoroutine(cdFormationInfo.CoolDown());
         }
 
         private void ChangeFormation()
         {
             if (formationState == FormationState.Changing)
             {
-                StopCoroutine(cdChangeFormation.CoolDown());
                 cdChangeFormation.Restart();
             }
 
-            StartCoroutine(cdChangeFormation.CoolDown());
+            if (!cdChangeFormation.CanUse)
+                StartCoroutine(cdChangeFormation.CoolDown());
 
             UpdateFormationText();
             formationState = FormationState.Changing;

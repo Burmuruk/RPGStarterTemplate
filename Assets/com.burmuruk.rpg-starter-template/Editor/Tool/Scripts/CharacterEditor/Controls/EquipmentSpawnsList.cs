@@ -36,15 +36,19 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         {
             if (_loading || _updatingChoices)
                 return;
+
             _updatingChoices = true;
+
             try
             {
-                // Resolve removed IDs in all rows before rebuilding filtered menus.
                 foreach (var element in _enabledElements)
+                {
                     if (_registry.GetEntry(typeof(EquipmentType), element.place.SelectedId) == null)
                         element.place.SetValueWithoutNotify(EnumRegistry.NoneId);
+                }
                 foreach (var element in _enabledElements)
                     element.place.RefreshChoices();
+
                 OnChoicesChanged?.Invoke(GetChoices());
             }
             finally { _updatingChoices = false; }
@@ -54,6 +58,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         {
             var selected = new HashSet<int>(_enabledElements.Select(e => e.place.SelectedId)
                 .Where(id => id != EnumRegistry.NoneId));
+
             return _registry.GetEntries<EquipmentType>().Where(e => !selected.Contains(e.Id))
                 .Select(e => e.Name).ToList();
         }
@@ -67,8 +72,10 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         private void OnBoneDropped(DragPerformEvent evt)
         {
             var values = DragAndDrop.GetGenericData("DraggedNode") as UnityEngine.Object[];
+
             if (values == null || values.Length == 0)
                 return;
+
             Add();
             _enabledElements.Last.Value.transform.value = values[0];
         }
@@ -85,6 +92,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             try
             {
                 DisableAllElements();
+
                 if (data != null)
                     foreach (var item in data)
                     {
@@ -99,23 +107,28 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
         public void LoadInfo(List<(Transform transform, EquipmentType place)> newData)
         {
-            // Copy before applying: never retain the caller's mutable list.
             _snapshot = newData == null ? new() : new(newData);
             ApplyRows(newData);
         }
 
         public new void UpdateUIData<T>(T newData) where T : List<(Transform transform, EquipmentType place)>
         {
-            // Draft UI data must not replace the saved comparison baseline.
             ApplyRows(newData);
         }
 
         public override void Clear()
         {
             _loading = true;
+
             try
-            { base.Clear(); _snapshot = null; }
-            finally { _loading = false; UpdatePlaceChoices(); }
+            { 
+                base.Clear(); _snapshot = null; 
+            }
+            finally 
+            { 
+                _loading = false; 
+                UpdatePlaceChoices(); 
+            }
         }
 
         public override ModificationTypes Check_Changes()
@@ -123,15 +136,19 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             var current = CaptureRows();
             if (_snapshot == null)
                 return current.Count == 0 ? ModificationTypes.None : ModificationTypes.Add;
+
             if (current.Count != _snapshot.Count)
                 return ModificationTypes.EditData;
-            // Compare by reference + ID, not transform.name. Order is irrelevant.
+
             var unmatched = new List<(Transform transform, EquipmentType place)>(_snapshot);
+
             foreach (var row in current)
             {
                 int idx = unmatched.FindIndex(old => old.transform == row.transform && old.place == row.place);
+
                 if (idx < 0)
                     return ModificationTypes.EditData;
+
                 unmatched.RemoveAt(idx);
             }
             return ModificationTypes.None;
