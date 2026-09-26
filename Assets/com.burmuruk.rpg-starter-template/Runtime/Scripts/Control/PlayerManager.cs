@@ -331,8 +331,6 @@ namespace Burmuruk.RPGStarterTemplate.Control
 
             players.Clear();
 
-            DontDestroyOnLoad(players[0].gameObject.transform.parent);
-
             foreach (var member in members)
                 AddMember(member);
 

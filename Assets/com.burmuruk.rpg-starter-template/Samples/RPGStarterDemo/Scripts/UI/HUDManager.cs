@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Burmuruk.RPGStarterTemplate.UI.Samples
@@ -104,6 +105,7 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
         private void Awake()
         {
             hudCanvasGroup = GetComponent<CanvasGroup>();
+            //transform.parent.GetComponentInChildren<EventSystem>(true).gameObject.SetActive(true);
             playerController = FindAnyObjectByType<PlayerControllerSample>();
             playerManager = FindAnyObjectByType<PlayerManagerSample>();
             gameManager = FindAnyObjectByType<GameManager>();
@@ -164,7 +166,8 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
             if (savingWrapper)
             {
                 savingWrapper.OnSaving += ShowSavingIcon;
-                savingWrapper.OnLoading += ShowSavingIcon;
+                savingWrapper.OnLoading += ShowLoadingIcon;
+                savingWrapper.OnLoaded += HideLoadingIcon;
             }
         }
 
@@ -174,7 +177,8 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
             if (savingWrapper)
             {
                 savingWrapper.OnSaving -= ShowSavingIcon;
-                savingWrapper.OnLoading -= ShowSavingIcon;
+                savingWrapper.OnLoading -= ShowLoadingIcon;
+                savingWrapper.OnLoaded -= HideLoadingIcon;
             }
             //if (!hasInitialized) { return; }
 
@@ -642,6 +646,17 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
 
             if (pNotifications.activeNodes.Count == 0)
                 pNotifications.container.SetActive(false);
+        }
+
+        private void ShowLoadingIcon(float slot)
+        {
+            if (savingNotification == null)
+                ShowSavingIcon(0);
+        }
+
+        private void HideLoadingIcon(SlotData data)
+        {
+            StopSavingNotification();
         }
 
         private void ShowSavingIcon(float progress)

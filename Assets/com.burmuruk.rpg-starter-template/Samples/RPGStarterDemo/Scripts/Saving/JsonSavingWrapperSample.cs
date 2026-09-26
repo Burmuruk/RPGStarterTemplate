@@ -42,9 +42,7 @@ namespace Burmuruk.RPGStarterTemplate.Saving.Samples
 
         protected override void LoadFinalElements(SlotData data)
         {
-            SetSlotData(data);
-            //FindObjectOfType<HUDManager>().Init();
-            FindObjectOfType<GameManager>()?.SetState(GameManager.State.Playing);
+            base.LoadFinalElements(data);
         }
     }
 }

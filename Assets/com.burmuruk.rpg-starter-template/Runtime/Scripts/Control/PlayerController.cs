@@ -63,6 +63,8 @@ namespace Burmuruk.RPGStarterTemplate.Control
 
         void FixedUpdate()
         {
+            if (!player) return;
+
             if (m_shouldMove && player && GameManager.Instance.GameState == GameManager.State.Playing)
             {
                 try

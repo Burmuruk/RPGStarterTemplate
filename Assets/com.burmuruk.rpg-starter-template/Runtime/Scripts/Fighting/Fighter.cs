@@ -26,6 +26,18 @@ namespace Burmuruk.RPGStarterTemplate.Combat
         bool inAutoAttack = false;
 
         BasicStats Stats { get => m_Stats.Invoke(); }
+        public int Damage
+        {
+            get
+            {
+                var e = m_inventory?.Equipped[(int)Inventory.EquipmentType.WeaponR];
+
+                if (e != null && e is Weapon weapon)
+                    return weapon.Damage + Stats.damage;
+
+                return Stats.damage;
+            }
+        }
 
         enum Satate
         {
@@ -98,18 +110,18 @@ namespace Burmuruk.RPGStarterTemplate.Combat
                 if (Vector3.Distance(m_target.position, transform.position) > Stats.minDistance)
                     return;
 
+                EquipeableItem equipable = m_inventory.Equipped[(int)Inventory.EquipmentType.WeaponR];
                 m_targetHealth.ApplyDamage(Stats.damage);
 
-                EquipeableItem weapon = m_inventory.Equipped[(int)Inventory.EquipmentType.WeaponR];
-
-                if (weapon != null && (weapon as Weapon).TryGetBuff(out BuffData? buff))
+                if (equipable != null && (equipable as Weapon).TryGetBuff(out BuffData? buff))
                 {
-                    if (buff.HasValue)
-                        BuffsManager.Instance.AddBuff(transform.GetComponent<Control.Character>(), buff.Value, () => m_targetHealth.ApplyDamage(Stats.damage));
+                    if (buff.HasValue && (float)UnityEngine.Random.Range(0, 1) <= buff.Value.probability)
+                        BuffsManager.Instance.AddBuff(transform.GetComponent<Control.Character>(), buff.Value);
                 }
 
                 if (!gameObject.activeSelf) return;
 
+                cdBasicAttack.Restart();
                 StartCoroutine(cdBasicAttack.CoolDown());
             }
         }

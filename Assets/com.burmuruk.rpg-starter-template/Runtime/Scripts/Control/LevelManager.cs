@@ -78,6 +78,9 @@ namespace Burmuruk.RPGStarterTemplate.Control
             LoadNavigationMap();
             FindAnyObjectByType<LevelManager>().SetPaths();
             UpdatePlayerPosition();
+
+            Time.timeScale = 1;
+            FindObjectOfType<LevelManager>()?.pauseMenu?.SetActive(false);
         }
 
         public void SetPaths()

@@ -300,7 +300,7 @@ namespace Burmuruk.RPGStarterTemplate.Saving
 
         private IEnumerator ChangeScene(string name)
         {
-            yield return new WaitForSeconds(1f);
+            yield return new WaitForSecondsRealtime(1f);
 
             yield return SceneManager.LoadSceneAsync(name, LoadSceneMode.Single);
 
