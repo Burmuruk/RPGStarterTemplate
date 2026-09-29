@@ -12,7 +12,6 @@ namespace Burmuruk.WorldG.Patrol
     public class NodeListSuplier : INodeListSupplier
     {
         IPathNode[][][] connections;
-        float halfNodeDistance;
 
         public float NodeDistance { get; private set; }
 
@@ -35,14 +34,14 @@ namespace Burmuruk.WorldG.Patrol
 
             (int x, int y, int z)? index = null;
             int length = connections.Length - 1;
-            float dis;
 
             for (int i = 0; i < connections.Length; i++)
             {
                 if (i == length ||
                     (connections[i][0][0].Position.x > start.x))
                 {
-                    RoundIdx(ref i, connections[i][0][0].Position.x, start.x);
+                    if (i > 0)
+                        RoundIdx(ref i, start.x, connections[i][0][0].Position.x, connections[i - 1][0][0].Position.x);
 
                     length = connections[i].Length - 1;
 
@@ -51,7 +50,8 @@ namespace Burmuruk.WorldG.Patrol
                         if (j == length ||
                             (start.z > connections[i][j][0].Position.z))
                         {
-                            RoundIdx(ref j, start.z, connections[i][j][0].Position.z);
+                            if (j > 0)
+                                RoundIdx(ref j, start.z, connections[i][j][0].Position.z, connections[i][j - 1][0].Position.z);
 
                             length = connections[i][j].Length - 1;
 
@@ -60,7 +60,8 @@ namespace Burmuruk.WorldG.Patrol
                                 if (k == length ||
                                     (start.y < connections[i][j][k].Position.y))
                                 {
-                                    RoundIdx(ref k, connections[i][j][k].Position.y, start.y);
+                                    if (k > 0)
+                                        RoundIdx(ref k, start.y, connections[i][j][k].Position.y, connections[i][j][k - 1].Position.y);
 
                                     index = (i, j, k);
                                     break;
@@ -77,11 +78,9 @@ namespace Burmuruk.WorldG.Patrol
 
             return index.HasValue ? connections[index.Value.x][index.Value.y][index.Value.z] : null;
 
-            void RoundIdx(ref int idx, float max, float min)
+            void RoundIdx(ref int idx, float position, float current, float previous)
             {
-                dis = max - min;
-
-                if (dis > halfNodeDistance && idx > 0)
+                if (Mathf.Abs(position - previous) < Mathf.Abs(position - current))
                 {
                     --idx;
                 }
@@ -104,7 +103,6 @@ namespace Burmuruk.WorldG.Patrol
             PlayerRadious = pRadious;
             NodeDistance = maxDistance;
             MaxAngle = maxAngle;
-            halfNodeDistance = NodeDistance / 2;
         }
 
         public bool ValidatePosition(Vector3 position, IPathNode nearestPoint)
