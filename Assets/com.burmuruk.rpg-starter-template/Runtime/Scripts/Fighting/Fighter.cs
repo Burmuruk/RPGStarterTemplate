@@ -1,4 +1,5 @@
-﻿using Burmuruk.RPGStarterTemplate.Inventory;
+﻿using Burmuruk.RPGStarterTemplate.Control;
+using Burmuruk.RPGStarterTemplate.Inventory;
 using Burmuruk.RPGStarterTemplate.Stats;
 using Burmuruk.Utilities;
 using System;
@@ -30,11 +31,6 @@ namespace Burmuruk.RPGStarterTemplate.Combat
         {
             get
             {
-                var e = m_inventory?.Equipped[(int)Inventory.EquipmentType.WeaponR];
-
-                if (e != null && e is Weapon weapon)
-                    return weapon.Damage + Stats.damage;
-
                 return Stats.damage;
             }
         }
@@ -62,14 +58,6 @@ namespace Burmuruk.RPGStarterTemplate.Combat
             m_inventory = inventory;
             m_Stats = stats;
 
-            //m_inventory.Equipped.OnEquipmentChanged += (id) =>
-            //{
-            //    if (id == (int)EquipmentType.WeaponR)
-            //    {
-            //        CacheWeapon();
-            //    }
-            //};
-
             float rate = m_Stats.Invoke().damageRate;
             cdBasicAttack = new CoolDownAction(in rate);
             inAutoAttack = false;
@@ -77,25 +65,34 @@ namespace Burmuruk.RPGStarterTemplate.Combat
 
         public void Pause(bool shouldPause)
         {
-            canAttack = shouldPause;
+            canAttack = !shouldPause;
+        }
+
+        public void ResetCombat()
+        {
+            StopAllCoroutines();
+            cdBasicAttack?.Cancel();
+            autoBACoroutine = null;
+            inAutoAttack = false;
+            SetTarget(null);
+            canAttack = true;
         }
 
         public void SetTarget(Transform target)
         {
-            m_target = target;
+            if (m_targetHealth != null)
+                m_targetHealth.OnDied -= RemoveTarget;
 
-            if (target == null) return;
-            m_targetHealth = target?.GetComponent<Health>();
-            m_targetHealth.OnDied -= RemoveTarget;
-            m_targetHealth.OnDied += RemoveTarget;
+            m_target = target;
+            m_targetHealth = target != null ? target.GetComponent<Health>() : null;
+
+            if (m_targetHealth != null)
+                m_targetHealth.OnDied += RemoveTarget;
         }
         public void RemoveTarget(Transform target)
         {
-            target.GetComponent<Health>().OnDied -= RemoveTarget;
-
             if (m_target != target) return;
-            m_target = null;
-            m_targetHealth = null;
+            SetTarget(null);
         }
 
         /// <summary>
@@ -103,26 +100,24 @@ namespace Burmuruk.RPGStarterTemplate.Combat
         /// </summary>
         public void BasicAttack()
         {
-            if (!m_target) return;
+            if (!canAttack || !isActiveAndEnabled || !m_target || !m_target.gameObject.activeInHierarchy ||
+                m_targetHealth == null || !m_targetHealth.IsAlive || cdBasicAttack == null) return;
 
             if (cdBasicAttack.CanUse)
             {
                 if (Vector3.Distance(m_target.position, transform.position) > Stats.minDistance)
                     return;
 
-                EquipeableItem equipable = m_inventory.Equipped[(int)Inventory.EquipmentType.WeaponR];
-                m_targetHealth.ApplyDamage(Stats.damage);
-
-                if (equipable != null && (equipable as Weapon).TryGetBuff(out BuffData? buff))
-                {
-                    if (buff.HasValue && (float)UnityEngine.Random.Range(0, 1) <= buff.Value.probability)
-                        BuffsManager.Instance.AddBuff(transform.GetComponent<Control.Character>(), buff.Value);
-                }
-
-                if (!gameObject.activeSelf) return;
-
+                EquipableItem equipable = m_inventory?.Equipped[(int)Inventory.EquipmentType.WeaponR];
                 cdBasicAttack.Restart();
                 StartCoroutine(cdBasicAttack.CoolDown());
+                m_targetHealth.ApplyDamage(Stats.damage);
+
+                if (equipable is Weapon weapon && weapon.TryGetBuff(out BuffData? buff))
+                {
+                    if (buff.HasValue && BuffsManager.Instance != null)
+                        BuffsManager.Instance.AddBuff(transform.GetComponent<Control.Character>(), buff.Value);
+                }
             }
         }
 
@@ -130,9 +125,6 @@ namespace Burmuruk.RPGStarterTemplate.Combat
         {
             if (start)
             {
-                if (autoBACoroutine != null)
-                    StopCoroutine(autoBACoroutine);
-
                 if (inAutoAttack) return;
 
                 autoBACoroutine = StartCoroutine(AutoBasicAttackCoroutine()); 
@@ -143,6 +135,7 @@ namespace Burmuruk.RPGStarterTemplate.Combat
                     StopCoroutine(autoBACoroutine);
 
                 autoBACoroutine = null;
+                inAutoAttack = false;
             }
         }
 
@@ -171,36 +164,17 @@ namespace Burmuruk.RPGStarterTemplate.Combat
 
         private IEnumerator AutoBasicAttackCoroutine()
         {
-            if (m_target == null) goto EndAutoAttack;
-
             inAutoAttack = true;
 
-            while (m_target != null)
+            while (m_target != null && m_targetHealth != null && m_targetHealth.IsAlive &&
+                m_target.gameObject.activeInHierarchy)
             {
-                while (Vector3.Distance(m_target.position, transform.position) > Stats.minDistance)
-                {
-                    yield return new WaitForSeconds(.5f);
-
-                    if (m_target == null) goto EndAutoAttack;
-                }
-
-                m_targetHealth.ApplyDamage(Stats.damage);
-
-                EquipeableItem weapon = m_inventory.Equipped[(int)Inventory.EquipmentType.WeaponR];
-
-                if (weapon != null && (weapon as Weapon).TryGetBuff(out BuffData? buff))
-                {
-                    if (buff.HasValue)
-                        BuffsManager.Instance.AddBuff(transform.GetComponent<Control.Character>(), buff.Value, () => m_targetHealth.ApplyDamage(Stats.damage));
-                }
-
-                if (!gameObject.activeSelf) goto EndAutoAttack;
-
-                yield return new WaitForSeconds(Stats.damageRate);
+                BasicAttack();
+                yield return null;
             }
 
-        EndAutoAttack:
             inAutoAttack = false;
+            autoBACoroutine = null;
         }
     }
 }

@@ -75,7 +75,8 @@ namespace Burmuruk.RPGStarterTemplate.Control
                 {
                     if (value != m_target)
                     {
-                        m_target.GetComponent<Health>().OnDied -= GetNextTarget;
+                        if (m_target.TryGetComponent<Health>(out var oldHealth))
+                            oldHealth.OnDied -= GetNextTarget;
                     }
                     else
                     {
@@ -86,8 +87,8 @@ namespace Burmuruk.RPGStarterTemplate.Control
                 m_target = value;
                 fighter.SetTarget(value);
 
-                if (value != null)
-                    m_target.GetComponent<Health>().OnDied += GetNextTarget;
+                if (value != null && value.TryGetComponent<Health>(out var targetHealth))
+                    targetHealth.OnDied += GetNextTarget;
             }
         }
         #endregion
@@ -110,8 +111,9 @@ namespace Burmuruk.RPGStarterTemplate.Control
         {
             if (health.HP <= 0) return;
 
-            eyesPerceibed = Physics.OverlapSphere(farPercept.position, stats.farDectection, 1 << 10);
-            earsPerceibed = Physics.OverlapSphere(closePercept.position, stats.closeDetection, 1 << 10);
+            eyesPerceibed = hasFarPerception ? Physics.OverlapSphere(farPercept != null ? farPercept.position : transform.position, stats.farDectection, 1 << 10) : Array.Empty<Collider>();
+            earsPerceibed = hasClosePerception ? Physics.OverlapSphere(closePercept != null ? closePercept.position : transform.position, stats.closeDetection, 1 << 10) : Array.Empty<Collider>();
+            isTargetFar = isTargetClose = false;
 
             PerceptionManager();
         }
@@ -135,8 +137,6 @@ namespace Burmuruk.RPGStarterTemplate.Control
             ModsList.AddVariable((Character)this, (ModifiableStat)3, () => stats.damage, (value) => { stats.damage = (int)value; });
             ModsList.AddVariable((Character)this, (ModifiableStat)5, () => stats.damageRate, (value) => { stats.damageRate = value; });
             ModsList.AddVariable((Character)this, (ModifiableStat)6, () => stats.minDistance, (value) => { stats.minDistance = value; });
-            ModsList.AddVariable((Character)this, (ModifiableStat)7, () => stats.testAmount, (value) => { stats.testAmount = value; });
-            ModsList.AddVariable((Character)this, (ModifiableStat)4, () => stats.farDectection, (value) => { stats.farDectection = (int)value; });
 }
 
         public virtual void SetStats(BasicStats newStats)
@@ -156,7 +156,6 @@ namespace Burmuruk.RPGStarterTemplate.Control
 
         public void SetPosition(Vector3 position)
         {
-            mover.CancelAll();
             mover.ChangePositionTo(position);
             //mover.UpdatePosition();
         } 
@@ -194,17 +193,14 @@ namespace Burmuruk.RPGStarterTemplate.Control
             {
                 ref var cur = ref perceibed[i];
 
-                if (cur.CompareTag(enemyTag))
+                if (cur != null && cur.CompareTag(enemyTag) && IsValidTarget(cur.transform))
                 {
                     enemies.Add(cur);
                     founded = true;
                 }
             }
 
-            if (enemies.Count > 0)
-            {
-                perceibed = enemies.ToArray();
-            }
+            perceibed = enemies.ToArray();
 
             return founded;
         }
@@ -219,9 +215,11 @@ namespace Burmuruk.RPGStarterTemplate.Control
         {
             (Transform enemy, float dis) closest = (null, float.MaxValue);
 
+            if (eyesPerceibed == null) return null;
+
             foreach (var enemy in eyesPerceibed)
             {
-                if (!enemy.CompareTag(enemyTag)) continue;
+                if (enemy == null || !enemy.CompareTag(enemyTag) || !IsValidTarget(enemy.transform)) continue;
 
                 if (Vector3.Distance(enemy.transform.position, transform.position) is var d && d < closest.dis)
                 {
@@ -232,10 +230,22 @@ namespace Burmuruk.RPGStarterTemplate.Control
             return closest.enemy;
         }
 
+        protected Transform GetPerceivedTarget()
+        {
+            Transform enemy = hasFarPerception ? GetNearestTarget(eyesPerceibed) : null;
+            return enemy != null ? enemy : hasClosePerception ? GetNearestTarget(earsPerceibed) : null;
+        }
+
+        protected bool IsValidTarget(Transform target)
+        {
+            return target != null && target.gameObject.activeInHierarchy &&
+                target.TryGetComponent<Health>(out var targetHealth) && targetHealth.IsAlive;
+        }
+
         protected virtual void GetNextTarget(Transform target)
         {
             var nearEnemies = (from enemy in Physics.OverlapSphere(transform.position, 12, 1 << 10)
-                                 where enemy.TryGetComponent<Character>(out _) && enemy.transform.CompareTag(enemyTag)
+                                 where enemy.TryGetComponent<Character>(out _) && enemy.transform.CompareTag(enemyTag) && IsValidTarget(enemy.transform)
                                  select enemy).ToArray();
 
             var result = GetClosestEnemy(nearEnemies);
@@ -273,7 +283,9 @@ namespace Burmuruk.RPGStarterTemplate.Control
         {
             gameObject.SetActive(false);
             StopAllCoroutines();
-            FindObjectOfType<BuffsManager>().RemoveAllBuffs(this);
+
+            if (BuffsManager.Instance != null)
+                BuffsManager.Instance.RemoveAllBuffs(this);
         }
 
         #region Saving
@@ -306,7 +318,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
                     itemState["Id"] = items[j].ID;
                     itemState["Count"] = inventory.GetItemCount(items[j].ID);
 
-                    if (items[j] is EquipeableItem equipeable && equipeable.Characters.Contains(this))
+                    if (items[j] is EquipableItem equipeable && equipeable.Characters.Contains(this))
                         itemState["Equipped"] = true;
 
                     state[i++.ToString()] = itemState;
@@ -331,7 +343,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
                     inventory.Add(id);
                 }
 
-                if (inventory.GetItem(id) is EquipeableItem equipeable && 
+                if (inventory.GetItem(id) is EquipableItem equipeable && 
                     state[i.ToString()]["Equipped"]?.ToObject<bool>() == true)
                 {
                     (inventory as InventoryEquipDecorator)

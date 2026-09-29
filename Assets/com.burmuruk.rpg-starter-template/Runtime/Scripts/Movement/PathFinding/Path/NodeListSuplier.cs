@@ -143,35 +143,42 @@ namespace Burmuruk.WorldG.Patrol
 
         public IPathNode FindNearestNodeAround(IPathNode start, Vector3 destiny, float maxDistance = 0)
         {
-            float curDistance = 0;
+            if (start == null) return null;
 
             if (maxDistance <= 0)
                 maxDistance = Vector3.Distance(start.Position, destiny);
 
-            SortedDictionary<float, IPathNode> closestNodes = new();
             IPathNode curNode = start;
+            var visited = new HashSet<IPathNode>();
 
-            while (curDistance < maxDistance)
+            while (visited.Add(curNode) && curNode.NodeConnections != null)
             {
-                closestNodes.Clear();
+                IPathNode closest = null;
+                float bestDistance = Vector3.SqrMagnitude(curNode.Position - destiny);
 
                 foreach (var connection in curNode.NodeConnections)
                 {
-                    closestNodes.Add(Vector3.Distance(connection.node.Position, destiny), connection.node);
+                    var next = connection.node;
+
+                    if (next == null || !next.IsEnabled || visited.Contains(next) ||
+                        Vector3.Distance(start.Position, next.Position) > maxDistance) 
+                        continue;
+
+                    float distance = Vector3.SqrMagnitude(next.Position - destiny);
+
+                    if (distance < bestDistance)
+                    {
+                        bestDistance = distance;
+                        closest = next;
+                    }
                 }
 
-                var nextDistance = Vector3.Distance(start.Position, closestNodes.First().Value.Position);
+                if (closest == null) break;
 
-                if (closestNodes.Count > 0 && nextDistance > curDistance && nextDistance <= maxDistance)
-                {
-                    curNode = closestNodes.First().Value;
-                    curDistance = nextDistance;
-                }
-                else
-                    break;
+                curNode = closest;
             }
 
-            return curNode;
+            return curNode.IsEnabled ? curNode : null;
         }
 
         List<Direction> GetDirections(Vector3 curPos, Vector3 nextPos)

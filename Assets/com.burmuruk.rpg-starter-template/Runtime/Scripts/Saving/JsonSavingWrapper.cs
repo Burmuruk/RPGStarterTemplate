@@ -271,6 +271,7 @@ namespace Burmuruk.RPGStarterTemplate.Saving
 
         protected virtual void LoadFinalElements(SlotData data)
         {
+            FindObjectOfType<LevelManager>()?.RefreshRuntimeReferences();
             SetSlotData(data);
             FindObjectOfType<GameManager>()?.SetState(GameManager.State.Playing);
         }

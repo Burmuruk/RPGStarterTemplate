@@ -64,7 +64,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 if (field == null)
                     continue;
 
-                var item = ItemDataConverter.GetItem((ElementType)element.Type, element.Id) as EquipeableItem;
+                var item = ItemDataConverter.GetItem((ElementType)element.Type, element.Id) as EquipableItem;
 
                 var requiredPlace = (EquipmentType)item.GetEquipLocation();
 
@@ -165,11 +165,11 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             var type = (ElementType)element.Type;
             var equipmentField = element.GetComponent<ListElementTypedUI<ElementType, EquipmentType>>();
             var item = ItemDataConverter.GetItem(type, element.Id);
-            bool isEquipable = item is EquipeableItem;
+            bool isEquipable = item is EquipableItem;
             EnableContainer(element.Toggle, isEquipable);
             EnableContainer(equipmentField.EnumField, isEquipable); //displays the element
 
-            if (item is EquipeableItem equipable)
+            if (item is EquipableItem equipable)
             {
                 try
                 {
@@ -206,7 +206,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 return;
             }
 
-            var item = ItemDataConverter.GetItem(type, element.Id) as EquipeableItem;
+            var item = ItemDataConverter.GetItem(type, element.Id) as EquipableItem;
             var place = (EquipmentType)item.GetEquipLocation();
 
             Set_Tooltip(element.element, _highlighted, highlight: false);
@@ -341,6 +341,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         void OnPointerDown(PointerDownEvent evt)
         {
             var label = evt.target as Label;
+
             if (label == null || evt.button != 0)
                 return;
 
@@ -360,6 +361,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         private void ShowBodyTree(UnityEngine.Object evt)
         {
             GameObject selected = evt as GameObject;
+
             if (selected == null)
                 return;
 
@@ -387,6 +389,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             foreach (var item in items)
             {
                 TVBodyParts.CollapseItem(item.id);
+
                 if (item.children != null && item.children.Count() > 0)
                 {
                     CollapseAll(item.children);
@@ -397,6 +400,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         void FlattenTree(TransformNode node, List<TransformNode> list)
         {
             list.Add(node);
+
             foreach (var child in node.children)
                 FlattenTree(child, list);
         }
@@ -463,6 +467,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 bool equipped = false;
 
                 var equipmentField = MClEquipmentElements[i].GetComponent<ListElementTypedUI<ElementType, EquipmentType>>();
+
                 if (equipmentField == null || IsDisabled(equipmentField.EnumField))
                     continue;
 
@@ -566,15 +571,17 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
         {
             _itemsIds.Clear();
             MClEquipmentElements.RestartValues();
+
             if (inventory == null)
                 return;
-            equipment.equipment ??= new();
 
+            equipment.equipment ??= new();
             Dictionary<string, EquipData> newItems = new();
 
             foreach (var item in inventory.EnabledComponents)
             {
                 EquipData? equipFound = null;
+
                 foreach (var equipable in equipment.equipment)
                 {
                     if (item.Id == equipable.Key)
@@ -595,10 +602,12 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 }
 
                 MClEquipmentElements.AddElementExtraData += EditData;
-
                 _itemsIds.Enqueue(item.Id);
+
                 if (!MClEquipmentElements.AddElement(item.NameButton.text, item.Type))
+                {
                     _itemsIds.Dequeue();
+                }
                 else if (save)
                 {
                     var newItem = MClEquipmentElements.EnabledComponents.Last();
@@ -651,7 +660,6 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                 _changes = null;
                 _inventory = null;
 
-                // Set_Tooltip podría modificar _highlighted.
                 foreach (var item in _highlighted.ToList())
                     Set_Tooltip(item.Key, item.Value, false);
 
@@ -697,9 +705,13 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
             CurModificationType = UIParts.Check_Changes();
 
             if (_changes?.equipment == null ^ MClEquipmentElements?.Components == null)
+            {
                 CurModificationType = ModificationTypes.EditData;
+            }
             else if (_changes?.equipment?.Count != MClEquipmentElements?.Components?.Count)
+            {
                 CurModificationType = ModificationTypes.EditData;
+            }
             else
                 foreach (var item in _changes.equipment)
                 {
@@ -707,8 +719,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
                     {
                         if (element.Id == item.Key)
                         {
-                            if ((ElementType)element.Type != item.Value.type ||
-                                element.Toggle.value != item.Value.equipped)
+                            if ((ElementType)element.Type != item.Value.type || element.Toggle.value != item.Value.equipped)
                             {
                                 CurModificationType = ModificationTypes.EditData;
                                 break;
@@ -742,9 +753,9 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Controls
 
     public class EquipmentListElement : ListElementUI<ElementType>
     {
-        public EquipmentListElement()
-            : base(new ListElementTypedUI<ElementType, EquipmentType>(syncWithParent: false))
+        public EquipmentListElement() : base(new ListElementTypedUI<ElementType, EquipmentType>(syncWithParent: false))
         {
+
         }
     }
 }

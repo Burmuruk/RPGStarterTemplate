@@ -4,12 +4,12 @@ using System.Collections.Generic;
 
 namespace Burmuruk.RPGStarterTemplate.Inventory
 {
-    public abstract class EquipeableItem : InventoryItem
+    public abstract class EquipableItem : InventoryItem
     {
         int maxCount;
         List<Character> characters;
 
-        public event Action<Character, EquipeableItem> OnUnequiped;
+        public event Action<Character, EquipableItem> OnUnequiped;
 
         public int MaxCount => maxCount;
         public bool IsEquip => characters.Count > 0;
@@ -24,7 +24,7 @@ namespace Burmuruk.RPGStarterTemplate.Inventory
             }
         }
 
-        public EquipeableItem(params Character[] characters)
+        public EquipableItem(params Character[] characters)
         {
             if (characters.Length > 0)
                 this.characters = new List<Character>(characters);
@@ -32,7 +32,7 @@ namespace Burmuruk.RPGStarterTemplate.Inventory
                 this.characters = new List<Character>();
         }
 
-        public EquipeableItem(int count, params Character[] characters) : this(characters)
+        public EquipableItem(int count, params Character[] characters) : this(characters)
         {
             this.maxCount = count;
         }

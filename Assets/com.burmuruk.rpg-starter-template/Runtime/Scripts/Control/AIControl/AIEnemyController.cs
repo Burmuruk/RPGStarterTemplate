@@ -13,12 +13,7 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
     public class AIEnemyController : Character
     {
         [SerializeField] List<InventoryItem> itemsToDrop;
-        protected AIEnemyController leader;
-        protected List<(float value, Character enemy)> rage;
-        protected List<AbiltyTrigger> abilities = new();
         [SerializeField] PatrolController patrolController;
-        List<Character> _enemies = new();
-
         [SerializeField] protected PlayerAction playerAction;
         [SerializeField] protected AttackState attackState;
         [SerializeField] protected PlayerDistance playerDistance;
@@ -26,8 +21,20 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
         [SerializeField] protected RageState rageState;
         [SerializeField] protected Awareness awareness;
         [SerializeField] protected LeaderOrder curOrder;
+        protected AIEnemyController leader;
+        protected List<(float value, Character enemy)> rage;
+        protected List<AbiltyTrigger> abilities = new();
+        List<Character> _enemies = new();
+        private bool inCombat;
+        private Vector3 chaseDestination;
+        private float nextRepathTime;
+
+        private static readonly HashSet<AIEnemyController> activeEnemies = new();
 
         public Character CurEnemy { get; private set; }
+        protected virtual void OnEnable() => activeEnemies.Add(this);
+        protected virtual void OnDisable() => activeEnemies.Remove(this);
+        public override event Action<bool> OnCombatStarted;
 
         #region Enums
         public enum PlayerAction
@@ -81,7 +88,7 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
             Surounded,
             Alone,
             Threatened
-        } 
+        }
 
         public enum LeaderOrder
         {
@@ -90,6 +97,44 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
             Follow
         }
         #endregion
+
+        public static bool IsThreatening(Character character)
+        {
+            foreach (var enemy in activeEnemies)
+            {
+                if (enemy != null && enemy.isActiveAndEnabled && enemy.Health != null && enemy.Health.IsAlive &&
+                    enemy.playerAction == PlayerAction.Combat && enemy.Target == character.transform)
+                    return true;
+            }
+            return false;
+        }
+
+        protected void PursueCombatTarget()
+        {
+            if (!IsValidTarget(Target)) return;
+
+            mover.FacingTarget = Target;
+            float distance = stats.minDistance * .8f;
+
+            if (Vector3.Distance(Target.position, transform.position) <= distance)
+            {
+                if (mover.IsWorking) mover.CancelAction();
+                return;
+            }
+
+            if (mover.IsWorking && Time.time >= nextRepathTime && 
+                (Target.position - chaseDestination).sqrMagnitude > .25f)
+            {
+                mover.CancelAction();
+            }
+
+            if (!mover.IsWorking)
+            {
+                chaseDestination = Target.position;
+                nextRepathTime = Time.time + .25f;
+                mover.MoveTo(chaseDestination, stoppingDistance: distance);
+            }
+        }
 
         public class AbiltyTrigger
         {
@@ -118,14 +163,48 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
 
         public void Restart()
         {
+            SetDefaultStats();
+            StopPatrol();
+            UpdateCombatState(false);
 
+            Target = null;
+            mover.FacingTarget = null;
+
+            mover.ResetRoute();
+            mover.ContinueAction();
+            fighter.ResetCombat();
+            health.Heal(health.MaxHp);
+
+            playerAction = PlayerAction.None;
+            attackState = AttackState.None;
+            curOrder = LeaderOrder.None;
+            eyesPerceibed = earsPerceibed = Array.Empty<Collider>();
+            isTargetFar = isTargetClose = false;
+        }
+
+        public Transform GetObservedTarget() => 
+            isActiveAndEnabled && health != null && health.IsAlive ? GetPerceivedTarget() : null;
+
+        protected void StopPatrol() => patrolController?.StopPatrolling();
+
+        public void StopEncounterActions()
+        {
+            StopPatrol();
+            UpdateCombatState(false);
+
+            Target = null;
+            mover.FacingTarget = null;
+
+            mover.ResetRoute();
+            fighter.ResetCombat();
+            playerAction = PlayerAction.None;
         }
 
         public void SetLeader(AIEnemyController leader)
         {
             if (!leader)
             {
-                leader = null;
+                this.leader = null;
                 curOrder = LeaderOrder.None;
                 return;
             }
@@ -166,16 +245,49 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
         {
             if (playerAction == PlayerAction.Dead) return;
 
-            if (CheckLeader() ||
+            bool hasAction = CheckLeader() ||
                 CheckOwnState() ||
                 FindEnemies() ||
                 ChooseAttack() ||
-                TryTakeCover() ||
-                CheckPatrolPath())
+                TryTakeCover();
+
+            if (!hasAction)
+                playerAction = PlayerAction.None;
+
+            UpdateCombatState(playerAction == PlayerAction.Combat);
+
+            if (!hasAction)
+                hasAction = CheckPatrolPath();
+
+            if (hasAction)
             { 
                 ActionManager();
                 MovementManager();
             }
+        }
+
+        protected void UpdateCombatState(bool value)
+        {
+            if (inCombat == value) return;
+
+            inCombat = value;
+            if (value)
+                patrolController?.StopPatrolling();
+            else
+            {
+                mover.FacingTarget = null;
+                Target = null;
+                attackState = AttackState.None;
+                fighter.StartAutoBasicAttack(false);
+            }
+
+            mover.CancelAction();
+            OnCombatStarted?.Invoke(value);
+        }
+
+        protected override void GetNextTarget(Transform target)
+        {
+            Target = null;
         }
 
         protected override void ActionManager()
@@ -186,6 +298,7 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
         protected virtual bool CheckPatrolPath()
         {
             if (!patrolController) return false;
+
             if (mover == null || mover.nodeList == null) return false;
 
             playerAction = PlayerAction.Patrol;
@@ -200,10 +313,15 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
             switch (curOrder)
             {
                 case LeaderOrder.Attack:
+
+                    if (!IsValidTarget(leader.Target)) return false;
+
+                    Target = leader.Target;
                     playerAction = PlayerAction.Combat;
                     break;
 
                 case LeaderOrder.Follow:
+
                     playerAction = PlayerAction.Following;
                     break;
 
@@ -218,8 +336,7 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
         {
             if (health.HP < health.MaxHp * .4f)
             {
-                TryHeal();
-                return true;
+                return TryHeal();
             }
             //else if (Inventory.EquipedWeapon.Ammo <= 0)
             //{
@@ -232,8 +349,11 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
 
         protected virtual bool FindEnemies()
         {
-            if (IsTargetClose || IsTargetFar)
+            Transform enemy = GetPerceivedTarget();
+
+            if (enemy != null)
             {
+                Target = enemy;
                 playerAction = PlayerAction.Combat;
                 return true;
             }
@@ -270,7 +390,9 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
 
         private void SetAbilities()
         {
-            var items = (inventory as InventoryEquipDecorator).Equipped.GetItems((int)EquipmentType.Ability);
+            abilities.Clear();
+            if (!(Inventory is InventoryEquipDecorator equipmentInventory)) return;
+            var items = equipmentInventory.Equipped.GetItems((int)EquipmentType.Ability);
 
             if (items == null) return;
             
@@ -294,6 +416,10 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
 
         protected override void Dead()
         {
+            UpdateCombatState(false);
+            patrolController?.StopPatrolling();
+            mover.CancelAction();
+            playerAction = PlayerAction.Dead;
             base.Dead();
 
             DropItem();

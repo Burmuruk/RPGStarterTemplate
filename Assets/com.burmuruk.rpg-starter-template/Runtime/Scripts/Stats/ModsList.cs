@@ -41,15 +41,19 @@ namespace Burmuruk.RPGStarterTemplate.Stats
         {
             if (character == null)
                 throw new ArgumentNullException(nameof(character));
+
             if (getter == null)
                 throw new ArgumentNullException(nameof(getter));
+
             if (setter == null)
                 throw new ArgumentNullException(nameof(setter));
+
             if (!variables.TryGetValue(character, out var stats))
                 variables.Add(character, stats = new Dictionary<ModifiableStat, Variable>());
-            // SetUpPlayer can run twice. Do not reset active modifiers on duplicate registration.
+
             if (stats.ContainsKey(modType))
                 return;
+
             float value = getter();
             stats.Add(modType, new Variable { Get = getter, Set = setter, BaseValue = value, LastWritten = value });
         }
@@ -59,8 +63,10 @@ namespace Burmuruk.RPGStarterTemplate.Stats
         public static bool TryGetValue(Character character, ModifiableStat stat, out float value)
         {
             value = 0;
+
             if (!Find(character, stat, out var variable))
                 return false;
+
             value = variable.Get();
             return true;
         }
@@ -68,8 +74,10 @@ namespace Burmuruk.RPGStarterTemplate.Stats
         public static bool TryGetBaseValue(Character character, ModifiableStat stat, out float value)
         {
             value = 0;
+
             if (!Find(character, stat, out var variable))
                 return false;
+
             variable.Sync();
             value = variable.BaseValue;
             return true;
@@ -80,6 +88,7 @@ namespace Burmuruk.RPGStarterTemplate.Stats
         {
             if (!Find(character, stat, out var variable))
                 return false;
+
             variable.Sync();
             variable.BaseValue += delta;
             variable.Write();
@@ -92,8 +101,10 @@ namespace Burmuruk.RPGStarterTemplate.Stats
         public static bool AddModification(Character character, ModifiableStat stat, float modification, out Guid id)
         {
             id = Guid.Empty;
+
             if (!Find(character, stat, out var variable))
                 return false;
+
             variable.Sync();
             id = Guid.NewGuid();
             variable.Modifications.Add(id, modification);
@@ -105,21 +116,28 @@ namespace Burmuruk.RPGStarterTemplate.Stats
         {
             if (!Find(character, stat, out var variable) || !variable.Modifications.ContainsKey(id))
                 return false;
+
             variable.Sync();
             variable.Modifications.Remove(id);
             variable.Write();
             return true;
         }
 
-        // Legacy API. New callers should remove by ID through BuffsManager.RemoveEffect.
         public static bool RemoveModification(Character character, ModifiableStat modsStat, float modification)
         {
             if (!Find(character, modsStat, out var variable))
                 return false;
+
             Guid found = Guid.Empty;
+
             foreach (var pair in variable.Modifications)
+            {
                 if (pair.Value.Equals(modification))
-                { found = pair.Key; break; }
+                { 
+                    found = pair.Key; break; 
+                }
+            }
+
             return found != Guid.Empty && RemoveModification(character, modsStat, found);
         }
 
@@ -127,6 +145,7 @@ namespace Burmuruk.RPGStarterTemplate.Stats
         {
             if (ReferenceEquals(character, null) || !variables.TryGetValue(character, out var stats))
                 return;
+
             foreach (var variable in stats.Values)
             {
                 variable.Sync();
@@ -139,6 +158,7 @@ namespace Burmuruk.RPGStarterTemplate.Stats
         {
             if (!Find(character, modsStat, out var variable))
                 return;
+
             variable.Sync();
             variable.Modifications.Clear();
             variable.Write();
@@ -149,8 +169,10 @@ namespace Burmuruk.RPGStarterTemplate.Stats
         {
             if (ReferenceEquals(character, null))
                 return false;
+
             if (character != null)
                 RemoveAllModifications(character);
+
             return variables.Remove(character);
         }
 
@@ -167,8 +189,6 @@ namespace Burmuruk.RPGStarterTemplate.Stats
         GunDamage = 4,
         GunFireRate = 5,
         MinDistance = 6,
-        TestBuff = 7,
-        workie = 8,
     }
 
     public enum ModsType

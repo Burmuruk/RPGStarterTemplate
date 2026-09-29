@@ -23,6 +23,8 @@ namespace Burmuruk.RPGStarterTemplate.Control
         protected PlayerController playerController;
         protected int? m_CurPlayer;
         protected (Formation value, object args) curFormation = default;
+        private bool inCombat;
+        public bool IsInCombat => inCombat;
 
         public event Action OnPlayerChanged;
         public event Action<bool> OnCombatEnter;
@@ -208,11 +210,28 @@ namespace Burmuruk.RPGStarterTemplate.Control
 
         private void EnterToCombatMode(bool shouldEnter)
         {
+            if (!shouldEnter)
+            {
+                shouldEnter = players.Any(player => player != null && player.gameObject.activeInHierarchy &&
+                    player.Health != null && player.Health.IsAlive &&
+                    (player.IsUnderAttack || (player.Target != null && player.Target.gameObject.activeInHierarchy &&
+                      player.Target.TryGetComponent<Health>(out var targetHealth) && targetHealth.IsAlive) ||
+                     (player.enabled && (player.IsTargetClose || player.IsTargetFar))));
+            }
+
+            if (inCombat == shouldEnter) return;
+
+            inCombat = shouldEnter;
             PlayerState state = shouldEnter ? PlayerState.Combat : PlayerState.None;
 
             players.ForEach((player) => { player.PlayerState = state; });
 
             OnCombatEnter?.Invoke(shouldEnter);
+        }
+
+        private void LateUpdate()
+        {
+            EnterToCombatMode(false);
         }
 
         public void AddMember(AIGuildMember member)
@@ -366,9 +385,10 @@ namespace Burmuruk.RPGStarterTemplate.Control
                     itemState["Count"] = MainInventory.GetItemCount(items[j].ID);
 
                     JObject equipmentState = new JObject();
+
                     for (int k = 0; k < Players.Count; k++)
                     {
-                        if (items[j] is EquipeableItem equipeable && equipeable.Characters.Contains(Players[k]))
+                        if (items[j] is EquipableItem equipeable && equipeable.Characters.Contains(Players[k]))
                         {
                             equipmentState[k.ToString()] = 1;
                         }

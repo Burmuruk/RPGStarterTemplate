@@ -4,7 +4,7 @@ namespace Burmuruk.RPGStarterTemplate.Inventory
 {
     public static class ItemEquiper
     {
-        public static void EquipModification(ref Equipment equipment, EquipeableItem item)
+        public static void EquipModification(ref Equipment equipment, EquipableItem item)
         {
             if (equipment == null || item == null)
                 return;
@@ -48,7 +48,7 @@ namespace Burmuruk.RPGStarterTemplate.Inventory
             equipment.Equip(location, instance, item);
         }
 
-        public static void UnequipModification(ref Equipment equipment, EquipeableItem item)
+        public static void UnequipModification(ref Equipment equipment, EquipableItem item)
         {
             if (equipment == null || item == null)
                 return;

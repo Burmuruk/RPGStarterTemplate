@@ -40,6 +40,11 @@ namespace Burmuruk.RPGStarterTemplate.Control.Samples
 
         public void ChangeMenu()
         {
+            RefreshRuntimeReferences();
+
+            if (gameManager == null || !gameManager.CanChangeToUI() || playerManager == null || playerManager.CurPlayer == null)
+                return;
+
             savingWrapper.AddNewAutoSaveSlot(CaptureLevelData(), false);
 
             gameManager.EnableUI(true);
@@ -64,7 +69,17 @@ namespace Burmuruk.RPGStarterTemplate.Control.Samples
             GetComponentInChildren<Camera>(true).gameObject.SetActive(true);
 
             gameManager.ExitUI();
-            Task.Delay(200).GetAwaiter().OnCompleted(() => savingWrapper.AddNewAutoSaveSlot(CaptureLevelData(), false));
+            StartCoroutine(SaveAfterLeavingInventory());
+        }
+
+        private System.Collections.IEnumerator SaveAfterLeavingInventory()
+        {
+            yield return new WaitForSecondsRealtime(.2f);
+
+            RefreshRuntimeReferences();
+
+            if (savingWrapper != null)
+                savingWrapper.AddNewAutoSaveSlot(CaptureLevelData(), false);
         }
 
         public void EndGame()
@@ -174,8 +189,7 @@ namespace Burmuruk.RPGStarterTemplate.Control.Samples
                     hud.SetVisible(true);
                     break;
                 case GameManager.State.UI:
-                    hud?.gameObject.SetActive(false);
-                    hud.SetVisible(false);
+                    hud?.SetVisible(false);
                     break;
                 default:
                     break;

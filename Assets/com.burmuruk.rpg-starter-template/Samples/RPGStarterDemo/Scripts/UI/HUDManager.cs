@@ -12,16 +12,17 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Burmuruk.RPGStarterTemplate.UI.Samples
 {
     public class HUDManager : MonoBehaviour
     {
+        private static HUDManager instance;
         [Header("References")]
         [SerializeField] Camera mainCamera;
         CanvasGroup hudCanvasGroup;
+        CanvasGroup dialogueCanvasGroup;
         PlayerControllerSample playerController;
         PlayerManagerSample playerManager;
         GameManager gameManager;
@@ -47,6 +48,9 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
         [SerializeField] TextMeshProUGUI pDialogueTitle;
         [Header("Life"), Space()]
         [SerializeField] StackableLabel pLife;
+        [SerializeField] bool alwaysShowHealthBars = false;
+        bool requestedVisible = true;
+        GameManager.State currentGameState;
 
         [Space, Header("Saving")]
         [SerializeField] Image imgSaving;
@@ -104,23 +108,92 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
 
         private void Awake()
         {
+            if (instance != null && instance != this)
+            {
+                gameObject.SetActive(false);
+                Destroy(gameObject);
+                return;
+            }
+            instance = this;
             hudCanvasGroup = GetComponent<CanvasGroup>();
-            //transform.parent.GetComponentInChildren<EventSystem>(true).gameObject.SetActive(true);
+            if (pDialogue != null)
+            {
+                // Render dialogue independently while the gameplay HUD is hidden.
+                var canvas = pDialogue.GetComponent<Canvas>();
+                if (canvas == null) canvas = pDialogue.AddComponent<Canvas>();
+                canvas.overrideSorting = true;
+                canvas.sortingOrder = 32759;
+                dialogueCanvasGroup = pDialogue.GetComponent<CanvasGroup>();
+                if (dialogueCanvasGroup == null)
+                    dialogueCanvasGroup = pDialogue.AddComponent<CanvasGroup>();
+                dialogueCanvasGroup.ignoreParentGroups = true;
+                pDialogue.SetActive(false);
+            }
             playerController = FindAnyObjectByType<PlayerControllerSample>();
             playerManager = FindAnyObjectByType<PlayerManagerSample>();
             gameManager = FindAnyObjectByType<GameManager>();
             missionsManager = FindAnyObjectByType<Missions.MissionManager>();
-            missionsManager.OnMissionStarted += (m) => ShowMission( m.Description );
+            if (missionsManager != null)
+                missionsManager.OnMissionStarted += HandleMissionStarted;
+            if (imgSaving != null)
+            {
+                var canvas = imgSaving.GetComponent<Canvas>();
+                if (canvas == null) canvas = imgSaving.gameObject.AddComponent<Canvas>();
+                canvas.overrideSorting = true;
+                canvas.sortingOrder = 32760;
+                var group = imgSaving.GetComponent<CanvasGroup>();
+                if (group == null) group = imgSaving.gameObject.AddComponent<CanvasGroup>();
+                group.ignoreParentGroups = true;
+                group.interactable = false;
+                group.blocksRaycasts = false;
+                imgSaving.gameObject.SetActive(false);
+            }
         }
+
+        private void HandleMissionStarted(Missions.Mission mission) => ShowMission(mission.Description);
 
         public void SetVisible(bool visible)
         {
+            requestedVisible = visible;
+            ApplyVisibility();
+        }
+
+        private void ApplyVisibility()
+        {
+            bool visible = requestedVisible && currentGameState == GameManager.State.Playing;
+            if (dialogueCanvasGroup != null)
+            {
+                bool dialogueVisible = requestedVisible &&
+                    (currentGameState == GameManager.State.Playing ||
+                     currentGameState == GameManager.State.Cinematic);
+                dialogueCanvasGroup.alpha = dialogueVisible ? 1f : 0f;
+                dialogueCanvasGroup.interactable = dialogueVisible;
+                dialogueCanvasGroup.blocksRaycasts = dialogueVisible;
+            }
+
             if (hudCanvasGroup == null)
                 return;
 
             hudCanvasGroup.alpha = visible ? 1f : 0f;
             hudCanvasGroup.interactable = visible;
             hudCanvasGroup.blocksRaycasts = visible;
+        }
+
+        private void HandleGameState(GameManager.State newState)
+        {
+            currentGameState = newState;
+            ApplyVisibility();
+
+            if (newState == GameManager.State.Loading)
+                ShowSavingIcon(0);
+            else
+                StopSavingNotification();
+
+            if (newState == GameManager.State.Playing && hasInitialized)
+            {
+                CreateHPPlayersBar();
+                ShowAbilities(playerManager != null && playerManager.IsInCombat);
+            }
         }
 
         private void InitializeStackables()
@@ -134,35 +207,35 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
 
         public void CreateHPPlayersBar()
         {
-            if (playersLife != null && playersLife.Count > 0)
-            {
-                foreach (var item in playersLife.Values)
+            if (playerManager == null) return;
+            playersLife ??= new();
+            foreach (var player in playersLife.Keys.ToArray())
+                if (player == null || !playerManager.Players.Contains(player))
                 {
-                    pLife.Release(item);
+                    pLife.Release(playersLife[player]);
+                    playersLife.Remove(player);
                 }
-            }
-            playersLife = new();
             
             foreach (var player in playerManager.Players)
             {
                 if (player == null || player.Health == null)
                     continue;
 
-                StackableNode lifeBar = pLife.Get();
-                playersLife.Add(player, lifeBar);
-
-                lifeBar.label.transform.parent.position = mainCamera.WorldToScreenPoint(player.transform.position);
+                if (!playersLife.TryGetValue(player, out var lifeBar))
+                {
+                    lifeBar = pLife.Get();
+                    playersLife.Add(player, lifeBar);
+                }
                 UpdateHealth(player.Health.HP, player);
-                lifeBar.label.transform.parent.gameObject.SetActive(false);
             }
         }
 
         private void OnEnable()
         {
-            //if (!hasInitialized) { return; }
+            if (hasInitialized) UpdateSubscripttions();
 
-            //UpdateSubscripttions();
             var savingWrapper = FindAnyObjectByType<JsonSavingWrapper>();
+
             if (savingWrapper)
             {
                 savingWrapper.OnSaving += ShowSavingIcon;
@@ -173,6 +246,7 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
 
         private void OnDisable()
         {
+            RemoveSubscripttions();
             var savingWrapper = FindAnyObjectByType<JsonSavingWrapper>();
             if (savingWrapper)
             {
@@ -180,26 +254,13 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
                 savingWrapper.OnLoading -= ShowLoadingIcon;
                 savingWrapper.OnLoaded -= HideLoadingIcon;
             }
-            //if (!hasInitialized) { return; }
-
-            //playerManager.OnCombatEnter -= EnableHPPlayersBar;
-            //playerManager.OnCombatEnter -= ShowAbilities;
-            //playerManager.OnFormationChanged -= ChangeFormation;
-            //playerController.OnFormationHold -= ShowFormations;
-            //playerController.OnPickableEnter -= ShowInteractionButton;
-            //playerController.OnPickableExit -= ShowInteractionButton;
-            //playerController.OnItemPicked -= ShowNotification;
-
-            //foreach (var player in playerManager.Players)
-            //{
-            //    player.Health.OnDamaged -= (hp) => { UpdateHealth(hp, player); };
-            //}
         }
 
         private void LateUpdate()
         {
-            if (gameManager.GameState == GameManager.State.Playing)
+            if (hasInitialized && currentGameState == GameManager.State.Playing)
             {
+                CreateHPPlayersBar();
                 UpdateHealthPosition();
             }
         }
@@ -210,6 +271,14 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
 
             var manager = playerManager;
             var controller = playerController;
+
+            if (gameManager != null)
+            {
+                var states = gameManager;
+                states.onStateChange += HandleGameState;
+                removeSubscriptions.Add(() => states.onStateChange -= HandleGameState);
+                HandleGameState(states.GameState);
+            }
 
             if (manager != null)
             {
@@ -310,7 +379,10 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
 
         private void OnDestroy()
         {
+            if (instance == this) instance = null;
             RemoveSubscripttions();
+            if (missionsManager != null)
+                missionsManager.OnMissionStarted -= HandleMissionStarted;
         }
 
         private void UpdateHealthPosition()
@@ -351,6 +423,7 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
 
         public void Init()
         {
+            if (instance != null && instance != this) return;
             RemoveSubscripttions();
 
             playerController = FindAnyObjectByType<PlayerControllerSample>();
@@ -379,11 +452,6 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
 
         public void RestartPlayersTags()
         {
-            //pFormationState.Initialize();
-            //pInteractable.Initialize();
-            //pNotifications.Initialize();
-            //pMissions.Initialize();
-            //pLife.Initialize();
             CreateHPPlayersBar();
         }
 
@@ -401,8 +469,10 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
                 ? Mathf.Clamp01(hp / maxHp)
                 : 0f;
 
-            if (hp <= maxHp)
-                bar.image.transform.parent.parent.gameObject.SetActive(true);
+            bool visible = player.gameObject.activeInHierarchy && hp > 0 &&
+                (alwaysShowHealthBars || (playerManager != null && playerManager.IsInCombat) ||
+                 (maxHp > 0 && hp * 100f < maxHp * 15f));
+            bar.label.transform.parent.gameObject.SetActive(visible);
         }
 
         private void ShowFormations(bool value)
@@ -558,6 +628,8 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
 
         private void ShowAbilities(bool shouldShow)
         {
+            if (pActiveAbilities == null) return;
+            shouldShow &= playerManager != null && playerManager.CurPlayer != null && playerManager.MainInventory != null;
             if (shouldShow)
             {
                 var inventory = playerManager.MainInventory;
@@ -597,7 +669,7 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
             Ability[] GetEquippedAbilitites(IInventory inventory, Character curPlayer)
             {
                 return (from ability in inventory.GetList(ItemType.Ability)
-                        where ((EquipeableItem)ability).Characters.Contains(curPlayer)
+                        where ((EquipableItem)ability).Characters.Contains(curPlayer)
                         select (Ability)inventory.GetItem(ability.ID))
                                              .ToArray();
             }
@@ -615,10 +687,7 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
 
         private void EnableHPPlayersBar(bool enable)
         {
-            foreach (var bar in playersLife)
-            {
-                bar.Value.label.transform.parent.gameObject.SetActive(enable);
-            }
+            CreateHPPlayersBar();
         }
 
         private void ShowNotification(string itemName, Vector3 itemPosition)
@@ -656,29 +725,33 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
 
         private void HideLoadingIcon(SlotData data)
         {
-            StopSavingNotification();
+            if (currentGameState != GameManager.State.Loading)
+                StopSavingNotification();
+            if (hasInitialized) CreateHPPlayersBar();
         }
 
         private void ShowSavingIcon(float progress)
         {
-            if (!gameObject.activeSelf) return;
+            if (!isActiveAndEnabled || imgSaving == null ||
+                (currentGameState != GameManager.State.Playing && currentGameState != GameManager.State.Loading)) return;
 
-            if (savingNotification != null && progress < 0)
-                return;
-            else if (progress >= 1)
+            if (progress >= 1 && currentGameState != GameManager.State.Loading)
             {
                 Invoke("StopSavingNotification", .5f);
                 return;
             }
             
-            savingNotification = StartCoroutine(RotateSavingImage());
+            CancelInvoke(nameof(StopSavingNotification));
+            if (savingNotification == null)
+                savingNotification = StartCoroutine(RotateSavingImage());
         }
 
         private void StopSavingNotification()
         {
-            if (savingNotification == null) return;
-
-            StopCoroutine(savingNotification);
+            if (currentGameState == GameManager.State.Loading) return;
+            CancelInvoke(nameof(StopSavingNotification));
+            if (savingNotification != null) StopCoroutine(savingNotification);
+            if (imgSaving == null) return;
             imgSaving.gameObject.SetActive(false);
             imgSaving.transform.rotation = Quaternion.identity;
             
@@ -695,7 +768,7 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
 
             while (curTime < maxTime)
             {
-                yield return new WaitForEndOfFrame();
+                yield return null;
 
                 imgSaving.transform.Rotate(Vector3.forward, 2);
             }
