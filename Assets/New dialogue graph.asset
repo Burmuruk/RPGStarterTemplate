@@ -1,0 +1,122 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-7695862531516639133
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62f1f43ebb8f0054d89a8c377983f2df, type: 3}
+  m_Name: 5e2d2fc7-0b3a-4caa-9677-1ab6ec9034f9
+  m_EditorClassIdentifier: 
+  characterID: 1a81ee0c-5837-41d8-b0a7-034bfda59368
+  dialogueName: 
+  isPlayerSpeaking: 0
+  _isStartNode: 1
+  _isPinned: 1
+  _expanded: 1
+  _position: {x: 44.8, y: 433.6}
+  _children:
+  - 3124b80c-159f-4671-a5ab-2251457d7f5b
+  _isExecutable: 1
+  onEnterAction: 2-1
+  onExitAction: 
+  _text: "Se\xF1or, traigo el registro de bajas"
+--- !u!114 &-7450039379487347597
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62f1f43ebb8f0054d89a8c377983f2df, type: 3}
+  m_Name: 3124b80c-159f-4671-a5ab-2251457d7f5b
+  m_EditorClassIdentifier: 
+  characterID: 9e5a433c-4b7c-44a3-af91-a20cd2c85777
+  dialogueName: 
+  isPlayerSpeaking: 0
+  _isStartNode: 0
+  _isPinned: 0
+  _expanded: 1
+  _position: {x: 287.2, y: 433.6}
+  _children: []
+  _isExecutable: 1
+  onEnterAction: 
+  onExitAction: 
+  _text: Menos mal que no han
+--- !u!114 &-1065855006651561848
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62f1f43ebb8f0054d89a8c377983f2df, type: 3}
+  m_Name: d830c404-ca6b-4224-af57-0b02d032faa6
+  m_EditorClassIdentifier: 
+  characterID: 02c04226-0320-4378-9826-b50419bfbbfd
+  dialogueName: 
+  isPlayerSpeaking: 0
+  _isStartNode: 0
+  _isPinned: 1
+  _expanded: 1
+  _position: {x: 287.2, y: 209.59999}
+  _children: []
+  _isExecutable: 1
+  onEnterAction: 
+  onExitAction: 1-2
+  _text: "Los preparativos est\xE1n listos"
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2c6635eff4b35d4d9ca5888678160b2, type: 3}
+  m_Name: New dialogue graph
+  m_EditorClassIdentifier: 
+  _pins:
+  - 4f94cec1-7202-40f6-9884-ba7d6123dd94
+  - 5e2d2fc7-0b3a-4caa-9677-1ab6ec9034f9
+  - d830c404-ca6b-4224-af57-0b02d032faa6
+  _selectedNode: {fileID: 36954129692768043}
+  characters:
+  - id: 02c04226-0320-4378-9826-b50419bfbbfd
+    name: No character
+    Color: {r: 0.32941177, g: 0.3137255, b: 0.078431375, a: 1}
+  dialogueGUID: 
+--- !u!114 &36954129692768043
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62f1f43ebb8f0054d89a8c377983f2df, type: 3}
+  m_Name: 4f94cec1-7202-40f6-9884-ba7d6123dd94
+  m_EditorClassIdentifier: 
+  characterID: 02c04226-0320-4378-9826-b50419bfbbfd
+  dialogueName: Primer encuentro
+  isPlayerSpeaking: 0
+  _isStartNode: 1
+  _isPinned: 1
+  _expanded: 1
+  _position: {x: 44.8, y: 156}
+  _children:
+  - d830c404-ca6b-4224-af57-0b02d032faa6
+  _isExecutable: 1
+  onEnterAction: 1-1
+  onExitAction: 
+  _text: "\xA1Bienvenido!"

@@ -29,12 +29,7 @@ namespace Burmuruk.RPGStarterTemplate.Stats
         [Utilities.DisallowNegative]
         [SerializeField] public float minDistance;
 
-
-        [Space(), Header("testHeader")]
-        [SerializeField] public float testAmount;
-        [SerializeField] public bool didItWork;
-
-[Serializable]
+        [Serializable]
         public struct Slot
         {
             public ItemType type;

@@ -9,7 +9,5 @@ namespace Burmuruk.RPGStarterTemplate.Inventory
     	WeaponR = 4,
     	WeaponL = 5,
     	Ability = 7,
-    	backPack = 9,
-    	migiTe = 10,
     }
-    }
+}

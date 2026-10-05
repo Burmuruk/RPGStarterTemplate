@@ -132,11 +132,11 @@ namespace Burmuruk.RPGStarterTemplate.Control
         #region Public methods
         public virtual void SetUpMods()
         {
-            //ModsList.AddVariable(this, ModifiableStat.HP, _=>health.HP, (value) => health.HP = value);
-            ModsList.AddVariable((Character)this, (ModifiableStat)2, () => stats.speed, (value) => stats.speed = value);
-            ModsList.AddVariable((Character)this, (ModifiableStat)3, () => stats.damage, (value) => { stats.damage = (int)value; });
-            ModsList.AddVariable((Character)this, (ModifiableStat)5, () => stats.damageRate, (value) => { stats.damageRate = value; });
-            ModsList.AddVariable((Character)this, (ModifiableStat)6, () => stats.minDistance, (value) => { stats.minDistance = value; });
+            health.RegisterValues(this);
+            ModsList.AddVariable((Character)this, (ModifiableStat)3, () => stats.speed, (value) => stats.speed = value);
+            ModsList.AddVariable((Character)this, (ModifiableStat)4, () => stats.damage, (value) => { stats.damage = (int)value; });
+            ModsList.AddVariable((Character)this, (ModifiableStat)6, () => stats.damageRate, (value) => { stats.damageRate = value; });
+            ModsList.AddVariable((Character)this, (ModifiableStat)7, () => stats.minDistance, (value) => { stats.minDistance = value; });
 }
 
         public virtual void SetStats(BasicStats newStats)
@@ -436,6 +436,8 @@ namespace Burmuruk.RPGStarterTemplate.Control
             JObject basicStatsData = new();
             Character character = (Character)this;
 
+            basicStatsData["MaxHp"] = ModsList.TryGetRealValue(health.MaxHp, character, ModifiableStat.MaxHP);
+            basicStatsData["HP"] = ModsList.TryGetRealValue(health.HP, character, ModifiableStat.HP);
             basicStatsData["Speed"] = ModsList.TryGetRealValue(stats.speed, character, ModifiableStat.Speed);
             basicStatsData["Damage"] = ModsList.TryGetRealValue(stats.damage, character, ModifiableStat.BaseDamage);
             basicStatsData["DamageRate"] = ModsList.TryGetRealValue(stats.damageRate, character, ModifiableStat.GunFireRate);
@@ -451,6 +453,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
         {
             if (jToken is JObject state)
             {
+                health.LoadValues(state["HP"].ToObject<int>(), state["MaxHp"].ToObject<int>());
                 stats.speed = state["Speed"].ToObject<float>();
                 stats.damage = state["Damage"].ToObject<int>();
                 stats.damageRate = state["DamageRate"].ToObject<float>();

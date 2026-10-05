@@ -52,7 +52,7 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
 
             if (savingWrapper == null)
             {
-                Debug.LogWarning("SavingUI: JsonSavingWrapper no encontrado.", this);
+                Debug.LogWarning("SavingUI: JsonSavingWrapper not found.", this);
                 return false;
             }
 
@@ -123,7 +123,7 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
 
             if (slotTemplate == null || manualSlotsParent == null || autoSavesParent == null)
             {
-                Debug.LogError("SavingUI: asigna la plantilla y ambos contenedores.", this);
+                Debug.LogError("SavingUI: assign template and containers.", this);
                 return;
             }
 
@@ -181,7 +181,7 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
             selectedSlot = id;
             ApplyState();
 
-            if (deleting) return; // Only the delete button confirms deletion.
+            if (deleting) return;
 
             if (saveMode)
                 SaveSlot(id);
@@ -262,7 +262,6 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
             }
             else
             {
-                // Preserve original new-game behavior: load a previously unused slot.
                 ShowMenu(false);
                 savingWrapper.Load(id);
                 OnSlotAdded?.Invoke(id);

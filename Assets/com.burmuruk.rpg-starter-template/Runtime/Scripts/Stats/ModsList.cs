@@ -184,11 +184,12 @@ namespace Burmuruk.RPGStarterTemplate.Stats
     {
         None = 0,
         HP = 1,
-        Speed = 2,
-        BaseDamage = 3,
-        GunDamage = 4,
-        GunFireRate = 5,
-        MinDistance = 6,
+        MaxHP = 2,
+        Speed = 3,
+        BaseDamage = 4,
+        GunDamage = 5,
+        GunFireRate = 6,
+        MinDistance = 7,
     }
 
     public enum ModsType

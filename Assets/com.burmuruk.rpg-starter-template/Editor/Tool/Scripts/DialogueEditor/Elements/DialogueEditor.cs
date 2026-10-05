@@ -98,8 +98,11 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
         {
             _controller = controller;
             _controller.Initialize();
+
             configTab = _controller.SettingsContainer;
-            rootVisualElement.Add(configTab);
+
+            rootVisualElement.Add(_controller.Container);
+
             SetUpControllerEvents();
             var nodes = _controller.GetNodes();
             CreateNodes(nodes);
@@ -147,7 +150,10 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
 
         private void ResetGraphView()
         {
-            rootVisualElement.Remove(configTab);
+            if (_controller != null && _controller.Container != null)
+            {
+                rootVisualElement.Remove(_controller.Container);
+            }
             window.graphView.ResetGraph();
             SetUpGraphEvents();
         }
@@ -169,7 +175,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
             _controller.Initialize();
             configTab = _controller.SettingsContainer;
 
-            rootVisualElement.Add(configTab);
+            rootVisualElement.Add(_controller.Container);
 
             configTab.style.visibility = Visibility.Hidden;
             SetUpGraphEvents();

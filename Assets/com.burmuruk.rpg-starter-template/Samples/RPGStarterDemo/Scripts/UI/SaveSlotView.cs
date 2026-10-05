@@ -33,7 +33,7 @@ namespace Burmuruk.RPGStarterTemplate.UI.Samples
             button.onClick.AddListener(() => clicked(Id));
 
             if (title != null)
-                title.text = id > 0 ? "Guardado " + id : "Autoguardado " + -id;
+                title.text = id > 0 ? "Manual save " + id : "Auto save " + -id;
 
             if (timePlayed != null)
                 timePlayed.text = data?["TimePlayed"]?.ToString() ?? "0";
