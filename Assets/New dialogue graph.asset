@@ -17,6 +17,7 @@ MonoBehaviour:
   isPlayerSpeaking: 0
   _isStartNode: 1
   _isPinned: 1
+  _pinNote: 
   _expanded: 1
   _position: {x: 44.8, y: 433.6}
   _children:
@@ -24,6 +25,7 @@ MonoBehaviour:
   _isExecutable: 1
   onEnterAction: 2-1
   onExitAction: 
+  _id: 5e2d2fc7-0b3a-4caa-9677-1ab6ec9034f9
   _text: "Se\xF1or, traigo el registro de bajas"
 --- !u!114 &-7450039379487347597
 MonoBehaviour:
@@ -42,12 +44,14 @@ MonoBehaviour:
   isPlayerSpeaking: 0
   _isStartNode: 0
   _isPinned: 0
+  _pinNote: 
   _expanded: 1
   _position: {x: 287.2, y: 433.6}
   _children: []
   _isExecutable: 1
   onEnterAction: 
   onExitAction: 
+  _id: 3124b80c-159f-4671-a5ab-2251457d7f5b
   _text: Menos mal que no han
 --- !u!114 &-1065855006651561848
 MonoBehaviour:
@@ -66,13 +70,42 @@ MonoBehaviour:
   isPlayerSpeaking: 0
   _isStartNode: 0
   _isPinned: 1
+  _pinNote: 
   _expanded: 1
   _position: {x: 287.2, y: 209.59999}
-  _children: []
+  _children:
+  - 603b11d3-11cf-4d1c-a6aa-fddff11b4e21
   _isExecutable: 1
   onEnterAction: 
   onExitAction: 1-2
+  _id: d830c404-ca6b-4224-af57-0b02d032faa6
   _text: "Los preparativos est\xE1n listos"
+--- !u!114 &-434314955950620456
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62f1f43ebb8f0054d89a8c377983f2df, type: 3}
+  m_Name: fead6d59-7a3f-401c-a8de-dde81d296398
+  m_EditorClassIdentifier: 
+  characterID: 037b736d-69dd-40d1-bf0a-e855060fcdaa
+  dialogueName: 
+  isPlayerSpeaking: 0
+  _isStartNode: 1
+  _isPinned: 0
+  _pinNote: 
+  _expanded: 1
+  _position: {x: 516, y: 433.6}
+  _children: []
+  _isExecutable: 1
+  onEnterAction: 
+  onExitAction: 
+  _id: fead6d59-7a3f-401c-a8de-dde81d296398
+  _text: 
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -86,14 +119,19 @@ MonoBehaviour:
   m_Name: New dialogue graph
   m_EditorClassIdentifier: 
   _pins:
-  - 4f94cec1-7202-40f6-9884-ba7d6123dd94
   - 5e2d2fc7-0b3a-4caa-9677-1ab6ec9034f9
+  - 4f94cec1-7202-40f6-9884-ba7d6123dd94
   - d830c404-ca6b-4224-af57-0b02d032faa6
-  _selectedNode: {fileID: 36954129692768043}
+  _selectedNode: {fileID: 0}
   characters:
   - id: 02c04226-0320-4378-9826-b50419bfbbfd
     name: No character
-    Color: {r: 0.32941177, g: 0.3137255, b: 0.078431375, a: 1}
+    Color: {r: 0.690566, g: 0.6573738, b: 0.47297254, a: 1}
+  - id: 1a81ee0c-5837-41d8-b0a7-034bfda59368
+    name: No character
+    Color: {r: 0.690566, g: 0.6605143, b: 0, a: 0}
+  _sourceAsset: {fileID: 0}
+  _editingNodes: []
   dialogueGUID: 
 --- !u!114 &36954129692768043
 MonoBehaviour:
@@ -112,11 +150,39 @@ MonoBehaviour:
   isPlayerSpeaking: 0
   _isStartNode: 1
   _isPinned: 1
+  _pinNote: 
   _expanded: 1
   _position: {x: 44.8, y: 156}
   _children:
   - d830c404-ca6b-4224-af57-0b02d032faa6
-  _isExecutable: 1
+  _isExecutable: 0
   onEnterAction: 1-1
   onExitAction: 
+  _id: 4f94cec1-7202-40f6-9884-ba7d6123dd94
   _text: "\xA1Bienvenido!"
+--- !u!114 &8075518757167017776
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62f1f43ebb8f0054d89a8c377983f2df, type: 3}
+  m_Name: 603b11d3-11cf-4d1c-a6aa-fddff11b4e21
+  m_EditorClassIdentifier: 
+  characterID: 02c04226-0320-4378-9826-b50419bfbbfd
+  dialogueName: 
+  isPlayerSpeaking: 0
+  _isStartNode: 0
+  _isPinned: 0
+  _pinNote: 
+  _expanded: 1
+  _position: {x: 516.8, y: 245.59999}
+  _children: []
+  _isExecutable: 1
+  onEnterAction: 
+  onExitAction: 
+  _id: 603b11d3-11cf-4d1c-a6aa-fddff11b4e21
+  _text: 
