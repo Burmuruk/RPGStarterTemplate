@@ -11,6 +11,17 @@ namespace Burmuruk.RPGStarterTemplate.Control.Samples
         public event Action<bool> OnFormationHold;
         public event Action<Vector2, object> OnFormationChanged;
 
+        protected override void FixedUpdate()
+        {
+            base.FixedUpdate();
+
+            if (playerAnimator != null && player != null)
+            {
+                playerAnimator.SetInteger("Health", player.Health.HP);
+                playerAnimator.SetFloat("Speed", player.mover.Veloctiy.magnitude);
+            }
+        }
+
         public void DisplayFormations(InputAction.CallbackContext context)
         {
             if (!player) return;

@@ -32,12 +32,6 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
         public float SearchRadius => Mathf.Max(.1f, searchRadius);
         public event Action OnTroopsDeployed;
 
-        protected override void Awake()
-        {
-            base.Awake();
-            InitializeHorde();
-        }
-
         public override void SetStats(BasicStats newStats)
         {
             newStats.minDistance = Mathf.Max(newStats.minDistance, rangedAttackDistance);

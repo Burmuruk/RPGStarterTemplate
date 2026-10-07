@@ -103,12 +103,17 @@ PrefabInstance:
     - target: {fileID: 4417388710563994346, guid: 8309bf9444a004e4b854038f1c57a905,
         type: 3}
       propertyPath: _hp
-      value: 10
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 4417388710563994346, guid: 8309bf9444a004e4b854038f1c57a905,
         type: 3}
       propertyPath: _maxHp
-      value: 10
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 4817401017363074416, guid: 8309bf9444a004e4b854038f1c57a905,
+        type: 3}
+      propertyPath: shouldGetClose
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7068048499374997909, guid: 8309bf9444a004e4b854038f1c57a905,
         type: 3}
@@ -126,6 +131,37 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 11400000, guid: d10504a0fbc69c741867b7fe641e0eef,
         type: 2}
+    - target: {fileID: 8791493188561593395, guid: 8309bf9444a004e4b854038f1c57a905,
+        type: 3}
+      propertyPath: _initialItems.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8791493188561593395, guid: 8309bf9444a004e4b854038f1c57a905,
+        type: 3}
+      propertyPath: _initialItems.Array.data[0]._item
+      value: 
+      objectReference: {fileID: 11400000, guid: 9a235ea5c80e2be4a8d1537dd6630f6e,
+        type: 2}
+    - target: {fileID: 8791493188561593395, guid: 8309bf9444a004e4b854038f1c57a905,
+        type: 3}
+      propertyPath: _initialItems.Array.data[0]._amount
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8791493188561593395, guid: 8309bf9444a004e4b854038f1c57a905,
+        type: 3}
+      propertyPath: _initialItems.Array.data[0]._isEquip
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8791493188561593395, guid: 8309bf9444a004e4b854038f1c57a905,
+        type: 3}
+      propertyPath: _initialItems.Array.data[0]._character
+      value: 
+      objectReference: {fileID: 3826504892136243318}
+    - target: {fileID: 9070186933416403932, guid: 8309bf9444a004e4b854038f1c57a905,
+        type: 3}
+      propertyPath: m_slowingRadious
+      value: 3
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 7068048499374997909, guid: 8309bf9444a004e4b854038f1c57a905, type: 3}
@@ -166,7 +202,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   farPercept: {fileID: 8109093021902687507}
   closePercept: {fileID: 3679242422502118134}
-  shaders: []
+  shaders:
+  - {fileID: 2100000, guid: f68d266fb92ffd04597989926c400e58, type: 2}
   hasFarPerception: 1
   hasClosePerception: 1
   enemyTag: Player
@@ -174,16 +211,15 @@ MonoBehaviour:
   stats:
     speed: 8
     testDir: {x: 0, y: 0}
-    damage: 1
+    damage: 3
     damageRate: 1
     color: {r: 0, g: 0, b: 0, a: 0}
     farDectection: 0
     closeDetection: 0
     minDistance: 3
-    testAmount: 0
-    didItWork: 0
   mover: {fileID: 0}
   fighter: {fileID: 0}
+  animator: {fileID: 0}
   itemsToDrop:
   - {fileID: 11400000, guid: 75619ae22d649fa48a3f533efd8bce31, type: 2}
   patrolController: {fileID: 0}

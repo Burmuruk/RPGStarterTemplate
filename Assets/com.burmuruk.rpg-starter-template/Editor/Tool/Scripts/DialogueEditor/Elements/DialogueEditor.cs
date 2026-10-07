@@ -393,7 +393,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
             _notificationElement.Add(label);
             label.style.unityTextAlign = TextAnchor.MiddleCenter;
             label.style.backgroundColor = new Color(0, 0, 0, 0.6f);
-            label.style.width = new Length(50, LengthUnit.Percent);
+            label.style.width = new Length(80, LengthUnit.Percent);
             label.style.fontSize = new Length(30, LengthUnit.Pixel);
             _notificationElement.style.borderBottomLeftRadius = 15;
             _notificationElement.style.borderBottomRightRadius = 15;

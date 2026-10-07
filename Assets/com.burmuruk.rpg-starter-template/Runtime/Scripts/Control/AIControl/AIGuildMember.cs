@@ -77,21 +77,25 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
         }
         public Character Leader { get => mainPlayer; }
 
-        protected override void Awake()
-        {
-            base.Awake();
-            health.OnDamaged += HandleDamage;
-        }
-
         private void OnDestroy()
         {
             if (health != null) health.OnDamaged -= HandleDamage;
+        }
+
+        public override void SetStats(BasicStats newStats)
+        {
+            base.SetStats(newStats);
+            health.OnDamaged -= HandleDamage;
+            health.OnDamaged += HandleDamage;
         }
 
         private void HandleDamage(int remainingHealth)
         {
             combatDamageUntil = Time.time + 3f;
             AnalizeDamage();
+
+            if (animator != null)
+                animator.SetBool("Hit", true);
         }
 
         protected virtual void Start()

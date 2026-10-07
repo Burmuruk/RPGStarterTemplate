@@ -42,12 +42,11 @@ namespace Burmuruk.RPGStarterTemplate.Inventory
         public event Action OnTryDeleteEquiped;
         public event Action OnTryAlreadyEquiped;
 
-        private void Start()
+        public void SetInventory(Inventory inventory)
         {
+            this._inventory = inventory;
             InitInventory();
         }
-
-        public void SetInventory(Inventory inventory) => this._inventory = inventory;
 
         public bool TryEquip(Character player, InventoryItem item, out List<EquipableItem> unequippedItems)
         {

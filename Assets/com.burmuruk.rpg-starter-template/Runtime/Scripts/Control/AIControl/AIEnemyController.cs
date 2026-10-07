@@ -156,11 +156,6 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
             }
         }
 
-        protected override void FixedUpdate()
-        {
-            base.FixedUpdate();
-        }
-
         public void Restart()
         {
             SetDefaultStats();
@@ -229,11 +224,19 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
             SetAbilities();
             //statsList.OnDied += DropItem;
             //patrolController = new PatrolController();
+            Health.OnDamaged -= HandleDamage;
+            Health.OnDamaged += HandleDamage;
 
             if (patrolController != null)
             {
                 patrolController.Initialize(mover, mover.Finder);
             }
+        }
+
+        private void HandleDamage(int obj)
+        {
+            if (animator != null)
+                animator.SetBool("Hit", true);
         }
 
         protected override void PerceptionManager()

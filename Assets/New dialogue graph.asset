@@ -126,7 +126,7 @@ MonoBehaviour:
   characters:
   - id: 02c04226-0320-4378-9826-b50419bfbbfd
     name: No character
-    Color: {r: 0.690566, g: 0.6573738, b: 0.47297254, a: 1}
+    Color: {r: 0.32941177, g: 0.3137255, b: 0.078431375, a: 1}
   - id: 1a81ee0c-5837-41d8-b0a7-034bfda59368
     name: No character
     Color: {r: 0.690566, g: 0.6605143, b: 0, a: 0}
@@ -155,7 +155,7 @@ MonoBehaviour:
   _position: {x: 44.8, y: 156}
   _children:
   - d830c404-ca6b-4224-af57-0b02d032faa6
-  _isExecutable: 0
+  _isExecutable: 1
   onEnterAction: 1-1
   onExitAction: 
   _id: 4f94cec1-7202-40f6-9884-ba7d6123dd94

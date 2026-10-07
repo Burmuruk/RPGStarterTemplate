@@ -10,6 +10,7 @@ namespace Burmuruk.RPGStarterTemplate.Combat
 {
     public class Fighter : MonoBehaviour
     {
+        [SerializeField] protected Animator animator;
         [SerializeField] float detectionRadious = 8;
 
         Func<BasicStats> m_Stats;
@@ -40,6 +41,11 @@ namespace Burmuruk.RPGStarterTemplate.Combat
             None,
             Paused,
             Working,
+        }
+
+        private void Awake()
+        {
+            animator = GetComponent<Animator>();
         }
 
         private void FixedUpdate()
@@ -112,6 +118,7 @@ namespace Burmuruk.RPGStarterTemplate.Combat
                 cdBasicAttack.Restart();
                 StartCoroutine(cdBasicAttack.CoolDown());
                 m_targetHealth.ApplyDamage(Stats.damage);
+                SetAttackTrigger(equipable);
 
                 if (equipable is Weapon weapon && weapon.TryGetBuff(out BuffData? buff))
                 {
@@ -119,6 +126,11 @@ namespace Burmuruk.RPGStarterTemplate.Combat
                         BuffsManager.Instance.AddBuff(transform.GetComponent<Control.Character>(), buff.Value);
                 }
             }
+        }
+
+        protected virtual void SetAttackTrigger(EquipableItem equipable)
+        {
+            // Implementation for attack trigger based on equipable item
         }
 
         public void StartAutoBasicAttack(bool start)

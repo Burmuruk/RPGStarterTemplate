@@ -21,6 +21,7 @@ namespace Burmuruk.RPGStarterTemplate.Movement
     [RequireComponent(typeof(Rigidbody))]
     public class Movement : MonoBehaviour, IScheduledAction
     {
+        [SerializeField] protected Animator animator;
         [SerializeField] float m_maxVel = 7;
         [SerializeField] float m_maxSteerForce = 5;
         [SerializeField] float m_threshold = 1;
@@ -120,6 +121,12 @@ namespace Burmuruk.RPGStarterTemplate.Movement
             col = GetComponent<Collider>();
         }
 
+        private void Start()
+        {
+            if (animator == null)
+                animator = GetComponent<Animator>();
+        }
+
         private void FixedUpdate()
         {
             Move();
@@ -129,6 +136,9 @@ namespace Burmuruk.RPGStarterTemplate.Movement
                 if (direction.sqrMagnitude > 0.0001f)
                     m_rb.MoveRotation(Quaternion.LookRotation(direction));
             }
+
+            if (animator != null)
+                animator.SetFloat("Speed", m_rb.velocity.magnitude);
         }
         #endregion
 

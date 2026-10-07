@@ -15,6 +15,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
     {
         [SerializeField] Camera mainCamera;
         protected Character player;
+        protected Animator playerAnimator;
         protected GameManager gameManager;
         protected LevelManager levelManager;
 
@@ -61,7 +62,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
             levelManager = GetComponent<LevelManager>();
         }
 
-        void FixedUpdate()
+        protected virtual void FixedUpdate()
         {
             if (!player) return;
 
@@ -99,6 +100,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
         {
             var vollider = player.GetComponent<CapsuleCollider>();
             this.player = player;
+            playerAnimator = player.gameObject.GetComponent<Animator>();
         }
 
         #region Inputs

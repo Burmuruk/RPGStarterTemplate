@@ -18,7 +18,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
         [SerializeField] protected Transform farPercept;
         [SerializeField] protected Transform closePercept;
         [SerializeField] protected Material[] shaders;
-        
+
         [Space(), Header("Perception"), Space()]
         [SerializeField] protected bool hasFarPerception;
         [SerializeField] protected bool hasClosePerception;
@@ -34,6 +34,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
         [HideInInspector] protected Health health;
         [HideInInspector] protected IInventory inventory;
 
+        public Animator animator;
         protected Collider[] eyesPerceibed, earsPerceibed;
         protected bool isTargetFar = false;
         protected bool isTargetClose = false;
@@ -94,11 +95,6 @@ namespace Burmuruk.RPGStarterTemplate.Control
         #endregion
 
         #region Unity methods
-        protected virtual void Awake()
-        {
-            GetComponents();
-            health.OnDied += _ => Dead();
-        }
 
         protected virtual void Update()
         {
@@ -116,6 +112,8 @@ namespace Burmuruk.RPGStarterTemplate.Control
             isTargetFar = isTargetClose = false;
 
             PerceptionManager();
+            if (animator != null)
+                animator.SetInteger("Health", health.HP);
         }
 
         private void OnDrawGizmosSelected()
@@ -141,6 +139,8 @@ namespace Burmuruk.RPGStarterTemplate.Control
 
         public virtual void SetStats(BasicStats newStats)
         {
+            GetComponents();
+
             stats = newStats;
             var invent = Inventory as InventoryEquipDecorator;
             if (!fighter)
@@ -164,8 +164,12 @@ namespace Burmuruk.RPGStarterTemplate.Control
         private void GetComponents()
         {
             health ??= GetComponent<Health>();
+            health.OnDied -= Dead;
+            health.OnDied += Dead;
+
             mover ??= GetComponent<Movement.Movement>();
             fighter ??= GetComponent<Fighter>();
+            animator ??= GetComponent<Animator>();
         }
 
         public virtual void StopActions(bool shouldPause) { }
@@ -278,6 +282,8 @@ namespace Burmuruk.RPGStarterTemplate.Control
 
             return (enemies[closest.idx], closest.distance);
         }
+
+        private void Dead(Transform transform) => Dead();
 
         protected virtual void Dead()
         {
@@ -469,12 +475,13 @@ namespace Burmuruk.RPGStarterTemplate.Control
 
         public void Select()
         {
-            var rend = GetComponent<Renderer>();
-
-            foreach (var material in rend.materials)
+            foreach (Renderer rend in GetComponentsInChildren<Renderer>())
             {
-                if (material.shader.name.Contains("Outliner"))
+                foreach (Material material in rend.materials)
                 {
+                    if (!material.shader.name.Contains("Outliner"))
+                        continue;
+
                     material.SetFloat("_Enabled", 1);
                     break;
                 }
@@ -483,12 +490,13 @@ namespace Burmuruk.RPGStarterTemplate.Control
 
         public void Deselect()
         {
-            var rend = GetComponent<Renderer>();
-
-            foreach (var material in rend.materials)
+            foreach (Renderer rend in GetComponentsInChildren<Renderer>())
             {
-                if (material.shader.name.Contains("Outliner"))
+                foreach (Material material in rend.materials)
                 {
+                    if (!material.shader.name.Contains("Outliner"))
+                        continue;
+
                     material.SetFloat("_Enabled", 0);
                     break;
                 }
