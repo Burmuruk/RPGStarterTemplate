@@ -34,7 +34,6 @@ namespace Burmuruk.RPGStarterTemplate.Control
         [HideInInspector] protected Health health;
         [HideInInspector] protected IInventory inventory;
 
-        public Animator animator;
         protected Collider[] eyesPerceibed, earsPerceibed;
         protected bool isTargetFar = false;
         protected bool isTargetClose = false;
@@ -112,8 +111,6 @@ namespace Burmuruk.RPGStarterTemplate.Control
             isTargetFar = isTargetClose = false;
 
             PerceptionManager();
-            if (animator != null)
-                animator.SetInteger("Health", health.HP);
         }
 
         private void OnDrawGizmosSelected()
@@ -161,7 +158,7 @@ namespace Burmuruk.RPGStarterTemplate.Control
         } 
         #endregion
 
-        private void GetComponents()
+        protected virtual void GetComponents()
         {
             health ??= GetComponent<Health>();
             health.OnDied -= Dead;
@@ -169,7 +166,6 @@ namespace Burmuruk.RPGStarterTemplate.Control
 
             mover ??= GetComponent<Movement.Movement>();
             fighter ??= GetComponent<Fighter>();
-            animator ??= GetComponent<Animator>();
         }
 
         public virtual void StopActions(bool shouldPause) { }

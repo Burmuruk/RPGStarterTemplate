@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AnimBehav_DisableWhenOut : StateMachineBehaviour
+public class AnimBehaviour_SetState : StateMachineBehaviour
 {
     [SerializeField] List<string> enableWhenOut = new List<string>();
     [SerializeField] List<string> disableWhenOut = new List<string>();

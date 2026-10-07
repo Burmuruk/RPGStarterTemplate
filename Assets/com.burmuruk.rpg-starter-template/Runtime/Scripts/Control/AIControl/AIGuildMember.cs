@@ -22,6 +22,7 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
         private float combatDamageUntil = float.NegativeInfinity;
         public bool IsUnderAttack => Time.time < combatDamageUntil || AIEnemyController.IsThreatening(this);
         public int id = -1;
+        private Animator animator;
 
         #region Enums
 
@@ -82,11 +83,21 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
             if (health != null) health.OnDamaged -= HandleDamage;
         }
 
+        protected override void Update()
+        {
+            base.Update();
+
+            if (animator != null)
+                animator.SetInteger("Health", health.HP);
+        }
+
         public override void SetStats(BasicStats newStats)
         {
             base.SetStats(newStats);
             health.OnDamaged -= HandleDamage;
             health.OnDamaged += HandleDamage;
+
+            animator = GetComponent<Animator>();
         }
 
         private void HandleDamage(int remainingHealth)

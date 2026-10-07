@@ -28,7 +28,7 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
         private bool inCombat;
         private Vector3 chaseDestination;
         private float nextRepathTime;
-
+        private Animator animator;
         private static readonly HashSet<AIEnemyController> activeEnemies = new();
 
         public Character CurEnemy { get; private set; }
@@ -217,6 +217,14 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
             curOrder = order;
         }
 
+        protected override void Update()
+        {
+            base.Update();
+
+            if (animator != null)
+                animator.SetInteger("Health", health.HP);
+        }
+
         public override void SetStats(BasicStats stats)
         {
             base.SetStats(stats);
@@ -231,6 +239,8 @@ namespace Burmuruk.RPGStarterTemplate.Control.AI
             {
                 patrolController.Initialize(mover, mover.Finder);
             }
+
+            animator = GetComponent<Animator>();
         }
 
         private void HandleDamage(int obj)

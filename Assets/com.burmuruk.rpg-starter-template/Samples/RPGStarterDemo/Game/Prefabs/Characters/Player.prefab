@@ -75,7 +75,7 @@ GameObject:
   - component: {fileID: 8513808792933276440}
   - component: {fileID: 568186869901110011}
   - component: {fileID: 6869620104190364405}
-  - component: {fileID: 2370757275715202751}
+  - component: {fileID: 3881325871314369850}
   - component: {fileID: 5788352531148499114}
   - component: {fileID: 268288380871414093}
   - component: {fileID: 983552356110687233}
@@ -207,7 +207,7 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 0
---- !u!114 &2370757275715202751
+--- !u!114 &3881325871314369850
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -216,10 +216,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 5813016171580300768}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 87f32191f6718e64c91b14fd331afe2d, type: 3}
+  m_Script: {fileID: 11500000, guid: 8740fe5254295f94990d4b3b3caf73bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  animator: {fileID: 0}
   m_maxVel: 10
   m_maxSteerForce: 5
   m_threshold: 1
@@ -240,9 +239,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de457abb3f566e4409f7baecb3f98a09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  animator: {fileID: 0}
   detectionRadious: 8
-  shouldGetClose: 1
+  animator: {fileID: 0}
 --- !u!114 &268288380871414093
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -273,7 +271,6 @@ MonoBehaviour:
     minDistance: 3
   mover: {fileID: 0}
   fighter: {fileID: 0}
-  animator: {fileID: 0}
   formation: 0
   playerState: 0
   mainPlayer: {fileID: 0}

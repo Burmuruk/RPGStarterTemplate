@@ -10,7 +10,6 @@ namespace Burmuruk.RPGStarterTemplate.Combat
 {
     public class Fighter : MonoBehaviour
     {
-        [SerializeField] protected Animator animator;
         [SerializeField] float detectionRadious = 8;
 
         Func<BasicStats> m_Stats;
@@ -21,52 +20,29 @@ namespace Burmuruk.RPGStarterTemplate.Combat
 
         Transform m_target;
         CoolDownAction cdBasicAttack;
-        Coroutine basicAttackC;
-        Coroutine autoBACoroutine;
-        public bool shouldGetClose = false;
+
         bool canAttack = true;
-        bool inAutoAttack = false;
+        bool autoAttack = false;
 
-        BasicStats Stats { get => m_Stats.Invoke(); }
-        public int Damage
-        {
-            get
-            {
-                return Stats.damage;
-            }
-        }
+        BasicStats Stats => m_Stats.Invoke();
 
-        enum Satate
-        {
-            None,
-            Paused,
-            Working,
-        }
+        public int Damage => Stats.damage;
 
-        private void Awake()
+        private void Update()
         {
-            animator = GetComponent<Animator>();
-        }
-
-        private void FixedUpdate()
-        {
-            if (m_targetHealth && canAttack)
-            {
+            if (autoAttack)
                 BasicAttack();
-            }
-
-            //if (m_Stats.DamageRate != 0)
-            //    cdBasicAttack = new CoolDownAction(m_Stats.DamageRate);
         }
 
-        public void Initilize(InventoryEquipDecorator inventory, Func<BasicStats> stats)
+        public virtual void Initilize(InventoryEquipDecorator inventory, Func<BasicStats> stats) 
         {
             m_inventory = inventory;
             m_Stats = stats;
 
-            float rate = m_Stats.Invoke().damageRate;
+            float rate = Stats.damageRate;
             cdBasicAttack = new CoolDownAction(in rate);
-            inAutoAttack = false;
+
+            autoAttack = false;
         }
 
         public void Pause(bool shouldPause)
@@ -77,9 +53,9 @@ namespace Burmuruk.RPGStarterTemplate.Combat
         public void ResetCombat()
         {
             StopAllCoroutines();
+
             cdBasicAttack?.Cancel();
-            autoBACoroutine = null;
-            inAutoAttack = false;
+            autoAttack = false;
             SetTarget(null);
             canAttack = true;
         }
@@ -95,60 +71,91 @@ namespace Burmuruk.RPGStarterTemplate.Combat
             if (m_targetHealth != null)
                 m_targetHealth.OnDied += RemoveTarget;
         }
+
         public void RemoveTarget(Transform target)
         {
-            if (m_target != target) return;
+            if (m_target != target)
+                return;
+
             SetTarget(null);
         }
 
         /// <summary>
-        /// Executes a basic attack if it's close enough to the m_direction.
+        /// Attempts to start a basic attack.
         /// </summary>
         public void BasicAttack()
         {
-            if (!canAttack || !isActiveAndEnabled || !m_target || !m_target.gameObject.activeInHierarchy ||
-                m_targetHealth == null || !m_targetHealth.IsAlive || cdBasicAttack == null) return;
+            if (!CanBasicAttack())
+                return;
 
-            if (cdBasicAttack.CanUse)
+            EquipableItem equipable =
+                m_inventory?.Equipped[(int)EquipmentType.WeaponR];
+
+            StartBasicAttack(equipable);
+            StartCoroutine(cdBasicAttack.CoolDown());
+        }
+
+        /// <summary>
+        /// Determines whether a new basic attack can be started.
+        /// </summary>
+        protected virtual bool CanBasicAttack()
+        {
+            if (!canAttack ||
+                !isActiveAndEnabled ||
+                m_target == null ||
+                !m_target.gameObject.activeInHierarchy ||
+                m_targetHealth == null ||
+                !m_targetHealth.IsAlive ||
+                cdBasicAttack == null ||
+                !cdBasicAttack.CanUse)
             {
-                if (Vector3.Distance(m_target.position, transform.position) > Stats.minDistance)
-                    return;
+                return false;
+            }
 
-                EquipableItem equipable = m_inventory?.Equipped[(int)Inventory.EquipmentType.WeaponR];
-                cdBasicAttack.Restart();
-                StartCoroutine(cdBasicAttack.CoolDown());
-                m_targetHealth.ApplyDamage(Stats.damage);
-                SetAttackTrigger(equipable);
+            return Vector3.Distance(m_target.position, transform.position) <= Stats.minDistance;
+        }
 
-                if (equipable is Weapon weapon && weapon.TryGetBuff(out BuffData? buff))
+        /// <summary>
+        /// Starts the basic attack.
+        ///
+        /// The default implementation hits immediately.
+        /// Derived classes can override this method to play
+        /// an animation and call Hit() later.
+        /// </summary>
+        protected virtual void StartBasicAttack(EquipableItem equipable)
+        {
+            Hit();
+        }
+
+        /// <summary>
+        /// Applies the effects of the current basic attack.
+        /// </summary>
+        protected virtual void Hit()
+        {
+            if (m_targetHealth == null || !m_targetHealth.IsAlive)
+            {
+                return;
+            }
+
+            m_targetHealth.ApplyDamage(Stats.damage);
+
+            EquipableItem equipable = m_inventory?.Equipped[(int)EquipmentType.WeaponR];
+
+            if (equipable is Weapon weapon && weapon.TryGetBuff(out BuffData? buff))
+            {
+                if (buff.HasValue && BuffsManager.Instance != null)
                 {
-                    if (buff.HasValue && BuffsManager.Instance != null)
-                        BuffsManager.Instance.AddBuff(transform.GetComponent<Control.Character>(), buff.Value);
+                    BuffsManager.Instance.AddBuff(GetComponent<Character>(), buff.Value);
                 }
             }
         }
 
-        protected virtual void SetAttackTrigger(EquipableItem equipable)
-        {
-            // Implementation for attack trigger based on equipable item
-        }
-
+        /// <summary>
+        /// Enables or disables automatic basic attacks.
+        /// </summary>
         public void StartAutoBasicAttack(bool start)
         {
-            if (start)
-            {
-                if (inAutoAttack) return;
-
-                autoBACoroutine = StartCoroutine(AutoBasicAttackCoroutine()); 
-            }
-            else
-            {
-                if (autoBACoroutine != null)
-                    StopCoroutine(autoBACoroutine);
-
-                autoBACoroutine = null;
-                inAutoAttack = false;
-            }
+            autoAttack = start;
         }
 
         public void SpecialAttack(AbilityType type)
@@ -160,7 +167,10 @@ namespace Burmuruk.RPGStarterTemplate.Combat
                 if ((AbilityType)hability.GetSubType() == type)
                 {
                     var args = GetSpecialAttackArgs(type);
-                    //AbilitiesManager.habilitiesList[modifiableStat]?.Invoke(args);
+
+                    // AbilitiesManager.habilitiesList[
+                    //     modifiableStat]?.Invoke(args);
+
                     return;
                 }
             }
@@ -173,20 +183,5 @@ namespace Burmuruk.RPGStarterTemplate.Combat
                 AbilityType.StealHealth => m_target,
                 _ => null
             };
-
-        private IEnumerator AutoBasicAttackCoroutine()
-        {
-            inAutoAttack = true;
-
-            while (m_target != null && m_targetHealth != null && m_targetHealth.IsAlive &&
-                m_target.gameObject.activeInHierarchy)
-            {
-                BasicAttack();
-                yield return null;
-            }
-
-            inAutoAttack = false;
-            autoBACoroutine = null;
-        }
     }
 }

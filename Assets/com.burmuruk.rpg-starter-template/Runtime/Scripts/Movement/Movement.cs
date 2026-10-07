@@ -21,14 +21,13 @@ namespace Burmuruk.RPGStarterTemplate.Movement
     [RequireComponent(typeof(Rigidbody))]
     public class Movement : MonoBehaviour, IScheduledAction
     {
-        [SerializeField] protected Animator animator;
         [SerializeField] float m_maxVel = 7;
         [SerializeField] float m_maxSteerForce = 5;
         [SerializeField] float m_threshold = 1;
         [SerializeField] float m_slowingRadious = 1.5f;
         [SerializeField] bool smoothPathCorners = true;
 
-        Rigidbody m_rb;
+        protected Rigidbody _rb;
         Func<BasicStats> stats;
         InventoryEquipDecorator m_inventory;
         ActionScheduler m_scheduler;
@@ -63,7 +62,7 @@ namespace Burmuruk.RPGStarterTemplate.Movement
         public event Action OnFinished = delegate { };
 
         public Vector3 CurDirection { get; private set; }
-        public Vector3 Veloctiy { get => m_rb.velocity; }
+        public Vector3 Veloctiy { get => _rb.velocity; }
         public bool IsWorking
         {
             get
@@ -117,32 +116,23 @@ namespace Burmuruk.RPGStarterTemplate.Movement
         #region Unity mehthods
         private void Awake()
         {
-            m_rb = GetComponent<Rigidbody>();
+            _rb = GetComponent<Rigidbody>();
             col = GetComponent<Collider>();
         }
 
-        private void Start()
-        {
-            if (animator == null)
-                animator = GetComponent<Animator>();
-        }
-
-        private void FixedUpdate()
+        protected virtual void FixedUpdate()
         {
             Move();
             if (m_canMove && FacingTarget != null)
             {
                 Vector3 direction = Vector3.ProjectOnPlane(FacingTarget.position - transform.position, Vector3.up);
                 if (direction.sqrMagnitude > 0.0001f)
-                    m_rb.MoveRotation(Quaternion.LookRotation(direction));
+                    _rb.MoveRotation(Quaternion.LookRotation(direction));
             }
-
-            if (animator != null)
-                animator.SetFloat("Speed", m_rb.velocity.magnitude);
         }
         #endregion
 
-        public void Initialize(InventoryEquipDecorator inventory, ActionScheduler scheduler, Func<BasicStats> stats)
+        public virtual void Initialize(InventoryEquipDecorator inventory, ActionScheduler scheduler, Func<BasicStats> stats)
         {
             this.stats = stats;
             this.m_inventory = inventory;
@@ -259,8 +249,8 @@ namespace Burmuruk.RPGStarterTemplate.Movement
 
             ResetRoute();
             curNodePosition = nextNode;
-            m_rb.position = nextNode.Position + Vector3.up * col.bounds.extents.y;
-            m_rb.velocity = Vector3.zero;
+            _rb.position = nextNode.Position + Vector3.up * col.bounds.extents.y;
+            _rb.velocity = Vector3.zero;
 
             m_state = MovementState.None;
             return true;
@@ -279,8 +269,8 @@ namespace Burmuruk.RPGStarterTemplate.Movement
 
             ResetRoute();
             curNodePosition = nextNode;
-            m_rb.position = nextNode.Position + Vector3.up * col.bounds.extents.y;
-            m_rb.velocity = Vector3.zero;
+            _rb.position = nextNode.Position + Vector3.up * col.bounds.extents.y;
+            _rb.velocity = Vector3.zero;
 
             m_state = MovementState.None;
             return;
@@ -308,9 +298,9 @@ namespace Burmuruk.RPGStarterTemplate.Movement
             target = destiny = requestedDestination = transform.position;
             CurDirection = Vector3.zero;
 
-            if (m_rb == null) m_rb = GetComponent<Rigidbody>();
+            if (_rb == null) _rb = GetComponent<Rigidbody>();
             if (col == null) col = GetComponent<Collider>();
-            if (m_rb != null) ApplyPlanarVelocity(Vector3.zero);
+            if (_rb != null) ApplyPlanarVelocity(Vector3.zero);
         }
 
         public float getMaxVel()
@@ -458,7 +448,7 @@ namespace Burmuruk.RPGStarterTemplate.Movement
                 ApplyPlanarVelocity(SteeringBehaviours.Arrival(this, destiny, SlowingRadious, adaptiveThreshold));
             }
 
-            Vector3 planarVelocity = Vector3.ProjectOnPlane(m_rb.velocity, Vector3.up);
+            Vector3 planarVelocity = Vector3.ProjectOnPlane(_rb.velocity, Vector3.up);
             CurDirection = planarVelocity.sqrMagnitude > 0.0001f ? planarVelocity.normalized : CurDirection;
 
             if (!detachRotation && FacingTarget == null)
@@ -466,15 +456,15 @@ namespace Burmuruk.RPGStarterTemplate.Movement
                 if (planarVelocity.sqrMagnitude > 0.01f)
                 {
                     Quaternion rotation = Quaternion.LookRotation(planarVelocity.normalized);
-                    m_rb.MoveRotation(Quaternion.Slerp(m_rb.rotation, rotation, Time.fixedDeltaTime * m_maxSteerForce));
+                    _rb.MoveRotation(Quaternion.Slerp(_rb.rotation, rotation, Time.fixedDeltaTime * m_maxSteerForce));
                 }
             }
         }
 
         private void ApplyPlanarVelocity(Vector3 velocity)
         {
-            velocity.y = m_rb.velocity.y;
-            m_rb.velocity = velocity;
+            velocity.y = _rb.velocity.y;
+            _rb.velocity = velocity;
         }
 
         private bool GetNextNode()
