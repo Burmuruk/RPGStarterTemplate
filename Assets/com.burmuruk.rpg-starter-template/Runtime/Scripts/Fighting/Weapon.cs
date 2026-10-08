@@ -36,28 +36,32 @@ namespace Burmuruk.RPGStarterTemplate.Combat
         public float ReloadTime { get => reloadTime; }
         public BuffData[] Buffs { get => _buffs; }
 
-        public bool TryGetBuff(out BuffData? buffData)
+        public bool TryGetBuffs(out List<BuffData> buffsData)
         {
-            buffData = null;
+            buffsData = new List<BuffData>();
 
-            if (_buffs == null || _buffs.Length == 0) return false;
+            if (_buffs == null || _buffs.Length == 0) 
+                return false;
 
-            int idx = Random.Range(0, _buffs.Length);
+            buffsData.AddRange(_buffs);
+            return true;
 
-            if (_buffs[idx].probability == 1)
-            {
-                buffData = _buffs[idx];
-                return true;
-            }
+            //int idx = Random.Range(0, _buffs.Length);
 
-            float probability = Random.Range(0, 1.0f);
+            //if (_buffs[idx].probability == 1)
+            //{
+            //    buffsData.Add(_buffs[idx]);
+            //    return true;
+            //}
 
-            if (probability <= _buffs[idx].probability)
-            {
-                buffData = _buffs[idx];
-                return true;
-            }
-            else return false;
+            //float probability = Random.Range(0, 1.0f);
+
+            //if (probability <= _buffs[idx].probability)
+            //{
+            //    buffsData.Add(_buffs[idx]);
+            //    return true;
+            //}
+            //else return false;
         }
 
         public void UpdateBuffData(BuffData[] buffData) =>

@@ -18,7 +18,10 @@ namespace Burmuruk.RPGStarterTemplate.Stats
         public float rate;
         [Tooltip("10 means 10%. Modifiers use a snapshot of the unmodified value.")]
         public bool percentage;
-        [Range(0,1)] public float probability; //values between 0 - 1
+        [Range(0,1)] 
+        public float probability; //values between 0 - 1
+        [Tooltip("Visual effect to display when the buff is applied.")]
+        public VisualBuff visual;
 
         public static bool operator == (BuffData lhs, BuffData rhs)
         {

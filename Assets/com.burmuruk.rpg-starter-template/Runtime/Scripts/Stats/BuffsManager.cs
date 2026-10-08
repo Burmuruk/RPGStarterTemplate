@@ -12,21 +12,23 @@ namespace Burmuruk.RPGStarterTemplate.Stats
     {
         private sealed class ActiveEffect
         {
-            public Guid Id;
-            public Guid ModifierId;
-            public Character Character;
-            public BuffData Data;
-            public Action Tick;
-            public CoolDownAction Timer;
+            public Guid id;
+            public Guid modifierId;
+            public Character character;
+            public BuffData data;
+            public Action tick;
+            public CoolDownAction timer;
         }
-
+        
         private readonly Dictionary<Guid, ActiveEffect> active = new();
         const int timersCount = 30;
         private readonly Queue<CoolDownAction> timers = new();
-        private readonly Dictionary<CoolDownAction, (Character character, Coroutine coroutine, BuffData buff)> runningTimers =
-            new();
+        private readonly Dictionary<CoolDownAction, (Character character, Coroutine coroutine, BuffData buff)> runningTimers = new();
         public static BuffsManager Instance { get; private set; }
-        public int ActiveEffectCount => active.Count;
+
+        public event Action<Character, BuffData> OnEffectExecuted;
+        public event Action<Guid, Character, BuffData> OnEffectApplied;
+        public event Action<Guid, Character, BuffData> OnEffectRemoved;
 
         private void Awake()
         {
@@ -61,9 +63,23 @@ namespace Burmuruk.RPGStarterTemplate.Stats
                 timers.Enqueue(new CoolDownAction(0));
         }
 
+        public int ActiveEffectCount => active.Count;
+
         public void AddBuff(Character character, in BuffData buff, Action tickAction = null)
         {
             ApplyEffect(character, buff, tickAction);
+        }
+
+        public Guid ApplyEffectIfNotActive(Character character, BuffData buff, Action action = null, bool rollProbability = false)
+        {
+            if (HasActiveEffect(character, buff))
+                return Guid.Empty;
+
+            return ApplyEffect(
+                character,
+                buff,
+                action,
+                rollProbability);
         }
 
         public Guid ApplyEffect(Character character, BuffData buff, Action action = null, bool rollProbability = false)
@@ -81,11 +97,12 @@ namespace Burmuruk.RPGStarterTemplate.Stats
 
             var effect = new ActiveEffect
             {
-                Id = Guid.NewGuid(),
-                Character = character,
-                Data = buff,
-                Tick = action
+                id = Guid.NewGuid(),
+                character = character,
+                data = buff,
+                tick = action
             };
+
             if (modifier)
             {
                 float delta = buff.value;
@@ -94,13 +111,19 @@ namespace Burmuruk.RPGStarterTemplate.Stats
                     ModsList.TryGetBaseValue(character, buff.stat, out float basis);
                     delta = basis * buff.value / 100f;
                 }
-                if (!ModsList.AddModification(character, buff.stat, delta, out effect.ModifierId))
+
+                if (!ModsList.AddModification(character, buff.stat, delta, out effect.modifierId))
                     return Reject("Could not register modifier: " + buff.stat);
             }
-            active.Add(effect.Id, effect);
+
+            active.Add(effect.id, effect);
+
+            OnEffectApplied?.Invoke(effect.id, effect.character, buff);
+
             if (timed)
                 SetTimer(effect);
-            return effect.Id;
+
+            return effect.id;
         }
 
         private Guid? VerifyRequest(Character character, BuffData buff, Action action, bool rollProbability, out bool modifier, out bool timed)
@@ -157,10 +180,13 @@ namespace Burmuruk.RPGStarterTemplate.Stats
 
         private Guid Reject(string message) { Debug.LogWarning(message, this); return Guid.Empty; }
 
-        private static void ExecuteChange(Character character, BuffData data, Action action)
+        private void ExecuteChange(Character character, BuffData data, Action action)
         {
             if (action != null)
-            { action(); return; }
+            { 
+                action(); return; 
+            }
+
             if (data.stat == ModifiableStat.HP)
             {
                 int amount = Mathf.RoundToInt(Mathf.Abs(data.value));
@@ -186,45 +212,47 @@ namespace Burmuruk.RPGStarterTemplate.Stats
             }
 
             ModsList.ApplyChange(character, data.stat, delta);
+
+            OnEffectExecuted?.Invoke(character, data);
         }
 
         private void SetTimer(ActiveEffect effect)
         {
             CoolDownAction coolDown = timers.Count > 0 ? timers.Dequeue() : new CoolDownAction(0);
-            effect.Timer = coolDown;
+            effect.timer = coolDown;
 
-            if (effect.Data.effectType == EffectType.Periodic)
+            if (effect.data.effectType == EffectType.Periodic)
             {
-                coolDown.ResetAttributes(effect.Data.duration, effect.Data.rate,
+                coolDown.ResetAttributes(effect.data.duration, effect.data.rate,
                     () =>
                     {
-                        ExecuteChange(effect.Character, effect.Data, effect.Tick);
+                        ExecuteChange(effect.character, effect.data, effect.tick);
 
-                        if (effect.Character == null || !effect.Character.gameObject.activeInHierarchy)
-                            RemoveEffectInternal(effect.Id, false);
+                        if (effect.character == null || !effect.character.gameObject.activeInHierarchy)
+                            RemoveEffectInternal(effect.id, false);
                     },
-                    _ => RemoveEffectInternal(effect.Id, false));
+                    _ => RemoveEffectInternal(effect.id, false));
             }
             else
-                coolDown.ResetAttributes(effect.Data.duration, _ => RemoveEffectInternal(effect.Id, false));
+                coolDown.ResetAttributes(effect.data.duration, _ => RemoveEffectInternal(effect.id, false));
 
-            runningTimers.Add(coolDown, (effect.Character, null, effect.Data));
+            runningTimers.Add(coolDown, (effect.character, null, effect.data));
             Coroutine coroutine = StartCoroutine(RunTimer(effect));
 
             if (runningTimers.ContainsKey(coolDown))
-                runningTimers[coolDown] = (effect.Character, coroutine, effect.Data);
+                runningTimers[coolDown] = (effect.character, coroutine, effect.data);
         }
 
         private IEnumerator RunTimer(ActiveEffect effect)
         {
-            IEnumerator routine = effect.Data.effectType == EffectType.Periodic
-                ? effect.Timer.Tick() : effect.Timer.CoolDown();
+            IEnumerator routine = effect.data.effectType == EffectType.Periodic
+                ? effect.timer.Tick() : effect.timer.CoolDown();
 
-            while (active.ContainsKey(effect.Id))
+            while (active.ContainsKey(effect.id))
             {
-                if (effect.Character == null || !effect.Character.gameObject.activeInHierarchy)
+                if (effect.character == null || !effect.character.gameObject.activeInHierarchy)
                 { 
-                    RemoveEffectInternal(effect.Id, false); 
+                    RemoveEffectInternal(effect.id, false); 
                     yield break; 
                 }
                 bool hasNext;
@@ -236,13 +264,13 @@ namespace Burmuruk.RPGStarterTemplate.Stats
                 catch (Exception exception)
                 {
                     Debug.LogException(exception, this);
-                    RemoveEffectInternal(effect.Id, false);
+                    RemoveEffectInternal(effect.id, false);
                     hasNext = false;
                 }
 
                 if (!hasNext)
                 { 
-                    RemoveEffectInternal(effect.Id, false); 
+                    RemoveEffectInternal(effect.id, false); 
                     yield break; 
                 }
 
@@ -276,30 +304,33 @@ namespace Burmuruk.RPGStarterTemplate.Stats
 
             active.Remove(id);
 
-            if (effect.Timer != null)
-                RemoveTimer(effect.Timer, stopCoroutine);
-            if (effect.ModifierId != Guid.Empty && effect.Character != null)
-                ModsList.RemoveModification(effect.Character, effect.Data.stat, effect.ModifierId);
+            if (effect.timer != null)
+                RemoveTimer(effect.timer, stopCoroutine);
+
+            if (effect.modifierId != Guid.Empty && effect.character != null)
+                ModsList.RemoveModification(effect.character, effect.data.stat, effect.modifierId);
+
+            OnEffectRemoved?.Invoke(effect.id, effect.character, effect.data);
 
             return true;
         }
 
         public bool RefreshEffect(Guid id)
         {
-            if (!active.TryGetValue(id, out ActiveEffect effect) || effect.Timer == null)
+            if (!active.TryGetValue(id, out ActiveEffect effect) || effect.timer == null)
                 return false;
 
-            effect.Timer.Restart();
+            effect.timer.Restart();
             return true;
         }
 
         public void RemoveBuff(CoolDownAction coolDown, Character character, ModifiableStat type, float modification)
         {
-            ActiveEffect effect = active.Values.FirstOrDefault(item => item.Timer == coolDown &&
-                item.Character == character && item.Data.stat == type);
+            ActiveEffect effect = active.Values.FirstOrDefault(item => item.timer == coolDown &&
+                item.character == character && item.data.stat == type);
 
             if (effect != null)
-                RemoveEffect(effect.Id);
+                RemoveEffect(effect.id);
         }
 
         public KeyValuePair<CoolDownAction, (Character character, Coroutine coroutine, BuffData buff)>[] GetCharacterTimers(Character character)
@@ -312,7 +343,7 @@ namespace Burmuruk.RPGStarterTemplate.Stats
             var ids = new List<Guid>();
             foreach (KeyValuePair<Guid, ActiveEffect> pair in active)
             {
-                if (pair.Value.Character == character)
+                if (pair.Value.character == character)
                     ids.Add(pair.Key);
             }
 
@@ -327,6 +358,26 @@ namespace Burmuruk.RPGStarterTemplate.Stats
         {
             foreach (Guid id in new List<Guid>(active.Keys))
                 RemoveEffect(id);
+        }
+
+        public bool HasActiveEffect(Character character, BuffData buff)
+        {
+            if (character == null)
+                return false;
+
+            return active.Values.Any(effect =>
+                effect.character == character &&
+                IsSameEffect(effect.data, buff));
+        }
+
+        private static bool IsSameEffect(in BuffData a, in BuffData b)
+        {
+            return a.effectType == b.effectType &&
+                   a.stat == b.stat &&
+                   a.value == b.value &&
+                   a.percentage == b.percentage &&
+                   a.duration == b.duration &&
+                   a.rate == b.rate;
         }
     }
 }

@@ -141,11 +141,14 @@ namespace Burmuruk.RPGStarterTemplate.Combat
 
             EquipableItem equipable = m_inventory?.Equipped[(int)EquipmentType.WeaponR];
 
-            if (equipable is Weapon weapon && weapon.TryGetBuff(out BuffData? buff))
+            if (equipable is Weapon weapon && BuffsManager.Instance != null)
             {
-                if (buff.HasValue && BuffsManager.Instance != null)
+                if (weapon.TryGetBuffs(out var buffsData))
                 {
-                    BuffsManager.Instance.AddBuff(GetComponent<Character>(), buff.Value);
+                    foreach (var buff in buffsData)
+                    {
+                        BuffsManager.Instance.ApplyEffectIfNotActive(m_target.GetComponent<Character>(), buff, rollProbability: true);
+                    }
                 }
             }
         }

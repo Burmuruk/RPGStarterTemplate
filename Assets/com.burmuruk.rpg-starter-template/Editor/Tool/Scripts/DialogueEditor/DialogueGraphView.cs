@@ -103,7 +103,7 @@ namespace Burmuruk.RPGStarterTemplate.Editor.Dialogue
         void ShowContextMenu(Vector2 position)
         {
             GenericMenu menu = new();
-            menu.AddItem(new GUIContent("Crear nodo"), false, () => OpenCreateNodeSearch(position, null));
+            menu.AddItem(new GUIContent("Create node"), false, () => OpenCreateNodeSearch(position, null));
             menu.AddItem(new GUIContent(saved ? "Save" : "Save*"), false, () => OnSave?.Invoke());
             menu.AddItem(new GUIContent("Export results"), false, () => OnExportResults?.Invoke());
             menu.DropDown(new Rect(position, Vector2.zero));

@@ -19,6 +19,7 @@ GameObject:
   - component: {fileID: 4417388710563994346}
   - component: {fileID: 4881003949534948866}
   - component: {fileID: 8008480660568491735}
+  - component: {fileID: 3814079723551230013}
   m_Layer: 10
   m_Name: BasicEnemy
   m_TagString: Enemy
@@ -157,7 +158,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87f32191f6718e64c91b14fd331afe2d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  animator: {fileID: 0}
   m_maxVel: 10
   m_maxSteerForce: 5
   m_threshold: 1
@@ -178,9 +178,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de457abb3f566e4409f7baecb3f98a09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  animator: {fileID: 0}
   detectionRadious: 8
-  shouldGetClose: 0
+  animator: {fileID: 0}
 --- !u!114 &8791493188561593395
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -252,6 +251,22 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &3814079723551230013
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 510198339536785829}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b41957461da6fad409cde2897d7e0da6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  effects:
+  - visual: {fileID: 11400000, guid: a4dfc68c7ef5a8f4086daa6598c83b2b, type: 2}
+    prefab: {fileID: 7857524497512514215, guid: ead83999517e5174aa0b326151ca8656,
+      type: 3}
 --- !u!1 &6807788337000474248
 GameObject:
   m_ObjectHideFlags: 0

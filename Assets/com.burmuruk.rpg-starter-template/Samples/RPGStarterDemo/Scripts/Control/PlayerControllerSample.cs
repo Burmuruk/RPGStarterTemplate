@@ -8,8 +8,15 @@ namespace Burmuruk.RPGStarterTemplate.Control.Samples
 {
     public class PlayerControllerSample : PlayerController
     {
+        protected Animator playerAnimator;
+
         public event Action<bool> OnFormationHold;
         public event Action<Vector2, object> OnFormationChanged;
+
+        private void OnEnable()
+        {
+            OnItemPicked += ItemPickedTrigger;
+        }
 
         protected override void FixedUpdate()
         {
@@ -20,6 +27,20 @@ namespace Burmuruk.RPGStarterTemplate.Control.Samples
                 playerAnimator.SetInteger("Health", player.Health.HP);
                 playerAnimator.SetFloat("Speed", player.mover.Veloctiy.magnitude);
             }
+        }
+
+        private void ItemPickedTrigger(string arg1, Vector3 vector)
+        {
+            if (playerAnimator != null && player != null)
+            {
+                playerAnimator.SetBool("PickUp", true);
+            }
+        }
+
+        public override void SetPlayer(Character player)
+        {
+            base.SetPlayer(player);
+            playerAnimator = player.gameObject.GetComponent<Animator>();
         }
 
         public void DisplayFormations(InputAction.CallbackContext context)
